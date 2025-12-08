@@ -1,0 +1,30 @@
+# BEGIN WebP Rewrite
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Rediriger JPG/PNG vers WebP si le navigateur supporte WebP et si le fichier WebP existe
+  RewriteCond %{HTTP_ACCEPT} image/webp
+  RewriteCond %{DOCUMENT_ROOT}/$1.webp -f
+  RewriteRule ^(wp-content/uploads/.+)\.(jpe?g|png)$ $1.webp [T=image/webp,NC,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(jpe?g|png|webp)$">
+    Header append Vary Accept
+  </FilesMatch>
+</IfModule>
+
+AddType image/webp .webp
+# END WebP Rewrite
+
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress

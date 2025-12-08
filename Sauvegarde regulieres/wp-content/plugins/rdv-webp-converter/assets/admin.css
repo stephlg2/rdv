@@ -1,0 +1,1044 @@
+/**
+ * RDV WebP Converter - Admin Styles v3.1
+ */
+
+/* ==========================================================================
+   LAYOUT GÉNÉRAL
+   ========================================================================== */
+
+.rdv-webp-wrap {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.rdv-webp-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #1d2327;
+}
+
+.rdv-webp-title .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #2271b1;
+}
+
+/* ==========================================================================
+   NAVIGATION PAR ONGLETS
+   ========================================================================== */
+
+.rdv-webp-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #c3c4c7;
+    padding-bottom: 0;
+}
+
+.rdv-webp-tabs .tab-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #50575e;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s ease;
+}
+
+.rdv-webp-tabs .tab-link:hover {
+    color: #2271b1;
+    background: #f0f6fc;
+}
+
+.rdv-webp-tabs .tab-link.active {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+    background: #fff;
+}
+
+.rdv-webp-tabs .tab-link .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.rdv-webp-tab-content {
+    display: none;
+}
+
+.rdv-webp-tab-content.active {
+    display: block;
+}
+
+/* ==========================================================================
+   CARTES
+   ========================================================================== */
+
+.rdv-webp-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.rdv-webp-card h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 15px 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.rdv-webp-card h2 .dashicons {
+    color: #2271b1;
+}
+
+/* ==========================================================================
+   GRILLE DE STATS
+   ========================================================================== */
+
+.rdv-webp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.rdv-webp-stats-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+}
+
+.rdv-webp-stats-card.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rdv-webp-stats-card.clickable:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+}
+
+.stat-icon.converted { background: linear-gradient(135deg, #28a745, #20c997); }
+.stat-icon.pending { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+.stat-icon.savings { background: linear-gradient(135deg, #17a2b8, #6f42c1); }
+.stat-icon.total { background: linear-gradient(135deg, #6c757d, #495057); }
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1d2327;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #50575e;
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   BOUTONS
+   ========================================================================== */
+
+.button-hero {
+    padding: 12px 30px !important;
+    height: auto !important;
+    font-size: 15px !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-hero .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+/* ==========================================================================
+   BARRE DE PROGRESSION
+   ========================================================================== */
+
+.rdv-webp-progress-container {
+    margin-top: 20px;
+}
+
+.rdv-webp-progress-bar {
+    height: 20px;
+    background: #f0f0f1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.rdv-webp-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #135e96);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.rdv-webp-progress-text {
+    text-align: center;
+    margin-top: 10px;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+.rdv-webp-progress-status {
+    text-align: center;
+    color: #50575e;
+    font-size: 13px;
+}
+
+.rdv-webp-results {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.rdv-webp-results.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.rdv-webp-results.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+/* ==========================================================================
+   TABLE DE STATUT
+   ========================================================================== */
+
+.rdv-webp-status-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rdv-webp-status-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.rdv-webp-status-table td:first-child {
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.rdv-webp-status-table td:last-child {
+    text-align: right;
+}
+
+.status-ok {
+    color: #28a745;
+}
+
+.status-no {
+    color: #dc3545;
+}
+
+/* ==========================================================================
+   TOOLBAR
+   ========================================================================== */
+
+.rdv-webp-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+}
+
+.rdv-webp-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.rdv-webp-filters select,
+.rdv-webp-filters input[type="text"] {
+    padding: 6px 12px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.rdv-webp-filters input[type="text"] {
+    width: 200px;
+}
+
+.rdv-webp-filters .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rdv-webp-filters .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+}
+
+.rdv-webp-view-options {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.rdv-webp-view-options .button.view-btn {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.rdv-webp-view-options .button.view-btn .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rdv-webp-view-options .button.active {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+/* Boutons d'action des items */
+.item-actions .button {
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.item-actions .button .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+/* Boutons pagination */
+.rdv-webp-pagination .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rdv-webp-pagination .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+}
+
+/* ==========================================================================
+   BARRE DE SÉLECTION
+   ========================================================================== */
+
+.rdv-webp-selection-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    background: #f0f6fc;
+    border: 1px solid #c5d9ed;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   GALERIE
+   ========================================================================== */
+
+.rdv-webp-loading {
+    text-align: center;
+    padding: 60px;
+    color: #50575e;
+}
+
+.rdv-webp-loading .spinner {
+    float: none;
+    margin: 0 auto 15px;
+}
+
+/* Grille */
+.rdv-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.rdv-gallery-item {
+    background: #fff;
+    border: 2px solid #c3c4c7;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.rdv-gallery-item:hover {
+    border-color: #2271b1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.rdv-gallery-item.selected {
+    border-color: #2271b1;
+    background: #f0f6fc;
+}
+
+.item-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 2px solid #c3c4c7;
+    border-radius: 4px;
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.item-checkbox:hover {
+    border-color: #2271b1;
+}
+
+.rdv-gallery-item.selected .item-checkbox {
+    background: #2271b1;
+    border-color: #2271b1;
+}
+
+.rdv-gallery-item.selected .item-checkbox::after {
+    content: '✓';
+    color: #fff;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.item-thumbnail {
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+    background: #f0f0f1;
+}
+
+.item-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.item-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.item-status.converted {
+    background: #28a745;
+    color: #fff;
+}
+
+.item-status.pending {
+    background: #ffc107;
+    color: #000;
+}
+
+.item-info {
+    padding: 12px;
+}
+
+.item-title {
+    font-weight: 500;
+    color: #1d2327;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+
+.item-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    color: #50575e;
+}
+
+.item-meta .savings {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.item-alt {
+    font-size: 12px;
+    color: #50575e;
+    margin-top: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-alt .missing {
+    color: #dc3545;
+    font-style: italic;
+}
+
+.item-actions {
+    display: flex;
+    gap: 5px;
+    padding: 10px 12px;
+    border-top: 1px solid #f0f0f1;
+    background: #fafafa;
+}
+
+/* Liste */
+.rdv-gallery-list .rdv-gallery-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 15px;
+    align-items: center;
+}
+
+.rdv-gallery-list .item-thumbnail {
+    height: 60px;
+    width: 80px;
+    border-radius: 4px;
+}
+
+.rdv-gallery-list .item-info {
+    padding: 0;
+}
+
+.rdv-gallery-list .item-actions {
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+/* ==========================================================================
+   PAGINATION
+   ========================================================================== */
+
+.rdv-webp-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px;
+}
+
+#rdv-page-info {
+    color: #50575e;
+}
+
+/* ==========================================================================
+   MODALS
+   ========================================================================== */
+
+.rdv-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rdv-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+}
+
+.rdv-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+}
+
+.rdv-modal-large {
+    max-width: 1000px;
+}
+
+.rdv-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f9f9f9;
+}
+
+.rdv-modal-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+}
+
+.rdv-modal-header h2 .dashicons {
+    color: #2271b1;
+}
+
+.rdv-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #50575e;
+    padding: 0;
+    line-height: 1;
+}
+
+.rdv-modal-close:hover {
+    color: #dc3545;
+}
+
+.rdv-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.rdv-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
+    background: #f9f9f9;
+}
+
+/* Convert Options */
+.rdv-convert-options {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.rdv-convert-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #50575e;
+    white-space: nowrap;
+}
+
+.rdv-convert-options label .dashicons {
+    color: #2271b1;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.rdv-convert-options input[type="range"] {
+    width: 120px;
+    margin: 0;
+}
+
+.rdv-convert-options #rdv-quality-value {
+    color: #2271b1;
+    min-width: 35px;
+}
+
+/* Boutons du footer */
+.rdv-modal-footer .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rdv-modal-footer .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+}
+
+#rdv-edit-revert {
+    margin-left: auto;
+}
+
+#rdv-edit-convert,
+#rdv-edit-revert {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Edit Modal Layout */
+.rdv-modal-body {
+    display: flex;
+    gap: 25px;
+}
+
+.rdv-edit-preview {
+    flex: 0 0 250px;
+}
+
+.rdv-edit-preview img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.rdv-edit-form {
+    flex: 1;
+}
+
+.rdv-form-group {
+    margin-bottom: 20px;
+}
+
+.rdv-form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #1d2327;
+}
+
+.rdv-form-group label .dashicons {
+    color: #2271b1;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.rdv-form-group input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.rdv-form-group input[type="text"]:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.rdv-form-group .description {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #50575e;
+}
+
+.rdv-input-with-ext {
+    display: flex;
+    align-items: center;
+}
+
+.rdv-input-with-ext input {
+    border-radius: 6px 0 0 6px !important;
+    border-right: none !important;
+}
+
+.rdv-input-with-ext span {
+    padding: 10px 15px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-radius: 0 6px 6px 0;
+    color: #50575e;
+    font-weight: 500;
+}
+
+.rdv-edit-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.rdv-edit-info .info-item {
+    font-size: 13px;
+}
+
+.rdv-edit-info .info-item strong {
+    color: #666;
+}
+
+/* Usage links */
+.rdv-edit-usage {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f0f7ff;
+    border-radius: 8px;
+    border: 1px solid #c5dff7;
+}
+
+.rdv-edit-usage > strong {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #1d2327;
+    margin-bottom: 10px;
+}
+
+.rdv-edit-usage .dashicons {
+    color: #2271b1;
+}
+
+.rdv-edit-usage .usage-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rdv-edit-usage .usage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 6px;
+}
+
+.rdv-edit-usage .usage-item .usage-title {
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.rdv-edit-usage .usage-item .usage-type {
+    font-size: 11px;
+    color: #666;
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.rdv-edit-usage .usage-item .usage-links {
+    display: flex;
+    gap: 10px;
+}
+
+.rdv-edit-usage .usage-item .usage-links a {
+    font-size: 12px;
+    color: #2271b1;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.rdv-edit-usage .usage-item .usage-links a:hover {
+    text-decoration: underline;
+}
+
+.rdv-edit-usage .no-usage {
+    color: #666;
+    font-style: italic;
+    font-size: 13px;
+}
+
+/* Bulk Edit */
+.rdv-bulk-edit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.rdv-bulk-edit-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.rdv-bulk-edit-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.rdv-bulk-edit-item .edit-fields {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.rdv-bulk-edit-item .edit-fields input {
+    padding: 8px 12px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.rdv-bulk-edit-item .edit-fields .field-full {
+    grid-column: span 2;
+}
+
+/* ==========================================================================
+   SETTINGS
+   ========================================================================== */
+
+.form-table th {
+    width: 200px;
+    padding: 15px 10px 15px 0;
+}
+
+.form-table td {
+    padding: 15px 10px;
+}
+
+.form-table input[type="range"] {
+    width: 200px;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    .rdv-webp-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .rdv-webp-tabs .tab-link {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+    
+    .rdv-webp-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .rdv-webp-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .rdv-webp-filters {
+        flex-direction: column;
+    }
+    
+    .rdv-webp-filters input[type="text"] {
+        width: 100%;
+    }
+    
+    .rdv-modal-body {
+        flex-direction: column;
+    }
+    
+    .rdv-edit-preview {
+        flex: none;
+        max-width: 200px;
+        margin: 0 auto;
+    }
+    
+    .rdv-edit-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .rdv-modal-footer {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .rdv-convert-options {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}

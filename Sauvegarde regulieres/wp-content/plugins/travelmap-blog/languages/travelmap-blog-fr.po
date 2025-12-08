@@ -1,0 +1,92 @@
+# Copyright (C) 2017 TravelMap Itinerary
+# This file is distributed under the same license as the TravelMap Itinerary package.
+msgid ""
+msgstr ""
+"Project-Id-Version: TravelMap Itinerary 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/travelmap-blog\n"
+"POT-Creation-Date: 2017-11-11 15:22:59+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2017-MO-DA HO:MI+ZONE\n"
+"Last-Translator: TravelMap <clem@travelmap.net>\n"
+"Language-Team: TravelMap <clem@travelmap.net>\n"
+
+#: admin/partials/travelmap-blog-widget-form.php:3
+#: admin/partials/travelmap-widget-form.php:3
+msgctxt "widget form"
+msgid "TravelMap"
+msgstr ""
+
+#: admin/partials/travelmap-blog-widget-form.php:11
+#: admin/partials/travelmap-widget-form.php:9
+msgctxt "widget form"
+msgid "Title:"
+msgstr "Titre:"
+
+#: admin/partials/travelmap-blog-widget-form.php:17
+msgctxt "widget form"
+msgid "TravelMap url*:"
+msgstr "TravelMap url*:"
+
+#: admin/partials/travelmap-blog-widget-form.php:19
+msgctxt "widget form"
+msgid "https://username.travelmap.net"
+msgstr "https://pseudo.travelmap.net"
+
+#: admin/partials/travelmap-blog-widget-form.php:23
+#: admin/partials/travelmap-widget-form.php:15
+msgctxt "widget form"
+msgid "Map width:"
+msgstr "Largeur de la carte:"
+
+#: admin/partials/travelmap-blog-widget-form.php:29
+#: admin/partials/travelmap-widget-form.php:21
+msgctxt "widget form"
+msgid "Map height:"
+msgstr "Hauteur de la carte:"
+
+#: admin/partials/travelmap-blog-widget-form.php:36
+msgctxt "widget form"
+msgid "Map only (hide header and menu)"
+msgstr "Carte uniquement (cache le bandeau et le menu)"
+
+#: widgets/class-travelmap-blog-widget.php:9
+msgctxt "widget"
+msgid "TravelMap Blog"
+msgstr "TravelMap (Blog)"
+
+#: widgets/class-travelmap-blog-widget.php:11
+msgctxt "widget"
+msgid "Embed a TravelMap blog"
+msgstr "Affichez un blog TravelMap"
+
+#: widgets/class-travelmap-widget.php:9
+msgctxt "widget"
+msgid "TravelMap"
+msgstr ""
+
+#: widgets/class-travelmap-widget.php:11
+msgctxt "widget"
+msgid "Embed your TravelMap"
+msgstr "Affichez votre carte TravelMap"
+
+#. Plugin Name of the plugin/theme
+msgid "TravelMap Itinerary"
+msgstr "TravelMap itinéraire"
+
+#. Plugin URI of the plugin/theme
+msgid "https://wordpress.org/support/plugin/travelmap-blog/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid "Create and display a beautiful, interactive travel map on your website. Choose your transport modes, update your itinerary using geolocation, etc."
+msgstr "Affichez une carte interactive sur votre site. Gérez votre itinéraire en quelques clics depuis votre admin WordPress, choisissez vos modes de transports, etc."
+
+#. Author of the plugin/theme
+msgid "TravelMap"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://travelmap.net"
+msgstr ""

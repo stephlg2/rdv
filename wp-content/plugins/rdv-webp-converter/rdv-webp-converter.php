@@ -103,15 +103,15 @@ class RDV_WebP_Converter {
         if (!$this->browser_supports_webp()) {
             return;
         }
-        // Démarrer le buffer - utiliser une priorité élevée pour capturer tout le HTML
-        // Ne pas vérifier ob_get_level() car WordPress peut déjà avoir un buffer actif
-        // Utiliser un callback qui sera appelé à la fin du buffer
-        ob_start([$this, 'replace_images_in_html'], 0, PHP_OUTPUT_HANDLER_REMOVABLE);
+        // Démarrer le buffer seulement si on n'est pas déjà dans un buffer
+        // Éviter les conflits avec d'autres plugins
+        if (ob_get_level() === 0) {
+            ob_start([$this, 'replace_images_in_html']);
+        }
     }
 
     public function end_html_buffer() {
-        // Le buffer se ferme automatiquement à la fin du script
-        // Cette fonction est là pour compatibilité mais ne fait rien de spécial
+        // Ne rien faire - le buffer se ferme automatiquement
     }
 
     public function replace_images_in_content($content) {
@@ -122,68 +122,84 @@ class RDV_WebP_Converter {
     }
 
     public function replace_images_in_html($html) {
-        if (empty($html) || !$this->browser_supports_webp()) {
+        // Protection contre les erreurs
+        if (empty($html) || !is_string($html) || !$this->browser_supports_webp()) {
             return $html;
         }
 
-        $upload_dir = wp_upload_dir();
-        $upload_url = $upload_dir['baseurl'];
-        $upload_path = $upload_dir['basedir'];
-        $site_url = site_url();
+        try {
+            $upload_dir = wp_upload_dir();
+            if (empty($upload_dir) || isset($upload_dir['error']) && $upload_dir['error']) {
+                return $html;
+            }
+            
+            $upload_url = $upload_dir['baseurl'];
+            $upload_path = $upload_dir['basedir'];
+            $site_url = site_url();
 
-        // Pattern amélioré pour capturer toutes les URLs d'images dans wp-content/uploads
-        // Capture les URLs complètes ET relatives, avec ou sans query string
-        $pattern = '/(https?:\/\/[^"\'\s\)\>]+\/wp-content\/uploads\/[^"\'\s\)\>]+|(?<!https?:)\/wp-content\/uploads\/[^"\'\s\)\>]+)\.(jpe?g|png|gif)(\?[^"\'\s\)\>]*)?/i';
-        
-        $html = preg_replace_callback($pattern, function($matches) use ($upload_url, $upload_path, $site_url) {
-            $original_url = $matches[0];
-            $base_url = $matches[1];
-            $extension = $matches[2];
-            $query_string = isset($matches[3]) ? $matches[3] : '';
+            // Pattern amélioré pour capturer toutes les URLs d'images dans wp-content/uploads
+            // Capture les URLs complètes ET relatives, avec ou sans query string
+            $pattern = '/(https?:\/\/[^"\'\s\)\>]+\/wp-content\/uploads\/[^"\'\s\)\>]+|(?<!https?:)\/wp-content\/uploads\/[^"\'\s\)\>]+)\.(jpe?g|png|gif)(\?[^"\'\s\)\>]*)?/i';
             
-            // Convertir URL relative en absolue si nécessaire
-            $is_relative = (strpos($base_url, '/wp-content') === 0);
-            if ($is_relative) {
-                $base_url_full = rtrim($site_url, '/') . $base_url;
-            } else {
-                $base_url_full = $base_url;
-            }
-            
-            // Gérer les miniatures avec dimensions (ex: image-300x200.jpg -> image-300x200.webp)
-            $webp_url = $base_url_full . '.webp';
-            
-            // Construire les chemins possibles pour le fichier WebP
-            $relative_path = preg_replace('#https?://[^/]+#', '', $webp_url);
-            $webp_paths = [
-                str_replace($upload_url, $upload_path, $webp_url),
-                $upload_path . ltrim($relative_path, '/'),
-                ABSPATH . ltrim($relative_path, '/'),
-            ];
-            
-            // Vérifier si au moins un fichier WebP existe
-            $webp_exists = false;
-            $found_path = '';
-            foreach ($webp_paths as $webp_path) {
-                if (file_exists($webp_path)) {
-                    $webp_exists = true;
-                    $found_path = $webp_path;
-                    break;
+            $html = preg_replace_callback($pattern, function($matches) use ($upload_url, $upload_path, $site_url) {
+                try {
+                    if (empty($matches) || !isset($matches[1]) || !isset($matches[2])) {
+                        return isset($matches[0]) ? $matches[0] : '';
+                    }
+                    
+                    $original_url = $matches[0];
+                    $base_url = $matches[1];
+                    $extension = $matches[2];
+                    $query_string = isset($matches[3]) ? $matches[3] : '';
+                    
+                    // Convertir URL relative en absolue si nécessaire
+                    $is_relative = (strpos($base_url, '/wp-content') === 0);
+                    if ($is_relative) {
+                        $base_url_full = rtrim($site_url, '/') . $base_url;
+                    } else {
+                        $base_url_full = $base_url;
+                    }
+                    
+                    // Gérer les miniatures avec dimensions (ex: image-300x200.jpg -> image-300x200.webp)
+                    $webp_url = $base_url_full . '.webp';
+                    
+                    // Construire les chemins possibles pour le fichier WebP
+                    $relative_path = preg_replace('#https?://[^/]+#', '', $webp_url);
+                    $webp_paths = [
+                        str_replace($upload_url, $upload_path, $webp_url),
+                        $upload_path . ltrim($relative_path, '/'),
+                    ];
+                    
+                    // Vérifier si au moins un fichier WebP existe
+                    $webp_exists = false;
+                    foreach ($webp_paths as $webp_path) {
+                        if ($webp_path && file_exists($webp_path)) {
+                            $webp_exists = true;
+                            break;
+                        }
+                    }
+                    
+                    if ($webp_exists) {
+                        // Si c'était une URL relative, retourner en relatif
+                        if ($is_relative) {
+                            $relative_webp = '/wp-content/uploads/' . ltrim(str_replace($upload_url . '/', '', $webp_url), '/');
+                            return $relative_webp . $query_string;
+                        }
+                        return $webp_url . $query_string;
+                    }
+                    
+                    return $original_url;
+                } catch (Exception $e) {
+                    // En cas d'erreur, retourner l'URL originale
+                    return isset($matches[0]) ? $matches[0] : '';
                 }
-            }
-            
-            if ($webp_exists) {
-                // Si c'était une URL relative, retourner en relatif
-                if ($is_relative) {
-                    $relative_webp = '/wp-content/uploads/' . ltrim(str_replace($upload_url . '/', '', $webp_url), '/');
-                    return $relative_webp . $query_string;
-                }
-                return $webp_url . $query_string;
-            }
-            
-            return $original_url;
-        }, $html);
+            }, $html);
 
-        return $html;
+            return $html ? $html : '';
+        } catch (Exception $e) {
+            // En cas d'erreur fatale, retourner le HTML original
+            return $html;
+        }
     }
 
     private function browser_supports_webp() {

@@ -1,0 +1,86 @@
+<!-- Section 3 colonnes pour email - RESPONSIVE -->
+<style type="text/css">
+  @media only screen and (max-width: 600px) {
+    .stack-column {
+      width: 100% !important;
+      max-width: 100% !important;
+      display: block !important;
+    }
+    .mobile-spacing {
+      padding: 20px 0 !important;
+    }
+  }
+</style>
+
+<tr>
+  <td style="padding:20px 0;" align="center">
+    <table cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width:600px;">
+      <tbody>
+        <tr>
+          
+          <!-- COLONNE 1 : Avis Vérifiés -->
+          <td class="stack-column" width="33.33%" style="width:33.33%;vertical-align:top;" align="center">
+            <table cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tbody>
+                <tr>
+                  <td class="mobile-spacing" style="padding:10px;" align="center">
+                    <a href="{{ avis_url | default: 'https://www.avis-verifies.com/avis-clients/no-name.fr' }}?hc_id={{ contact_code }}&hct_e={{ email_hash }}&utm_campaign={{ campaign_name }}&utm_medium=email&utm_source=HeliumConnect" target="_blank">
+                      <img alt="{{ avis_alt | default: 'Avis Vérifiés' }}" src="{{ avis_image | default: 'https://www.no-name.fr/module/ras_general_script/avis?width=400' }}" style="display:block;width:140px;max-width:140px;margin:0 auto;" width="140" border="0">
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+
+          <!-- COLONNE 2 : Livraison -->
+          <td class="stack-column" width="33.33%" style="width:33.33%;vertical-align:top;" align="center">
+            <table cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tbody>
+                <tr>
+                  <td class="mobile-spacing" style="padding:10px 10px 6px;" align="center">
+                    <a href="{{ livraison_url | default: 'https://www.no-name.fr/fr/content/4-livraisons' }}?hc_id={{ contact_code }}&hct_e={{ email_hash }}&utm_campaign={{ campaign_name }}&utm_medium=email&utm_source=HeliumConnect" target="_blank">
+                      <img alt="{{ livraison_alt | default: 'Livraison' }}" src="{{ livraison_icon | default: 'https://helium-connect.fr/customers_data/5bb5c1c4441eecb21d003597/images/nn-icon-liv-h35-2024.png' }}" style="display:block;width:45px;max-width:45px;margin:0 auto;" width="45" border="0">
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 10px 10px;" align="center">
+                    <div style="text-align:center;font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:13px;color:#000000;margin:0;">
+                      {{ livraison_texte_1 | default: 'Livraison offerte' }}<br>
+                      {{ livraison_texte_2 | default: 'en Union Européenne' }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+
+          <!-- COLONNE 3 : Paiement -->
+          <td class="stack-column" width="33.33%" style="width:33.33%;vertical-align:top;" align="center">
+            <table cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tbody>
+                <tr>
+                  <td class="mobile-spacing" style="padding:10px 10px 6px;" align="center">
+                    <a href="{{ paiement_url | default: 'https://www.no-name.fr/fr/content/5-paiement-securise' }}?hc_id={{ contact_code }}&hct_e={{ email_hash }}&utm_campaign={{ campaign_name }}&utm_medium=email&utm_source=HeliumConnect" target="_blank">
+                      <img alt="{{ paiement_alt | default: 'Paiement sécurisé' }}" src="{{ paiement_icon | default: 'https://helium-connect.fr/customers_data/5bb5c1c4441eecb21d003597/images/nn-icon-pai-h35-2024.png' }}" style="display:block;width:35px;max-width:35px;margin:0 auto;" width="35" border="0">
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 10px 10px;" align="center">
+                    <div style="text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:13px;color:#000000;margin:0;">
+                      {{ paiement_texte_1 | default: 'Paiement sécurisé' }}<br>
+                      {{ paiement_texte_2 | default: 'CB, 3X sans frais, Paypal, Amex' }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+  </td>
+</tr>
