@@ -673,7 +673,11 @@ A x.1 version increase introduces new or updated features and can be considered 
 * Further sanitize match data against bad serialization
 
 = 2.7.3 - 26th August 2017 =
+<<<<<<< HEAD
 * Fix an ***REMOVED***gression bug
+=======
+* Fix an import regression bug
+>>>>>>> cc2a832e (first commit)
 
 = 2.7.2 - 25th August 2017 =
 * Better IE11 support

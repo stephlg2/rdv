@@ -1453,7 +1453,11 @@ class Avada_Demo_Import {
 			}
 
 			foreach ( $layersliders as $layer_file ) {
+<<<<<<< HEAD
 				// Finally ***REMOVED***v slider data files.
+=======
+				// Finally import rev slider data files.
+>>>>>>> cc2a832e (first commit)
 				$filepath = $this->importer_files->get_path( 'layersliders/' . $layer_file );
 				$import   = new LS_ImportUtil( $filepath );
 			}
@@ -1494,7 +1498,11 @@ class Avada_Demo_Import {
 
 			$slider = new RevSliderSliderImport();
 			foreach ( $revsliders as $rev_file ) {
+<<<<<<< HEAD
 				// Finally ***REMOVED***v slider data files.
+=======
+				// Finally import rev slider data files.
+>>>>>>> cc2a832e (first commit)
 				$filepath = $this->importer_files->get_path( 'revsliders/' . $rev_file );
 				ob_start();
 				$result = $slider->import_slider( true, $filepath );
