@@ -1,0 +1,27 @@
+/*Tooltip RTL CSS */
+[dir="rtl"]  .tripzzy-copy-to-clipboard-list > span .tripzzy-tooltip-container, 
+[dir="rtl"]  .tripzzy-copy-to-clipboard-list > code .tripzzy-tooltip-container  {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+/* Dashboard cards RTL CSS */
+[dir="rtl"] .tripzzy-card-box-content a.tripzzy-more-info:after {
+ content: "\f060";
+}
+/* Tab Search Box RTL CSS */
+[dir="rtl"] .tripzzy-quick-search-button .tripzzy-quick-search code:before{
+  margin-left: 0;
+  margin-right: 6px;
+}
+/* Multi Select Dropdown RTL CSS */
+[dir="rtl"] .react-datepicker__close-icon {
+  left: 5px;
+  right: unset;
+}
+[dir="rtl"] .tripzzy-form-field
+  .tripzzy-input-field.tripzzy-datepicker-field
+  .react-datepicker__input-container:after {
+  left: 8px;
+  right: unset;
+}
+

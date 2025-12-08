@@ -1,0 +1,32 @@
+.toplevel_page_travelmap #wpbody,
+.toplevel_page_travelmap #wpcontent,
+.toplevel_page_travelmap #wpbody-content {
+	position: absolute;
+	bottom: 0;
+	top: 0;
+	right: 0;
+	left: 0;
+	padding: 0;
+} 
+
+iframe.travelmap-iframe {
+	position: absolute;
+	top: 46px;
+	width: 100%;
+	height: calc(100% - 46px);
+	border: 0;
+	z-index: 1;
+}
+
+@media screen and (min-width: 600px) {
+	iframe.travelmap-iframe {
+		top: 0;
+		height: 100%;
+	}
+}
+
+@media screen and (min-width: 782px) {
+	iframe.travelmap-iframe {
+		max-height: calc(100vh - 34px);
+	}
+}

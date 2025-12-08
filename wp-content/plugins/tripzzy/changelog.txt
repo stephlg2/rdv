@@ -1,0 +1,287 @@
+== Changelog ==
+
+= 1.3.0 - 11th June 2025 =
+* New: Added Icon Box block.
+* New: Added Trip Duration option in trip filter & trip search.
+* Tweaks: Added an option to enable or disable the trip slider on a trip's single page.
+* Tweaks: Added option to select the image size of a trip slider in a trip single page.
+* Tweaks: Added editor in the Trip itinerary description.
+* Fixes: Made User Dashboard Page translation ready.
+* Fixes: Month selection in recurring date conflicts if the start date is added.
+* Fixes: Removed admin header layout in site editor page.
+
+= 1.2.9 - 15th May 2025 =
+* Tweaks: Add to cart error message updated if only one category option.
+* Fixes: Itinerary schedule date icon is displaying even if the date is not selected.
+* Layout: Added People selector input layout with an increase and decrease button.
+* Layout: The Admin Booking detail page layout has been updated.
+* Layout: Minor layout fixes.
+* Compatibility: Latest 6.8 compatibility.
+
+= 1.2.8 - 7th April 2025 =
+* Fixes: Fixed Google Map Marker not added issue.
+* Fixes: Fixed pagination issue with taxonomy page.
+* Fixes: Fixed 'trips blocks' show empty when selecting taxonomies like destination, trip type, etc.
+* Fixes: Fixed string localization in admin trips page and frontend.
+* Fixes: Fixed error on the checkout page if the active gateway is unavailable.
+* Fixes: Fixed checkout form empty even added profile info in dashboard.
+* Fixes: Fixed trip includes and excludes taxonomy not being saved.
+
+= 1.2.7 - 21st March 2025 =
+* Tweaks: Added border-radius and slide gap in Slider block.
+* Tweaks: Added reply to email in the admin booking and enquiry email.
+* Tweaks: Added From name option in email instead of default name WordPress.
+* Tweaks: Ignore caching of checkout page in WP Rocket.
+* Fixes: Fixed block id duplication in tripzzy blocks in case of duplicate block.
+* Fixes: Fixed string translation in trip filters input.
+* Fixes: Fixed checkout page error message label shows null.
+* Fixes: Fixed smooth scroll offset top.
+* Fixes: Fixed demo link on admin homepage.
+* Fixes: Fixed console error on blocks if no login.
+* Fixes: Fixed style dependency error on console due to recent update.
+* Fixes: Fixed color palette spacing issue in Tripzzy Blocks color options.
+* Fixes: Fixed Slider Block Min height not working.
+
+= 1.2.6 - 7th March 2025 =
+* Fixes: Search block dropdown layout fixes.
+* Fixes: Fixed error in console.
+
+= 1.2.5 - 7th March 2025 =
+* New: Added Cut-off time feature.
+* New: Admin UI updated.
+* Tweaks: Added shortcut for search settings.
+* Tweaks: Admin tab layout consistency for settings, trips, coupons, and forms.
+* Tweaks: Changed range slider library.
+* Fixes: Show empty email content in settings if refreshed on the same tab.
+* Fixes: The icon picker block hover color is not displaying on the front end.
+* Fixes: Fixed booking on hold template layout broken after save.
+
+= 1.2.4 - 10th February 2025 =
+* Tweaks: Display trip name in the admin enquiry list.
+* Fixes: Fixed Enquiry trip in the admin shows the same trips even though we did an inquiry for a different trip.
+* Fixes: Fixed Form field disable input option not working when editing form.
+* Fixes: Fixed filters in the sidebar that were not working after the recent update.
+* Fixes: Added Missing string localization.
+
+= 1.2.3 - 6th February 2025 =
+* New: Added RTL support.
+* New: Added a schema for trip itineraries and trip faqs.
+* New: Replaced the PHP Carbon date with wp_date.
+* Update: Swiper slider library updated to latest version 11.2.2.
+* Fixes: Fixed Allowed memory size issue when opening an enquiry form admin.
+* Fixes: Fixed Coupon warning if expiry date removed after adding.
+* Fixes: Fixed Undefined array key 'start_date' if we leave empty fixed starting date.
+* Style: In checkout page, added default background to form.
+
+= 1.2.2 - 27th January 2025 =
+* New: Added Sort by option on the trips page.
+* New: Added option to enable/disable shine overlay effect on tripzzy images.
+* New: Added option to enable/disable lightbox on tripzzy images.
+* Tweaks: Display Post states for Tripzzy forms in the admin.
+* Tweaks: Updated default email templates.
+* Fixes: Fixed the broken link in the active page number for pagination.
+* Fixes: Fixed trip pagination issues if query args changed via hooks.
+* Fixes: Fixed Displaying all recurring dates on the all-departure section on page load.
+* Fixes: Fixed Displaying the date list upto the end of the month even if we set a date until to middle of the month.
+* Fixes: Fixed displaying decimal review even added whole number review. Like 5-star review shows 2.5.
+* Fixes: Fixed displaying all the package category even not selected in thankyou page and email.
+* Fixes: Fixed minor issue with an undefined index if no payment gateway is active.
+* Fixes: Fixed Trip filter is not showing on the archive page if only the price range filter is active.
+* Style: Minor check availability button issue and responsiveness fixed on the trip detail page.
+* Style: Fixed broken layout for TRIPZZY_TRIP_TAXONOMY shortcode.
+
+= 1.2.1 - 2nd January 2025 =
+* New: An option was added to allow users to give ratings with decimal values.
+* New: Added an option to show/hide emoji on ratings.
+* Tweaks: Display min people info with a tooltip.
+* Fixes: Fixed Display all dates if recurring `until date` is added.
+* Fixes: Fixed Display all departure month lists if recurring `until date` is added.
+* Compatibility: Latest 6.7.1 compatibility.
+
+= 1.2.0 - 4th December 2024 =
+* Tweaks: Added Hide coupon option on the checkout page.
+* Tweaks: Added Coupon Position option on the checkout page.
+* Fix: Fixed empty email and phone number field in checkout even if it is filled in a dashboard profile.
+* Fix: Fixed translation issue in WordPress 6.7.
+* Fix: Fixed deprecated warning in PHP 8.1.
+
+= 1.1.9 - 27th November 2024 =
+* Fix: Fixed showing first name required issue when submitting an enquiry.
+* Fix: Fixed showing dropdown option without value in admin enquiry detail page.
+* Fix: List all bookings for the user role manager.
+* Fix: Fixed Tripzzy Dashboard profile data is not being saved issue.
+* Tweaks: Added template part for check the availability section of a single trip page.
+* Tweaks: Added capability read for user manager.
+* Tweaks: Added logout URL to the admin Tripzzy Dashboard.
+* Tweaks: Added reset password option in Tripzzy Dashboard.
+* Tweaks: WP Login redirect to the Tripzzy Dashboard page for customer and manager roles.
+* Tweaks: Loaded plugin text domain in init hook instead of plugins_loaded hook.
+
+= 1.1.8 - 13th November 2024 =
+* New: Added booking notes for the user.
+* New: Added bank transfer as a payment method for checkout.
+* New: Added email template for booking on hold.
+* New: Added booking summary on thankyou page.
+* Compatibility: Tested with latest WP Version 6.7
+* Fix: Fixed date format on thank you page.
+* Style: Minor layout change in checkout page.
+
+= 1.1.7 - 13th October 2024 =
+* Tweaks: Added Minimum people required validation while trip adds to cart/checkout.
+* Fix: Display the hidden trip dropdown option on the admin enquiry edit page.
+* Fix: Fixed displaying past departure month in the availability section if the past starting date is set as a recurring date.
+* Fix: Fixed showing duplicate trips on the trip archive page.
+* Fix: Fixed displaying the current month in recurring date even if the date is not available in the current month.
+
+= 1.1.6 - 5th September 2024 =
+* New: Added `TRIPZZY_TRIPS` shortcode to list trips.
+* Enhancement: Attributes added for `TRIPZZY_TRIP_SEARCH` shortcode.
+* Tweaks: Optimized render of Ajax request output.
+* Fix: Nonce verification issue if the page is cached
+* Fix: Fixed checkout page payment option loading if no default gateway is selected
+* Style: Fixed Tripzzy admin bar menu style on the front end.
+* Style: The accordion angle down style was changed.
+* Style: Search form minor layout fixes.
+
+= 1.1.5 - 12th August 2024 =
+* Fix: Trip taxonomy page showing repetitive trips.
+* Fix: Thankyou page showing the link expired on FSE Themes.
+* Fix: Coupon discount mismatch if the item is removed from cart after coupon applied.
+* Style: Admin header layout updated.
+
+= 1.1.4 - 28th July 2024 =
+* New: Added price range to the search form.
+* New: Added price range to trip search filters.
+* Enhancement: Optimized activation query.
+* Enhancement: Blocked multiple HTTP requests on the reset filter.
+* Tweaks: Display the Tripzzy admin bar menu on the frontend as well.
+* Fix: Fixed sticky trip issue with trip pagination.
+* Style: Minor style fixes have been made for the archive page loader.
+
+= 1.1.3 - 1st July 2024 =
+* New: Added Trip Taxonomies list shortcode.
+* New: Added Sticky Trip option.
+* Fix: Recurring Dates month is not checked/selected after saving in the trip edit page.
+* Fix: The Recurring Dates list shows duplicate Months in the list.
+* Fix: In Recurring Dates. It was showing an earlier date than the start date we set.
+
+= 1.1.2 - 5th June 2024 =
+* New: Added Themes Tab.
+* Tweaks: Added Loader while changing trip package on the availability section.
+* Tweaks: All Blocks Style moved into head tag.
+* Fix: Fix: Search Block shows an error in the style book section of FSE Editor.
+* Fix: Hide a Sticky menu for small devices.
+* Fix: Sticky tab spacing issue in FSE themes. No margins on the left and right sides.
+* Fix: Availability section months list layout issue in small devices.
+* Fix: Custom color picker layout spacing fixed.
+
+= 1.1.1 - 22nd May 2024 =
+* New: Added Template for dashboard page.
+* Tweak: Responsive breakpoints updated.
+* Tweak: Query Vars added for tripzzy.
+* Tweak: Replaced wp_unslash and sanitize_text_field with sanitize_key while verify nonce.
+* Tweak: Renamed Template name/slug for checkout page.
+* Tweak: Icon block screen reader text added for icon.
+* Tweak: Font size updated for Tripzzy pages.
+* Fix: Qty field validation issue with an empty value.
+* Fix: Book Now button text toggle issue in availability section.
+* Fix: Form spacing issue in all forms.
+* Fix: Dashboard Page login redirect into main wp-login screen if invalid credential provided.
+* Style: container spacing and layout issue fixes.
+
+= 1.1.0 - 3rd May 2024 =
+* Fix: Trip duration layout fixes.
+* Fix: Trip Search form layout fixed in mobile device.
+
+= 1.0.9 - 2nd May 2024 =
+* New: Added Trip Slider Block.
+* Enhancement: Added Slider height in Slider Block.
+* Enhancement: Added spacing support for Search Block and removed container width field.
+* Enhancement: Added spacing support for Trips Blocks.
+* Enhancement: Added spacing support for Trip Taxonomies Blocks.
+* Tewaks: Markup changed for trips block and trip listings.
+* Tewaks: Added body class for checkout, search-result, and dashboard page.
+* Fix: Qty field validation for -ve value in trip detail page.
+* Fix: Display N/A text in the trip info section if info is not available.
+* Fix: Display found trips on search result page while searching via search form.
+* Style: Search block input layout updated.
+* Style: list style updated for multi-select dropdown of search filter in archive page.
+* Style: Trip review markup updated. Removed review count and average review text from reviews.
+* Style: Made Form style consistent for checkout form, enquiry form, search form, and search filter.
+* Style: Checkout page order info section sticky position fixed to top.
+
+= 1.0.8 - 4th April 2024 =
+* New: Added Icon Picker Block.
+* New: Added Slider Block
+* New: Added Import & Export Tripzzy Data
+* Tweak: Added Column field replacing Item width in Trip Taxonomies block.
+* Tweak: Added Title Position above and below image option in Trip Taxonomies block.
+* Compatibility: Tested with latest WP Version 6.5
+* Fix: Review section layout broken in astra theme.
+* Fix: We have changed the label name in Admin Settings. The `Sticky Tab` label under `Trip Settings` changed To `Tabs`
+* Fix: Console warning undefined category tripzzy in theme editor page.
+* Style: Default Thumbnail added in admin taxonomy list and changed thumbnail size.
+* Style: Admin trip edit page layout fixed. The package category layout is broken into small devices.
+
+= 1.0.7 - 20th March 2024 =
+* Tweak: Markup updated in FSE templates.
+* Fix: PHP 8.2 compatibility fixes.
+* Fix: Trip end date calculation. The End date is adding one additional day to it.
+* Fix: Rest API error if no taxonomy query passed in trips Rest API.
+* Fix: Typo error fixed in the admin settings page.
+* Fix: Showing error on 'Appearance > Menu' in fresh WP installation.
+
+= 1.0.6 - 19th February 2024 =
+* Enhancement: Block theme header and footer support for tripzzy pages.
+* Tweak: Display the Booking date in the Admin booking list.
+* Tweak: Disable the Booking form submit button on booking to prevent empty bookings.
+* Style: Archive page content loader layout implemented.
+* Fix: Archive Page load more trip button is overriding loaded trips with a placeholder.
+* Fix: Layout issue with pagination in a default theme.
+* Fix: Trip filter dropdown toggle issue.
+* Fix: Sale percentage issue with -ve value.
+
+= 1.0.5 - 29th January 2024 =
+* Enhancement: Added Block styles and settings for Trip Taxonomies Block.
+* Enhancement: Added Block styles and settings for Search Block.
+* Fix: Search block layout issue from previous release.
+* Fix: Trip Taxonomies block 'Select Taxonomy' always select trip destination on page load.
+* Fix: Minor layout issue fixes.
+
+= 1.0.4 - 1st January 2024 =
+* Tweak: Added paragraph support in itineraries description.
+* Tweak: Removed Price category, trip includes and trip excludes taxonomies from trip info list.
+* Fix: Removed input fields displaying in booking email.
+* Fix: Form validation added for PayPal Payment on checkout.
+* Fix: Settings reset not resetting trip info.
+* Fix: Minor layout issues.
+
+= 1.0.3 - 25th December 2023 =
+* Fix: render_class warning on activation.
+* Fix: Search form field not displaying in sub site setup.
+* Added Default thumbnail on taxonomy items block if thumbnail image not selected.
+
+= 1.0.2 - 14th December 2023 =
+* New: Added Sticky Tab in trip detail page and its settings.
+* New: Added age requirement as default trip info field.
+* Tweak: Itinerary schedule (time and title) can be added in one step.
+* Tweak: Updated Smooth Scroll scripts.
+* Tweak: Updated Close icon in all admin forms and panels.
+* Fix: Hide more photos link if less than one image in gallery.
+* Fix: Hide discount % if sale price higher than trip price.
+* Updated the layout of trip category blocks
+* Tripzzy Welcome Pointer displayed in Tripzzy Homepage too.
+
+= 1.0.1 - 27th November 2023 =
+* New: Added Trip Taxonomies Items Blocks to render list of Terms under selected categories like Top Destinations, Trip Types, etc.
+* Fix: Showing trips with any status like draft, trash on trip archive page.
+* Fix: Not displaying pricing category on thankyou page.
+* Fix: Showing deleted pricing category on trip edit page.
+* Layout Fix: Responsive fixes of single page availability section and itineraries section.
+* Tewak: Hide view mode on archive in case of no trips.
+* Updated Admin Homepage Layout.
+* Added changelog.txt file for complete changelog.
+
+= 1.0.0 - 11th November 2023 =
+* Initial release.
+

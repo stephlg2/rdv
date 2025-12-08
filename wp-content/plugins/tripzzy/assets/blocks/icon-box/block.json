@@ -1,0 +1,98 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tripzzy/icon-box",
+  "title": "Icon Box",
+  "category": "tripzzy",
+  "icon": "<svg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><g clip-path='url(#clip0_5_4)'><path d='M0 2C0 0.895431 0.895431 0 2 0H30C31.1046 0 32 0.895431 32 2V30C32 31.1046 31.1046 32 30 32H2C0.895431 32 0 31.1046 0 30V2Z' fill='#3EB368'/><path d='M13.1729 9.44275C14.0556 7.26788 14.497 6.18043 15.214 6.02973C15.4026 5.99009 15.5974 5.99009 15.786 6.02973C16.5029 6.18043 16.9443 7.26788 17.827 9.44275C18.3289 10.6796 18.58 11.298 19.0496 11.7186C19.1813 11.8366 19.3242 11.9416 19.4766 12.0323C20.0193 12.3557 20.6969 12.4156 22.0521 12.5356C24.3461 12.7387 25.4932 12.8402 25.8435 13.4866C25.916 13.6204 25.9654 13.7654 25.9894 13.9154C26.1055 14.6396 25.2622 15.3979 23.5757 16.9143L23.1075 17.3355C22.3189 18.0445 21.9248 18.399 21.6967 18.8414C21.56 19.1068 21.4683 19.3925 21.4252 19.6873C21.3536 20.1788 21.4691 20.6931 21.6999 21.7216L21.7824 22.089C22.1965 23.9336 22.4035 24.8558 22.145 25.3092C21.913 25.7164 21.4853 25.977 21.013 25.9993C20.4871 26.0241 19.7461 25.4274 18.2642 24.2339C17.2879 23.4476 16.7997 23.0544 16.2578 22.9008C15.7626 22.7605 15.2373 22.7605 14.7422 22.9008C14.2002 23.0544 13.7121 23.4476 12.7357 24.2339C11.2538 25.4274 10.5128 26.0241 9.98697 25.9993C9.51463 25.977 9.08702 25.7164 8.85487 25.3092C8.59644 24.8558 8.80347 23.9336 9.21752 22.089L9.30002 21.7216C9.53092 20.6931 9.64635 20.1788 9.57472 19.6873C9.53174 19.3925 9.44002 19.1068 9.30324 18.8414C9.07521 18.399 8.68098 18.0445 7.89251 17.3355L7.42418 16.9143C5.73769 15.3979 4.89443 14.6396 5.01057 13.9154C5.03461 13.7654 5.08394 13.6204 5.15648 13.4866C5.50676 12.8402 6.6538 12.7387 8.9479 12.5356C10.3031 12.4156 10.9807 12.3557 11.5235 12.0323C11.6757 11.9416 11.8187 11.8366 11.9504 11.7186C12.42 11.298 12.671 10.6796 13.1729 9.44275Z' fill='white'/></g><defs><clipPath id='clip0_5_4'><rect width='32' height='32' fill='white'/></clipPath></defs></svg>",
+  "description": "Icon Box allows users to easily search, select, and insert icon along with text directly into your page.",
+  "keywords": [
+    "tripzzy",
+    "icon box",
+    "icon"
+  ],
+  "textdomain": "default",
+  "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
+    "iconData": {
+      "type": "object",
+      "default": {}
+    },
+    "content": {
+      "type": "string",
+      "default": ""
+    },
+    "gap": {
+      "type": "string",
+      "default": "5px"
+    },
+    "primaryColor": {
+      "type": "string",
+      "default": ""
+    },
+    "primaryColorHover": {
+      "type": "string",
+      "default": ""
+    },
+    "secondaryColor": {
+      "type": "string",
+      "default": ""
+    },
+    "secondaryColorHover": {
+      "type": "string",
+      "default": ""
+    },
+    "textAlign": {
+      "type": "string",
+      "default": "center"
+    },
+    "padding": {
+      "type": "object",
+      "default": {
+        "top": "16px",
+        "right": "16px",
+        "bottom": "16px",
+        "left": "16px"
+      }
+    },
+    "borderWidth": {
+      "type": "object",
+      "default": {
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": ""
+      }
+    },
+    "borderRadius": {
+      "type": "object",
+      "default": {
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": ""
+      }
+    }
+  },
+  "supports": {
+    "anchor": true,
+    "className": true,
+    "typography": {
+      "fontSize": true,
+      "__experimentalDefaultControls": {
+        "fontSize": true
+      }
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": [
+    "tripzzy-fontawesome",
+    "tripzzy-admin-block-editor",
+    "file:./index.css"
+  ],
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}
