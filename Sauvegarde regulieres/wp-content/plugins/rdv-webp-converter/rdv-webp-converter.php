@@ -79,21 +79,128 @@ class RDV_WebP_Converter {
         if ($this->options['serve_webp']) {
             add_filter('wp_get_attachment_image_src', [$this, 'serve_webp'], 10, 4);
             add_filter('wp_calculate_image_srcset', [$this, 'serve_webp_srcset'], 10, 5);
+            add_filter('wp_get_attachment_url', [$this, 'serve_webp_url'], 10, 2);
+            add_filter('get_the_post_thumbnail_url', [$this, 'serve_webp_url'], 10, 3);
             
             // Remplacer les URLs dans tout le HTML (y compris backgrounds CSS)
             if (!is_admin()) {
+                // Buffer HTML pour capturer tout le HTML généré (y compris par Tripzzy)
                 add_action('template_redirect', [$this, 'start_html_buffer'], 1);
+                
+                // Filtres WordPress standards
                 add_filter('the_content', [$this, 'replace_images_in_content'], 999);
                 add_filter('post_thumbnail_html', [$this, 'replace_images_in_content'], 999);
                 add_filter('widget_text', [$this, 'replace_images_in_content'], 999);
                 add_filter('get_header_image_tag', [$this, 'replace_images_in_content'], 999);
+                
                 // Traiter les styles inline générés par WordPress/Avada
                 add_filter('style_loader_tag', [$this, 'replace_images_in_style_tag'], 10, 2);
                 
                 // Intercepter le CSS dynamique d'Avada pour remplacer les URLs d'images
                 add_filter('fusion_dynamic_css_final', [$this, 'replace_images_in_content'], 999);
-                // Intercepter aussi le CSS avant la finalisation (pour les variables CSS)
                 add_filter('fusion_dynamic_css_cached', [$this, 'replace_images_in_content'], 999);
+                
+                // Filtres spécifiques pour Tripzzy
+                add_filter('tripzzy_filter_default_thumbnail_url', [$this, 'serve_webp_url'], 10, 1);
+
+                /**
+                 * Force Tripzzy images to use WebP
+                 * Covers shortcodes, thumbnails, and template-generated images
+                 */
+                add_filter('tripzzy_filter_thumbnail_html', [$this, 'replace_images_in_html'], 10, 1);
+                add_filter('tripzzy_filter_gallery_image', [$this, 'replace_images_in_html'], 10, 1);
+                add_filter('tripzzy_shortcode_output', [$this, 'replace_images_in_html'], 10, 1);
+                
+                // Intercepter le contenu des shortcodes Tripzzy qui utilisent ob_start/ob_get_clean
+                // Ces shortcodes retournent du HTML qui n'est pas capturé par le buffer principal
+                add_filter('do_shortcode_tag', [$this, 'replace_shortcode_output'], 10, 4);
+            }
+            // Injecter JS front-end pour forcer WebP sur les images Tripzzy et lazyload
+            if (!is_admin() && $this->browser_supports_webp()) {
+                add_action('wp_footer', function() {
+                    ?>
+                    <script>
+                    (function() {
+                        function replaceWithWebP(img) {
+                            if (!img || img.dataset.webpProcessed) return;
+                            
+                            let attrs = ['src', 'srcset', 'data-src', 'data-srcset', 'data-orig-src', 'data-lazy-src'];
+                            let changed = false;
+                            
+                            attrs.forEach(function(attr) {
+                                let url = img.getAttribute(attr);
+                                if (url && url.match(/\.(jpe?g|png|gif)(\?|$)/i) && url.indexOf('.webp') === -1) {
+                                    let webpUrl = url.replace(/\.(jpe?g|png|gif)(\?|$)/i, '.webp$2');
+                                    img.setAttribute(attr, webpUrl);
+                                    changed = true;
+                                }
+                            });
+                            
+                            if (changed) {
+                                img.dataset.webpProcessed = '1';
+                            }
+                        }
+
+                        function processAllImages() {
+                            document.querySelectorAll('img:not([data-webp-processed])').forEach(replaceWithWebP);
+                        }
+
+                        // Traiter immédiatement
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', processAllImages);
+                        } else {
+                            processAllImages();
+                        }
+
+                        // Observer le DOM pour les images ajoutées dynamiquement
+                        let observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                mutation.addedNodes.forEach(function(node) {
+                                    if (node.tagName === 'IMG') {
+                                        replaceWithWebP(node);
+                                    } else if (node.querySelectorAll) {
+                                        node.querySelectorAll('img').forEach(replaceWithWebP);
+                                    }
+                                });
+                            });
+                            // Retraiter toutes les images après chaque mutation
+                            setTimeout(processAllImages, 50);
+                        });
+
+                        observer.observe(document.body, { 
+                            childList: true, 
+                            subtree: true,
+                            attributes: true,
+                            attributeFilter: ['src', 'data-src', 'data-srcset', 'data-lazy-src']
+                        });
+
+                        // Intercepter les changements d'attributs src en temps réel
+                        let imgObserver = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if (mutation.type === 'attributes' && mutation.target.tagName === 'IMG') {
+                                    replaceWithWebP(mutation.target);
+                                }
+                            });
+                        });
+
+                        // Observer tous les attributs src des images existantes et futures
+                        document.querySelectorAll('img').forEach(function(img) {
+                            imgObserver.observe(img, { 
+                                attributes: true, 
+                                attributeFilter: ['src', 'data-src', 'data-srcset', 'data-lazy-src', 'srcset']
+                            });
+                        });
+
+                        // Retraiter périodiquement pour forcer le WebP (au cas où un script modifie après)
+                        setInterval(processAllImages, 500);
+                        
+                        // Retraiter après un délai pour capturer les scripts qui chargent après
+                        setTimeout(processAllImages, 1000);
+                        setTimeout(processAllImages, 2000);
+                    })();
+                    </script>
+                    <?php
+                });
             }
         }
     }
@@ -102,7 +209,10 @@ class RDV_WebP_Converter {
         if (!$this->browser_supports_webp()) {
             return;
         }
-        ob_start([$this, 'replace_images_in_html']);
+        // Vérifier qu'on n'est pas déjà dans un buffer pour éviter les conflits
+        if (ob_get_level() === 0) {
+            ob_start([$this, 'replace_images_in_html']);
+        }
     }
 
     public function replace_images_in_content($content) {
@@ -113,16 +223,110 @@ class RDV_WebP_Converter {
     }
 
     public function replace_images_in_html($html) {
-        if (empty($html)) {
+        if (empty($html) || !is_string($html)) {
             return $html;
         }
 
+        // PROTECTION CRITIQUE : Extraire et protéger tous les scripts et styles AVANT traitement
+        $protected = [];
+        $placeholder_index = 0;
+        
+        // Protéger les balises <script> (avec contenu)
+        $html = preg_replace_callback('/<script[^>]*>.*?<\/script>/is', function($matches) use (&$protected, &$placeholder_index) {
+            $placeholder = '<!--RDV_WEBP_PROTECT_SCRIPT_' . $placeholder_index . '-->';
+            $protected[$placeholder] = $matches[0];
+            $placeholder_index++;
+            return $placeholder;
+        }, $html);
+        
+        // Protéger les balises <style> (avec contenu)
+        $html = preg_replace_callback('/<style[^>]*>.*?<\/style>/is', function($matches) use (&$protected, &$placeholder_index) {
+            $placeholder = '<!--RDV_WEBP_PROTECT_STYLE_' . $placeholder_index . '-->';
+            $protected[$placeholder] = $matches[0];
+            $placeholder_index++;
+            return $placeholder;
+        }, $html);
+        
+        // Protéger les attributs onclick, onload, etc. (scripts inline)
+        $html = preg_replace_callback('/(\s+on\w+\s*=\s*["\'])(.*?)(["\'])/is', function($matches) use (&$protected, &$placeholder_index) {
+            $placeholder = '<!--RDV_WEBP_PROTECT_INLINE_' . $placeholder_index . '-->';
+            $protected[$placeholder] = $matches[0];
+            $placeholder_index++;
+            return $matches[1] . $placeholder . $matches[3];
+        }, $html);
+
         $upload_dir = wp_upload_dir();
+        if (empty($upload_dir) || (isset($upload_dir['error']) && $upload_dir['error'])) {
+            // Restaurer les éléments protégés avant de retourner
+            foreach ($protected as $placeholder => $original) {
+                $html = str_replace($placeholder, $original, $html);
+            }
+            return $html;
+        }
+
         $upload_url = $upload_dir['baseurl'];
         $upload_path = $upload_dir['basedir'];
 
-        // Pattern amélioré pour capturer les URLs dans les attributs HTML ET dans les styles CSS
-        // Capture les URLs dans: src="...", href="...", background-image: url(...), style="background-image: url(...)", etc.
+        // PRIORITÉ 1 : Pattern spécifique pour les balises <img> (notamment celles générées par Tripzzy)
+        // Nouveau pattern et callback pour gérer tous les cas, y compris les miniatures avec dimensions
+        $img_pattern = '/(<img\s+[^>]*?src\s*=\s*["\'])([^"\']*\/wp-content\/uploads\/[^"\']*\.(jpe?g|png|gif)(\?[^"\']*)?)(["\'][^>]*>)/i';
+        $html = preg_replace_callback($img_pattern, function($matches) use ($upload_url, $upload_path) {
+            $before = $matches[1];
+            $url = $matches[2];
+            $query_string = isset($matches[4]) ? $matches[4] : '';
+            $after = $matches[5];
+
+            // Si l'image est déjà WebP, on ne fait rien
+            if (strpos($url, '.webp') !== false) {
+                return $matches[0];
+            }
+
+            // Construire l'URL WebP, en gérant les miniatures avec dimensions
+            $webp_url = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $url);
+
+            // Vérifier si le fichier WebP existe
+            $relative_path = str_replace($upload_url, $upload_path, preg_replace('/\?.*$/', '', $webp_url));
+            if (file_exists($relative_path)) {
+                return $before . $webp_url . $after;
+            }
+
+            // Essayer sans dimensions (ex: image-520x390.webp -> image.webp)
+            $webp_url_no_size = preg_replace('/-(\d+)x(\d+)\.webp$/i', '.webp', $webp_url);
+            $relative_path_no_size = str_replace($upload_url, $upload_path, preg_replace('/\?.*$/', '', $webp_url_no_size));
+            if (file_exists($relative_path_no_size)) {
+                return $before . $webp_url_no_size . $after;
+            }
+
+            return $matches[0];
+        }, $html);
+
+        // PRIORITÉ 3 : Remplacer les URLs dans data-orig-src et data-src pour les images lazyload (Tripzzy, Avada, WordPress native)
+        $html = preg_replace_callback(
+            '/<img[^>]+(data-(?:orig-)?src)=["\']([^"\']+)["\']/i',
+            function($matches) use ($upload_url, $upload_path) {
+                $attr = $matches[1];
+                $url = $matches[2];
+
+                // Ne pas toucher si déjà WebP
+                if (strpos($url, '.webp') !== false) {
+                    return $matches[0];
+                }
+
+                $webp_url = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $url);
+
+                // Vérifier existence fichier WebP
+                $webp_path = str_replace($upload_url, $upload_path, $webp_url);
+                if (file_exists($webp_path)) {
+                    return str_replace($url, $webp_url, $matches[0]);
+                }
+
+                return $matches[0];
+            },
+            $html
+        );
+
+        // PRIORITÉ 2 : Pattern amélioré pour capturer les URLs dans les autres attributs HTML ET dans les styles CSS
+        // Capture les URLs dans: href="...", background-image: url(...), style="background-image: url(...)", etc.
         // Supporte les guillemets simples, doubles, ou sans guillemets
         // Supporte aussi les URLs sans protocole (//) utilisées par Avada
         $pattern = '/((?:https?:)?\/\/[^"\'\s\)]+\/wp-content\/uploads\/[^"\'\s\)]+)\.(jpe?g|png|gif)(\?[^"\'\s\)]*)?/i';
@@ -201,6 +405,11 @@ class RDV_WebP_Converter {
             return $matches[0];
         }, $html);
 
+        // RESTAURATION CRITIQUE : Restaurer tous les scripts et styles protégés
+        foreach ($protected as $placeholder => $original) {
+            $html = str_replace($placeholder, $original, $html);
+        }
+
         return $html;
     }
 
@@ -219,7 +428,25 @@ class RDV_WebP_Converter {
         
         return $tag;
     }
-
+    
+    /**
+     * Intercepte le contenu retourné par les shortcodes (notamment Tripzzy)
+     * qui utilisent ob_start/ob_get_clean et retournent du HTML
+     */
+    public function replace_shortcode_output($output, $tag, $attr, $m) {
+        // Ne traiter que les shortcodes Tripzzy
+        if (strpos($tag, 'tripzzy') === false && strpos($tag, 'TRIPZZY') === false) {
+            return $output;
+        }
+        
+        if (!$this->browser_supports_webp()) {
+            return $output;
+        }
+        
+        return $this->replace_images_in_html($output);
+    }
+    
+    
 
     /**
      * Récupère l'URL WebP correspondante à une URL d'image
@@ -903,7 +1130,7 @@ class RDV_WebP_Converter {
     }
 
     public function serve_webp($image, $attachment_id, $size, $icon) {
-        if (!$image || !is_array($image)) {
+        if (!$image || !is_array($image) || !isset($image[0])) {
             return $image;
         }
 
@@ -912,18 +1139,36 @@ class RDV_WebP_Converter {
         }
 
         $url = $image[0];
-        $path_info = pathinfo($url);
         
-        if (!isset($path_info['extension']) || !in_array(strtolower($path_info['extension']), ['jpg', 'jpeg', 'png', 'gif'])) {
+        // Vérifier que c'est une image
+        if (!preg_match('/\.(jpe?g|png|gif)(\?|$)/i', $url)) {
             return $image;
         }
 
-        $webp_url = $path_info['dirname'] . '/' . $path_info['filename'] . '.webp';
+        // Construire l'URL WebP (gérer les query strings et les dimensions dans le nom de fichier)
+        // Exemple: image-520x390.jpg -> image-520x390.webp
+        $url_parts = explode('?', $url);
+        $base_url = $url_parts[0];
+        $query_string = isset($url_parts[1]) ? '?' . $url_parts[1] : '';
         
+        // Remplacer l'extension par .webp
+        $webp_url = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $base_url) . $query_string;
+        
+        // Vérifier l'existence du fichier WebP
         $upload_dir = wp_upload_dir();
+        if (empty($upload_dir) || (isset($upload_dir['error']) && $upload_dir['error'])) {
+            return $image;
+        }
+        
+        // Méthode 1 : Remplacement direct de l'URL
         $webp_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $webp_url);
         
-        if (file_exists($webp_path)) {
+        // Méthode 2 : Chemin relatif depuis ABSPATH (pour les URLs absolues)
+        $relative_path = preg_replace('#https?://[^/]+#', '', $webp_url);
+        $webp_path_alt = ABSPATH . ltrim($relative_path, '/');
+        
+        // Vérifier si le fichier WebP existe
+        if (file_exists($webp_path) || file_exists($webp_path_alt)) {
             $image[0] = $webp_url;
         }
 
@@ -954,6 +1199,33 @@ class RDV_WebP_Converter {
         }
 
         return $sources;
+    }
+    
+    /**
+     * Convertit une URL d'image en WebP si le fichier existe
+     * Utilisé par les filtres wp_get_attachment_url et get_the_post_thumbnail_url
+     */
+    public function serve_webp_url($url, $attachment_id = null, $size = null) {
+        if (!$url || !$this->browser_supports_webp()) {
+            return $url;
+        }
+        
+        $path_info = pathinfo($url);
+        
+        if (!isset($path_info['extension']) || !in_array(strtolower($path_info['extension']), ['jpg', 'jpeg', 'png', 'gif'])) {
+            return $url;
+        }
+        
+        $webp_url = $path_info['dirname'] . '/' . $path_info['filename'] . '.webp';
+        
+        $upload_dir = wp_upload_dir();
+        $webp_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $webp_url);
+        
+        if (file_exists($webp_path)) {
+            return $webp_url;
+        }
+        
+        return $url;
     }
 
     // AJAX Handlers

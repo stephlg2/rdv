@@ -280,6 +280,7 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						<div class="tz-filter-widget-container">
 							<div class="tz-filter-header">
 								<div class="tz-filter-title"><?php echo esc_html( $labels['filter_by'] ?? '' ); ?></div>
+								<div class="tz-toolbar-title" id="tripzzy-filter-found-posts" style="margin-top:8px;"></div>
 								<button type="button" class="tz-btn tz-btn-sm tz-btn-close-filter" aria-label="Fermer">
 									<i class="fa fa-times"></i>
 								</button>
@@ -327,44 +328,78 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 
 					function openArea(){
 					  if (window.innerWidth <= 768) {
-						// Mode mobile : drawer avec overlay
-						filterArea.style.display = 'block';
-						setTimeout(function() {
-						  filterArea.classList.remove('collapsed');
-						  filterArea.classList.add('drawer-open');
-						  if (overlay) {
-							overlay.style.display = 'block';
-							setTimeout(function() {
-							  overlay.classList.add('active');
-							}, 10);
-						  }
-						}, 10);
-						document.body.style.overflow = 'hidden';
+					    // Mode mobile : drawer with overlay - force fixed positioning so it doesn't appear "under" the page
+					    filterArea.style.display = 'block';
+					    // apply fixed drawer styles
+					    filterArea.style.position = 'fixed';
+					    filterArea.style.top = '0';
+					    filterArea.style.right = '0';
+					    filterArea.style.bottom = '0';
+					    filterArea.style.width = '85%';
+					    filterArea.style.maxWidth = '380px';
+					    filterArea.style.background = '#fff';
+					    filterArea.style.zIndex = '999999';
+					    filterArea.style.transform = 'translateX(100%)';
+					    filterArea.style.transition = 'transform 0.3s ease';
+
+					    setTimeout(function() {
+					      filterArea.classList.remove('collapsed');
+					      filterArea.classList.add('drawer-open');
+					      // slide in
+					      filterArea.style.transform = 'translateX(0)';
+					      if (overlay) {
+					        overlay.style.display = 'block';
+					        overlay.style.position = 'fixed';
+					        overlay.style.top = '0';
+					        overlay.style.left = '0';
+					        overlay.style.right = '0';
+					        overlay.style.bottom = '0';
+					        overlay.style.background = 'rgba(0,0,0,0.45)';
+					        overlay.style.zIndex = '999998';
+					        setTimeout(function() {
+					          overlay.classList.add('active');
+					        }, 10);
+					      }
+					    }, 10);
+					    document.body.style.overflow = 'hidden';
 					  } else {
-						// Mode desktop : affichage normal
-						filterArea.classList.remove('collapsed');
-						filterArea.style.display = 'block';
+					    // Mode desktop : affichage normal
+					    filterArea.classList.remove('collapsed');
+					    filterArea.style.display = 'block';
 					  }
 					  toggleBtn.setAttribute('aria-expanded', 'true');
 					}
 					function closeArea(){
 					  if (window.innerWidth <= 768) {
-						// Mode mobile : fermer drawer
-						filterArea.classList.remove('drawer-open');
-						if (overlay) {
-						  overlay.classList.remove('active');
-						  setTimeout(function() {
-							overlay.style.display = 'none';
-						  }, 300);
-						}
-						setTimeout(function() {
-						  filterArea.classList.add('collapsed');
-						  filterArea.style.display = 'none';
-						}, 300);
+					    // Mode mobile : fermer drawer
+					    // slide out
+					    filterArea.style.transform = 'translateX(100%)';
+					    filterArea.classList.remove('drawer-open');
+					    if (overlay) {
+					      overlay.classList.remove('active');
+					      setTimeout(function() {
+					        overlay.style.display = 'none';
+					      }, 300);
+					    }
+					    setTimeout(function() {
+					      filterArea.classList.add('collapsed');
+					      // remove fixed positioning but keep display none after transition
+					      filterArea.style.display = 'none';
+					      filterArea.style.position = '';
+					      filterArea.style.top = '';
+					      filterArea.style.right = '';
+					      filterArea.style.bottom = '';
+					      filterArea.style.width = '';
+					      filterArea.style.maxWidth = '';
+					      filterArea.style.background = '';
+					      filterArea.style.zIndex = '';
+					      filterArea.style.transform = '';
+					      filterArea.style.transition = '';
+					    }, 300);
 					  } else {
-						// Mode desktop
-						filterArea.classList.add('collapsed');
-						filterArea.style.display = 'none';
+					    // Mode desktop
+					    filterArea.classList.add('collapsed');
+					    filterArea.style.display = 'none';
 					  }
 					  document.body.style.overflow = '';
 					  toggleBtn.setAttribute('aria-expanded', 'false');
