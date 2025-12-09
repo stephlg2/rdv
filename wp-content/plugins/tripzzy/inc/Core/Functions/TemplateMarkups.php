@@ -62,16 +62,6 @@ if ( ! function_exists( 'tripzzy_render_archive_toolbar' ) ) {
 				<?php Loading::render( array( 'id' => 'tripzzy-archive-loader' ) ); ?>
 			</div>
 			<div class="tz-toolbar-right">
-				<?php
-				// Ajouter le bouton Filtres dans la toolbar si des filtres sont actifs
-				if ( class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) && \Tripzzy\Core\Helpers\TripFilter::has_active_filters() ) :
-					?>
-					<button type="button" class="tz-filter-toggle" aria-expanded="false" aria-controls="tripzzy-filter-form-wrapper" data-tripzzy-drawer-trigger>
-						<i class="fa fa-thin fa-sliders"></i> <?php esc_html_e( 'Filtres', 'tripzzy' ); ?>
-					</button>
-					<?php
-				endif;
-				?>
 				<div class="tz-toolbar-sort-by-wrapper" id="tz-toolbar-sort-by-wrapper">
 					<select class="tripzzy-input tripzzy-multiselect tz-toolbar-sort-by" id="tz-toolbar-sort-by" multiple data-placeholder="<?php esc_attr_e( 'Sort by', 'tripzzy' ); ?>" style="display: none;">
 						<option value="" selected><?php esc_html_e( 'Sort by', 'tripzzy' ); ?></option>

@@ -195,14 +195,10 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
 }
 .nav-menus-php #cboxContent {
   padding: 0;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  user-select: none;
 }
 .nav-menus-php #cboxContent .CodeMirror {
-  -webkit-user-select: auto;
-     -moz-user-select: auto;
-          user-select: auto;
+  user-select: auto;
 }
 .nav-menus-php #cboxContent .notice {
   margin: 10px 0 0 0;
@@ -283,6 +279,7 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   vertical-align: top;
   margin-right: 5px;
   content: "\f463";
+  -webkit-animation: rotation 2s infinite linear;
   animation: rotation 2s infinite linear;
 }
 .nav-menus-php #cboxContent .mm_tab_container {
@@ -291,6 +288,8 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   position: relative;
   height: 504px;
   background: white;
+  -webkit-box-shadow: inset -10px 0px 7px -12px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: inset -10px 0px 7px -12px rgba(0, 0, 0, 0.2);
   box-shadow: inset -10px 0px 7px -12px rgba(0, 0, 0, 0.2);
 }
 .nav-menus-php #cboxContent .mm_tab_container .mm_tab {
@@ -897,6 +896,8 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
 }
 .nav-menus-php #cboxContent .mm_content.mega_menu #megamenu-grid .drop-area {
   display: inline-block;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 .nav-menus-php #cboxContent .mm_content.mega_menu #megamenu-grid .ui-sortable-helper {
@@ -928,6 +929,8 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   display: block;
   border: 1px solid #f1f1f1;
   float: left;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 .nav-menus-php #cboxContent .mm_content.mega_menu #widgets .widget {
@@ -954,6 +957,8 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   float: right;
 }
 .nav-menus-php #cboxContent .mm_content.mega_menu .widget {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
   width: 160px;
   margin: 0;
@@ -986,6 +991,7 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   border: 1px solid #444;
   position: absolute;
   z-index: 1000;
+  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
   margin-top: -1px;
   background: white;
@@ -998,6 +1004,7 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
 }
 .nav-menus-php #cboxContent .mm_content.mega_menu .widget-top {
   border: 0;
+  -webkit-box-shadow: 0 0 0;
   box-shadow: 0 0 0;
   border: 1px solid #DFDFDF;
   padding: 0 8px;
@@ -1029,6 +1036,7 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   vertical-align: top;
   margin-left: 5px;
   content: "\f463";
+  -webkit-animation: rotation 2s infinite linear;
   animation: rotation 2s infinite linear;
   vertical-align: middle;
 }
@@ -1423,6 +1431,7 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   cursor: pointer;
   -webkit-user-select: none;
   -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
 }
 .nav-menus-php #cboxContent .menu_icon .icon_selector input.radio:checked ~ label {
@@ -1598,6 +1607,10 @@ body.toplevel_page_maxmegamenu .mega-tooltip[data-tooltip-disabled]:hover:after,
   padding: 1px 5px;
   border-radius: 3px;
   opacity: 0;
+  -webkit-transition: all 0.3s ease;
+  -moz-transition: all 0.3s ease;
+  -o-transition: all 0.3s ease;
+  -ms-transition: all 0.3s ease;
   transition: all 0.3s ease;
   z-index: 1;
   position: relative;
@@ -3082,9 +3095,11 @@ body.toplevel_page_maxmegamenu .mega-delete {
 
 @keyframes "rotation" {
   0% {
+    -webkit-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   100% {
+    -webkit-transform: rotate(359deg);
     transform: rotate(359deg);
   }
 }
@@ -3092,4 +3107,6 @@ body.toplevel_page_maxmegamenu .mega-delete {
   0% {
     background-position: 200px 0;
   }
-}/*# sourceMappingURL=admin.css.map */
+}
+
+/*# sourceMappingURL=admin.css.map */

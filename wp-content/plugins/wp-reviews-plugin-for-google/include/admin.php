@@ -18,6 +18,7 @@ exit;
 }
 if (isset($_GET['notification'])) {
 if (isset($_GET['action'])) {
+check_admin_referer('ti-notification');
 $type = sanitize_text_field(wp_unslash($_GET['notification']));
 $action = sanitize_text_field(wp_unslash($_GET['action']));
 
@@ -110,7 +111,7 @@ $selectedTab = $tabs[0]['slug'];
 <?php if (isset($assetCheckJs) && isset($assetCheckCssFile)): ?>
 <div id="ti-assets-error" class="notice notice-warning" style="display: none; margin-left: 0; margin-right: 0; padding-bottom: 9px">
 <p>
-<?php echo wp_kses_post(__('For some reason, the <strong>CSS</strong> file required to run the plugin was not loaded.<br />One of your plugins is probably causing the problem.', 'trustindex-plugin')); ?>
+<?php echo wp_kses_post(__('For some reason, the <strong>CSS</strong> file required to run the plugin was not loaded.<br />One of your plugins is probably causing the problem.', 'wp-reviews-plugin-for-google')); ?>
 </p>
 </div>
 <?php
@@ -207,7 +208,7 @@ href="<?php echo esc_url(admin_url('admin.php?page='. esc_attr(sanitize_text_fie
 >
 <?php echo esc_html($tab['name']); ?>
 <?php if (isset($newBadgeTabs) && in_array($tab['slug'], $newBadgeTabs)): ?>
-<span class="ti-new-badge"><?php echo esc_html(__('new', 'trustindex-plugin')); ?></span>
+<span class="ti-new-badge"><?php echo esc_html(__('new', 'wp-reviews-plugin-for-google')); ?></span>
 <?php endif; ?>
 </a>
 <?php endforeach; ?>
@@ -218,21 +219,21 @@ href="<?php echo esc_url(admin_url('admin.php?page='. esc_attr(sanitize_text_fie
 <?php if ($httpBlocked): ?>
 <div class="ti-box ti-notice-error ti-mb-1">
 <p>
-<?php echo esc_html(__('Your site cannot download our widget templates, because of your server settings not allowing that:', 'trustindex-plugin')); ?><br /><a href="https://wordpress.org/support/article/editing-wp-config-php/#block-external-url-requests" target="_blank">https://wordpress.org/support/article/editing-wp-config-php/#block-external-url-requests</a><br /><br />
-<strong><?php echo esc_html(__('Solution', 'trustindex-plugin')); ?></strong><br />
-<?php echo wp_kses_post(__('a) You should define <strong>WP_HTTP_BLOCK_EXTERNAL</strong> as false', 'trustindex-plugin')); ?><br />
-<?php echo wp_kses_post(__("b) or you should add Trustindex as an <strong>WP_ACCESSIBLE_HOSTS</strong>: \"*.trustindex.io\"", 'trustindex-plugin')); ?><br />
+<?php echo esc_html(__('Your site cannot download our widget templates, because of your server settings not allowing that:', 'wp-reviews-plugin-for-google')); ?><br /><a href="https://wordpress.org/support/article/editing-wp-config-php/#block-external-url-requests" target="_blank">https://wordpress.org/support/article/editing-wp-config-php/#block-external-url-requests</a><br /><br />
+<strong><?php echo esc_html(__('Solution', 'wp-reviews-plugin-for-google')); ?></strong><br />
+<?php echo wp_kses_post(__('a) You should define <strong>WP_HTTP_BLOCK_EXTERNAL</strong> as false', 'wp-reviews-plugin-for-google')); ?><br />
+<?php echo wp_kses_post(__("b) or you should add Trustindex as an <strong>WP_ACCESSIBLE_HOSTS</strong>: \"*.trustindex.io\"", 'wp-reviews-plugin-for-google')); ?><br />
 </p>
 </div>
 <?php endif; ?>
 <?php if ($proxyCheck !== TRUE): ?>
 <div class="ti-box ti-notice-error ti-mb-1">
 <p>
-<?php echo esc_html(__('It seems you are using a proxy for HTTP requests but after a test request it returned a following error:', 'trustindex-plugin')); ?><br />
+<?php echo esc_html(__('It seems you are using a proxy for HTTP requests but after a test request it returned a following error:', 'wp-reviews-plugin-for-google')); ?><br />
 <strong><?php echo wp_kses_post($proxyCheck); ?></strong><br /><br />
-<?php echo esc_html(__('Therefore, our plugin might not work properly. Please, contact your hosting support, they can resolve this easily.', 'trustindex-plugin')); ?>
+<?php echo esc_html(__('Therefore, our plugin might not work properly. Please, contact your hosting support, they can resolve this easily.', 'wp-reviews-plugin-for-google')); ?>
 </p>
-<a href="<?php echo esc_url(wp_nonce_url('?page='. esc_attr(sanitize_text_field(wp_unslash($_GET['page']))) .'&tab='. esc_attr(sanitize_text_field(wp_unslash($_GET['tab']))) .'&test_proxy', 'ti-test-proxy')); ?>" class="ti-btn ti-btn-loading-on-click"><?php echo esc_html(__('Test again', 'trustindex-plugin')); ?></a>
+<a href="<?php echo esc_url(wp_nonce_url('?page='. esc_attr(sanitize_text_field(wp_unslash($_GET['page']))) .'&tab='. esc_attr(sanitize_text_field(wp_unslash($_GET['tab']))) .'&test_proxy', 'ti-test-proxy')); ?>" class="ti-btn ti-btn-loading-on-click"><?php echo esc_html(__('Test again', 'wp-reviews-plugin-for-google')); ?></a>
 </div>
 <?php endif; ?>
 <?php if (!isset($noContainerElementTabs) || !in_array($selectedTab, $noContainerElementTabs)): ?>

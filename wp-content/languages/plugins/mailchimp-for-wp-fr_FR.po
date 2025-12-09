@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the Plugins - MC4WP: Mailchimp for WordPress - Stable (latest release) package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2025-10-21 08:00:41+0000\n"
+"PO-Revision-Date: 2025-12-01 08:18:03+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -309,11 +309,11 @@ msgstr "Choisissez un champ à ajouter au formulaire"
 msgid "Thank you, your records have been updated!"
 msgstr "Merci, vos enregistrements ont été mis à jour !"
 
-#: includes/views/other-settings.php:65
+#: includes/views/other-settings.php:76
 msgid "Please ensure %1$s has the proper <a href=\"%2$s\">file permissions</a>."
 msgstr "Merci de vérifier que %s possèdent les bons <a href=\"%s\">droits de fichier</a>."
 
-#: includes/views/other-settings.php:64
+#: includes/views/other-settings.php:75
 msgid "Log file is not writable."
 msgstr "Le fichier de traces n'est pas accessible en écriture."
 
@@ -357,7 +357,7 @@ msgstr "Propriété de la page ou de l’article actuel"
 msgid "Select the form to show"
 msgstr "Choisissez le formulaire à afficher"
 
-#: includes/views/other-settings.php:104
+#: includes/views/other-settings.php:115
 msgid "Right now, the plugin is configured to only log errors and warnings."
 msgstr "Actuellement, cette extension est configurée pour ne tracer que les erreurs et les avertissements."
 
@@ -369,19 +369,19 @@ msgstr "Libellé utilisé pour remplir ce champ."
 msgid "Text to show when field has no value."
 msgstr "Texte à afficher lorsque le champ n'est pas renseigné."
 
-#: includes/views/other-settings.php:96
+#: includes/views/other-settings.php:107
 msgid "Empty Log"
 msgstr "Vider les traces"
 
-#: includes/views/other-settings.php:86
+#: includes/views/other-settings.php:97
 msgid "Nothing here. Which means there are no errors!"
 msgstr "Rien ici. Ce qui signifie qu'il n'y a pas d'erreurs!"
 
-#: includes/views/other-settings.php:59
+#: includes/views/other-settings.php:70
 msgid "Filter.."
 msgstr "Filtrer.."
 
-#: includes/views/other-settings.php:59
+#: includes/views/other-settings.php:70
 msgid "Debug Log"
 msgstr "Journal de débogage"
 

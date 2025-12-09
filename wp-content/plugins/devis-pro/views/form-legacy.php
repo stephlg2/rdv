@@ -178,99 +178,154 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
 
 <script>
 (function() {
-    var form = document.getElementById('<?php echo esc_js($form_unique_id); ?>');
-    if (!form) return;
-    
-    var formWrapper = form.closest('.devis-form-wrapper');
-    var submitBtn = form.querySelector('input[type="submit"]');
-    var originalBtnValue = submitBtn ? submitBtn.value : '';
-    
-    // Validation
-    function validateForm() {
-        var isValid = true;
-        form.querySelectorAll('[required]').forEach(function(field) {
-            var errorDiv = field.parentNode.querySelector('.field-error');
-            var value = field.value.trim();
-            if (value === '') {
-                isValid = false;
-                field.classList.add('invalid-field');
-                if (errorDiv) errorDiv.classList.add('visible');
-            } else {
-                field.classList.remove('invalid-field');
-                if (errorDiv) errorDiv.classList.remove('visible');
-            }
-        });
-        if (!isValid) {
-            var firstError = form.querySelector('.invalid-field');
-            if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Fonction d'initialisation du formulaire
+    function initForm(form) {
+        // Éviter la double initialisation
+        if (form.dataset.initialized) {
+            console.log('Formulaire déjà initialisé');
+            return;
         }
-        return isValid;
-    }
-    
-    // Soumission AJAX
-    function submitFormAjax() {
-        if (!validateForm()) return;
+        form.dataset.initialized = 'true';
         
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.value = 'Envoi en cours...';
-            submitBtn.style.opacity = '0.7';
-        }
+        console.log('Initialisation du formulaire:', form.id);
         
-        var formData = new FormData(form);
-        formData.append('action', 'devis_pro_submit_form');
+        var formWrapper = form.closest('.devis-form-wrapper');
+        var submitBtn = form.querySelector('input[type="submit"]');
+        var originalBtnValue = submitBtn ? submitBtn.value : '';
         
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-            method: 'POST',
-            body: formData
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            if (data.success) {
-                // Remplacer par le message de succès
-                if (formWrapper) {
-                    formWrapper.innerHTML = data.data.html;
+        // Validation
+        function validateForm() {
+            var isValid = true;
+            form.querySelectorAll('[required]').forEach(function(field) {
+                var errorDiv = field.parentNode.querySelector('.field-error');
+                var value = field.value.trim();
+                if (value === '') {
+                    isValid = false;
+                    field.classList.add('invalid-field');
+                    if (errorDiv) errorDiv.classList.add('visible');
                 } else {
-                    form.innerHTML = data.data.html;
+                    field.classList.remove('invalid-field');
+                    if (errorDiv) errorDiv.classList.remove('visible');
                 }
-            } else {
-                alert(data.data || 'Une erreur est survenue');
+            });
+            if (!isValid) {
+                var firstError = form.querySelector('.invalid-field');
+                if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return isValid;
+        }
+        
+        // Soumission AJAX
+        function submitFormAjax() {
+            if (!validateForm()) return;
+            
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.value = 'Envoi en cours...';
+                submitBtn.style.opacity = '0.7';
+            }
+            
+            var formData = new FormData(form);
+            formData.append('action', 'devis_pro_submit_form');
+            
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    // Remplacer par le message de succès
+                    if (formWrapper) {
+                        formWrapper.innerHTML = data.data.html;
+                    } else {
+                        form.innerHTML = data.data.html;
+                    }
+                } else {
+                    alert(data.data || 'Une erreur est survenue');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.value = originalBtnValue;
+                        submitBtn.style.opacity = '1';
+                    }
+                }
+            })
+            .catch(function(error) {
+                console.error('Erreur:', error);
+                alert('Erreur de connexion. Veuillez réessayer.');
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.value = originalBtnValue;
                     submitBtn.style.opacity = '1';
                 }
-            }
-        })
-        .catch(function(error) {
-            console.error('Erreur:', error);
-            alert('Erreur de connexion. Veuillez réessayer.');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.value = originalBtnValue;
-                submitBtn.style.opacity = '1';
-            }
+            });
+        }
+        
+        // Click sur le bouton submit
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                submitFormAjax();
+            });
+        }
+        
+        // Reset erreurs sur saisie
+        form.querySelectorAll('[required]').forEach(function(field) {
+            field.addEventListener('input', function() {
+                var errorDiv = field.parentNode.querySelector('.field-error');
+                if (field.value.trim() !== '') {
+                    field.classList.remove('invalid-field');
+                    if (errorDiv) errorDiv.classList.remove('visible');
+                }
+            });
         });
     }
     
-    // Click sur le bouton submit
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            submitFormAjax();
-        });
+    // Initialiser le formulaire immédiatement s'il existe
+    var form = document.getElementById('<?php echo esc_js($form_unique_id); ?>');
+    if (form) {
+        initForm(form);
     }
     
-    // Reset erreurs sur saisie
-    form.querySelectorAll('[required]').forEach(function(field) {
-        field.addEventListener('input', function() {
-            var errorDiv = field.parentNode.querySelector('.field-error');
-            if (field.value.trim() !== '') {
-                field.classList.remove('invalid-field');
-                if (errorDiv) errorDiv.classList.remove('visible');
-            }
+    // Observer les changements du DOM pour les formulaires chargés dynamiquement (modals Tripzzy)
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    // Chercher le formulaire dans les nœuds ajoutés
+                    var dynamicForm = node.id === '<?php echo esc_js($form_unique_id); ?>' 
+                        ? node 
+                        : node.querySelector('#<?php echo esc_js($form_unique_id); ?>');
+                    
+                    if (dynamicForm && !dynamicForm.dataset.initialized) {
+                        console.log('Formulaire détecté dynamiquement');
+                        setTimeout(function() {
+                            initForm(dynamicForm);
+                        }, 100);
+                    }
+                }
+            });
         });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // Listener pour les boutons "Demander un devis" de Tripzzy
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.tripzzy-enquiry-button')) {
+            console.log('Bouton Tripzzy cliqué, attente du formulaire...');
+            setTimeout(function() {
+                var modalForm = document.getElementById('<?php echo esc_js($form_unique_id); ?>');
+                if (modalForm && !modalForm.dataset.initialized) {
+                    console.log('Réinitialisation du formulaire dans la modal');
+                    initForm(modalForm);
+                }
+            }, 500);
+        }
     });
 })();
 </script>

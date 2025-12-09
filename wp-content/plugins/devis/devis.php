@@ -381,7 +381,6 @@ add_action('admin_menu', 'devis_setup_menu');
 
 function devis_setup_menu(){
     add_menu_page( 'Gestion des demandes de devis', 'Gestion des devis', 'manage_options', 'devis', 'devis_init' );
-    add_submenu_page( 'devis', 'Exporter les devis', 'Exporter (CSV)', 'manage_options', 'devis-export', 'devis_export' );
     add_submenu_page( 'options.php','Détail de la demande', "Voir la demande",'manage_options', 'devis-detail', 'devis_detail' );
     add_submenu_page( 'options.php','Supprimer la demande', "Supprimer la demande",'manage_options', 'devis-submit', 'devis_submit' );
     add_submenu_page( 'options.php','Supprimer la demande', "Supprimer la demande",'manage_options', 'devis-delete', 'devis_delete' );
@@ -462,117 +461,8 @@ function devis_delete(){
 
     wp_redirect( "?page=devis" );
     exit;
-}
 
-function devis_export(){
-    global $wpdb;
-    
-    // Si le formulaire est soumis, générer le CSV
-    if (isset($_POST['export_devis'])) {
-        $table_name = $wpdb->prefix . 'devis';
-        $devis_list = $wpdb->get_results("SELECT * FROM $table_name ORDER BY demande DESC", ARRAY_A);
-        
-        if (empty($devis_list)) {
-            echo '<div class="notice notice-error"><p>Aucun devis à exporter.</p></div>';
-            return;
-        }
-        
-        // Préparer le nom du fichier
-        $filename = 'devis_export_' . date('Y-m-d_H-i-s') . '.csv';
-        
-        // Headers pour forcer le téléchargement
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=' . $filename);
-        header('Pragma: no-cache');
-        header('Expires: 0');
-        
-        // Ouvrir la sortie
-        $output = fopen('php://output', 'w');
-        
-        // BOM UTF-8 pour Excel
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-        
-        // En-têtes CSV
-        $headers = array(
-            'ID', 'Destination', 'Voyage', 'Départ', 'Retour', 'Durée', 'Budget',
-            'Adulte', 'Enfant', 'Bébé', 'Vol', 'Message', 'Civilité', 'Nom', 
-            'Prénom', 'Email', 'Code Postal', 'Ville', 'Téléphone', 'Status', 
-            'Montant', 'Date demande', 'Langue', 'Token', 'MAC'
-        );
-        fputcsv($output, $headers, ';');
-        
-        // Données
-        foreach ($devis_list as $devis) {
-            $row = array(
-                $devis['id'],
-                $devis['destination'],
-                $devis['voyage'],
-                $devis['depart'],
-                $devis['retour'],
-                $devis['duree'],
-                $devis['budget'],
-                $devis['adulte'],
-                $devis['enfant'],
-                $devis['bebe'],
-                $devis['vol'],
-                $devis['message'],
-                $devis['civ'],
-                $devis['nom'],
-                $devis['prenom'],
-                $devis['email'],
-                $devis['cp'],
-                $devis['ville'],
-                $devis['tel'],
-                $devis['status'],
-                $devis['montant'],
-                $devis['demande'],
-                $devis['langue'],
-                $devis['token'],
-                $devis['mac']
-            );
-            fputcsv($output, $row, ';');
-        }
-        
-        fclose($output);
-        exit;
-    }
-    
-    // Afficher la page d'export
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'devis';
-    $count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
-    ?>
-    <div class="wrap">
-        <h1>Exporter les devis</h1>
-        <div class="card" style="max-width: 800px;">
-            <h2>Export CSV des devis</h2>
-            <p>Cette page permet d'exporter tous vos devis au format CSV pour les migrer vers "Devis Pro".</p>
-            <p><strong>Nombre de devis à exporter :</strong> <?php echo $count; ?></p>
-            
-            <form method="post">
-                <p>
-                    <button type="submit" name="export_devis" class="button button-primary button-large">
-                        <span class="dashicons dashicons-download" style="vertical-align: middle;"></span>
-                        Télécharger le CSV
-                    </button>
-                </p>
-            </form>
-            
-            <hr>
-            
-            <h3>Instructions</h3>
-            <ol>
-                <li>Cliquez sur "Télécharger le CSV" pour exporter tous vos devis</li>
-                <li>Le fichier CSV sera automatiquement téléchargé</li>
-                <li>Conservez ce fichier pour l'import dans "Devis Pro"</li>
-            </ol>
-            
-            <div class="notice notice-info inline">
-                <p><strong>Note :</strong> L'export n'affecte pas vos données. Tous les devis restent dans la base de données.</p>
-            </div>
-        </div>
-    </div>
-    <?php
+
 }
 
 /* Front */

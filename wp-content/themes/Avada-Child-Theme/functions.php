@@ -1,10 +1,65 @@
 <?php
 
+// Activer les shortcodes dans les menus de façon sécurisée
+add_filter('wp_nav_menu_items', function($items) {
+    // Éviter d'appliquer do_shortcode sur les data-attributes et href
+    // On applique seulement sur le texte visible
+    return preg_replace_callback('/>(.*?)</', function($matches) {
+        return '>' . do_shortcode($matches[1]) . '<';
+    }, $items);
+}, 99);
+
 // Enqueue styles du thème enfant
 function theme_enqueue_styles() {
     wp_enqueue_style( 'child-style', get_stylesheet_directory_uri() . '/style.css', [] );
 }
 add_action( 'wp_enqueue_scripts', 'theme_enqueue_styles', 20 );
+
+// Fix pour sprintf manquant dans Tripzzy admin
+function fix_tripzzy_sprintf_issue() {
+    if ( is_admin() && function_exists('get_current_screen') ) {
+        $screen = get_current_screen();
+        if ( $screen && $screen->post_type === 'tripzzy' ) {
+            // S'assurer que wp-i18n est chargé avec sprintf
+            wp_enqueue_script('wp-i18n');
+            wp_add_inline_script('wp-i18n', '
+                if (typeof window.wp === "undefined") { window.wp = {}; }
+                if (typeof window.wp.i18n === "undefined") { window.wp.i18n = {}; }
+                if (typeof window.wp.i18n.sprintf === "undefined") {
+                    // Fallback sprintf simple
+                    window.wp.i18n.sprintf = function(str) {
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        return str.replace(/%[sd]/g, function() {
+                            return args.shift();
+                        });
+                    };
+                }
+                // Exposer sprintf globalement pour les scripts qui en ont besoin
+                if (typeof window.sprintf === "undefined") {
+                    window.sprintf = window.wp.i18n.sprintf;
+                }
+            ', 'before');
+        }
+    }
+}
+add_action('admin_enqueue_scripts', 'fix_tripzzy_sprintf_issue', 5);
+
+// Forcer l'éditeur Gutenberg pour les voyages Tripzzy
+add_filter( 'get_edit_post_link', function( $link, $post_id, $context ) {
+    if ( ! $post_id ) {
+        return $link;
+    }
+    
+    $post_type = get_post_type( $post_id );
+    if ( 'tripzzy' === $post_type ) {
+        // Ajouter le paramètre gutenberg-editor si ce n'est pas déjà présent
+        if ( strpos( $link, 'gutenberg-editor' ) === false ) {
+            $link = add_query_arg( 'gutenberg-editor', '', $link );
+        }
+    }
+    
+    return $link;
+}, 10, 3 );
 
 // Chargement des traductions du thème enfant
 function avada_lang_setup() {
@@ -55,6 +110,20 @@ function rdvasie_add_header_classique( $classes ) {
         $classes[] = sanitize_html_class( $page_class );
     }
 
+    return $classes;
+}
+
+// Forcer page_classique pour les pages de recherche, blog et archives
+add_filter( 'body_class', 'rdvasie_add_page_classique_to_body' );
+function rdvasie_add_page_classique_to_body( $classes ) {
+    // Ajouter page_classique pour les pages de recherche, blog et archives
+    if ( is_search() || is_home() || is_archive() ) {
+        $classes[] = 'page_classique';
+        
+        // Supprimer header_classique si présent
+        $classes = array_diff( $classes, array( 'header_classique' ) );
+    }
+    
     return $classes;
 }
 
@@ -115,3 +184,9 @@ add_filter( 'all_plugins', function( $plugins ) {
     }
     return $plugins;
 });
+
+// Forcer le format français pour l'affichage des montants (€ après le chiffre)
+add_filter('tripzzy_filter_settings', function($settings) {
+    $settings['amount_display_format'] = '%DISPLAY_AMOUNT% %CURRENCY_SYMBOL%';
+    return $settings;
+}, 99);

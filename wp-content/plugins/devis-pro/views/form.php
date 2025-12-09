@@ -361,131 +361,186 @@ $form_unique_id = 'devis-pro-form-' . uniqid();
 
 <script>
 (function() {
-    var form = document.getElementById('<?php echo esc_js($form_unique_id); ?>');
-    if (!form) return;
-    
-    var formContainer = form.closest('.devis-pro-form');
-    var submitBtn = form.querySelector('.submit-btn');
-    var originalBtnText = submitBtn ? submitBtn.innerHTML : '';
-    
-    // Validation du formulaire
-    function validateForm() {
-        var isValid = true;
-        var firstError = null;
-
-        form.querySelectorAll('[required]').forEach(function(field) {
-            var error = field.parentNode.querySelector('.field-error');
-            var value = field.value.trim();
-
-            if (!value || (field.tagName === 'SELECT' && !value)) {
-                isValid = false;
-                field.classList.add('invalid');
-                if (error) error.classList.add('visible');
-                if (!firstError) firstError = field;
-            } else {
-                field.classList.remove('invalid');
-                if (error) error.classList.remove('visible');
-            }
-        });
-
-        // Validation email
-        var emailField = form.querySelector('input[type="email"]');
-        if (emailField && emailField.value) {
-            var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(emailField.value)) {
-                isValid = false;
-                emailField.classList.add('invalid');
-                var error = emailField.parentNode.querySelector('.field-error');
-                if (error) error.classList.add('visible');
-                if (!firstError) firstError = emailField;
-            }
+    // Fonction d'initialisation du formulaire
+    function initForm(form) {
+        // Éviter la double initialisation
+        if (form.dataset.initialized) {
+            console.log('Formulaire déjà initialisé');
+            return;
         }
+        form.dataset.initialized = 'true';
+        
+        console.log('Initialisation du formulaire:', form.id);
+        
+        var formContainer = form.closest('.devis-pro-form');
+        var submitBtn = form.querySelector('.submit-btn');
+        var originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+        
+        // Validation du formulaire
+        function validateForm() {
+            var isValid = true;
+            var firstError = null;
 
-        if (!isValid && firstError) {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            firstError.focus();
-        }
-        
-        return isValid;
-    }
-    
-    // Soumission AJAX
-    function submitFormAjax(recaptchaToken) {
-        if (!validateForm()) return;
-        
-        // Désactiver le bouton
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="32" stroke-linecap="round"/></svg> Envoi en cours...</span>';
-        }
-        
-        var formData = new FormData(form);
-        formData.append('action', 'devis_pro_submit_form');
-        if (recaptchaToken) {
-            formData.append('recaptcha_token', recaptchaToken);
-        }
-        
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-            method: 'POST',
-            body: formData
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            if (data.success) {
-                // Remplacer le formulaire par le message de succès
-                if (formContainer) {
-                    formContainer.innerHTML = data.data.html;
+            form.querySelectorAll('[required]').forEach(function(field) {
+                var error = field.parentNode.querySelector('.field-error');
+                var value = field.value.trim();
+
+                if (!value || (field.tagName === 'SELECT' && !value)) {
+                    isValid = false;
+                    field.classList.add('invalid');
+                    if (error) error.classList.add('visible');
+                    if (!firstError) firstError = field;
                 } else {
-                    form.innerHTML = data.data.html;
+                    field.classList.remove('invalid');
+                    if (error) error.classList.remove('visible');
                 }
-            } else {
-                // Afficher l'erreur
-                alert(data.data || 'Une erreur est survenue');
+            });
+
+            // Validation email
+            var emailField = form.querySelector('input[type="email"]');
+            if (emailField && emailField.value) {
+                var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailPattern.test(emailField.value)) {
+                    isValid = false;
+                    emailField.classList.add('invalid');
+                    var error = emailField.parentNode.querySelector('.field-error');
+                    if (error) error.classList.add('visible');
+                    if (!firstError) firstError = emailField;
+                }
+            }
+
+            if (!isValid && firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+            
+            return isValid;
+        }
+        
+        // Soumission AJAX
+        function submitFormAjax(recaptchaToken) {
+            if (!validateForm()) return;
+            
+            // Désactiver le bouton
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="32" stroke-linecap="round"/></svg> Envoi en cours...</span>';
+            }
+            
+            var formData = new FormData(form);
+            formData.append('action', 'devis_pro_submit_form');
+            if (recaptchaToken) {
+                formData.append('recaptcha_token', recaptchaToken);
+            }
+            
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    // Remplacer le formulaire par le message de succès
+                    if (formContainer) {
+                        formContainer.innerHTML = data.data.html;
+                    } else {
+                        form.innerHTML = data.data.html;
+                    }
+                } else {
+                    // Afficher l'erreur
+                    alert(data.data || 'Une erreur est survenue');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    }
+                }
+            })
+            .catch(function(error) {
+                console.error('Erreur:', error);
+                alert('Erreur de connexion. Veuillez réessayer.');
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                 }
-            }
-        })
-        .catch(function(error) {
-            console.error('Erreur:', error);
-            alert('Erreur de connexion. Veuillez réessayer.');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
-            }
+            });
+        }
+        
+        // Gérer la soumission via le bouton
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                <?php if ($has_recaptcha) : ?>
+                // Avec reCAPTCHA
+                grecaptcha.ready(function() {
+                    grecaptcha.execute('<?php echo esc_js($recaptcha_site_key); ?>', {action: 'devis_submit'}).then(function(token) {
+                        submitFormAjax(token);
+                    });
+                });
+                <?php else : ?>
+                // Sans reCAPTCHA
+                submitFormAjax(null);
+                <?php endif; ?>
+            });
+        }
+
+        // Reset errors on input
+        form.querySelectorAll('[required]').forEach(function(field) {
+            field.addEventListener('input', function() {
+                var error = this.parentNode.querySelector('.field-error');
+                if (this.value.trim()) {
+                    this.classList.remove('invalid');
+                    if (error) error.classList.remove('visible');
+                }
+            });
         });
     }
     
-    // Gérer la soumission via le bouton
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            <?php if ($has_recaptcha) : ?>
-            // Avec reCAPTCHA
-            grecaptcha.ready(function() {
-                grecaptcha.execute('<?php echo esc_js($recaptcha_site_key); ?>', {action: 'devis_submit'}).then(function(token) {
-                    submitFormAjax(token);
-                });
-            });
-            <?php else : ?>
-            // Sans reCAPTCHA
-            submitFormAjax(null);
-            <?php endif; ?>
-        });
+    // Initialiser le formulaire immédiatement s'il existe
+    var form = document.getElementById('<?php echo esc_js($form_unique_id); ?>');
+    if (form) {
+        initForm(form);
     }
-
-    // Reset errors on input
-    form.querySelectorAll('[required]').forEach(function(field) {
-        field.addEventListener('input', function() {
-            var error = this.parentNode.querySelector('.field-error');
-            if (this.value.trim()) {
-                this.classList.remove('invalid');
-                if (error) error.classList.remove('visible');
-            }
+    
+    // Observer les changements du DOM pour les formulaires chargés dynamiquement (modals Tripzzy)
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    // Chercher le formulaire dans les nœuds ajoutés
+                    var dynamicForm = node.id === '<?php echo esc_js($form_unique_id); ?>' 
+                        ? node 
+                        : node.querySelector('#<?php echo esc_js($form_unique_id); ?>');
+                    
+                    if (dynamicForm && !dynamicForm.dataset.initialized) {
+                        console.log('Formulaire détecté dynamiquement');
+                        setTimeout(function() {
+                            initForm(dynamicForm);
+                        }, 100);
+                    }
+                }
+            });
         });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // Listener pour les boutons "Demander un devis" de Tripzzy
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.tripzzy-enquiry-button')) {
+            console.log('Bouton Tripzzy cliqué, attente du formulaire...');
+            setTimeout(function() {
+                var modalForm = document.getElementById('<?php echo esc_js($form_unique_id); ?>');
+                if (modalForm && !modalForm.dataset.initialized) {
+                    console.log('Réinitialisation du formulaire dans la modal');
+                    initForm(modalForm);
+                }
+            }, 500);
+        }
     });
 })();
 </script>

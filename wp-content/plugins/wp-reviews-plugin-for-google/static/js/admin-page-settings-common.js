@@ -68,6 +68,13 @@ jQuery(document).ready(function() {
 		return false;
 	});
 
+	let htmlentities = function(str) {
+		let div = document.createElement('div');
+		div.textContent = str;
+
+		return div.innerHTML;
+	}
+
 	// background post save - style and set change
 	let backgroundPostSave = function(event) {
 		let form = jQuery(event.target).closest('form');
@@ -82,6 +89,12 @@ jQuery(document).ready(function() {
 					name: checkbox.attr('name'),
 					value: 0
 				});
+			}
+		});
+
+		data.forEach(item => {
+			if (['fomo-title', 'fomo-text'].indexOf(item.name) !== -1) {
+				item.value = htmlentities(item.value);
 			}
 		});
 

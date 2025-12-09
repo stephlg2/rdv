@@ -393,7 +393,7 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\Trip' ) ) {
 		 * @since 1.0.4 Added itineraries.
 		 */
 		private static function required_wp_keses_metas() {
-			$list = array( 'overview', 'map_iframe', 'map_image', 'itineraries' );
+		$list = array( 'overview', 'map_iframe', 'map_image', 'itineraries', 'faqs' );
 			return $list;
 		}
 

@@ -99,6 +99,16 @@ $current_status = $settings['statuses'][$devis->status] ?? array('label' => 'Inc
                             <label><?php _e('Adresse', 'devis-pro'); ?></label>
                             <p><?php echo esc_html($devis->cp . ' ' . $devis->ville); ?></p>
                         </div>
+                        <div class="info-group">
+                            <label><?php _e('Newsletter', 'devis-pro'); ?></label>
+                            <p>
+                                <?php if (!empty($devis->newsletter)): ?>
+                                    <span style="color: #28a745;">✅ <?php _e('Abonné', 'devis-pro'); ?></span>
+                                <?php else: ?>
+                                    <span style="color: #6c757d;">❌ <?php _e('Non abonné', 'devis-pro'); ?></span>
+                                <?php endif; ?>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

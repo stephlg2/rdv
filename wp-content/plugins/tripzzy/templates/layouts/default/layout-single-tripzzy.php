@@ -174,7 +174,7 @@ $show_page_title = apply_filters( 'tripzzy_filter_display_single_page_title', tr
 
 					
 		</div>
-		<div class="tz-col tz-cols-4-lg dispo-bloc">
+		<div class="tz-col tz-cols-4-lg">
 			<?php
 			/**
 			 * Template for check availabilty section.

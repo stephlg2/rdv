@@ -100,15 +100,14 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFaqs' ) ) {
 			ob_start();
 			if ( is_array( $faqs ) && count( $faqs ) > 0 ) : ?>
 				<div class="tripzzy-section"  id="tripzzy-faqs-section">
-					<h3 class="tripzzy-section-title"><span><?php echo esc_html( $section_title ); ?></span></h3>
-					<a href="#" class="tripzzy-accordion-expand-close" data-expand="<?php esc_html_e( 'Expand all', 'tripzzy' ); ?>" data-close="<?php esc_html_e( 'Close all', 'tripzzy' ); ?>" ><?php esc_html_e( 'Expand all', 'tripzzy' ); ?></a>
+					<h3 class="tripzzy-section-title"><span><?php echo esc_html( $section_title ); ?></span> <a href="#" class="tripzzy-accordion-expand-close" data-expand="<?php esc_html_e( 'Expand all', 'tripzzy' ); ?>" data-close="<?php esc_html_e( 'Close all', 'tripzzy' ); ?>" ><?php esc_html_e( 'Expand all', 'tripzzy' ); ?></a></h3>
 					<div class="tripzzy-section-inner tripzzy-faqs-wrapper"  id="tripzzy-faqs" >
 						<ul class="tripzzy-accordion tripzzy-faqs" >
 						<?php foreach ( $faqs as $faq ) : ?>
 							<li>
 								<span class="accordion-title faq-question"><?php echo esc_html( $faq['question'] ); ?></span>
 								<div class="accordion-content faq-answer">
-									<?php echo wp_kses_post( do_shortcode( $faq['answer'] ) ); ?>
+									<?php echo wp_kses_post( do_shortcode( wpautop( $faq['answer'] ) ) ); ?>
 								</div>
 							</li>
 						<?php endforeach; ?>

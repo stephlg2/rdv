@@ -27,6 +27,9 @@ class Devis_Pro_DB {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
 
+        // Vérifier et ajouter la colonne newsletter si nécessaire
+        $this->maybe_add_newsletter_column();
+
         // Table des devis
         $sql_devis = "CREATE TABLE {$this->table_devis} (
             id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -56,6 +59,7 @@ class Devis_Pro_DB {
             mac varchar(300) NOT NULL DEFAULT '',
             reminders_count int(11) NOT NULL DEFAULT 0,
             last_reminder datetime DEFAULT NULL,
+            newsletter tinyint(1) NOT NULL DEFAULT 0,
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -92,6 +96,40 @@ class Devis_Pro_DB {
         dbDelta($sql_devis);
         dbDelta($sql_notes);
         dbDelta($sql_history);
+        
+        // Ajouter la colonne newsletter si elle n'existe pas
+        $this->add_newsletter_column();
+    }
+    
+    /**
+     * Ajouter la colonne newsletter à la table existante
+     */
+    public function add_newsletter_column() {
+        global $wpdb;
+        
+        // Vérifier si déjà fait (pour éviter de refaire la vérification à chaque chargement)
+        if (get_option('devis_pro_newsletter_column_added')) {
+            return;
+        }
+        
+        $column_exists = $wpdb->get_results(
+            "SHOW COLUMNS FROM {$this->table_devis} LIKE 'newsletter'"
+        );
+        
+        if (empty($column_exists)) {
+            $result = $wpdb->query(
+                "ALTER TABLE {$this->table_devis} 
+                ADD COLUMN newsletter tinyint(1) NOT NULL DEFAULT 0 
+                AFTER last_reminder"
+            );
+            
+            if ($result !== false) {
+                update_option('devis_pro_newsletter_column_added', true);
+            }
+        } else {
+            // La colonne existe déjà
+            update_option('devis_pro_newsletter_column_added', true);
+        }
     }
 
     /**

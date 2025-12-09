@@ -21,8 +21,8 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 .devis-full-form {
     display: block !important;
     width: 100% !important;
-    max-width: 900px !important;
-    margin: 40px auto !important;
+    max-width: 100% !important;
+    margin: 40px 0 !important;
     padding: 0 20px !important;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     float: none !important;
@@ -161,7 +161,6 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 }
 
 .devis-full-form .voyage-search-input {
-    padding-left: 45px !important;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23999' viewBox='0 0 24 24'><path d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/></svg>");
     background-repeat: no-repeat;
     background-position: 14px center;
@@ -187,7 +186,10 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 .devis-full-form .voyage-results.active {
     display: block;
 }
-
+.page-devis .fusion-column-wrapper {
+    display: block !important;
+    margin: 0;
+}
 .devis-full-form .voyage-result-item {
     padding: 12px 16px;
     cursor: pointer;
@@ -568,6 +570,14 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
                     <input type="text" id="ville" name="ville">
                 </div>
             </div>
+            
+            <!-- Checkbox Newsletter -->
+            <div class="newsletter-checkbox-wrapper">
+                <label class="newsletter-checkbox-label">
+                    <input type="checkbox" id="newsletter" name="newsletter" value="1">
+                    <span><?php _e('Je souhaite recevoir la newsletter', 'devis-pro'); ?></span>
+                </label>
+            </div>
         </div>
 
         <div class="form-submit">
@@ -735,22 +745,106 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 <?php if ($has_recaptcha) : ?>
 <!-- reCAPTCHA v3 -->
 <script src="https://www.google.com/recaptcha/api.js?render=<?php echo esc_attr($recaptcha_site_key); ?>"></script>
-<script>
-document.getElementById('<?php echo esc_js($form_id); ?>').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var form = this;
-    
-    grecaptcha.ready(function() {
-        grecaptcha.execute('<?php echo esc_js($recaptcha_site_key); ?>', {action: 'devis_submit'}).then(function(token) {
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'recaptcha_token';
-            input.value = token;
-            form.appendChild(input);
-            form.submit();
-        });
-    });
-});
-</script>
 <?php endif; ?>
+
+<!-- Script pour soumission AJAX et bouton 3 états -->
+<script>
+(function() {
+    var form = document.getElementById('<?php echo esc_js($form_id); ?>');
+    var submitBtn = form.querySelector('.submit-btn');
+    var originalBtnText = submitBtn.textContent;
+    var isSubmitting = false;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (isSubmitting) {
+            return;
+        }
+
+        console.log('Formulaire soumis');
+        isSubmitting = true;
+
+        // État 2: Envoi en cours
+        submitBtn.textContent = 'Envoi en cours...';
+        submitBtn.style.opacity = '0.7';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.disabled = true;
+
+        <?php if ($has_recaptcha) : ?>
+        grecaptcha.ready(function() {
+            grecaptcha.execute('<?php echo esc_js($recaptcha_site_key); ?>', {action: 'devis_submit'}).then(function(token) {
+                submitFormAjax(token);
+            });
+        });
+        <?php else : ?>
+        submitFormAjax('');
+        <?php endif; ?>
+    });
+
+    function submitFormAjax(recaptchaToken) {
+        var formData = new FormData(form);
+        formData.append('action', 'devis_pro_process_front_form');
+        
+        if (recaptchaToken) {
+            formData.append('recaptcha_token', recaptchaToken);
+        }
+
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Réponse serveur:', data);
+            
+            if (data.success) {
+                // État 3: Succès
+                submitBtn.textContent = '✓ DEMANDE ENVOYÉE';
+                submitBtn.style.backgroundColor = '#28a745';
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'default';
+                
+                // Réinitialiser le formulaire après 3 secondes
+                setTimeout(function() {
+                    form.reset();
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.style.backgroundColor = '';
+                    submitBtn.style.opacity = '';
+                    submitBtn.style.cursor = '';
+                    submitBtn.disabled = false;
+                    isSubmitting = false;
+                    
+                    // Réafficher le champ de recherche si un voyage était sélectionné
+                    var selectedContainer = document.getElementById('voyage-selected-wrapper');
+                    var searchInput = document.getElementById('voyage-search');
+                    if (selectedContainer) {
+                        selectedContainer.classList.remove('active');
+                        searchInput.style.display = 'block';
+                        document.getElementById('voyage_id').value = '';
+                    }
+                }, 3000);
+            } else {
+                // Erreur
+                alert(data.data?.message || 'Erreur lors de l\'envoi du formulaire');
+                resetButton();
+            }
+        })
+        .catch(error => {
+            console.error('Erreur AJAX:', error);
+            alert('Erreur lors de l\'envoi du formulaire');
+            resetButton();
+        });
+    }
+
+    function resetButton() {
+        submitBtn.textContent = originalBtnText;
+        submitBtn.style.backgroundColor = '';
+        submitBtn.style.opacity = '';
+        submitBtn.style.cursor = '';
+        submitBtn.disabled = false;
+        isSubmitting = false;
+    }
+})();
+</script>
 

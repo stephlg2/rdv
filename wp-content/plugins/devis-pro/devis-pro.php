@@ -531,7 +531,7 @@ class Devis_Pro {
      * Sanitizer les données du devis
      */
     private function sanitize_devis_data($post) {
-        return array(
+        $data = array(
             'destination' => sanitize_text_field($post['destination'] ?? ''),
             'voyage' => sanitize_text_field($post['voyage'] ?? ''),
             'depart' => sanitize_text_field($post['depart'] ?? ''),
@@ -551,8 +551,11 @@ class Devis_Pro {
             'ville' => sanitize_text_field($post['ville'] ?? ''),
             'tel' => sanitize_text_field($post['tel'] ?? ''),
             'montant' => floatval($post['montant'] ?? 0),
-            'langue' => sanitize_text_field($post['langue'] ?? 'fr')
+            'langue' => sanitize_text_field($post['langue'] ?? 'fr'),
+            'newsletter' => isset($post['newsletter']) && $post['newsletter'] == '1' ? 1 : 0
         );
+        
+        return $data;
     }
 
     /**
@@ -1089,6 +1092,9 @@ class Devis_Pro {
             'mac' => ''
         );
         
+        // Ajouter newsletter 
+        $mapped['newsletter'] = isset($post['newsletter']) && $post['newsletter'] == '1' ? 1 : 0;
+        
         // Validation
         if (empty($mapped['email']) || !is_email($mapped['email'])) {
             return array('success' => false, 'error' => 'Email invalide');
@@ -1174,6 +1180,9 @@ class Devis_Pro {
             'mac' => ''
         );
         
+        // Ajouter newsletter
+        $mapped['newsletter'] = isset($post['newsletter']) && $post['newsletter'] == '1' ? 1 : 0;
+        
         // Validation avec sécurité
         $email = Devis_Pro_Security::validate_email($mapped['email']);
         if ($email === false) {
@@ -1208,11 +1217,11 @@ class Devis_Pro {
                         error_log('[Devis Pro] Erreur envoi email: ' . $e->getMessage());
                     }
                 }
-                
-                // Newsletter Mailchimp
-                if (!empty($post['newsletter'])) {
-                    $this->subscribe_to_mailchimp($mapped['email'], $mapped['prenom'], $mapped['nom']);
-                }
+            }
+            
+            // Inscription newsletter Mailchimp si cochée
+            if (!empty($post['newsletter'])) {
+                $this->subscribe_to_mailchimp($mapped['email'], $mapped['prenom'], $mapped['nom']);
             }
             
             return array('success' => true, 'id' => $id);
@@ -1305,11 +1314,6 @@ class Devis_Pro {
             $devis = $this->db->get_devis($id);
             $email_handler->send_new_request_notification($devis);
             $email_handler->send_confirmation_to_client($devis);
-            
-            // Inscription newsletter Mailchimp si cochée
-            if (!empty($post['newsletter'])) {
-                $this->subscribe_to_mailchimp($data['email'], $data['prenom'], $data['nom']);
-            }
             
             return array('success' => true, 'id' => $id);
         }
@@ -1437,11 +1441,7 @@ class Devis_Pro {
             $email_handler->send_new_request_notification($devis);
             $email_handler->send_confirmation_to_client($devis);
             
-            // Newsletter Mailchimp
-            if (!empty($post['newsletter'])) {
-                $this->subscribe_to_mailchimp($data['email'], $data['prenom'], $data['nom']);
-            }
-            
+            // Newsletter Mailchimp            
             return array('success' => true, 'id' => $id);
         }
         
@@ -1930,13 +1930,12 @@ class Devis_Pro {
     color: #fff !important;
     font-size: 9px !important;
     font-weight: bold !important;
-    border-radius: 50% !important;
+    border-radius: 0 !important;
     margin-left: 6px !important;
     min-width: 18px !important;
-    height: 18px !important;
-    width: 18px !important;
+    height: 16px !important;
+    padding: 0 5px !important;
     line-height: 1 !important;
-    padding: 0 !important;
     box-sizing: border-box !important;
 }
             .devis-pro-badge-inline {
@@ -1947,11 +1946,10 @@ class Devis_Pro {
                 color: #fff !important;
                 font-size: 9px !important;
                 font-weight: bold !important;
-                border-radius: 50% !important;
+               
                 min-width: 16px !important;
-                width: 16px !important;
                 height: 16px !important;
-                padding: 0 !important;
+                padding: 0 8px !important;
                 margin-left: 5px !important;
                 line-height: 1 !important;
                 box-sizing: border-box !important;

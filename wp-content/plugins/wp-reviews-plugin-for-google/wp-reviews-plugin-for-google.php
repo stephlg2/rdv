@@ -9,7 +9,7 @@ Author: Trustindex.io <support@trustindex.io>
 Author URI: https://www.trustindex.io/
 Contributors: trustindex
 License: GPLv2 or later
-Version: 13.2
+Version: 13.2.5
 Requires at least: 6.2
 Requires PHP: 7.0
 Text Domain: wp-reviews-plugin-for-google
@@ -22,7 +22,7 @@ Copyright 2019 Trustindex Kft (email: support@trustindex.io)
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 require_once plugin_dir_path(__FILE__) . 'include' . DIRECTORY_SEPARATOR . 'cache-plugin-filters.php';
 require_once plugin_dir_path(__FILE__) . 'trustindex-plugin.class.php';
-$trustindex_pm_google = new TrustindexPlugin_google("google", __FILE__, "13.2", "Widgets for Google Reviews", "Google");
+$trustindex_pm_google = new TrustindexPlugin_google("google", __FILE__, "13.2.5", "Widgets for Google Reviews", "Google");
 $pluginManager = 'TrustindexPlugin_google';
 $pluginManagerInstance = $trustindex_pm_google;
 add_action('admin_init', function() { ob_start(); });
@@ -30,26 +30,30 @@ register_activation_hook(__FILE__, [ $pluginManagerInstance, 'activate' ]);
 register_deactivation_hook(__FILE__, [ $pluginManagerInstance, 'deactivate' ]);
 add_action('plugins_loaded', [ $pluginManagerInstance, 'load' ]);
 add_action('wp_head', function() use($pluginManagerInstance) {
+$url = isset($_SERVER['REQUEST_URI']) ? sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])) : '';
 echo '<meta name="ti-site-data" content="'.esc_attr(base64_encode(json_encode([
 'r' =>
 '1:'.$pluginManagerInstance->getRegistrationCount(1) .
 '!7:'.$pluginManagerInstance->getRegistrationCount(7) .
 '!30:'.$pluginManagerInstance->getRegistrationCount(30),
-'o' => admin_url('admin-ajax.php').'?'.http_build_query([
+'o' => wp_nonce_url(admin_url('admin-ajax.php').'?'.http_build_query([
 'action' => 'ti_online_users_'.$pluginManagerInstance->getShortName(),
-'p' => esc_html($_SERVER['REQUEST_URI']),
-]),
+'p' => esc_html($url),
+]), 'ti-online-users-'.$pluginManagerInstance->getShortName()),
 ]))).'" />';
 });
 $onlineUsersFn = function() use($pluginManagerInstance) {
-$page = sanitize_text_field($_REQUEST['p']);
-$key = 'ti_uid_' . md5($_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT']);
+check_admin_referer('ti-online-users-'.$pluginManagerInstance->getShortName());
+$page = isset($_REQUEST['p']) ? sanitize_text_field(wp_unslash($_REQUEST['p'])) : '';
+$md5Value = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+$md5Value .= isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+$key = 'ti_uid_' . md5($md5Value);
 $userId = get_transient($key);
 if (!$userId) {
 $userId = uniqid('', true);
 set_transient($key, $userId, 3600);
 }
-echo $pluginManagerInstance->getOnlineUsers($userId, $page);
+echo esc_html($pluginManagerInstance->getOnlineUsers($userId, $page));
 wp_die();
 };
 add_action('wp_ajax_nopriv_ti_online_users_'.$pluginManagerInstance->getShortName(), $onlineUsersFn);
@@ -74,7 +78,7 @@ add_action('widgets_init', [ $pluginManagerInstance, 'init_widget' ]);
 add_action('widgets_init', [ $pluginManagerInstance, 'register_widget' ]);
 }
 add_action('init', function() {
-wp_register_script('trustindex-loader-js', 'https://cdn.trustindex.io/loader.js', [], null, [
+wp_register_script('trustindex-loader-js', 'https://cdn.trustindex.io/loader.js', [], true, [
 'strategy' => 'async',
 'in_footer' => true,
 ]);
@@ -84,9 +88,17 @@ add_action('elementor/controls/controls_registered', function($controlsManager) 
 require_once(__DIR__ . '/include/elementor-widgets.php');
 $controlsManager->register_control('choose', new \Elementor\Control_Choose2());
 });
-add_action('elementor/widgets/widgets_registered', function ($widgetsManager) use ($pluginManagerInstance) {
+add_action('elementor/widgets/register', function ($widgetsManager) use ($pluginManagerInstance) {
+if (method_exists($widgetsManager, 'register')) {
 require_once(__DIR__ . '/include/elementor-widgets.php');
 $widgetsManager->register(new \Elementor\TrustrindexElementorWidget_Google([], [$pluginManagerInstance]));
+}
+});
+add_action('elementor/widgets/widgets_registered', function ($widgetsManager) use ($pluginManagerInstance) {
+if (method_exists($widgetsManager, 'register_widget_type')) {
+require_once(__DIR__ . '/include/elementor-widgets.php');
+$widgetsManager->register_widget_type(new \Elementor\TrustrindexElementorWidget_Google([], [$pluginManagerInstance]));
+}
 });
 add_action('init', [ $pluginManagerInstance, 'register_tinymce_features' ]);
 add_action('wp_ajax_list_trustindex_widgets', [ $pluginManagerInstance, 'list_trustindex_widgets_ajax' ]);
@@ -104,18 +116,21 @@ return;
 }
 ?>
 <div class="notice notice-warning trustindex-notification-row is-dismissible" style="margin: 5px 0 15px">
-<p><strong><?php echo sprintf(__("Download our new <a href='%s' target='_blank'>%s</a> plugin and get features for free!", 'trustindex-plugin'), 'https://wordpress.org/plugins/customer-reviews-collector-for-woocommerce/', 'Customer Reviews Collector for WooCommerce'); ?></strong></p>
+<p><strong><?php
+/* translators: 1: plugin url, 2: plugin name */
+echo wp_kses_post(sprintf(__('Download our new <a href="%1$s" target="_blank">%2$s</a> plugin and get features for free!', 'wp-reviews-plugin-for-google'), 'https://wordpress.org/plugins/customer-reviews-collector-for-woocommerce/', 'Customer Reviews Collector for WooCommerce'));
+?></strong></p>
 <ul style="list-style-type: disc; margin-left: 10px; padding-left: 15px">
-<li><?php echo __('Send unlimited review invitations for free', 'trustindex-plugin'); ?></li>
-<li><?php echo __('E-mail templates are fully customizable', 'trustindex-plugin'); ?></li>
-<li><?php echo __('Collect reviews on 100+ review platforms (Google, Facebook, Yelp, etc.)', 'trustindex-plugin'); ?></li>
+<li><?php echo esc_html(__('Send unlimited review invitations for free', 'wp-reviews-plugin-for-google')); ?></li>
+<li><?php echo esc_html(__('E-mail templates are fully customizable', 'wp-reviews-plugin-for-google')); ?></li>
+<li><?php echo esc_html(__('Collect reviews on 100+ review platforms (Google, Facebook, Yelp, etc.)', 'wp-reviews-plugin-for-google')); ?></li>
 </ul>
 <p>
-<a href="<?php echo admin_url("admin.php?page=wp-reviews-plugin-for-google/settings.php&wc_notification=open"); ?>" target="_blank" class="ti-close-notification" style="text-decoration: none">
-<button class="button button-primary"><?php echo __('Download plugin', 'trustindex-plugin'); ?></button>
+<a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=wp-reviews-plugin-for-google/settings.php&wc_notification=open"), 'ti-wc-notification')); ?>" target="_blank" class="ti-close-notification" style="text-decoration: none">
+<button class="button button-primary"><?php echo esc_html(__('Download plugin', 'wp-reviews-plugin-for-google')); ?></button>
 </a>
-<a href="<?php echo admin_url("admin.php?page=wp-reviews-plugin-for-google/settings.php&wc_notification=hide"); ?>"target="_blank" class="ti-hide-notification" style="text-decoration: none">
-<button class="button button-secondary"><?php echo __('Do not remind me again', 'trustindex-plugin'); ?></button>
+<a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=wp-reviews-plugin-for-google/settings.php&wc_notification=hide"), 'ti-wc-notification')); ?>"target="_blank" class="ti-hide-notification" style="text-decoration: none">
+<button class="button button-secondary"><?php echo esc_html(__('Do not remind me again', 'wp-reviews-plugin-for-google')); ?></button>
 </a>
 </p>
 </div>
@@ -131,33 +146,33 @@ foreach ($pluginManagerInstance->getNotificationOptions() as $type => $options) 
 if (!$pluginManagerInstance->isNotificationActive($type)) {
 continue;
 }
-echo '<div class="notice notice-'. esc_attr($options['type']) .' '. ($options['is-closeable'] ? 'is-dismissible' : '') .' trustindex-notification-row '. $options['extra-class'].'" data-close-url="'. admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=close') .'">';
+echo '<div class="notice notice-'. esc_attr($options['type']) .' '. ($options['is-closeable'] ? 'is-dismissible' : '') .' trustindex-notification-row '. esc_attr($options['extra-class']).'" data-close-url="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=close'), 'ti-notification')) .'">';
 if ($type === 'rate-us') {
 echo '<div class="trustindex-star-row">&starf;&starf;&starf;&starf;&starf;</div>';
 }
 echo '<p>'. wp_kses_post($options['text']) .'<p>';
 if ($type === 'rate-us') {
 echo '
-<a href="'. esc_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=open')) .'" class="ti-close-notification" target="_blank">
-<button class="button ti-button-primary button-primary">'. esc_html(__('Write a review', 'trustindex-plugin')) .'</button>
+<a href="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=open'), 'ti-notification')) .'" class="ti-close-notification" target="_blank">
+<button class="button ti-button-primary button-primary">'. esc_html(__('Write a review', 'wp-reviews-plugin-for-google')) .'</button>
 </a>
-<a href="'. esc_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=later')) .'" class="ti-remind-later">
-'. esc_html(__('Maybe later', 'trustindex-plugin')) .'
+<a href="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=later'), 'ti-notification')) .'" class="ti-remind-later">
+'. esc_html(__('Maybe later', 'wp-reviews-plugin-for-google')) .'
 </a>
-<a href="'. esc_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=hide')) .'" class="ti-hide-notification" style="float: right; margin-top: 14px">
-'. esc_html(__('Do not remind me again', 'trustindex-plugin')) .'
+<a href="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=hide'), 'ti-notification')) .'" class="ti-hide-notification" style="float: right; margin-top: 14px">
+'. esc_html(__('Do not remind me again', 'wp-reviews-plugin-for-google')) .'
 </a>
 ';
 }
 else {
 echo '
-<a href="'. esc_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=open')) .'">
+<a href="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=open'), 'ti-notification')) .'">
 <button class="button button-primary">'. esc_html($options['button-text']) .'</button>
 </a>';
 if ($options['remind-later-button']) {
 echo '
-<a href="'. esc_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=later')) .'" class="ti-remind-later" style="margin-left: 5px">
-'. esc_html(__('Remind me later', 'trustindex-plugin')) .'
+<a href="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=later'), 'ti-notification')) .'" class="ti-remind-later" style="margin-left: 5px">
+'. esc_html(__('Remind me later', 'wp-reviews-plugin-for-google')) .'
 </a>';
 }
 }

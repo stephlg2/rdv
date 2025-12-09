@@ -1,0 +1,932 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>City Pack - Test Local</title>
+
+
+<style>
+body, html { margin:0; padding:0; overflow-x:hidden; font-family:sans-serif; scroll-behavior: smooth; }
+
+#backgrounds { position: fixed; top:0; left:0; width:100%; height:100%; z-index:-1; }
+.bg { position:absolute; width:100%; height:100%; background-size:cover; background-position:center; opacity:0; }
+.bg-intro { background-image:url('https://www.no-name.fr/img/cms/city-pack/NO-NAME-HIVER-25-WEB-IMAGE_background-desktop_2.jpg'); opacity:1; }
+.bg1 { background-image:url('https://www.no-name.fr/img/cms/city-pack/bg-paris.jpg'); }
+.bg2 { background-image:url('https://www.no-name.fr/img/cms/city-pack/bg-milan.jpg'); }
+.bg3 { background-image:url('https://www.no-name.fr/img/cms/city-pack/bg-berlin.jpg'); }
+.bg4 { background-image:url('https://www.no-name.fr/img/cms/city-pack/bg-tokyo.jpg'); }
+
+.story-section { height:100vh; display:flex; justify-content:center; align-items:center; color:white; position:relative; }
+
+.contenu-section-intro {
+    position: absolute;
+    left: 8vw;
+    width: 35vw;
+    top: 33vh;
+}
+.introtexte {
+    color: #fff;
+    font-size: 16px;
+    line-height: 23px;
+    margin: 3vh 0 0 0;
+    text-align: justify;
+}.decouvrir {
+    text-align: center;
+    margin-top: 30px;
+}
+.decouvrir a { color:#fff; text-decoration:none !important; text-transform:uppercase; letter-spacing:1px; font-weight:300; padding:8px 20px; background:rgba(0,0,0,0.52); display:inline-block; cursor:pointer; }
+.contenu-section-intro .decouvrir {
+    margin-top: 5vh;
+}
+.image-block { width:70vw; margin:0 auto;position: relative;z-index: 1;}
+.image-block img {
+    width: 100%;
+    height: auto;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: block;
+}
+.nom-modele { text-align:center; }
+.nom-modele h2 { font-size:4vw; margin:0; text-transform:uppercase; text-shadow:0px 0px 15px #000; margin-bottom:10px; }
+
+.sticker { position:absolute;z-index: 0; }
+.sticker img { width:100%; height:auto; }
+.sticker-paris { left:3vw; width:21vw; top:19vh; opacity:0; } /* initial state */
+.sticker-paris img { transform:rotate(6deg); }
+
+.sticker-berlin { left:3vw; width:21vw; top:19vh; opacity:0; } /* initial state */
+.sticker-berlin img { transform:rotate(6deg); }
+
+.tip { position:absolute; z-index:0; opacity:0; will-change:transform,opacity; }
+.tip img { width:100%; height:auto; display:block; }
+
+.intro-tip1 {
+    top: 60vh;
+    left: 45vw;
+    width: 8vw;
+}
+.intro-tip2 { bottom:10vh; left:1vw; width:10vw; }
+.intro-tip3 { top:17vh; left:10vw; width:10vw; }
+.intro-tip4 {
+    top: 22vh;
+    left: 44vw;
+    width: 9vw;
+    z-index: 1;
+}
+
+.paris-tip1 { bottom:30vh; right:10vw; width:15vw; }
+.paris-tip1 img{ transform:rotate(20deg); }
+.paris-tip2 { bottom:16vh; left:8vw; width:14vw; }
+.paris-tip3 { top:17vh; right:10vw; width:10vw; }
+
+.sticker-milan {
+    left: 15vw;
+    width: 22vw;
+    top: 2vh;
+    opacity: 0;
+}
+.sticker img {
+    width: 100%;
+    height: auto;
+    transform: rotate(340deg);
+}
+.milan-tip1 {
+    top: 3vh;
+    right: 6vw;
+    width: 9vw;
+}
+
+.milan-tip1 img {
+    transform: rotate(45deg);
+
+}
+.milan-tip2 {
+    bottom: 34vh;
+    left: 2vw;
+    width: 12vw;
+}
+.sticker-berlin {
+    left: 5vw;
+    width: 22vw;
+    top: 11vh;
+    opacity: 0;
+}
+.berlin-tip1 {
+    bottom: 26vh;
+    right: 10vw;
+    width: 10vw;
+}
+.berlin-tip1 img{ transform:rotate(20deg); }
+.berlin-tip2 {
+    bottom: 18vh;
+    left: 4vw;
+    width: 8vw;
+}
+.berlin-tip3 {
+    top: 8vh;
+    right: 10vw;
+    width: 12vw;
+}
+
+.sticker-tokyo {
+    left: 5vw;
+    width: 22vw;
+    top: 11vh;
+    opacity: 0;
+}
+.tokyo-tip1 {
+    bottom: 26vh;
+    right: 10vw;
+    width: 10vw;
+}
+.tokyo-tip1 img{ transform:rotate(20deg); }
+.tokyo-tip2 {
+    bottom: 18vh;
+    left: 9vw;
+    width: 13vw;
+}
+.tokyo-tip3 {
+    top: 8vh;
+    right: 10vw;
+    width: 12vw;
+}
+
+
+#catalogue { background:#fff; color:#000; padding:4rem 2rem; }
+
+/* Carousel container */
+.carousel-container {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+/* Track containing all items */
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+/* Each item */
+.carousel-item {
+  min-width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
+  position: relative;
+}
+
+/* Navigation buttons */
+.carousel-btn {
+    position: absolute;
+    top: 31%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    z-index: 10;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+}
+.carousel-btn.prev { left:2vw; }
+.carousel-btn.next { right: 2vw; }
+
+.decouvrir {
+    text-align: center;
+    margin-top: 15px;
+}
+.carousel-item .nom-modele h2 {
+    padding-top: 20px;
+}
+/* Dots */
+.carousel-dots {
+    text-align: center;
+    margin-top: 0;
+    position: absolute;
+    bottom: 23%;
+    width: 100%;
+}
+.carousel-dots .dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin: 0 5px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.carousel-dots .dot.active {
+  background: #fff;
+}
+.item-text {
+  text-align: center;
+  margin-top: 10px;
+}
+.explore2 {
+    position: absolute;
+    top: 1vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.explore2 img {
+    margin: 0 auto;
+    width: 160px;
+    display: block;
+}
+/* Bullet navigation */
+.bullet-nav {
+    position: fixed;
+    right: 4vw;
+    top: 23vh;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 3;
+}
+
+.bullet {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0px 0px 9px #00000091;
+}
+
+.bullet.active {
+  background: #fff;
+  transform: scale(1.3);
+}
+
+@media screen and (max-width:900px){
+  .contenu-section-intro {
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 72%;
+    max-width: 100%;
+}
+.carousel-dots {
+    text-align: center;
+    margin-top: 0;
+    position: absolute;
+    bottom: 34%;
+    width: 100%;
+}
+.nom-modele h2 {
+    font-size: 8vw;
+    margin: 0;
+    text-transform: uppercase;
+    text-shadow: 0px 0px 15px #000;
+    margin-bottom: 0;
+}
+.intro-tip1 {
+    top: 65vh;
+    left: inherit;
+    width: 21vw;
+    right: 1vw;
+}
+.intro-tip2 {
+    bottom: 10vh;
+    left: 10vw;
+    width: 22vw;
+}
+.intro-tip3 {
+    top: 14vh;
+    left: -1vw;
+    width: 25vw;
+}
+.intro-tip4 {
+    top: 11vh;
+    left: inherit;
+    width: 17vw;
+    z-index: 0;
+    right: 20vw;
+}
+.image-block {
+    width: 100vw;
+    margin: 0 auto;
+}
+.sticker-paris {
+    left: 25vw;
+    width: 39vw;
+    top: 15vh;
+    opacity: 0;
+}
+.paris-tip1 {
+    bottom: 12vh;
+    right: 10vw;
+    width: 31vw;
+}
+.paris-tip2 {
+    bottom: 34vh;
+    left: -4vw;
+    width: 24vw;
+}
+.paris-tip3 {
+    top: 9vh;
+    right: 10vw;
+    width: 20vw;
+}
+.sticker-milan {
+    left: 6vw;
+    width: 33vw;
+    top: 19vh;
+    opacity: 0;
+}
+.milan-tip1 {
+    top: 12vh;
+    right: 17vw;
+    width: 20vw;
+}
+.milan-tip1 img{
+    transform: rotate(20deg);
+}
+.milan-tip2 {
+    bottom: 16vh;
+    left: 6vw;
+    width: 28vw;
+}
+.sticker-berlin {
+    left: 10vw;
+    width: 39vw;
+    top: 15vh;
+    opacity: 0;
+}
+.berlin-tip1 {
+    bottom: 12vh;
+    right: 10vw;
+    width: 22vw;
+}
+
+.berlin-tip2 {
+    bottom: 34vh;
+    left: -4vw;
+    width: 24vw;
+}
+.berlin-tip3 {
+    top: 20vh;
+    right: 14vw;
+    width: 19vw;
+}
+
+.sticker-tokyo {
+    left: 10vw;
+    width: 39vw;
+    top: 15vh;
+    opacity: 0;
+}
+.tokyo-tip1 {
+    bottom: 12vh;
+    right: 10vw;
+    width: 22vw;
+}
+
+.tokyo-tip2 {
+    bottom: 34vh;
+    left: -4vw;
+    width: 24vw;
+}
+.tokyo-tip3 {
+    top: 19vh;
+    right: 17vw;
+    width: 19vw;
+}
+.explore2 {
+    position: absolute;
+    top: 1vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.explore2 img {
+    margin: 0 auto;
+    width: 160px;
+    display: block;
+}
+}
+</style>
+</head>
+<body>
+
+<div id="backgrounds">
+  <div class="bg bg-intro active"></div>
+  <div class="bg bg1"></div>
+  <div class="bg bg2"></div>
+  <div class="bg bg3"></div>
+  <div class="bg bg4"></div>
+</div>
+
+
+<!--INTRO-->
+<section class="story-section" id="intro">
+  <div class="contenu-section-intro">
+    <a href="#"><img src="https://www.no-name.fr/img/explore-logo.svg" class="explore explore1" alt="Intro illustration"></a>
+    <p class="introtexte">Cette saison, NO NAME t’invite à explorer l’univers urbain à travers des capsules inspirées de Paris, Milan, Berlin, Tokyo, mêlant style et fonctionnalité pour capturer l’essence unique de chaque ville. Découvre nos city packs dédiés à chaque ville en scrollant vers le bas !.</p>
+    <div class="decouvrir decouvrir-effet"><a href="#section1">Découvrir</a></div>
+  </div>
+  <div class="tip intro-tip1"><img src="https://www.no-name.fr/img/cms/city-pack/PARIS_STICKERS_PARIS_pigeon_ete.png"></div>
+  <div class="tip intro-tip2"><img src="https://www.no-name.fr/img/cms/city-pack/BERLIN_STICKERS_BERLIN_pattedours.png"></div>
+  <div class="tip intro-tip3"><img src="https://www.no-name.fr/img/cms/city-pack/MILAN_STICKERS-VILLE-MILAN.png"></div>
+  <div class="tip intro-tip4"><img src="https://www.no-name.fr/img/cms/city-pack/TOKYO_STICKERS_TOKYO_fleursdecerisier.png"></div>
+</section>
+
+
+<!--PARIS-->
+<section class="story-section" id="section1">
+     <div class="explore2"><img src="https://www.no-name.fr/img/explore-logo.svg" class="explore explore2" alt="Intro illustration"></div>
+  <div class="image-block image-simple">
+    <a href="https://www.no-name.fr/fr/joggers-femme/4898-carter-20-runner-w-knit-sde-reflet-gris-opal.html#/22-pointure-36"><img src="https://www.no-name.fr/img/cms/city-pack/resize/carter-2-paris.png"></a>
+    <div class="nom-modele">
+      <h2>Carter 2.0</h2>
+      <div class="decouvrir"><a href="https://www.no-name.fr/fr/joggers-femme/4898-carter-20-runner-w-knit-sde-reflet-gris-opal.html#/22-pointure-36">Découvrir</a></div>
+    </div>
+  </div>
+
+  <div class="sticker sticker-paris"><img src="https://www.no-name.fr/img/cms/city-pack/no-name-paris.png" alt="sticker"></div>
+
+  <div class="tip paris-tip1"><img src="https://www.no-name.fr/img/cms/city-pack/PARIS_STICKERS_PARIS_noname_vert.png"></div>
+  <div class="tip paris-tip2"><img src="https://www.no-name.fr/img/cms/city-pack/PARIS_STICKERS_PARIS_croissant_applat.png"></div>
+  <div class="tip paris-tip3"><img src="https://www.no-name.fr/img/cms/city-pack/PARIS_STICKERS_PARIS_pigeon_ete.png"></div>
+</section>
+
+
+<!--MILAN-->
+<section class="story-section" id="section2">
+<div class="explore2"><img src="https://www.no-name.fr/img/explore-logo.svg" class="explore explore2" alt="Intro illustration"></div>
+
+<div class="image-block">
+<div class="carousel-container"><button class="carousel-btn prev">❮</button>
+<div class="carousel-track">
+<div class="carousel-item"><a href="https://www.no-name.fr/fr/joggers-femme/4903-carter-20-runner-w-mesh-sde-earl-marron-beige.html#/22-pointure-36"> <img src="https://www.no-name.fr/img/cms/city-pack/resize/carter-2-milan-2.png" class="image-placeholder" alt="CARTER-2-0-MILAN.png" width="1080" height="567"> </a>
+<div class="nom-modele">
+<h2>Carter 2.0</h2>
+<div class="decouvrir"><a href="https://www.no-name.fr/fr/joggers-femme/4903-carter-20-runner-w-mesh-sde-earl-marron-beige.html#/22-pointure-36">Découvrir</a></div>
+</div>
+</div>
+<div class="carousel-item"><a href="https://www.no-name.fr/fr/joggers-femme/4864-carter-runner-w-mesh-sde-earl-marron-beige.html#/22-pointure-36"> <img src="https://www.no-name.fr/img/cms/city-pack/resize/carter-2-milan-1.png" class="image-placeholder" alt="CARTER-MILAN.png" width="1080" height="567"> </a>
+<div class="nom-modele">
+<h2>Carter</h2>
+<div class="decouvrir"><a href="https://www.no-name.fr/fr/joggers-femme/4864-carter-runner-w-mesh-sde-earl-marron-beige.html#/22-pointure-36">Découvrir</a></div>
+</div>
+</div>
+</div>
+<button class="carousel-btn next">❯</button>
+<div class="carousel-dots"><span class="dot active"></span> <span class="dot"></span></div>
+</div>
+</div>
+
+  <div class="sticker sticker-milan"><img src="https://www.no-name.fr/img/cms/city-pack/no-name-Milan.png" alt="sticker"></div>
+
+  <div class="tip milan-tip1"><img src="https://www.no-name.fr/img/cms/city-pack/STICKERS_MILAN_pasta.png"></div>
+  <div class="tip milan-tip2"><img src="https://www.no-name.fr/img/cms/city-pack/MILAN_STICKERS-VILLE-MILAN.png"></div>
+
+</section>
+
+<!--BERLIN-->
+<section class="story-section" id="section3">
+         <div class="explore2"><img src="https://www.no-name.fr/img/explore-logo.svg" class="explore explore2" alt="Intro illustration"></div>
+<div class="image-block image-simple">
+    <a href="https://www.no-name.fr/fr/joggers/4905-carter-20-runner-m-nylon-sde-shine-gris-kaki-noir.html#/26-pointure-40"><img src="https://www.no-name.fr/img/cms/city-pack/resize/carter-2-berlin.png"></a>
+    <div class="nom-modele">
+      <h2>Carter 2.0</h2>
+      <div class="decouvrir"><a href="https://www.no-name.fr/fr/joggers/4905-carter-20-runner-m-nylon-sde-shine-gris-kaki-noir.html#/26-pointure-40">Découvrir</a></div>
+    </div>
+  </div>
+
+  <div class="sticker sticker-berlin"><img src="https://www.no-name.fr/img/cms/city-pack/no-name-Berlin.png" alt="sticker"></div>
+
+  <div class="tip berlin-tip1"><img src="https://www.no-name.fr/img/cms/city-pack/BERLIN_STICKERS_BERLIN_antenne_tele.png"></div>
+  <div class="tip berlin-tip2"><img src="https://www.no-name.fr/img/cms/city-pack/BERLIN_STICKERS_BERLIN_bretzel.png"></div>
+  <div class="tip berlin-tip3"><img src="https://www.no-name.fr/img/cms/city-pack/BERLIN_STICKERS_BERLIN_pattedours.png"></div>
+
+</section>
+
+
+<!--TOKYO-->
+<section class="story-section" id="section4">
+<div class="explore2"><img src="https://www.no-name.fr/img/explore-logo.svg" class="explore explore2" alt="Intro illustration"></div>
+
+<div class="image-block">
+<div class="carousel-container"><button class="carousel-btn prev">❮</button>
+<div class="carousel-track">
+<div class="carousel-item">
+    <a href="https://www.no-name.fr/fr/joggers-femme/4903-carter-20-runner-w-mesh-sde-earl-marron-beige.html#/22-pointure-36"> 
+    <img src="https://www.no-name.fr/img/cms/city-pack/resize/carter-2-tokyo.png" class="image-placeholder" alt="CARTER-2-0-MILAN.png" width="1080" height="567"> 
+</a>
+<div class="nom-modele">
+<h2>Carter 2.0</h2>
+<div class="decouvrir">
+    <a href="https://www.no-name.fr/fr/joggers-femme/4903-carter-20-runner-w-mesh-sde-earl-marron-beige.html#/22-pointure-36">Découvrir</a>
+</div>
+</div>
+</div>
+<div class="carousel-item">
+    <a href="https://www.no-name.fr/fr/joggers-femme/4904-carter-20-runner-w-retro-earl-mir-beige-noir-lilas.html"> 
+    <img src="https://www.no-name.fr/img/cms/city-pack/resize/Onda.png" class="image-placeholder" alt="CARTER-MILAN.png" width="1080" height="567"> 
+</a>
+<div class="nom-modele">
+<h2>Onda</h2>
+<div class="decouvrir">
+    <a href="https://www.no-name.fr/fr/joggers-femme/4936-onda-elastic-w-soft-patent-noir.html">Découvrir</a>
+</div>
+</div>
+</div>
+</div>
+<button class="carousel-btn next">❯</button>
+<div class="carousel-dots"><span class="dot active"></span> <span class="dot"></span></div>
+</div>
+</div>
+
+  <div class="sticker sticker-tokyo"><img src="https://www.no-name.fr/img/cms/city-pack/sticker-tokyo.png" alt="sticker"></div>
+
+  <div class="tip tokyo-tip1"><img src="https://www.no-name.fr/img/cms/city-pack/TOKYO_STICKERS_TOKYO_fleursdecerisier.png"></div>
+  <div class="tip tokyo-tip2"><img src="https://www.no-name.fr/img/cms/city-pack/STICKERS_TOKYO_1.png"></div>
+   <div class="tip tokyo-tip3"><img src="https://www.no-name.fr/img/cms/city-pack/STICKERS_TOKYO_2.png"></div>
+</section>
+
+<!--CATALOGUE-->
+
+<div id="catalogue">
+  <h2>Catalogue</h2>
+  <p>Le système Start & Stop a véritablement émergé au début des années 2000, grâce entre autres à la Citroën C3. En coupant automatiquement le moteur quand la voiture s'arrête, il réduit la consommation de carburant et les émissions polluantes en milieu urbain.
+
+Les voitures avec Stop & Start sont équipées d'une batterie spécifiquement conçue pour supporter les multiples sollicitations du système. Le changement de celle-ci est une opération facile à réaliser. Prévoyez simplement les équipements suivants :
+
+Clé (pour desserrer les bornes et les supports de fixation de la batterie.)
+Gants de protection
+Brosse métallique ou produit nettoyant (pour nettoyer les bornes de la batterie et les cosses si nécessaire). Du papier à poncer peut aussi faire l'affaire.</p>
+</div>
+
+
+<!-- BULLET NAVIGATION -->
+<div class="bullet-nav">
+  <span data-target="intro" class="bullet active"></span>
+  <span data-target="section1" class="bullet"></span>
+  <span data-target="section2" class="bullet"></span>
+  <span data-target="section3" class="bullet"></span>
+  <span data-target="section4" class="bullet"></span>
+</div>
+
+
+<!--FIN HTML-->
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+const bgs = document.querySelectorAll("#backgrounds .bg");
+const introTips = Array.from(document.querySelectorAll("#intro .tip"));
+const parisTips = Array.from(document.querySelectorAll("#section1 .tip"));
+const stickerParis = document.querySelector(".sticker-paris");
+const exploreImg = document.querySelector(".explore.explore1");
+const sections = Array.from(document.querySelectorAll(".story-section"));
+
+const introDir = introTips.map((_,i)=>i%2===0?-1:1);
+const parisDir = parisTips.map((_,i)=>i%2===0?-1:1);
+
+// BACKGROUND
+function fadeToBg(index){
+  gsap.to("#backgrounds .bg",{opacity:0,duration:0.5,ease:"power2.out",overwrite:true});
+  if(bgs[index]) gsap.to(bgs[index],{opacity:1,duration:0.5,ease:"power2.out",overwrite:true});
+}
+
+sections.forEach((section,i)=>{
+  ScrollTrigger.create({
+    trigger: section,
+    start:"top center",
+    end:"bottom center",
+    onEnter:()=>fadeToBg(i),
+    onEnterBack:()=>fadeToBg(i),
+  });
+});
+
+fadeToBg(0);
+
+// INTRO TIPS ON LOAD
+window.addEventListener("load",()=>{
+  gsap.set(exploreImg,{x:-120,opacity:0});
+  gsap.to(exploreImg,{x:0,opacity:1,duration:0.7,ease:"power2.out"});
+  introTips.forEach((tip,i)=>{
+    const dir = introDir[i];
+    gsap.set(tip,{x:dir*120,opacity:0});
+    gsap.to(tip,{x:0,opacity:1,duration:0.7,ease:"power2.out",delay:i*0.12});
+  });
+});
+
+// PARIS TIPS & STICKER ANIMATION
+ScrollTrigger.create({
+  trigger:"#section1",
+  start:"top center",
+  end:"bottom center",
+  onEnter:()=>{
+    parisTips.forEach((tip,i)=>{
+      const dir = parisDir[i];
+      gsap.set(tip,{x:dir*120,opacity:0});
+      gsap.to(tip,{x:0,opacity:1,duration:0.7,ease:"power2.out",delay:i*0.12});
+    });
+    // Sticker enters from LEFT
+    gsap.set(stickerParis,{x:-200,opacity:0});
+    gsap.to(stickerParis,{x:0,opacity:1,duration:0.7,ease:"power2.out"});
+  },
+  onLeave:()=>{
+    parisTips.forEach((tip,i)=>{
+      const dir = parisDir[i];
+      gsap.to(tip,{x:-dir*120,opacity:0,duration:0.6,ease:"power2.in"});
+    });
+    // Sticker exits to LEFT
+    gsap.to(stickerParis,{x:-200,opacity:0,duration:0.6,ease:"power2.in"});
+  },
+  onEnterBack:()=>{
+    parisTips.forEach((tip,i)=>{
+      const dir = parisDir[i];
+      gsap.set(tip,{x:dir*120,opacity:0});
+      gsap.to(tip,{x:0,opacity:1,duration:0.7,ease:"power2.out",delay:i*0.12});
+    });
+    // Sticker re-enter from LEFT
+    gsap.set(stickerParis,{x:-200,opacity:0});
+    gsap.to(stickerParis,{x:0,opacity:1,duration:0.7,ease:"power2.out"});
+  }
+});
+
+// HIDE/SHOW introTips when scrolling past section2
+ScrollTrigger.create({
+  trigger:"#section2",
+  start:"top 80%",
+  end:"bottom top",
+  scrub:0.2,
+  onUpdate:(self)=>{
+    introTips.forEach((tip,i)=>{
+      const dir = introDir[i];
+      gsap.to(tip,{x:-dir*120,opacity:0,duration:0.4,ease:"power2.in"});
+    });
+  },
+  onLeaveBack:()=>{
+    introTips.forEach((tip,i)=>{
+      const dir = introDir[i];
+      gsap.set(tip,{x:dir*120,opacity:0});
+      gsap.to(tip,{x:0,opacity:1,duration:0.7,ease:"power2.out",delay:i*0.12});
+    });
+  }
+});
+// Fonction générique pour initialiser un carousel
+function initCarousel(container) {
+  const carouselTrack = container.querySelector('.carousel-track');
+  const items = Array.from(carouselTrack.children);
+  const prevBtn = container.querySelector('.carousel-btn.prev');
+  const nextBtn = container.querySelector('.carousel-btn.next');
+  const dots = Array.from(container.querySelectorAll('.carousel-dots .dot'));
+
+  let currentIndex = 0;
+  let startX = 0;
+  let isDragging = false;
+
+  // Mise à jour du défilement
+  function updateCarousel() {
+    carouselTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
+    dots.forEach((dot, i) => dot.classList.toggle('active', i === currentIndex));
+  }
+
+  // Boutons
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + items.length) % items.length;
+      updateCarousel();
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % items.length;
+      updateCarousel();
+    });
+  }
+
+  // Clics sur les points
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      currentIndex = i;
+      updateCarousel();
+    });
+  });
+
+  // Swipe mobile
+  carouselTrack.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+  });
+
+  carouselTrack.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+    carouselTrack.style.transform =
+      `translateX(${-currentIndex * 100 + diff / carouselTrack.clientWidth * 100}%)`;
+  });
+
+  carouselTrack.addEventListener('touchend', e => {
+    isDragging = false;
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
+
+    if (diff > 50) { // swipe right
+      currentIndex = (currentIndex - 1 + items.length) % items.length;
+    } else if (diff < -50) { // swipe left
+      currentIndex = (currentIndex + 1) % items.length;
+    }
+    updateCarousel();
+  });
+
+  updateCarousel(); // Init
+}
+
+// Initialiser TOUS les carousels présents sur la page
+document.querySelectorAll('.carousel-container').forEach(initCarousel);
+
+// Animate all .explore2 elements like tips
+const explore2Elements = document.querySelectorAll('.explore2');
+
+explore2Elements.forEach(el => {
+  // Initially hide below
+  gsap.set(el, {y: 80, opacity: 0});
+
+  ScrollTrigger.create({
+    trigger: el.closest('.story-section'),
+    start: "top center",
+    end: "bottom center",
+    onEnter: () => gsap.to(el, {y:0, opacity:1, duration:0.7, ease:"power2.out"}),
+    onEnterBack: () => gsap.to(el, {y:0, opacity:1, duration:0.7, ease:"power2.out"}),
+    onLeave: () => gsap.to(el, {y:80, opacity:0, duration:0.5, ease:"power2.in"}),
+    onLeaveBack: () => gsap.to(el, {y:80, opacity:0, duration:0.5, ease:"power2.in"})
+  });
+});
+// Milan sticker & tips animation
+const milanSticker = document.querySelector('.sticker-milan');
+const milanTips = [
+  document.querySelector('.milan-tip1'),
+  document.querySelector('.milan-tip2')
+];
+
+// Initial positions
+gsap.set(milanSticker, {y: 100, opacity: 0});
+gsap.set(milanTips[0], {x: 100, opacity: 0}); // tip1 from right
+gsap.set(milanTips[1], {x: -100, opacity: 0}); // tip2 from left
+
+ScrollTrigger.create({
+  trigger: "#section2",
+  start: "top center",
+  end: "bottom center",
+  onEnter: () => {
+    gsap.to(milanSticker, {y: 0, opacity:1, duration:0.7, ease:"power2.out"});
+    gsap.to(milanTips[0], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.1});
+    gsap.to(milanTips[1], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.2});
+  },
+  onLeave: () => {
+    gsap.to(milanSticker, {y:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(milanTips[0], {x:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(milanTips[1], {x:-100, opacity:0, duration:0.6, ease:"power2.in"});
+  },
+  onEnterBack: () => {
+    gsap.to(milanSticker, {y:0, opacity:1, duration:0.7, ease:"power2.out"});
+    gsap.to(milanTips[0], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.1});
+    gsap.to(milanTips[1], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.2});
+  },
+  onLeaveBack: () => {
+    gsap.to(milanSticker, {y:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(milanTips[0], {x:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(milanTips[1], {x:-100, opacity:0, duration:0.6, ease:"power2.in"});
+  }
+});
+// Berlin sticker & tips animation
+const berlinSticker = document.querySelector('.sticker-berlin');
+const berlinTips = [
+  document.querySelector('.berlin-tip1'),
+  document.querySelector('.berlin-tip2'),
+  document.querySelector('.berlin-tip3')
+];
+
+// Positions initiales
+gsap.set(berlinSticker, {x: -150, opacity: 0});
+gsap.set(berlinTips[0], {y: 100, opacity: 0});  // tip1 monte
+gsap.set(berlinTips[1], {x: -120, opacity: 0}); // tip2 vient de gauche
+gsap.set(berlinTips[2], {x: 120, opacity: 0});  // tip3 vient de droite
+
+ScrollTrigger.create({
+  trigger: "#section3",
+  start: "top center",
+  end: "bottom center",
+  onEnter: () => {
+    gsap.to(berlinSticker, {x:0, opacity:1, duration:0.7, ease:"power2.out"});
+    gsap.to(berlinTips[0], {y:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.1});
+    gsap.to(berlinTips[1], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.2});
+    gsap.to(berlinTips[2], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.3});
+  },
+  onLeave: () => {
+    gsap.to(berlinSticker, {x:-150, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(berlinTips[0], {y:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(berlinTips[1], {x:-120, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(berlinTips[2], {x:120, opacity:0, duration:0.6, ease:"power2.in"});
+  },
+  onEnterBack: () => {
+    gsap.to(berlinSticker, {x:0, opacity:1, duration:0.7, ease:"power2.out"});
+    gsap.to(berlinTips[0], {y:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.1});
+    gsap.to(berlinTips[1], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.2});
+    gsap.to(berlinTips[2], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.3});
+  },
+  onLeaveBack: () => {
+    gsap.to(berlinSticker, {x:-150, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(berlinTips[0], {y:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(berlinTips[1], {x:-120, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(berlinTips[2], {x:120, opacity:0, duration:0.6, ease:"power2.in"});
+  }
+});
+
+// TOKYO sticker & tips animation
+const tokyoSticker = document.querySelector('.sticker-tokyo');
+const tokyoTips = [
+  document.querySelector('.tokyo-tip1'),
+  document.querySelector('.tokyo-tip2'),
+  document.querySelector('.tokyo-tip3')
+];
+
+gsap.set(tokyoSticker, {x: 150, opacity: 0});   // vient de droite
+gsap.set(tokyoTips[0], {y: 100, opacity: 0});   // tip1 monte
+gsap.set(tokyoTips[1], {x: -120, opacity: 0});  // tip2 vient de gauche
+gsap.set(tokyoTips[2], {x: 120, opacity: 0});   // tip3 vient de droite
+
+ScrollTrigger.create({
+  trigger: "#section4",
+  start: "top center",
+  end: "bottom center",
+  onEnter: () => {
+    gsap.to(tokyoSticker, {x:0, opacity:1, duration:0.7, ease:"power2.out"});
+    gsap.to(tokyoTips[0], {y:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.1});
+    gsap.to(tokyoTips[1], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.2});
+    gsap.to(tokyoTips[2], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.3});
+  },
+  onLeave: () => {
+    gsap.to(tokyoSticker, {x:150, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(tokyoTips[0], {y:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(tokyoTips[1], {x:-120, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(tokyoTips[2], {x:120, opacity:0, duration:0.6, ease:"power2.in"});
+  },
+  onEnterBack: () => {
+    gsap.to(tokyoSticker, {x:0, opacity:1, duration:0.7, ease:"power2.out"});
+    gsap.to(tokyoTips[0], {y:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.1});
+    gsap.to(tokyoTips[1], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.2});
+    gsap.to(tokyoTips[2], {x:0, opacity:1, duration:0.7, ease:"power2.out", delay:0.3});
+  },
+  onLeaveBack: () => {
+    gsap.to(tokyoSticker, {x:150, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(tokyoTips[0], {y:100, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(tokyoTips[1], {x:-120, opacity:0, duration:0.6, ease:"power2.in"});
+    gsap.to(tokyoTips[2], {x:120, opacity:0, duration:0.6, ease:"power2.in"});
+  }
+});
+// BULLET NAVIGATION
+const bullets = document.querySelectorAll(".bullet-nav .bullet");
+
+bullets.forEach(bullet => {
+  bullet.addEventListener("click", () => {
+    const targetId = bullet.getAttribute("data-target");
+    const targetSection = document.getElementById(targetId);
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: "smooth" });
+    }
+  });
+});
+
+// Synchroniser bullets avec le scroll
+sections.forEach((section, i) => {
+  ScrollTrigger.create({
+    trigger: section,
+    start: "top center",
+    end: "bottom center",
+    onEnter: () => setActiveBullet(i),
+    onEnterBack: () => setActiveBullet(i)
+  });
+});
+
+function setActiveBullet(index) {
+  bullets.forEach(b => b.classList.remove("active"));
+  if (bullets[index]) bullets[index].classList.add("active");
+}
+
+
+</script>
+
+</body>
+</html>

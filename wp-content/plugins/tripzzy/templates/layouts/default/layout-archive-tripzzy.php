@@ -82,27 +82,12 @@ $trip_dates     = $dates->get_dates();
 						</div>
 					</div>
 				</div>
-				<div class="tz-col tz-cols-7-md">
+				<div class="tz-col tz-cols-7-md liste-voyages">
 					<div class="tripzzy-content-wrapper">
 						<h3 class="tripzzy-trip-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
 						</h3>
 						<div class="tripzzy-after-title">
 							<?php do_action( 'tripzzy_archive_page_after_title', get_the_ID() ); ?>
-							
-							<div class="tripzzy-review-price-wrapper">
-								<div class="tripzzy-review-wrapper">
-									<?php Reviews::ratings_average_html( Reviews::get_trip_ratings_average( get_the_ID() ) ); ?>
-								</div>
-								<div class="tripzzy-trip-price">
-									<div class="tripzzy-price-wrapper">
-										<?php if ( $has_sale ) : ?>
-										<div class="tripzzy-regular-price">
-											<?php echo esc_html( Amount::display( $regular_price ) ); ?></div>
-										<?php endif; ?>
-										<div class="tripzzy-price"><?php echo esc_html( Amount::display( $price ) ); ?></div>
-									</div>
-								</div>
-							</div>
 							<div class="tripzzy-meta-container">
 								<div class="tripzzy-meta-wrapper">
 									<div class="tripzzy-meta-item">
@@ -138,6 +123,22 @@ $trip_dates     = $dates->get_dates();
 									<?php endif; ?>
 								</div>
 							</div>
+							<div class="tripzzy-review-price-wrapper">
+								<div class="tripzzy-review-wrapper">
+									<?php Reviews::ratings_average_html( Reviews::get_trip_ratings_average( get_the_ID() ) ); ?>
+								</div>
+								<div class="tripzzy-trip-price">
+									<div class="tripzzy-price-from-label">À partir de</div>
+									<div class="tripzzy-price-wrapper">
+										<?php if ( $has_sale ) : ?>
+										<div class="tripzzy-regular-price">
+											<?php echo esc_html( Amount::display( $regular_price ) ); ?></div>
+										<?php endif; ?>
+										<div class="tripzzy-price"><?php echo esc_html( Amount::display( $price ) ); ?></div>
+									</div>
+								</div>
+							</div>
+							
 						</div>
 						<hr class="tripzzy-divider">
 						<div class="tripzzy-before-content">
