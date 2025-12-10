@@ -165,3 +165,4 @@ La **version 2** est une **mise à jour majeure** qui apporte :
 ✅ **Maintenabilité** : Code simplifié et mieux documenté  
 
 **Recommandation** : Utiliser la **version 2** pour une meilleure compatibilité et robustesse, surtout si vous utilisez Avada ou Tripzzy.
+

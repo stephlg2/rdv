@@ -1,7 +1,0 @@
-# Translation file for Redirection plugin
-# Copyright (C) 2024
-# This file is distributed under the same license as the Redirection plugin.
-msgid "Redirection Support"
-msgstr "Support Redirection"
-
-
