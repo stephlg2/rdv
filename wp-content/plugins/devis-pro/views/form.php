@@ -130,10 +130,43 @@ $form_unique_id = 'devis-pro-form-' . uniqid();
     cursor: pointer;
 }
 
+/* Checkbox Newsletter - Style identique à la page demande de devis */
 .devis-pro-form .checkbox-group input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: #de5b09;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #de5b09;
+    border-radius: 4px;
+    margin-right: 0;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.25s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.devis-pro-form .checkbox-group input[type="checkbox"]:checked {
+    background-color: #de5b09;
+    border-color: #de5b09;
+}
+
+.devis-pro-form .checkbox-group input[type="checkbox"]:checked::after {
+    content: "✔";
+    position: absolute;
+    top: 1px;
+    left: 5px;
+    font-size: 14px;
+    color: #fff;
+    line-height: 1;
+}
+
+.devis-pro-form .checkbox-group input[type="checkbox"]:hover {
+    border-color: #c44d07;
+}
+
+.devis-pro-form .checkbox-group input[type="checkbox"]:checked:hover {
+    background-color: #c44d07;
+    border-color: #c44d07;
 }
 
 .devis-pro-form .submit-section {

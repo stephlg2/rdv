@@ -407,6 +407,11 @@ class Devis_Pro {
      * Gérer les actions admin
      */
     public function handle_admin_actions() {
+        // Envoyer un email test
+        if (isset($_POST['devis_pro_send_test_email']) && check_admin_referer('devis_pro_test_email')) {
+            $this->send_test_email();
+        }
+        
         // Suppression d'un devis
         if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
             if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_devis_' . $_GET['id'])) {
@@ -1991,6 +1996,67 @@ class Devis_Pro {
             </div>
             <?php
         }
+    }
+
+    /**
+     * Envoyer un email test
+     */
+    private function send_test_email() {
+        $settings = get_option('devis_pro_settings');
+        $admin_email = $settings['email_admin'] ?? get_option('admin_email');
+        
+        // Créer un objet devis fictif pour le test
+        $test_devis = (object) array(
+            'id' => 999,
+            'civ' => 'Mme',
+            'prenom' => 'Sophie',
+            'nom' => 'Dupont',
+            'email' => 'test@example.com',
+            'tel' => '06 12 34 56 78',
+            'voyage' => '1',
+            'depart' => '15/06/2025',
+            'retour' => '30/06/2025',
+            'duree' => '15 jours',
+            'adulte' => 2,
+            'enfant' => 1,
+            'bebe' => 0,
+            'vol' => 'Oui',
+            'message' => 'Ceci est un message de test pour vérifier que l\'email fonctionne correctement.',
+            'montant' => 2500.00,
+            'status' => 0
+        );
+        
+        try {
+            $email = new Devis_Pro_Email();
+            $result = $email->send_new_request_notification($test_devis);
+            
+            if ($result) {
+                add_settings_error(
+                    'devis_pro',
+                    'test_email_sent',
+                    sprintf(__('✅ Email test envoyé avec succès à %s !', 'devis-pro'), $admin_email),
+                    'success'
+                );
+            } else {
+                add_settings_error(
+                    'devis_pro',
+                    'test_email_failed',
+                    __('❌ Erreur lors de l\'envoi de l\'email test. Vérifiez votre configuration SMTP.', 'devis-pro'),
+                    'error'
+                );
+            }
+        } catch (Exception $e) {
+            add_settings_error(
+                'devis_pro',
+                'test_email_error',
+                sprintf(__('❌ Erreur : %s', 'devis-pro'), $e->getMessage()),
+                'error'
+            );
+        }
+        
+        // Rediriger vers la page des réglages
+        wp_redirect(admin_url('admin.php?page=devis-pro-settings&test_email=1'));
+        exit;
     }
 }
 

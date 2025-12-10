@@ -46,7 +46,9 @@ function devis_pro_import_csv($file) {
         return array('success' => false, 'message' => __('Erreur lors de l\'upload du fichier', 'devis-pro'));
     }
     
-    if (!str_ends_with(strtolower($file['name']), '.csv')) {
+    // Compatibilité PHP 7.x (str_ends_with n'existe qu'en PHP 8.0+)
+    $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if ($file_ext !== 'csv') {
         return array('success' => false, 'message' => __('Le fichier doit être au format CSV', 'devis-pro'));
     }
     

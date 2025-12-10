@@ -276,11 +276,10 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 				<div id="tz-filter-overlay" class="tz-filter-overlay"></div>
 				<div id="tz-filter-widget-area" class="tz-filter-widget-area collapsed">
 					<form id="tripzzy-filter-form" method="post">
-						
+						<?php \Tripzzy\Core\Http\Nonce::create_field(); ?>
 						<div class="tz-filter-widget-container">
 							<div class="tz-filter-header">
 								<div class="tz-filter-title"><?php echo esc_html( $labels['filter_by'] ?? '' ); ?></div>
-								<div class="tz-toolbar-title" id="tripzzy-filter-found-posts" style="margin-top:8px;"></div>
 								<button type="button" class="tz-btn tz-btn-sm tz-btn-close-filter" aria-label="Fermer">
 									<i class="fa fa-times"></i>
 								</button>
@@ -305,8 +304,16 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 									<span class="tz-submit-btn-text"><?php esc_html_e( 'Afficher les résultats', 'tripzzy' ); ?></span>
 									<span class="tz-submit-btn-count" style="display:none;"></span>
 								</button>
-								<a href="#" class="tz-filter-clear-all" id="tz-filter-clear-all" style="display:none;"><?php esc_html_e( 'Tout effacer', 'tripzzy' ); ?></a>
+								<a href="#" class="tz-filter-clear-all" id="tz-filter-clear-all" style="display:none;text-align:center;margin-top:15px;color:#666;text-decoration:underline;font-size:14px;"><?php esc_html_e( 'Réinitialiser les filtres', 'tripzzy' ); ?></a>
 							<?php endif; ?>
+							
+							<!-- Zone des résultats en bas du panneau -->
+							<div class="tz-filter-results" id="tz-filter-results" style="margin-top:20px;padding-top:20px;border-top:2px solid #de5b09;display:none;">
+								<div class="tz-toolbar-title" id="tripzzy-filter-found-posts" style="margin-bottom:15px;font-weight:bold;color:#333;font-size:16px;"></div>
+								<div id="tripzzy-filter-results-list" class="tripzzy-trips-list" style="max-height:400px;overflow-y:auto;padding:10px 0;">
+									<!-- Les résultats s'afficheront ici -->
+								</div>
+							</div>
 						</div>
 					</form>
 				</div>
@@ -462,6 +469,401 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						closeArea();
 					  });
 					}
+					
+					// Fonction pour vérifier si des filtres sont actifs
+					function hasActiveFilters() {
+					  var hasActive = false;
+					  
+					  // Vérifier les selects
+					  var selects = filterArea.querySelectorAll('select.tripzzy-filter-dropdown');
+					  selects.forEach(function(select) {
+						if (select.multiple) {
+						  var selected = Array.from(select.selectedOptions).filter(function(opt) {
+							return opt.value && opt.value !== '';
+						  });
+						  if (selected.length > 0) {
+							hasActive = true;
+						  }
+						} else if (select.value && select.value !== '') {
+						  hasActive = true;
+						}
+					  });
+					  
+					  // Vérifier les sliders (prix et durée)
+					  var priceSlider = filterArea.querySelector('[name="tripzzy_price"]');
+					  var durationSlider = filterArea.querySelector('[name="tripzzy_trip_duration"]');
+					  
+					  if (priceSlider && priceSlider.noUiSlider) {
+						var priceValues = priceSlider.noUiSlider.get();
+						var priceMin = priceSlider.noUiSlider.options.range.min;
+						var priceMax = priceSlider.noUiSlider.options.range.max;
+						if (priceValues[0] != priceMin || priceValues[1] != priceMax) {
+						  hasActive = true;
+						}
+					  }
+					  
+					  if (durationSlider && durationSlider.noUiSlider) {
+						var durationValues = durationSlider.noUiSlider.get();
+						var durationMin = durationSlider.noUiSlider.options.range.min;
+						var durationMax = durationSlider.noUiSlider.options.range.max;
+						if (durationValues[0] != durationMin || durationValues[1] != durationMax) {
+						  hasActive = true;
+						}
+					  }
+					  
+					  return hasActive;
+					}
+					
+					// Fonction pour mettre à jour la visibilité du lien de réinitialisation
+					function updateClearAllButtonVisibility() {
+					  var clearAllBtn = document.querySelector('#tz-filter-clear-all');
+					  if (clearAllBtn) {
+						if (hasActiveFilters()) {
+						  clearAllBtn.style.display = 'block';
+						} else {
+						  clearAllBtn.style.display = 'none';
+						}
+					  }
+					}
+					
+					// Gérer le bouton "Réinitialiser les filtres"
+					var clearAllBtn = document.querySelector('#tz-filter-clear-all');
+					if (clearAllBtn) {
+					  clearAllBtn.addEventListener('click', function(e){
+						e.preventDefault();
+						
+						// Réinitialiser tous les selects
+						var selects = filterArea.querySelectorAll('select.tripzzy-filter-dropdown');
+						if (typeof jQuery !== 'undefined') {
+						  selects.forEach(function(select) {
+							jQuery(select).val(null).trigger('change');
+						  });
+						} else {
+						  selects.forEach(function(select) {
+							if (select.multiple) {
+							  Array.from(select.options).forEach(function(option) {
+								option.selected = false;
+							  });
+							} else {
+							  select.selectedIndex = 0;
+							}
+							select.dispatchEvent(new Event('change'));
+						  });
+						}
+						
+						// Réinitialiser les sliders de prix et durée
+						var priceSlider = filterArea.querySelector('[name="tripzzy_price"]');
+						var durationSlider = filterArea.querySelector('[name="tripzzy_trip_duration"]');
+						if (priceSlider && priceSlider.noUiSlider) {
+						  var priceMin = priceSlider.noUiSlider.options.range.min;
+						  var priceMax = priceSlider.noUiSlider.options.range.max;
+						  priceSlider.noUiSlider.set([priceMin, priceMax]);
+						}
+						if (durationSlider && durationSlider.noUiSlider) {
+						  var durationMin = durationSlider.noUiSlider.options.range.min;
+						  var durationMax = durationSlider.noUiSlider.options.range.max;
+						  durationSlider.noUiSlider.set([durationMin, durationMax]);
+						}
+						
+						// Masquer la zone de résultats
+						var resultsZone = document.querySelector('#tz-filter-results');
+						if (resultsZone) {
+						  resultsZone.style.display = 'none';
+						}
+						
+						// Réinitialiser le texte du bouton
+						var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
+						if (submitBtnText) {
+						  submitBtnText.textContent = '<?php esc_html_e( 'Afficher les résultats', 'tripzzy' ); ?>';
+						}
+						
+						// Masquer le lien de réinitialisation
+						updateClearAllButtonVisibility();
+						
+						// Réinitialiser aussi les résultats principaux
+						var mainResults = document.querySelector('#tripzzy-trip-listings');
+						if (mainResults) {
+						  mainResults.innerHTML = '';
+						}
+						
+						// Réinitialiser le compteur dans la toolbar
+						var toolbarCounter = document.querySelector('.tz-toolbar-left .tz-toolbar-title');
+						if (toolbarCounter) {
+						  toolbarCounter.textContent = '';
+						}
+						
+						// Recharger la page pour réinitialiser complètement
+						window.location.href = window.location.pathname;
+					  });
+					}
+					
+					// Fonction pour mettre à jour le texte du bouton avec le nombre de résultats
+					var updateButtonTimeout;
+					function updateButtonWithCount() {
+					  // Annuler le timeout précédent (debounce)
+					  if (updateButtonTimeout) {
+						clearTimeout(updateButtonTimeout);
+					  }
+					  
+					  // Attendre 300ms après le dernier changement avant de faire la requête
+					  updateButtonTimeout = setTimeout(function() {
+						if (!hasActiveFilters()) {
+						  // Pas de filtres actifs, remettre le texte par défaut
+						  var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
+						  if (submitBtnText) {
+							submitBtnText.textContent = '<?php esc_html_e( 'Afficher les résultats', 'tripzzy' ); ?>';
+						  }
+						  return;
+						}
+						
+						// Récupérer les données du formulaire
+						var form = document.querySelector('#tripzzy-filter-form');
+						if (!form || typeof jQuery === 'undefined') {
+						  return;
+						}
+						
+						var data = {};
+						
+						// Récupérer manuellement les valeurs des selects multiselect
+						var selects = form.querySelectorAll('select.tripzzy-filter-dropdown');
+						selects.forEach(function(select) {
+						  var selectName = select.name || select.id;
+						  if (selectName) {
+							// Essayer d'abord avec jQuery.val() (fonctionne avec les plugins multiselect)
+							var values = jQuery(select).val();
+							
+							// Si ça ne fonctionne pas, récupérer directement depuis les options sélectionnées
+							if (!values || (Array.isArray(values) && values.length === 0)) {
+							  values = [];
+							  var options = select.querySelectorAll('option:checked');
+							  options.forEach(function(option) {
+								if (option.value && option.value !== '') {
+								  values.push(option.value);
+								}
+							  });
+							}
+							
+							// Filtrer les valeurs vides et ajouter aux données
+							if (values) {
+							  if (Array.isArray(values)) {
+								values = values.filter(function(v) { return v && v !== ''; });
+								if (values.length > 0) {
+								  data[selectName] = values;
+								}
+							  } else if (values !== '') {
+								data[selectName] = [values];
+							  }
+							}
+						  }
+						});
+						
+						// Récupérer les autres champs du formulaire (champs cachés, etc.) avec serializeArray
+						var formData = jQuery(form).serializeArray();
+						formData.forEach(function(item) {
+						  // Ignorer les selects car déjà traités ci-dessus
+						  var isSelect = false;
+						  selects.forEach(function(select) {
+							if ((select.name || select.id) === item.name) {
+							  isSelect = true;
+							}
+						  });
+						  
+						  if (!isSelect) {
+							if (data[item.name]) {
+							  // Si la clé existe déjà, convertir en tableau
+							  if (!Array.isArray(data[item.name])) {
+								data[item.name] = [data[item.name]];
+							  }
+							  data[item.name].push(item.value);
+							} else {
+							  data[item.name] = item.value;
+							}
+						  }
+						});
+						
+						// Récupérer les valeurs des sliders et les ajouter
+						var priceSlider = filterArea.querySelector('[name="tripzzy_price"]');
+						var durationSlider = filterArea.querySelector('[name="tripzzy_trip_duration"]');
+						
+						if (priceSlider && priceSlider.noUiSlider) {
+						  var priceValues = priceSlider.noUiSlider.get();
+						  var priceMin = priceSlider.noUiSlider.options.range.min;
+						  var priceMax = priceSlider.noUiSlider.options.range.max;
+						  if (priceValues[0] != priceMin || priceValues[1] != priceMax) {
+							data['tripzzy_price[]'] = priceValues;
+							data.tripzzy_price_changed = true;
+						  }
+						}
+						
+						if (durationSlider && durationSlider.noUiSlider) {
+						  var durationValues = durationSlider.noUiSlider.get();
+						  var durationMin = durationSlider.noUiSlider.options.range.min;
+						  var durationMax = durationSlider.noUiSlider.options.range.max;
+						  if (durationValues[0] != durationMin || durationValues[1] != durationMax) {
+							data['tripzzy_trip_duration[]'] = durationValues;
+							data.tripzzy_trip_duration_changed = true;
+						  }
+						}
+						
+						// Ajouter les paramètres nécessaires pour la requête
+						data.action = 'tripzzy_get_trips';
+						data.loadDataFromFilters = true;
+						data.paged = 1;
+						data.is_trips = true;
+						data.is_taxonomy = false;
+						
+						// Debug: afficher les données envoyées (à retirer en production)
+						console.log('Données brutes:', data);
+						
+						// Préparer les données pour l'envoi AJAX
+						// Les taxonomies doivent être envoyées comme tableaux sans []
+						// Les sliders doivent être envoyés avec []
+						var ajaxData = {};
+						
+						for (var key in data) {
+						  if (data.hasOwnProperty(key)) {
+							// Les sliders ont déjà le format correct avec []
+							if (key.indexOf('[]') !== -1) {
+							  ajaxData[key] = data[key];
+							} else if (Array.isArray(data[key])) {
+							  // Les taxonomies : envoyer comme tableau directement
+							  ajaxData[key] = data[key];
+							} else {
+							  ajaxData[key] = data[key];
+							}
+						  }
+						}
+						
+						console.log('Données formatées pour AJAX:', ajaxData);
+						
+						// Le backend attend les données en JSON dans le body (INPUT_PAYLOAD)
+						// Récupérer le nonce depuis le formulaire
+						var nonceInput = form.querySelector('input[name="tripzzy_nonce"]');
+						var nonceValue = '';
+						if (nonceInput) {
+						  nonceValue = nonceInput.value;
+						  // Ajouter le nonce dans les données JSON aussi (au cas où)
+						  ajaxData.tripzzy_nonce = nonceValue;
+						}
+						
+						// Préparer l'URL avec les paramètres de base (action et nonce pour WordPress)
+						// Le nonce dans l'URL permet à WordPress de le vérifier si nécessaire
+						var ajaxUrl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';
+						var urlWithParams = ajaxUrl + '?action=tripzzy_get_trips';
+						if (nonceValue) {
+						  urlWithParams += '&tripzzy_nonce=' + encodeURIComponent(nonceValue);
+						}
+						
+						// Faire la requête AJAX en JSON avec fetch (comme le code original)
+						if (typeof fetch !== 'undefined') {
+						  fetch(urlWithParams, {
+							method: 'POST',
+							headers: {
+							  'Content-Type': 'application/json; charset=utf-8'
+							},
+							body: JSON.stringify(ajaxData)
+						  })
+						  .then(function(response) {
+							if (!response.ok) {
+							  throw new Error('HTTP error! status: ' + response.status);
+							}
+							return response.json();
+						  })
+						  .then(function(data) {
+							console.log('Réponse AJAX:', data);
+							if (data && data.success && data.data) {
+							  var count = data.data.found_posts || 0;
+							  var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
+							  
+							  console.log('Nombre de voyages trouvés:', count);
+							  
+							  if (submitBtnText) {
+								if (count > 0) {
+								  if (count === 1) {
+									submitBtnText.textContent = '<?php esc_html_e( 'Afficher le voyage', 'tripzzy' ); ?>';
+								  } else {
+									submitBtnText.textContent = '<?php echo esc_js( __( 'Afficher les', 'tripzzy' ) ); ?> ' + count + ' <?php echo esc_js( __( 'voyages', 'tripzzy' ) ); ?>';
+								  }
+								} else {
+								  submitBtnText.textContent = '<?php esc_html_e( 'Aucun résultat', 'tripzzy' ); ?>';
+								}
+							  }
+							} else {
+							  console.error('Réponse invalide:', data);
+							}
+						  })
+						  .catch(function(error) {
+							console.error('Erreur AJAX:', error);
+							// En cas d'erreur, garder le texte par défaut
+							var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
+							if (submitBtnText) {
+							  submitBtnText.textContent = '<?php esc_html_e( 'Afficher les résultats', 'tripzzy' ); ?>';
+							}
+						  });
+						}
+					  }, 300);
+					}
+					
+					// Écouter les changements sur les filtres pour mettre à jour la visibilité et le bouton
+					if (typeof jQuery !== 'undefined') {
+					  // Écouter les changements sur les selects
+					  jQuery(document).on('change', '#tz-filter-widget-area select.tripzzy-filter-dropdown', function() {
+						setTimeout(updateClearAllButtonVisibility, 100);
+						updateButtonWithCount();
+					  });
+					  
+					  // Écouter les changements sur les sliders (après leur initialisation)
+					  setTimeout(function() {
+						var priceSlider = filterArea.querySelector('[name="tripzzy_price"]');
+						var durationSlider = filterArea.querySelector('[name="tripzzy_trip_duration"]');
+						
+						if (priceSlider && priceSlider.noUiSlider) {
+						  priceSlider.noUiSlider.on('update', function() {
+							updateClearAllButtonVisibility();
+							updateButtonWithCount();
+						  });
+						}
+						
+						if (durationSlider && durationSlider.noUiSlider) {
+						  durationSlider.noUiSlider.on('update', function() {
+							updateClearAllButtonVisibility();
+							updateButtonWithCount();
+						  });
+						}
+					  }, 1000);
+					}
+					
+					// Vérifier l'état initial des filtres
+					setTimeout(function() {
+					  updateClearAllButtonVisibility();
+					  updateButtonWithCount();
+					}, 500);
+					
+					// Écouter les réponses AJAX pour mettre à jour les résultats dans le panneau
+					if (typeof jQuery !== 'undefined') {
+					  jQuery(document).on('tripzzy_filter_results_updated', function(e, data) {
+						var resultsZone = document.querySelector('#tz-filter-results');
+						var resultsList = document.querySelector('#tripzzy-filter-results-list');
+						var foundPostsEl = document.querySelector('#tripzzy-filter-found-posts');
+						
+						if (resultsZone && data && data.found_posts_html) {
+						  // Afficher la zone de résultats
+						  resultsZone.style.display = 'block';
+						  
+						  // Mettre à jour le compteur
+						  if (foundPostsEl) {
+							foundPostsEl.textContent = data.found_posts_html;
+						  }
+						  
+						  // Mettre à jour la liste des résultats (premiers résultats seulement)
+						  if (resultsList && data.trips) {
+							resultsList.innerHTML = data.trips;
+							// Scroll vers le haut de la zone de résultats
+							resultsList.scrollTop = 0;
+						  }
+						}
+					  });
+					}
 				  }
 
 				  if (document.readyState === 'loading') {
@@ -469,6 +871,27 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 				  } else {
 					initTripzzyFilterToggle();
 				  }
+				})();
+				</script>
+				<script>
+				// Hook pour intercepter les réponses AJAX et mettre à jour les résultats dans le panneau
+				(function() {
+				  if (typeof jQuery === 'undefined') return;
+				  
+				  // Intercepter les appels AJAX réussis
+				  jQuery(document).ajaxSuccess(function(event, xhr, settings) {
+					if (settings.url && settings.url.indexOf('tripzzy_render_trips') !== -1) {
+					  try {
+						var response = JSON.parse(xhr.responseText);
+						if (response.success && response.data) {
+						  // Déclencher l'événement personnalisé
+						  jQuery(document).trigger('tripzzy_filter_results_updated', [response.data]);
+						}
+					  } catch(e) {
+						console.error('Erreur parsing AJAX response:', e);
+					  }
+					}
+				  });
 				})();
 				</script>
 				<?php

@@ -20,10 +20,7 @@ Text Domain: Avada
     width: 100%;
 }
 
-.header_classique .col-logo {
-    position: absolute;
-    z-index: 1000;
-}
+
 
 .header_classique .col-menu {
     padding: 40px 0;
