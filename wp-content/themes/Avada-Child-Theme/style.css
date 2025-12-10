@@ -342,7 +342,12 @@ h1.fusion-title-heading.title-heading-center {
 .tripzzy-review-wrapper {
     display: none;
 }
-
+.rdvasie-rating-display {
+    text-align: center;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+}
 .tripzzy-meta-wrapper {
     display: block;
     margin: 11px 0 0 0;
