@@ -18,6 +18,21 @@
     // Vérifier si une URL est une image convertible
     function isConvertibleImage(url) {
         if (!url) return false;
+        
+        // Exclure les URLs externes (Google, etc.)
+        if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0) {
+            // Si l'URL ne contient pas le domaine du site, c'est une URL externe
+            const siteUrl = window.location.origin;
+            if (url.indexOf(siteUrl) !== 0) {
+                return false;
+            }
+        }
+        
+        // Exclure spécifiquement les URLs Google
+        if (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1) {
+            return false;
+        }
+        
         return /\/wp-content\/uploads\/.+\.(jpe?g|png)(\?.*)?$/i.test(url);
     }
 
@@ -54,7 +69,7 @@
 
     // Remplacer les images <img>
     function replaceImgTags() {
-        document.querySelectorAll('img:not([data-webp-checked])').forEach(function(img) {
+        document.querySelectorAll('img:not([data-webp-checked]):not([data-no-webp])').forEach(function(img) {
             img.setAttribute('data-webp-checked', '1');
 
             // src

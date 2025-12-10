@@ -190,3 +190,103 @@ add_filter('tripzzy_filter_settings', function($settings) {
     $settings['amount_display_format'] = '%DISPLAY_AMOUNT% %CURRENCY_SYMBOL%';
     return $settings;
 }, 99);
+
+// Script pour forcer la restauration des URLs Google (anti-WebP)
+add_action('wp_footer', function() {
+    ?>
+    <script>
+    (function() {
+        function restoreGoogleUrls() {
+            // Trouver toutes les images avec data-no-webp ou contenant google.com/googlelogo
+            document.querySelectorAll('img').forEach(function(img) {
+                var shouldRestore = false;
+                var isGoogle = false;
+                
+                // Vérifier si l'image doit être restaurée
+                if (img.hasAttribute('data-no-webp')) {
+                    shouldRestore = true;
+                }
+                
+                // Liste des attributs à vérifier
+                var attrs = ['src', 'data-src', 'data-orig-src', 'srcset', 'data-srcset'];
+                
+                attrs.forEach(function(attr) {
+                    var url = img.getAttribute(attr);
+                    if (!url) return;
+                    
+                    // Vérifier si c'est une URL Google
+                    if (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1) {
+                        isGoogle = true;
+                        shouldRestore = true;
+                    }
+                    
+                    // Si l'URL a été convertie en .webp et doit être restaurée
+                    if (shouldRestore && url.indexOf('.webp') !== -1) {
+                        // Restaurer l'extension originale (.png pour Google logo)
+                        var originalUrl = url.replace(/\.webp(\?|$)/i, '.png$1');
+                        img.setAttribute(attr, originalUrl);
+                        
+                        // Forcer le rechargement si c'est l'attribut src
+                        if (attr === 'src') {
+                            img.src = originalUrl;
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Exécuter immédiatement
+        restoreGoogleUrls();
+        
+        // Exécuter après le chargement complet
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', restoreGoogleUrls);
+        }
+        
+        // Exécuter après le chargement de toutes les ressources
+        window.addEventListener('load', function() {
+            setTimeout(restoreGoogleUrls, 100);
+        });
+        
+        // Observer les mutations du DOM pour les images ajoutées dynamiquement
+        var observer = new MutationObserver(function(mutations) {
+            var shouldRestore = false;
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.tagName === 'IMG') {
+                        shouldRestore = true;
+                    } else if (node.querySelectorAll && node.querySelectorAll('img').length > 0) {
+                        shouldRestore = true;
+                    }
+                });
+            });
+            if (shouldRestore) {
+                setTimeout(restoreGoogleUrls, 50);
+            }
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        // Exécuter périodiquement pour forcer la restauration (en dernier recours)
+        setInterval(function() {
+            document.querySelectorAll('img[data-no-webp], img[src*="google.com"], img[src*="googlelogo"]').forEach(function(img) {
+                var attrs = ['src', 'data-src', 'data-orig-src'];
+                attrs.forEach(function(attr) {
+                    var url = img.getAttribute(attr);
+                    if (url && url.indexOf('.webp') !== -1 && (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1)) {
+                        var originalUrl = url.replace(/\.webp(\?|$)/i, '.png$1');
+                        img.setAttribute(attr, originalUrl);
+                        if (attr === 'src') {
+                            img.src = originalUrl;
+                        }
+                    }
+                });
+            });
+        }, 500);
+    })();
+    </script>
+    <?php
+}, 9999);

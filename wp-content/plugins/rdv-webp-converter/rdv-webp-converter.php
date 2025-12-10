@@ -124,12 +124,44 @@ class RDV_WebP_Converter {
                         function replaceWithWebP(img) {
                             if (!img || img.dataset.webpProcessed) return;
                             
+                            // Exclure les images avec data-no-webp
+                            if (img.hasAttribute('data-no-webp')) {
+                                // Si l'URL a été convertie en .webp mais qu'elle est externe, la restaurer
+                                let attrs = ['src', 'srcset', 'data-src', 'data-srcset', 'data-orig-src', 'data-lazy-src'];
+                                attrs.forEach(function(attr) {
+                                    let url = img.getAttribute(attr);
+                                    if (url && url.indexOf('.webp') !== -1 && (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1)) {
+                                        let originalUrl = url.replace(/\.webp$/i, '.png');
+                                        img.setAttribute(attr, originalUrl);
+                                    }
+                                });
+                                return;
+                            }
+                            
                             let attrs = ['src', 'srcset', 'data-src', 'data-srcset', 'data-orig-src', 'data-lazy-src'];
                             let changed = false;
                             
                             attrs.forEach(function(attr) {
                                 let url = img.getAttribute(attr);
-                                if (url && url.match(/\.(jpe?g|png|gif)(\?|$)/i) && url.indexOf('.webp') === -1) {
+                                if (!url) return;
+                                
+                                // Exclure les URLs externes (Google, etc.)
+                                if (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1) {
+                                    // Si l'URL a été convertie en .webp, la restaurer
+                                    if (url.indexOf('.webp') !== -1) {
+                                        let originalUrl = url.replace(/\.webp$/i, '.png');
+                                        img.setAttribute(attr, originalUrl);
+                                        changed = true;
+                                    }
+                                    return;
+                                }
+                                
+                                // Ne traiter que les URLs locales (wp-content/uploads)
+                                if (url.indexOf('/wp-content/uploads/') === -1) {
+                                    return;
+                                }
+                                
+                                if (url.match(/\.(jpe?g|png|gif)(\?|$)/i) && url.indexOf('.webp') === -1) {
                                     let webpUrl = url.replace(/\.(jpe?g|png|gif)(\?|$)/i, '.webp$2');
                                     img.setAttribute(attr, webpUrl);
                                     changed = true;
@@ -267,6 +299,34 @@ class RDV_WebP_Converter {
         $upload_url = $upload_dir['baseurl'];
         $upload_path = $upload_dir['basedir'];
 
+        // PRIORITÉ 0 : Restaurer FORCÉMENT toutes les URLs Google déjà converties en .webp
+        // Ce pattern doit être exécuté EN PREMIER pour restaurer les URLs avant tout autre traitement
+        // Pattern 1 : Restaurer dans src, data-src, data-orig-src
+        $html = preg_replace_callback(
+            '/(<img[^>]*?)(\s+(?:src|data-src|data-orig-src)\s*=\s*["\'])([^"\']*google[^"\']*\.webp[^"\']*)(["\'][^>]*>)/i',
+            function($matches) {
+                $before = $matches[1];
+                $attr_start = $matches[2];
+                $url = $matches[3];
+                $after = $matches[4];
+                
+                // Restaurer l'extension originale (.png pour Google logo)
+                $original_url = preg_replace('/\.webp(\?|$)/i', '.png$1', $url);
+                
+                return $before . $attr_start . $original_url . $after;
+            },
+            $html
+        );
+        
+        // Pattern 2 : Restaurer spécifiquement les URLs Google dans tous les attributs d'image
+        $html = preg_replace_callback(
+            '/(google[^"\']*\.webp)/i',
+            function($matches) {
+                return preg_replace('/\.webp(\?|$)/i', '.png$1', $matches[0]);
+            },
+            $html
+        );
+
         // PRIORITÉ 1 : Pattern spécifique pour les balises <img> (notamment celles générées par Tripzzy)
         // Nouveau pattern et callback pour gérer tous les cas, y compris les miniatures avec dimensions
         $img_pattern = '/(<img\s+[^>]*?src\s*=\s*["\'])([^"\']*\/wp-content\/uploads\/[^"\']*\.(jpe?g|png|gif)(\?[^"\']*)?)(["\'][^>]*>)/i';
@@ -275,6 +335,17 @@ class RDV_WebP_Converter {
             $url = $matches[2];
             $query_string = isset($matches[4]) ? $matches[4] : '';
             $after = $matches[5];
+            $full_tag = $matches[0];
+
+            // Exclure si l'image a l'attribut data-no-webp
+            if (strpos($full_tag, 'data-no-webp') !== false) {
+                return $matches[0];
+            }
+
+            // Exclure les URLs externes (Google, etc.)
+            if (strpos($url, 'google.com') !== false || strpos($url, 'googlelogo') !== false) {
+                return $matches[0];
+            }
 
             // Si l'image est déjà WebP, on ne fait rien
             if (strpos($url, '.webp') !== false) {
@@ -301,13 +372,40 @@ class RDV_WebP_Converter {
         }, $html);
 
         // PRIORITÉ 3 : Remplacer les URLs dans data-orig-src et data-src pour les images lazyload (Tripzzy, Avada, WordPress native)
+        // Pattern amélioré pour capturer toute la balise img et vérifier data-no-webp
         $html = preg_replace_callback(
-            '/<img[^>]+(data-(?:orig-)?src)=["\']([^"\']+)["\']/i',
+            '/(<img[^>]*?)(data-(?:orig-)?src)=["\']([^"\']+)["\']([^>]*>)/i',
             function($matches) use ($upload_url, $upload_path) {
-                $attr = $matches[1];
-                $url = $matches[2];
+                $before = $matches[1];
+                $attr = $matches[2];
+                $url = $matches[3];
+                $after = $matches[4];
+                $full_tag = $before . $attr . '="' . $url . '"' . $after;
 
-                // Ne pas toucher si déjà WebP
+                // Exclure si l'image a l'attribut data-no-webp
+                if (strpos($full_tag, 'data-no-webp') !== false) {
+                    // Si l'URL a été convertie en .webp mais qu'elle est externe, la restaurer
+                    if (strpos($url, '.webp') !== false && (strpos($url, 'google.com') !== false || strpos($url, 'googlelogo') !== false)) {
+                        $original_url = preg_replace('/\.webp$/i', '.png', $url);
+                        return $before . $attr . '="' . $original_url . '"' . $after;
+                    }
+                    return $matches[0];
+                }
+
+                // Exclure les URLs externes (Google, etc.) - vérifier aussi les URLs qui ne sont pas dans wp-content/uploads
+                if (strpos($url, 'google.com') !== false || 
+                    strpos($url, 'googlelogo') !== false ||
+                    strpos($url, '/wp-content/uploads/') === false) {
+                    // Si l'URL a été convertie en .webp mais qu'elle est externe, la restaurer
+                    if (strpos($url, '.webp') !== false) {
+                        // Essayer de restaurer l'extension originale (.png pour Google logo)
+                        $original_url = preg_replace('/\.webp$/i', '.png', $url);
+                        return $before . $attr . '="' . $original_url . '"' . $after;
+                    }
+                    return $matches[0];
+                }
+
+                // Ne pas toucher si déjà WebP (et que c'est une URL locale)
                 if (strpos($url, '.webp') !== false) {
                     return $matches[0];
                 }
@@ -337,6 +435,11 @@ class RDV_WebP_Converter {
             $extension = $matches[2];
             $query_string = isset($matches[3]) ? $matches[3] : '';
             
+            // Exclure les URLs externes (Google, etc.)
+            if (strpos($base_url, 'google.com') !== false || strpos($base_url, 'googlelogo') !== false) {
+                return $original_url;
+            }
+            
             $webp_url = $base_url . '.webp';
             $relative_path = preg_replace('#https?://[^/]+#', '', $base_url);
             $webp_path = ABSPATH . ltrim($relative_path, '/') . '.webp';
@@ -361,6 +464,11 @@ class RDV_WebP_Converter {
             $extension = $matches[3];
             $query_string = isset($matches[4]) ? $matches[4] : '';
             $suffix = isset($matches[5]) ? $matches[5] : '';
+            
+            // Exclure les URLs externes (Google, etc.)
+            if (strpos($base_url, 'google.com') !== false || strpos($base_url, 'googlelogo') !== false) {
+                return $matches[0];
+            }
             
             $webp_url = $base_url . '.webp';
             $relative_path = preg_replace('#https?://[^/]+#', '', $base_url);
@@ -391,6 +499,11 @@ class RDV_WebP_Converter {
             $extension = $matches[3];
             $query_string = isset($matches[4]) ? $matches[4] : '';
             $suffix = isset($matches[5]) ? $matches[5] : '';
+            
+            // Exclure les URLs externes (Google, etc.)
+            if (strpos($base_url, 'google.com') !== false || strpos($base_url, 'googlelogo') !== false) {
+                return $matches[0];
+            }
             
             $webp_url = $base_url . '.webp';
             $relative_path = preg_replace('#https?://[^/]+#', '', $base_url);

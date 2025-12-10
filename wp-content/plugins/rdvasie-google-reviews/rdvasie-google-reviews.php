@@ -391,7 +391,7 @@ class RDVAsie_Google_Reviews {
 							</div>
 							<p class="rdvasie-reviews-count">Basée sur <?php echo esc_html( $total ); ?> avis</p>
 							<div class="rdvasie-google-logo">
-								<img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google" style="height: 20px;">
+								<img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google" style="height: 20px;" data-no-webp="1">
 							</div>
 						</div>
 					</div>
@@ -422,7 +422,7 @@ class RDVAsie_Google_Reviews {
 								<span class="rdvasie-review-date"><?php echo esc_html( $date ); ?></span>
 							</div>
 							<div class="rdvasie-google-icon">
-								<img src="https://www.google.com/favicon.ico" alt="Google" style="width: 16px; height: 16px;">
+								<img src="https://www.google.com/favicon.ico" alt="Google" style="width: 16px; height: 16px;" data-no-webp="1">
 							</div>
 						</div>
 						<div class="rdvasie-review-stars">

@@ -1815,6 +1815,7 @@ a.fusion-button:hover {
     .fusion-logo::after {
         top: 0;
         left: 0;
+        display: none !important;
         width: 100%;
         height: 55px;
         background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
@@ -2735,7 +2736,10 @@ a.fusion-button:hover {
     .devis-full-form .form-row {
         grid-template-columns: 1fr;
     }
-    
+    .devis-full-form {
+    margin: 0 !important;
+    padding: 0 !important;
+}
     .devis-full-form .participants-grid {
         grid-template-columns: 1fr;
     }
