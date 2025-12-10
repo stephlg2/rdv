@@ -374,8 +374,16 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 <!-- Script pour soumission AJAX et bouton 3 états -->
 <script>
 (function() {
-    var form = document.getElementById('<?php echo esc_js($form_id); ?>');
+    var form = document.getElementById('<?php echo esc_js($form_id); ?>-form');
+    if (!form) {
+        console.error('Formulaire non trouvé');
+        return;
+    }
     var submitBtn = form.querySelector('.submit-btn');
+    if (!submitBtn) {
+        console.error('Bouton submit non trouvé');
+        return;
+    }
     var originalBtnText = submitBtn.textContent;
     var isSubmitting = false;
 
@@ -383,6 +391,12 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
         e.preventDefault();
         
         if (isSubmitting) {
+            return;
+        }
+
+        // Valider le formulaire avant envoi
+        if (!form.checkValidity()) {
+            form.reportValidity();
             return;
         }
 
@@ -408,17 +422,35 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 
     function submitFormAjax(recaptchaToken) {
         var formData = new FormData(form);
-        formData.append('action', 'devis_pro_process_front_form');
+        formData.append('action', 'devis_pro_submit_form');
+        
+        // S'assurer que le champ voyage-id est bien envoyé comme 'voyage'
+        var voyageIdInput = document.getElementById('voyage-id');
+        if (voyageIdInput && voyageIdInput.value) {
+            formData.set('voyage', voyageIdInput.value);
+        }
         
         if (recaptchaToken) {
             formData.append('recaptcha_token', recaptchaToken);
         }
 
+        console.log('Envoi du formulaire...');
+        // Debug: afficher les données envoyées
+        for (var pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+        
         fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Réponse brute:', response);
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Réponse serveur:', data);
             

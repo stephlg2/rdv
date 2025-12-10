@@ -1446,7 +1446,11 @@ class Devis_Pro {
             $email_handler->send_new_request_notification($devis);
             $email_handler->send_confirmation_to_client($devis);
             
-            // Newsletter Mailchimp            
+            // Newsletter Mailchimp si cochée
+            if (!empty($post['newsletter']) && $post['newsletter'] == '1') {
+                $this->subscribe_to_mailchimp($email, $prenom, $nom);
+            }
+            
             return array('success' => true, 'id' => $id);
         }
         
