@@ -1653,6 +1653,15 @@ a.fusion-button:hover {
         top: 0;
         left: 0;
     }
+    .et-aussi {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+    .et-aussi .fusion-button-text{
+        font-size: 3.9vw;
+    }
 
     .tz-toolbar {
         padding: 15px 0 0 0;
