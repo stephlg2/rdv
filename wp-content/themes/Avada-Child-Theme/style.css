@@ -672,9 +672,13 @@ a.tripzzy-accordion-expand-close:hover {
    ========================================================================== */
 
 .demande-devis-top a span {
-    background: #ffffff38;
+    background: #de5b09;
     padding: 5px 10px;
     border-radius: 20px;
+}
+.page_classique .demande-devis-top a span {
+    background: #fff ;
+    color: #de5b09 ;
 }
 
 /* ==========================================================================
@@ -1481,7 +1485,10 @@ a.fusion-button:hover {
         margin: 0 0 10px 0 !important;
         line-height: 9vw !important;
     }
-
+.demande-devis-top a span {
+    background: #ffffff38;
+    border-radius: 5px;
+}
     h1.fusion-title-heading.title-heading-center {
         padding-top: 22vh !important;
     }

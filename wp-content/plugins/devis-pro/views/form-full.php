@@ -21,7 +21,7 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 <div class="devis-full-form" id="<?php echo $form_id; ?>">
     <div class="form-header">
         <h2><?php _e('Votre aventure en Asie <span style="color:#de5b09;">commence ici !</span>', 'devis-pro'); ?></h2>
-        <p><?php _e('Complétez ce formulaire et recevez un devis entièrement personnalisé <strong>dans les 48 heures.</strong>', 'devis-pro'); ?></p>
+        <p><?php _e('Complétez ce formulaire et recevez un devis entièrement personnalisé !', 'devis-pro'); ?></p>
     </div>
 
     <?php if (!empty($error)) : ?>
@@ -45,7 +45,7 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 
             <div class="form-row">
                 <div class="form-group full-width">
-                    <label for="voyage-search"><?php _e('Quel voyage vous intéresse ?', 'devis-pro'); ?></label>
+                    <label for="voyage-search"><?php _e('Quelle(s) destination(s) vous intéresse(nt) ?', 'devis-pro'); ?></label>
                     <div class="voyage-search-wrapper">
                         <input type="text" 
                                id="voyage-search" 
