@@ -193,6 +193,7 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
     transition: all 0.3s ease !important;
     display: inline-block !important;
     text-decoration: none !important;
+    white-space: nowrap !important;
 }
 
 .payment-btn:hover {
@@ -214,6 +215,41 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
     width: 22px;
     height: 22px;
     fill: currentColor;
+}
+
+.payment-reassurance {
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.payment-reassurance-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0 0 6px;
+    color: rgba(255,255,255,0.9);
+}
+
+.payment-reassurance-title .dashicons,
+.payment-reassurance-title svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+    opacity: 0.8;
+}
+
+.payment-reassurance-text {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+    line-height: 1.3;
 }
 
 .payment-logo {
@@ -269,7 +305,14 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
     <div class="devis-payment">
         <div class="payment-header">
             <h1><?php _e('Règlement de votre voyage', 'devis-pro'); ?></h1>
-            <p><?php echo esc_html($voyage_title); ?></p>
+            <?php 
+            $client_name = trim($devis->civ . ' ' . $devis->nom);
+            if (!empty($client_name)) :
+            ?>
+            <p><?php printf(__('Bonjour %s, tout est prêt pour votre voyage.', 'devis-pro'), esc_html($client_name)); ?><br><?php _e('Il ne vous reste plus qu\'à finaliser votre paiement en toute sécurité.', 'devis-pro'); ?></p>
+            <?php else : ?>
+            <p><?php _e('Tout est prêt pour votre voyage.', 'devis-pro'); ?><br><?php _e('Il ne vous reste plus qu\'à finaliser votre paiement en toute sécurité.', 'devis-pro'); ?></p>
+            <?php endif; ?>
         </div>
 
         <div class="payment-content">
@@ -367,7 +410,15 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
             </div>
 
             <!-- Action de paiement -->
-            <?php if ($payment_data) : ?>
+            <?php 
+            // Mode aperçu pour tester l'affichage (à retirer en production)
+            $show_preview = isset($_GET['preview']) && $_GET['preview'] == 'payment';
+            if ($payment_data || $show_preview) : 
+                // Données de test pour l'aperçu
+                if ($show_preview && !$payment_data) {
+                    $devis->montant = 2000;
+                }
+            ?>
                 <div class="payment-action">
                     <p><?php _e('Montant à régler', 'devis-pro'); ?></p>
                     
@@ -375,7 +426,21 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
                         <?php echo number_format($devis->montant, 0, ',', ' '); ?><small> €</small>
                     </div>
                     
-                    <form method="post" action="https://p.monetico-services.com/paiement.cgi" class="payment-form">
+                    <!-- Bloc de réassurance -->
+                    <div class="payment-reassurance">
+                        <div class="payment-reassurance-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                            </svg>
+                            <?php _e('Paiement sécurisé', 'devis-pro'); ?>
+                        </div>
+                        <p class="payment-reassurance-text">
+                            <?php _e('Vos données sont protégées et cryptées.', 'devis-pro'); ?>
+                        </p>
+                    </div>
+                    
+                    <form method="post" action="<?php echo $show_preview ? '#' : 'https://p.monetico-services.com/paiement.cgi'; ?>" class="payment-form">
+                        <?php if (!$show_preview) : ?>
                         <input type="hidden" name="version" value="3.0">
                         <input type="hidden" name="TPE" value="<?php echo esc_attr($payment_data['tpe']); ?>">
                         <input type="hidden" name="date" value="<?php echo esc_attr($payment_data['date']); ?>">
@@ -389,9 +454,13 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
                         <input type="hidden" name="societe" value="<?php echo esc_attr($payment_data['societe']); ?>">
                         <input type="hidden" name="texte-libre" value="Rendez-vous avec l'Asie">
                         <input type="hidden" name="mail" value="<?php echo esc_attr($payment_data['email']); ?>">
+                        <?php endif; ?>
                         
-                        <button type="submit" class="payment-btn">
-                            <?php _e('Procéder au paiement', 'devis-pro'); ?>
+                        <button type="submit" class="payment-btn" <?php echo $show_preview ? 'onclick="event.preventDefault(); alert(\'Mode aperçu - Le paiement n\'est pas activé\'); return false;"' : ''; ?>>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                            </svg>
+                            <?php _e('Finaliser ma commande', 'devis-pro'); ?>
                         </button>
                     </form>
                     
@@ -400,10 +469,6 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
                             <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
                         </svg>
                         <?php _e('Paiement sécurisé via Monetico CIC', 'devis-pro'); ?>
-                    </div>
-                    
-                    <div class="payment-logo">
-                        <img src="https://www.rdvasie.com/wp-content/uploads/2019/01/paiement-securise.png" alt="Paiement sécurisé">
                     </div>
                 </div>
             <?php else : ?>

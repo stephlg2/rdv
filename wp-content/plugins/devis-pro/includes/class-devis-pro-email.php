@@ -155,7 +155,13 @@ class Devis_Pro_Email {
      * Envoyer la confirmation au client
      */
     public function send_confirmation_to_client($devis) {
-        $voyage = $this->get_voyage_title($devis->voyage);
+        // Récupérer la destination (peut contenir plusieurs destinations séparées par des virgules)
+        $destination = !empty($devis->destination) ? $devis->destination : 'Voyage en Asie';
+        
+        // Si pas de destination mais un voyage ID, récupérer le titre du voyage
+        if (empty($devis->destination) && !empty($devis->voyage)) {
+            $destination = $this->get_voyage_title($devis->voyage);
+        }
         
         // Générer le lien d'accès direct à l'espace client
         $token = md5($devis->email . wp_salt());
@@ -163,6 +169,19 @@ class Devis_Pro_Email {
 
         $subject = 'Nous avons bien reçu votre demande de voyage !';
 
+        // Construire l'adresse complète
+        $adresse_complete = '';
+        if (!empty($devis->cp) || !empty($devis->ville)) {
+            $adresse_parts = array();
+            if (!empty($devis->cp)) {
+                $adresse_parts[] = esc_html($devis->cp);
+            }
+            if (!empty($devis->ville)) {
+                $adresse_parts[] = esc_html($devis->ville);
+            }
+            $adresse_complete = implode(' ', $adresse_parts);
+        }
+        
         $message = '
             <h2 style="color:#de5b09;margin-top:0;">Merci pour votre demande !</h2>
             <p>Bonjour ' . esc_html($devis->prenom) . ',</p>
@@ -172,18 +191,70 @@ class Devis_Pro_Email {
             <h3 style="color:#333;border-bottom:2px solid #de5b09;padding-bottom:10px;">Récapitulatif de votre demande</h3>
             
             <ul style="list-style:none;padding:0;">
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Voyage :</strong> ' . esc_html($voyage) . '</li>
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Dates :</strong> ' . esc_html($devis->depart) . ' → ' . esc_html($devis->retour) . '</li>
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Durée :</strong> ' . esc_html($devis->duree) . '</li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Destination(s) :</strong> ' . esc_html($destination) . '</li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Dates :</strong> ' . esc_html($devis->depart) . ' → ' . esc_html($devis->retour) . '</li>';
+        
+        // Ajouter la durée si elle existe
+        if (!empty($devis->duree)) {
+            $message .= '<li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Durée :</strong> ' . esc_html($devis->duree) . '</li>';
+        }
+        
+        // Ajouter le budget si disponible
+        if (!empty($devis->budget) && $devis->budget > 0) {
+            $message .= '<li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Budget par personne :</strong> ' . number_format($devis->budget, 0, ',', ' ') . ' €</li>';
+        }
+        
+        $message .= '
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Participants :</strong> ' . intval($devis->adulte) . ' adulte(s), ' . intval($devis->enfant) . ' enfant(s), ' . intval($devis->bebe) . ' bébé(s)</li>
-                <li style="padding:8px 0;"><strong>Vol inclus :</strong> ' . esc_html($devis->vol) . '</li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Vol inclus :</strong> ' . esc_html($devis->vol) . '</li>';
+        
+        // Ajouter le descriptif du voyage si présent
+        if (!empty($devis->message)) {
+            $message .= '<li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Descriptif de votre projet :</strong><br><span style="color:#666;font-style:italic;">' . nl2br(esc_html($devis->message)) . '</span></li>';
+        }
+        
+        $message .= '
             </ul>
+            
+            <div style="background:#f8f9fa;border-radius:10px;padding:20px;margin:25px 0;">
+                <h4 style="color:#333;margin:0 0 15px 0;font-size:16px;font-weight:600;">Vos coordonnées</h4>
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:8px 0;color:#666;width:120px;vertical-align:top;">Nom :</td>
+                        <td style="padding:8px 0;color:#333;font-weight:500;">' . esc_html($devis->civ . ' ' . $devis->prenom . ' ' . $devis->nom) . '</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 0;color:#666;vertical-align:top;">Email :</td>
+                        <td style="padding:8px 0;color:#333;">
+                            <a href="mailto:' . esc_attr($devis->email) . '" style="color:#de5b09;text-decoration:none;">' . esc_html($devis->email) . '</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 0;color:#666;vertical-align:top;">Téléphone :</td>
+                        <td style="padding:8px 0;color:#333;font-weight:500;">' . esc_html($devis->tel) . '</td>
+                    </tr>';
+        
+        if (!empty($adresse_complete)) {
+            $message .= '
+                    <tr>
+                        <td style="padding:8px 0;color:#666;vertical-align:top;">Adresse :</td>
+                        <td style="padding:8px 0;color:#333;font-weight:500;">' . $adresse_complete . '</td>
+                    </tr>';
+        }
+        
+        $message .= '
+                </table>
+            </div>
             
             <p style="text-align:center;margin:30px 0 20px;">
                 <a href="' . esc_url($access_url) . '" style="display:inline-block;background:#de5b09;color:#fff;padding:15px 40px;text-decoration:none;border-radius:8px;font-size:16px;font-weight:bold;">Accéder à mon espace client</a>
             </p>
             
-            <p style="margin-top:30px;">À très bientôt !</p>
+            <p style="margin-top:30px;padding-top:20px;border-top:1px solid #eee;color:#666;font-size:13px;">
+                <em>Une erreur dans vos coordonnées ? N\'hésitez pas à nous contacter par mail à <a href="mailto:contact@rdvasie.com" style="color:#de5b09;">contact@rdvasie.com</a></em>
+            </p>
+            
+            <p style="margin-top:20px;">À très bientôt !</p>
             <p><strong>L\'équipe Rendez-vous avec l\'Asie</strong></p>
         ';
 

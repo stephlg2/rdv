@@ -27,7 +27,7 @@ if (isset($_GET['migrate']) && $_GET['migrate'] == 1) {
     
     <hr class="wp-header-end">
 
-    <form method="post">
+    <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=devis-pro-settings')); ?>">
         <?php wp_nonce_field('devis_pro_settings'); ?>
         <input type="hidden" name="devis_pro_save_settings" value="1">
 
@@ -57,7 +57,7 @@ if (isset($_GET['migrate']) && $_GET['migrate'] == 1) {
                                     </code>
                                 </p>
                                 <p style="margin-top:10px;">
-                                    <form method="post" style="display:inline;">
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=devis-pro-settings')); ?>" style="display:inline;">
                                         <?php wp_nonce_field('devis_pro_test_email'); ?>
                                         <button type="submit" name="devis_pro_send_test_email" class="button button-secondary">
                                             <span class="dashicons dashicons-email-alt"></span>

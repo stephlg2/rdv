@@ -1079,3 +1079,19 @@
     }
 }
 
+/* Alignement icône bouton email test */
+button[name="devis_pro_send_test_email"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+button[name="devis_pro_send_test_email"] .dashicons {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    margin: 0 !important;
+}
+

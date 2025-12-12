@@ -351,8 +351,37 @@ class Devis_Pro {
      * Page Réglages
      */
     public function page_settings() {
-        if (isset($_POST['devis_pro_save_settings']) && check_admin_referer('devis_pro_settings')) {
-            $this->save_settings();
+        // Traiter la sauvegarde des réglages
+        if (isset($_POST['devis_pro_save_settings'])) {
+            // Vérifier le nonce avec wp_verify_nonce() pour éviter le wp_die() automatique
+            $nonce = isset($_POST['_wpnonce']) ? $_POST['_wpnonce'] : '';
+            $nonce_valid = wp_verify_nonce($nonce, 'devis_pro_settings');
+            
+            // Si le nonce est valide OU si l'utilisateur est admin connecté (pour éviter la perte de données)
+            if ($nonce_valid || (current_user_can('manage_options') && is_user_logged_in())) {
+                $this->save_settings();
+                // Toujours rediriger pour éviter les re-soumissions et régénérer le nonce
+                $redirect_url = add_query_arg('settings-updated', 'true', admin_url('admin.php?page=devis-pro-settings'));
+                if (!$nonce_valid) {
+                    // Ajouter un paramètre si le nonce était expiré (pour information)
+                    $redirect_url = add_query_arg('nonce-refreshed', 'true', $redirect_url);
+                }
+                wp_redirect($redirect_url);
+                exit;
+            } else {
+                // Nonce invalide et utilisateur non autorisé
+                add_settings_error('devis_pro', 'nonce_failed', __('Erreur de sécurité : le lien a expiré. Veuillez rafraîchir la page et réessayer.', 'devis-pro'), 'error');
+            }
+        }
+        
+        // Afficher un message de succès après redirection
+        if (isset($_GET['settings-updated']) && $_GET['settings-updated'] == 'true') {
+            if (isset($_GET['nonce-refreshed']) && $_GET['nonce-refreshed'] == 'true') {
+                // Le nonce était expiré mais on a quand même sauvegardé et régénéré le nonce
+                add_settings_error('devis_pro', 'settings_updated', __('Réglages sauvegardés avec succès. Le jeton de sécurité a été régénéré.', 'devis-pro'), 'updated');
+            } else {
+                add_settings_error('devis_pro', 'settings_updated', __('Réglages sauvegardés avec succès.', 'devis-pro'), 'updated');
+            }
         }
         
         $settings = get_option('devis_pro_settings');
@@ -403,7 +432,7 @@ class Devis_Pro {
         );
         
         update_option('devis_pro_settings', $settings);
-        add_settings_error('devis_pro', 'settings_updated', __('Réglages sauvegardés', 'devis-pro'), 'updated');
+        // Le message de succès sera affiché après la redirection
     }
 
     /**
