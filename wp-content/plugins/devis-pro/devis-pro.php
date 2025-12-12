@@ -81,6 +81,9 @@ class Devis_Pro {
         add_action('wp_ajax_nopriv_devis_pro_search_voyages', array($this, 'ajax_search_voyages'));
         add_action('wp_ajax_devis_pro_get_voyage', array($this, 'ajax_get_voyage'));
         add_action('wp_ajax_nopriv_devis_pro_get_voyage', array($this, 'ajax_get_voyage'));
+        // AJAX pour récupérer les destinations
+        add_action('wp_ajax_devis_pro_get_destinations', array($this, 'ajax_get_destinations'));
+        add_action('wp_ajax_nopriv_devis_pro_get_destinations', array($this, 'ajax_get_destinations'));
         
         // AJAX pour soumission formulaire front-end (sidebar)
         add_action('wp_ajax_devis_pro_submit_form', array($this, 'ajax_submit_form'));
@@ -536,8 +539,39 @@ class Devis_Pro {
      * Sanitizer les données du devis
      */
     private function sanitize_devis_data($post) {
+        // Traiter les destinations multiples
+        $destination = '';
+        $destination_names = array();
+        
+        if (!empty($post['destinations'])) {
+            $destination_ids = explode(',', sanitize_text_field($post['destinations']));
+            foreach ($destination_ids as $term_id) {
+                $term_id = intval(trim($term_id));
+                if ($term_id > 0) {
+                    $term = get_term($term_id, 'tripzzy_trip_destination');
+                    if ($term && !is_wp_error($term)) {
+                        $destination_names[] = $term->name;
+                    }
+                }
+            }
+        }
+        
+        // Ajouter la destination "Autre" si fournie
+        if (!empty($post['destination_other'])) {
+            $other_destination = sanitize_text_field($post['destination_other']);
+            if (!empty($other_destination)) {
+                $destination_names[] = $other_destination;
+            }
+        }
+        
+        if (!empty($destination_names)) {
+            $destination = implode(', ', $destination_names);
+        } else {
+            $destination = sanitize_text_field($post['destination'] ?? '');
+        }
+        
         $data = array(
-            'destination' => sanitize_text_field($post['destination'] ?? ''),
+            'destination' => $destination,
             'voyage' => sanitize_text_field($post['voyage'] ?? ''),
             'depart' => sanitize_text_field($post['depart'] ?? ''),
             'retour' => sanitize_text_field($post['retour'] ?? ''),
@@ -1063,6 +1097,39 @@ class Devis_Pro {
             'title' => $post->post_title,
             'thumbnail' => $thumbnail ?: ''
         ));
+    }
+
+    /**
+     * AJAX: Récupérer la liste des destinations
+     */
+    public function ajax_get_destinations() {
+        check_ajax_referer('devis_pro_search', 'nonce');
+        
+        // Récupérer les termes de la taxonomie tripzzy_trip_destination
+        $terms = get_terms(array(
+            'taxonomy' => 'tripzzy_trip_destination',
+            'hide_empty' => true,
+            'orderby' => 'name',
+            'order' => 'ASC'
+        ));
+        
+        $destinations = array();
+        if (!is_wp_error($terms) && !empty($terms)) {
+            foreach ($terms as $term) {
+                // Exclure "Toutes nos destinations en Asie"
+                if (stripos($term->name, 'Toutes nos destinations') !== false) {
+                    continue;
+                }
+                
+                $destinations[] = array(
+                    'id' => $term->term_id,
+                    'name' => $term->name,
+                    'slug' => $term->slug
+                );
+            }
+        }
+        
+        wp_send_json_success($destinations);
     }
     
     /**

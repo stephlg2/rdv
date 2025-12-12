@@ -17,6 +17,238 @@ $recaptcha_site_key = $settings['recaptcha_site_key'] ?? '';
 $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secret_key'] ?? '');
 ?>
 
+<style>
+/* Menu déroulant destinations multiples */
+.devis-full-form .destinations-tags-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 50px;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0px 12px !important;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box !important;
+    outline: none !important;
+    margin: 0 !important;
+}
+
+/* Supprimer toute bordure sur les éléments enfants */
+.devis-full-form .destinations-tags-wrapper * {
+    box-sizing: border-box;
+    border: none !important;
+}
+
+/* Exception pour les tags qui ont leur propre style */
+.devis-full-form .destinations-tags-wrapper .destination-tag {
+    border: none !important;
+}
+
+.devis-full-form .destinations-tags-wrapper:focus-within {
+    border-color: #de5b09;
+    box-shadow: 0 0 0 4px rgba(222, 91, 9, 0.1);
+}
+
+.devis-full-form .destinations-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.devis-full-form .destinations-tags-wrapper.has-tags .destinations-display-input {
+    display: none;
+}
+
+.devis-full-form .destinations-tags-wrapper:not(.has-tags) .destinations-tags-container {
+    display: none;
+}
+
+.devis-full-form .destination-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #de5b09;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    border: none;
+}
+
+.devis-full-form .destination-tag-remove {
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    color: #fff;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.devis-full-form .destination-tag-remove:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.devis-full-form .destinations-display-input {
+    flex: 1;
+    min-width: 200px;
+    border: none !important;
+    border-width: 0 !important;
+    padding: 8px 4px;
+    font-size: 15px;
+    font-family: inherit;
+    background: transparent !important;
+    outline: none !important;
+    cursor: pointer;
+    box-sizing: border-box;
+    box-shadow: none !important;
+    margin: 0 !important;
+}
+
+/* Supprimer toute bordure sur les éléments enfants */
+.devis-full-form .destinations-tags-wrapper .destinations-tags-container,
+.devis-full-form .destinations-tags-wrapper .destinations-display-input {
+    border: none !important;
+    border-width: 0 !important;
+}
+
+.devis-full-form .destinations-display-input::placeholder {
+    color: #999;
+}
+
+.devis-full-form .destinations-dropdown {
+    position: relative;
+    margin-top: 10px;
+}
+
+.devis-full-form .destinations-grid {
+    display: none;
+}
+
+.devis-full-form .destinations-dropdown.active .destinations-grid {
+    display: grid !important;
+}
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    background: #fff;
+    border: 2px solid #de5b09;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 5px;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+
+.devis-full-form .destination-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.devis-full-form .destination-checkbox-item:hover {
+    background: #fff5f0;
+}
+
+.devis-full-form .destination-checkbox-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #de5b09;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.devis-full-form .destination-checkbox-item span {
+    font-size: 14px;
+    color: #333;
+    user-select: none;
+    margin-left: 5px;
+}
+
+.devis-full-form .destinations-loading {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.devis-full-form .destination-other-wrapper {
+    padding: 15px 20px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 10px;
+}
+
+.devis-full-form label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: end;
+}
+
+.devis-full-form .destination-other-label {
+    display: block;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.devis-full-form .destination-other-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.devis-full-form .destination-other-input:focus {
+    border-color: #de5b09;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(222, 91, 9, 0.1);
+}
+
+.devis-full-form .destination-other-checkbox {
+    grid-column: 1 / -1;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
+    margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+    .devis-full-form .destinations-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 
 <div class="devis-full-form" id="<?php echo $form_id; ?>">
     <div class="form-header">
@@ -45,21 +277,27 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 
             <div class="form-row">
                 <div class="form-group full-width">
-                    <label for="voyage-search"><?php _e('Quelle(s) destination(s) vous intéresse(nt) ?', 'devis-pro'); ?></label>
-                    <div class="voyage-search-wrapper">
+                    <label for="destinations-display"><?php _e('Quelle(s) destination(s) vous intéresse(nt) ?', 'devis-pro'); ?></label>
+                    <div class="destinations-tags-wrapper" id="destinations-tags-wrapper">
+                        <div class="destinations-tags-container" id="destinations-tags-container"></div>
                         <input type="text" 
-                               id="voyage-search" 
-                               class="voyage-search-input" 
-                               placeholder="<?php _e('Recherchez un voyage, une destination...', 'devis-pro'); ?>"
-                               autocomplete="off">
-                        <div class="voyage-results" id="voyage-results"></div>
+                               id="destinations-display" 
+                               class="destinations-display-input" 
+                               placeholder="<?php _e('Sélectionnez une ou plusieurs destinations...', 'devis-pro'); ?>"
+                               readonly>
                     </div>
-                    <div class="voyage-selected" id="voyage-selected">
-                        <img src="" alt="" class="voyage-result-thumb" id="voyage-selected-thumb">
-                        <div class="voyage-selected-info">
-                            <div class="voyage-selected-title" id="voyage-selected-title"></div>
+                    <input type="hidden" id="destinations-values" name="destinations" value="">
+                    <input type="hidden" id="destination-other" name="destination_other" value="">
+                    <div class="destinations-dropdown" id="destinations-dropdown">
+                        <div class="destinations-loading">Chargement des destinations...</div>
+                        <div class="destinations-grid" id="destinations-grid"></div>
+                        <div class="destination-other-wrapper" id="destination-other-wrapper" style="display:none;">
+                            <label for="destination-other-input" class="destination-other-label"><?php _e('Précisez votre destination :', 'devis-pro'); ?></label>
+                            <input type="text" 
+                                   id="destination-other-input" 
+                                   class="destination-other-input" 
+                                   placeholder="<?php _e('Ex: Thaïlande, Malaisie...', 'devis-pro'); ?>">
                         </div>
-                        <button type="button" class="voyage-selected-remove" id="voyage-remove">&times;</button>
                     </div>
                 </div>
             </div>
@@ -218,120 +456,362 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 <script>
 (function() {
     var formWrapper = document.getElementById('<?php echo $form_id; ?>');
-    var searchInput = document.getElementById('voyage-search');
-    var resultsContainer = document.getElementById('voyage-results');
-    var selectedContainer = document.getElementById('voyage-selected');
-    var voyageIdInput = document.getElementById('voyage-id');
-    var removeBtn = document.getElementById('voyage-remove');
-    var searchTimeout;
+    var displayInput = document.getElementById('destinations-display');
+    var hiddenInput = document.getElementById('destinations-values');
+    var dropdown = document.getElementById('destinations-dropdown');
+    var grid = document.getElementById('destinations-grid');
+    var tagsWrapper = document.getElementById('destinations-tags-wrapper');
+    var selectedDestinations = [];
+    var allDestinations = [];
 
-    // Recherche avec debounce
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        var query = this.value.trim();
-        
-        if (query.length < 2) {
-            resultsContainer.classList.remove('active');
-            return;
-        }
-
-        searchTimeout = setTimeout(function() {
-            fetchVoyages(query);
-        }, 300);
-    });
-
-    // Fermer les résultats au clic extérieur
-    document.addEventListener('click', function(e) {
-        if (!formWrapper.contains(e.target)) {
-            resultsContainer.classList.remove('active');
-        }
-    });
-
-    // Focus sur l'input
-    searchInput.addEventListener('focus', function() {
-        if (this.value.length >= 2) {
-            fetchVoyages(this.value);
-        }
-    });
-
-    // Supprimer la sélection
-    removeBtn.addEventListener('click', function() {
-        voyageIdInput.value = '';
-        selectedContainer.classList.remove('active');
-        searchInput.value = '';
-        searchInput.style.display = 'block';
-    });
-
-    // Fetch voyages via AJAX
-    function fetchVoyages(query) {
-        resultsContainer.innerHTML = '<div class="loading-spinner active">Recherche...</div>';
-        resultsContainer.classList.add('active');
-
+    // Charger les destinations au chargement de la page
+    function loadDestinations() {
         fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-                action: 'devis_pro_search_voyages',
-                query: query,
+                action: 'devis_pro_get_destinations',
                 nonce: '<?php echo wp_create_nonce('devis_pro_search'); ?>'
             })
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.data.length > 0) {
-                renderResults(data.data);
+            if (data.success && data.data) {
+                allDestinations = data.data;
+                renderDestinations();
+                var loadingEl = document.querySelector('.destinations-loading');
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                // S'assurer que le dropdown est fermé au chargement
+                if (dropdown) {
+                    dropdown.classList.remove('active');
+                }
+                if (grid) {
+                    grid.style.display = 'none';
+                }
             } else {
-                resultsContainer.innerHTML = '<div style="padding:15px;text-align:center;color:#666;">Aucun voyage trouvé</div>';
+                document.querySelector('.destinations-loading').textContent = 'Aucune destination disponible';
             }
         })
         .catch(error => {
-            resultsContainer.innerHTML = '<div style="padding:15px;text-align:center;color:#dc3545;">Erreur de recherche</div>';
+            document.querySelector('.destinations-loading').textContent = 'Erreur de chargement';
         });
     }
 
-    // Afficher les résultats
-    function renderResults(voyages) {
+    // Afficher les destinations dans la grille
+    function renderDestinations() {
         var html = '';
-        voyages.forEach(function(voyage) {
-            html += '<div class="voyage-result-item" data-id="' + voyage.id + '" data-title="' + escapeHtml(voyage.title) + '" data-thumb="' + (voyage.thumbnail || '') + '">';
-            if (voyage.thumbnail) {
-                html += '<img src="' + voyage.thumbnail + '" alt="" class="voyage-result-thumb">';
-            }
-            html += '<div class="voyage-result-info">';
-            html += '<div class="voyage-result-title">' + escapeHtml(voyage.title) + '</div>';
-            if (voyage.destination) {
-                html += '<div class="voyage-result-meta">' + escapeHtml(voyage.destination) + '</div>';
-            }
-            html += '</div></div>';
-        });
-        resultsContainer.innerHTML = html;
-
-        // Event listeners pour les résultats
-        resultsContainer.querySelectorAll('.voyage-result-item').forEach(function(item) {
-            item.addEventListener('click', function() {
-                selectVoyage(this.dataset.id, this.dataset.title, this.dataset.thumb);
+        allDestinations.forEach(function(dest) {
+            var isChecked = selectedDestinations.some(function(sel) {
+                return sel.id === dest.id;
             });
+            html += '<label class="destination-checkbox-item">';
+            html += '<input type="checkbox" value="' + dest.id + '" data-name="' + escapeHtml(dest.name) + '" ' + (isChecked ? 'checked' : '') + '>';
+            html += '<span>' + escapeHtml(dest.name) + '</span>';
+            html += '</label>';
         });
+        
+        // Ajouter la case "Autre"
+        var hasOther = selectedDestinations.some(function(sel) {
+            return sel.id === 'other';
+        });
+        html += '<label class="destination-checkbox-item destination-other-checkbox">';
+        html += '<input type="checkbox" value="other" id="destination-other-checkbox" ' + (hasOther ? 'checked' : '') + '>';
+        html += '<span><?php _e('Autre', 'devis-pro'); ?></span>';
+        html += '</label>';
+        
+        grid.innerHTML = html;
+
+        // Event listeners pour les checkboxes
+        grid.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function(e) {
+                e.stopPropagation(); // Empêcher la propagation pour éviter la fermeture immédiate
+                if (this.value === 'other') {
+                    toggleOther(this.checked);
+                    // Ne pas fermer si on coche "Autre" car il faut pouvoir saisir le texte
+                } else {
+                    toggleDestination(this);
+                    // Fermer après sélection d'une destination normale
+                    closeDropdownAfterSelection();
+                }
+            });
+            
+            // Empêcher la fermeture au clic sur le label
+            var label = checkbox.closest('label');
+            if (label) {
+                label.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+        
+        // Event listener pour le champ "Autre"
+        var otherInput = document.getElementById('destination-other-input');
+        if (otherInput) {
+            otherInput.addEventListener('input', function() {
+                updateOtherDestination(this.value);
+            });
+            
+            // Fermer le dropdown quand on perd le focus du champ "Autre" (si du texte a été saisi)
+            otherInput.addEventListener('blur', function() {
+                setTimeout(function() {
+                    // Vérifier si le focus n'est pas passé sur un autre élément du dropdown
+                    var activeElement = document.activeElement;
+                    var isFocusInDropdown = dropdown && dropdown.contains(activeElement);
+                    if (!isFocusInDropdown) {
+                        closeDropdown();
+                    }
+                }, 150);
+            });
+        }
     }
 
-    // Sélectionner un voyage
-    function selectVoyage(id, title, thumb) {
-        voyageIdInput.value = id;
-        document.getElementById('voyage-selected-title').textContent = title;
-        
-        var thumbImg = document.getElementById('voyage-selected-thumb');
-        if (thumb) {
-            thumbImg.src = thumb;
-            thumbImg.style.display = 'block';
+    // Toggle une destination
+    function toggleDestination(checkbox) {
+        var destId = parseInt(checkbox.value);
+        var destName = checkbox.dataset.name;
+
+        if (checkbox.checked) {
+            selectedDestinations.push({
+                id: destId,
+                name: destName
+            });
         } else {
-            thumbImg.style.display = 'none';
+            selectedDestinations = selectedDestinations.filter(function(dest) {
+                return dest.id !== destId;
+            });
         }
 
-        selectedContainer.classList.add('active');
-        searchInput.style.display = 'none';
-        resultsContainer.classList.remove('active');
+        updateDisplay();
+    }
+
+    // Toggle la case "Autre"
+    function toggleOther(checked) {
+        var otherWrapper = document.getElementById('destination-other-wrapper');
+        var otherInput = document.getElementById('destination-other-input');
+        var otherHiddenInput = document.getElementById('destination-other');
+        
+        if (checked) {
+            otherWrapper.style.display = 'block';
+            // Ajouter "Autre" aux destinations sélectionnées
+            var otherValue = otherInput ? otherInput.value.trim() : '';
+            if (otherValue) {
+                selectedDestinations.push({
+                    id: 'other',
+                    name: otherValue
+                });
+            } else {
+                selectedDestinations.push({
+                    id: 'other',
+                    name: 'Autre'
+                });
+            }
+            // Focus sur le champ après un court délai pour permettre l'affichage
+            setTimeout(function() {
+                if (otherInput) {
+                    otherInput.focus();
+                }
+            }, 100);
+        } else {
+            otherWrapper.style.display = 'none';
+            if (otherInput) {
+                otherInput.value = '';
+            }
+            if (otherHiddenInput) {
+                otherHiddenInput.value = '';
+            }
+            // Retirer "Autre" des destinations sélectionnées
+            selectedDestinations = selectedDestinations.filter(function(dest) {
+                return dest.id !== 'other';
+            });
+            // Fermer le dropdown si on décoche "Autre"
+            closeDropdown();
+        }
+        updateDisplay();
+    }
+    
+    // Mettre à jour la destination "Autre"
+    function updateOtherDestination(value) {
+        var otherHiddenInput = document.getElementById('destination-other');
+        if (otherHiddenInput) {
+            otherHiddenInput.value = value.trim();
+        }
+        
+        // Mettre à jour dans selectedDestinations
+        var otherIndex = selectedDestinations.findIndex(function(dest) {
+            return dest.id === 'other';
+        });
+        
+        if (otherIndex !== -1) {
+            selectedDestinations[otherIndex].name = value.trim() || 'Autre';
+        } else if (value.trim()) {
+            // Si la case est cochée mais pas encore dans la liste
+            var otherCheckbox = document.getElementById('destination-other-checkbox');
+            if (otherCheckbox && otherCheckbox.checked) {
+                selectedDestinations.push({
+                    id: 'other',
+                    name: value.trim()
+                });
+            }
+        }
+        
+        updateDisplay();
+    }
+
+    // Mettre à jour l'affichage avec des tags
+    function updateDisplay() {
+        var tagsContainer = document.getElementById('destinations-tags-container');
+        var tagsWrapper = document.getElementById('destinations-tags-wrapper');
+        
+        if (!tagsContainer || !tagsWrapper) return;
+        
+        // Vider le conteneur de tags
+        tagsContainer.innerHTML = '';
+        
+        if (selectedDestinations.length === 0) {
+            displayInput.value = '';
+            hiddenInput.value = '';
+            tagsWrapper.classList.remove('has-tags');
+        } else {
+            // Créer un tag pour chaque destination sélectionnée
+            selectedDestinations.forEach(function(dest) {
+                var tag = document.createElement('div');
+                tag.className = 'destination-tag';
+                tag.dataset.destId = dest.id;
+                
+                var tagText = document.createElement('span');
+                tagText.textContent = dest.name;
+                tag.appendChild(tagText);
+                
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'destination-tag-remove';
+                removeBtn.innerHTML = '×';
+                removeBtn.setAttribute('aria-label', 'Supprimer ' + dest.name);
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    removeDestination(dest.id);
+                });
+                tag.appendChild(removeBtn);
+                
+                tagsContainer.appendChild(tag);
+            });
+            
+            // Pour les IDs, on ne garde que les IDs numériques (pas "other")
+            var ids = selectedDestinations.filter(function(dest) {
+                return dest.id !== 'other';
+            }).map(function(dest) {
+                return dest.id;
+            }).join(',');
+
+            hiddenInput.value = ids;
+            tagsWrapper.classList.add('has-tags');
+        }
+    }
+    
+    // Supprimer une destination
+    function removeDestination(destId) {
+        // Retirer de la liste
+        selectedDestinations = selectedDestinations.filter(function(dest) {
+            return dest.id !== destId;
+        });
+        
+        // Décocher la checkbox correspondante
+        if (destId === 'other') {
+            var otherCheckbox = document.getElementById('destination-other-checkbox');
+            if (otherCheckbox) {
+                otherCheckbox.checked = false;
+            }
+            var otherWrapper = document.getElementById('destination-other-wrapper');
+            if (otherWrapper) {
+                otherWrapper.style.display = 'none';
+            }
+            var otherInput = document.getElementById('destination-other-input');
+            if (otherInput) {
+                otherInput.value = '';
+            }
+            var otherHiddenInput = document.getElementById('destination-other');
+            if (otherHiddenInput) {
+                otherHiddenInput.value = '';
+            }
+        } else {
+            var checkbox = grid.querySelector('input[type="checkbox"][value="' + destId + '"]');
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        }
+        
+        updateDisplay();
+    }
+
+    // Ouvrir/fermer le dropdown
+    var tagsWrapper = document.getElementById('destinations-tags-wrapper');
+    if (tagsWrapper && dropdown && grid) {
+        tagsWrapper.addEventListener('click', function(e) {
+            // Ne pas ouvrir si on clique sur un bouton de suppression
+            if (e.target.classList.contains('destination-tag-remove') || e.target.closest('.destination-tag-remove')) {
+                return;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var isActive = dropdown.classList.contains('active');
+            if (isActive) {
+                // Si déjà ouvert, fermer
+                closeDropdown();
+            } else {
+                // Sinon, ouvrir
+                openDropdown();
+            }
+        });
+    }
+    
+    // Fonction pour ouvrir le dropdown
+    function openDropdown() {
+        if (dropdown && grid) {
+            dropdown.classList.add('active');
+            grid.style.display = 'grid';
+        }
+    }
+    
+    // Fonction pour fermer le dropdown
+    function closeDropdown() {
+        if (dropdown) {
+            dropdown.classList.remove('active');
+        }
+        if (grid) {
+            grid.style.display = 'none';
+        }
+    }
+
+    // Fermer le dropdown au clic extérieur
+    if (dropdown && tagsWrapper) {
+        document.addEventListener('click', function(e) {
+            // Vérifier si le clic est en dehors du dropdown et du wrapper de tags
+            var clickedInsideDropdown = dropdown.contains(e.target);
+            var clickedOnTagsWrapper = tagsWrapper.contains(e.target);
+            
+            // Ne pas fermer si on clique sur un élément du dropdown ou du wrapper de tags
+            if (!clickedInsideDropdown && !clickedOnTagsWrapper) {
+                closeDropdown();
+            }
+        });
+    }
+    
+    // Fermer le dropdown après sélection (sauf pour "Autre")
+    function closeDropdownAfterSelection() {
+        setTimeout(function() {
+            // Ne fermer que si on n'est pas en train de taper dans le champ "Autre"
+            var otherInput = document.getElementById('destination-other-input');
+            var isOtherInputFocused = otherInput && document.activeElement === otherInput;
+            if (!isOtherInputFocused) {
+                closeDropdown();
+            }
+        }, 200);
     }
 
     // Escape HTML
@@ -341,28 +821,19 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
         return div.innerHTML;
     }
 
-    // Si voyage pré-sélectionné
-    <?php if (!empty($atts['voyage'])) : ?>
-    (function() {
-        var preselectedId = '<?php echo esc_js($atts['voyage']); ?>';
-        // Fetch voyage info
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                action: 'devis_pro_get_voyage',
-                id: preselectedId,
-                nonce: '<?php echo wp_create_nonce('devis_pro_search'); ?>'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.data) {
-                selectVoyage(data.data.id, data.data.title, data.data.thumbnail);
-            }
-        });
-    })();
-    <?php endif; ?>
+    // Charger les destinations au chargement
+    loadDestinations();
+    
+    // S'assurer que le dropdown est fermé au démarrage
+    if (dropdown) {
+        dropdown.classList.remove('active');
+    }
+    if (grid) {
+        grid.style.display = 'none';
+    }
+    
+    // Exposer selectedDestinations pour la réinitialisation
+    window.selectedDestinations = selectedDestinations;
 })();
 </script>
 
@@ -424,10 +895,16 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
         var formData = new FormData(form);
         formData.append('action', 'devis_pro_submit_form');
         
-        // S'assurer que le champ voyage-id est bien envoyé comme 'voyage'
-        var voyageIdInput = document.getElementById('voyage-id');
-        if (voyageIdInput && voyageIdInput.value) {
-            formData.set('voyage', voyageIdInput.value);
+        // S'assurer que les destinations sont bien envoyées
+        var destinationsInput = document.getElementById('destinations-values');
+        if (destinationsInput && destinationsInput.value) {
+            formData.set('destinations', destinationsInput.value);
+        }
+        
+        // S'assurer que la destination "Autre" est bien envoyée
+        var destinationOtherInput = document.getElementById('destination-other');
+        if (destinationOtherInput && destinationOtherInput.value) {
+            formData.set('destination_other', destinationOtherInput.value);
         }
         
         if (recaptchaToken) {
@@ -471,14 +948,43 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
                     submitBtn.disabled = false;
                     isSubmitting = false;
                     
-                    // Réafficher le champ de recherche si un voyage était sélectionné
-                    var selectedContainer = document.getElementById('voyage-selected-wrapper');
-                    var searchInput = document.getElementById('voyage-search');
-                    if (selectedContainer) {
-                        selectedContainer.classList.remove('active');
-                        searchInput.style.display = 'block';
-                        document.getElementById('voyage_id').value = '';
+                    // Réinitialiser les destinations
+                    var destinationsInput = document.getElementById('destinations-values');
+                    var destinationsDisplay = document.getElementById('destinations-display');
+                    var destinationOtherInput = document.getElementById('destination-other');
+                    var destinationOtherTextInput = document.getElementById('destination-other-input');
+                    var destinationOtherWrapper = document.getElementById('destination-other-wrapper');
+                    var destinationOtherCheckbox = document.getElementById('destination-other-checkbox');
+                    
+                    if (destinationsInput) {
+                        destinationsInput.value = '';
                     }
+                    if (destinationsDisplay) {
+                        destinationsDisplay.value = '';
+                    }
+                    if (destinationOtherInput) {
+                        destinationOtherInput.value = '';
+                    }
+                    if (destinationOtherTextInput) {
+                        destinationOtherTextInput.value = '';
+                    }
+                    if (destinationOtherWrapper) {
+                        destinationOtherWrapper.style.display = 'none';
+                    }
+                    if (destinationOtherCheckbox) {
+                        destinationOtherCheckbox.checked = false;
+                    }
+                    
+                    // Réinitialiser selectedDestinations via la fonction globale si disponible
+                    if (window.selectedDestinations !== undefined) {
+                        window.selectedDestinations.length = 0;
+                    }
+                    
+                    // Décocher toutes les checkboxes de destinations
+                    var allCheckboxes = document.querySelectorAll('#destinations-grid input[type="checkbox"]');
+                    allCheckboxes.forEach(function(checkbox) {
+                        checkbox.checked = false;
+                    });
                 }, 3000);
             } else {
                 // Erreur
