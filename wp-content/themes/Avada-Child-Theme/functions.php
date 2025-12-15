@@ -290,3 +290,29 @@ add_action('wp_footer', function() {
     </script>
     <?php
 }, 9999);
+
+// Configuration de la barre d'état iOS en orange de la charte
+function rdvasie_ios_status_bar_style() {
+    // Couleur orange de la charte
+    $orange_color = '#de5b09';
+    
+    // Meta tag pour la barre d'état iOS (black-translucent permet de voir la couleur de fond)
+    echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
+    
+    // Meta tag theme-color pour Android et iOS
+    echo '<meta name="theme-color" content="' . esc_attr( $orange_color ) . '">' . "\n";
+    
+    // CSS pour que le haut de la page ait un fond orange visible à travers la barre translucide
+    echo '<style>' . "\n";
+    echo '        /* Fond orange pour la barre d\'etat iOS */' . "\n";
+    echo '        @supports (-webkit-touch-callout: none) {' . "\n";
+    echo '            html {' . "\n";
+    echo '                background-color: ' . esc_attr( $orange_color ) . ';' . "\n";
+    echo '            }' . "\n";
+    echo '            body {' . "\n";
+    echo '                background-color: #fff;' . "\n";
+    echo '            }' . "\n";
+    echo '        }' . "\n";
+    echo '    </style>' . "\n";
+}
+add_action( 'wp_head', 'rdvasie_ios_status_bar_style', 1 );
