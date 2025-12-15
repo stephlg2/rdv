@@ -27,7 +27,7 @@ if (isset($_GET['migrate']) && $_GET['migrate'] == 1) {
     
     <hr class="wp-header-end">
 
-    <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=devis-pro-settings')); ?>">
+    <form method="post">
         <?php wp_nonce_field('devis_pro_settings'); ?>
         <input type="hidden" name="devis_pro_save_settings" value="1">
 
@@ -48,26 +48,7 @@ if (isset($_GET['migrate']) && $_GET['migrate'] == 1) {
                             </th>
                             <td>
                                 <input type="email" id="email_admin" name="email_admin" value="<?php echo esc_attr($settings['email_admin']); ?>" class="regular-text">
-                                <p class="description">
-                                    <?php _e('Email qui recevra les notifications de nouvelles demandes.', 'devis-pro'); ?>
-                                    <br>
-                                    <strong><?php _e('Email actuel configuré :', 'devis-pro'); ?></strong> 
-                                    <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;">
-                                        <?php echo esc_html($settings['email_admin'] ?? get_option('admin_email')); ?>
-                                    </code>
-                                </p>
-                                <p style="margin-top:10px;">
-                                    <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=devis-pro-settings')); ?>" style="display:inline;">
-                                        <?php wp_nonce_field('devis_pro_test_email'); ?>
-                                        <button type="submit" name="devis_pro_send_test_email" class="button button-secondary">
-                                            <span class="dashicons dashicons-email-alt"></span>
-                                            <?php _e('Envoyer un email test', 'devis-pro'); ?>
-                                        </button>
-                                    </form>
-                                    <span class="description" style="margin-left:10px;">
-                                        <?php _e('Envoie un email de test avec le template de notification de nouvelle demande.', 'devis-pro'); ?>
-                                    </span>
-                                </p>
+                                <p class="description"><?php _e('Email qui recevra les notifications de nouvelles demandes.', 'devis-pro'); ?></p>
                             </td>
                         </tr>
                         <tr>
