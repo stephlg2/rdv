@@ -198,8 +198,8 @@ function sync_tripzzy_enquiry_to_devis_pro( $enquiry_id, $data ) {
         'nom'         => $nom,
         'prenom'      => $prenom,
         'email'       => isset( $data['email'] ) ? sanitize_email( $data['email'] ) : '',
-        'cp'          => isset( $data['country'] ) ? $data['country'] : '',
-        'ville'       => '',
+        'cp'          => isset( $data['cp'] ) ? sanitize_text_field( $data['cp'] ) : '',
+        'ville'       => isset( $data['ville'] ) ? sanitize_text_field( $data['ville'] ) : '',
         'tel'         => isset( $data['phone'] ) ? $data['phone'] : '',
         'status'      => 0,
         'montant'     => 0,
@@ -234,4 +234,43 @@ function sync_tripzzy_enquiry_to_devis_pro( $enquiry_id, $data ) {
             $email->send_new_request_notification( $devis );
         }
     }
+}
+
+// -----------------------------------------------------------------
+// Traiter les shortcodes dans le header secondaire
+// -----------------------------------------------------------------
+// Traiter les shortcodes dans le header secondaire
+add_filter( 'avada_secondary_header_content', 'rdvasie_process_header_shortcodes', 10, 3 );
+function rdvasie_process_header_shortcodes( $content, $content_area, $content_to_display ) {
+    // Traiter les shortcodes dans le contenu existant
+    if ( is_string( $content ) && ! empty( $content ) ) {
+        $content = do_shortcode( $content );
+    }
+    return $content;
+}
+
+// Traiter les shortcodes dans les titres de menu WordPress
+add_filter( 'wp_setup_nav_menu_item', 'rdvasie_process_menu_item_shortcodes' );
+function rdvasie_process_menu_item_shortcodes( $menu_item ) {
+    if ( isset( $menu_item->title ) && ! empty( $menu_item->title ) ) {
+        // Vérifier si le titre contient un shortcode
+        if ( has_shortcode( $menu_item->title, 'rdvasie_rating' ) || 
+             has_shortcode( $menu_item->title, 'rdvasie_reviews' ) ||
+             preg_match( '/\[.*?\]/', $menu_item->title ) ) {
+            $menu_item->title = do_shortcode( $menu_item->title );
+        }
+    }
+    return $menu_item;
+}
+
+// Traiter les shortcodes dans le HTML du menu (pour les walkers personnalisés)
+add_filter( 'walker_nav_menu_start_el', 'rdvasie_process_menu_output_shortcodes', 10, 4 );
+function rdvasie_process_menu_output_shortcodes( $item_output, $item, $depth, $args ) {
+    // Traiter les shortcodes dans le HTML du menu
+    if ( ! empty( $item_output ) && ( has_shortcode( $item_output, 'rdvasie_rating' ) || 
+                                       has_shortcode( $item_output, 'rdvasie_reviews' ) ||
+                                       preg_match( '/\[.*?\]/', $item_output ) ) ) {
+        $item_output = do_shortcode( $item_output );
+    }
+    return $item_output;
 }

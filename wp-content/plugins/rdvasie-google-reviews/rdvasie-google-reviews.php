@@ -296,6 +296,7 @@ class RDVAsie_Google_Reviews {
 			'show_stars' => 'yes',
 			'show_count' => 'no',
 			'show_score' => 'yes',
+			'show_logo' => 'no', // Ne pas afficher le logo Google par défaut
 			'format' => 'inline' // inline ou block
 		), $atts );
 		
@@ -329,6 +330,11 @@ class RDVAsie_Google_Reviews {
 			<?php endif; ?>
 			<?php if ( $atts['show_count'] === 'yes' && $total > 0 ) : ?>
 				<span class="rdvasie-rating-count"><?php echo esc_html( $total ); ?> avis</span>
+			<?php endif; ?>
+			<?php if ( $atts['show_logo'] === 'yes' ) : ?>
+				<span class="rdvasie-rating-google-logo">
+					<img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google" style="height: 16px; vertical-align: middle;" data-no-webp="1">
+				</span>
 			<?php endif; ?>
 		</span>
 		<?php

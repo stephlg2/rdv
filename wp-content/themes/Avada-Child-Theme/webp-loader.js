@@ -19,18 +19,18 @@
     function isConvertibleImage(url) {
         if (!url) return false;
         
-        // Exclure les URLs externes (Google, etc.)
+        // Exclure spécifiquement les URLs Google (en premier pour éviter toute conversion)
+        if (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1 || url.indexOf('google') !== -1) {
+            return false;
+        }
+        
+        // Exclure les URLs externes (qui ne sont pas sur le même domaine)
         if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0) {
             // Si l'URL ne contient pas le domaine du site, c'est une URL externe
             const siteUrl = window.location.origin;
             if (url.indexOf(siteUrl) !== 0) {
                 return false;
             }
-        }
-        
-        // Exclure spécifiquement les URLs Google
-        if (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1) {
-            return false;
         }
         
         return /\/wp-content\/uploads\/.+\.(jpe?g|png)(\?.*)?$/i.test(url);
@@ -69,7 +69,21 @@
 
     // Remplacer les images <img>
     function replaceImgTags() {
-        document.querySelectorAll('img:not([data-webp-checked]):not([data-no-webp])').forEach(function(img) {
+        document.querySelectorAll('img:not([data-webp-checked])').forEach(function(img) {
+            // Vérifier explicitement l'attribut data-no-webp (priorité absolue)
+            if (img.hasAttribute('data-no-webp') || img.getAttribute('data-no-webp') === '1' || img.getAttribute('data-no-webp') === '') {
+                img.setAttribute('data-webp-checked', '1'); // Marquer comme vérifié pour éviter de retraiter
+                return; // Ignorer cette image complètement
+            }
+            
+            // Vérifier si c'est une image Google (même si l'attribut n'est pas présent)
+            const imgSrc = img.src || img.dataset.src || img.getAttribute('src') || '';
+            if (imgSrc.indexOf('google.com') !== -1 || imgSrc.indexOf('googlelogo') !== -1 || imgSrc.indexOf('/google/') !== -1) {
+                img.setAttribute('data-webp-checked', '1'); // Marquer comme vérifié
+                img.setAttribute('data-no-webp', '1'); // Ajouter l'attribut pour protection future
+                return; // Ignorer les images Google
+            }
+            
             img.setAttribute('data-webp-checked', '1');
 
             // src
@@ -161,8 +175,26 @@
         });
     }
 
+    // Restaurer les images Google qui ont été modifiées par erreur
+    function restoreGoogleImages() {
+        document.querySelectorAll('img[src*="google"]').forEach(function(img) {
+            const src = img.src || '';
+            // Si l'URL a été modifiée en .webp mais que c'est une image Google, restaurer l'original
+            if (src.indexOf('googlelogo') !== -1 && src.indexOf('.webp') !== -1 && src.indexOf('.png') === -1) {
+                // Restaurer l'URL originale en .png
+                const originalUrl = src.replace(/\.webp(\?|$)/i, '.png$1');
+                img.src = originalUrl;
+                img.setAttribute('data-no-webp', '1');
+                img.setAttribute('data-webp-checked', '1');
+            }
+        });
+    }
+
     // Exécuter le remplacement
     function runReplacement() {
+        // D'abord restaurer les images Google si nécessaire
+        restoreGoogleImages();
+        // Ensuite traiter les autres images
         replaceImgTags();
         replaceBackgrounds();
         replaceStylesheetBackgrounds();

@@ -118,6 +118,14 @@ class Devis_Pro_Email {
                     <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->tel) . '</td>
                 </tr>
                 <tr>
+                    <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Code postal</strong></td>
+                    <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->cp) . '</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Ville</strong></td>
+                    <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->ville) . '</td>
+                </tr>
+                <tr>
                     <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Voyage</strong></td>
                     <td style="padding:10px;border:1px solid #ddd;">' . esc_html($voyage) . '</td>
                 </tr>

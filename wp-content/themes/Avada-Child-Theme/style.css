@@ -678,7 +678,7 @@ a.tripzzy-accordion-expand-close:hover {
     border-radius: 10px;
     text-transform: uppercase;
 }
-.page_classique .demande-devis-top a span {
+.page_classique .demande-devis-top a span, .tripzzy-trips-page .demande-devis-top a span {
     background: #fff ;
     color: #de5b09 ;
 }
@@ -1335,6 +1335,44 @@ a.fusion-button:hover {
     margin: 0 0 10px 0 !important;
     font-size: 14px !important;
 }
+/* Conteneur principal */
+.contact {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+/* Champs Nom / Prénom / Email / Téléphone → 2 colonnes */
+.contact .col {
+	flex: 1 1 calc(50% - 16px);
+}
+
+/* Bloc message en pleine largeur */
+.contact .message {
+	width: 100%;
+}
+
+/* Inputs & textarea pleine largeur */
+.contact input,
+.contact textarea {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Bouton centré */
+.contact .envoyer {
+	width: 100%;
+	text-align: center;
+	margin-top: 20px;
+}
+
+/* Mobile : 1 colonne */
+@media (max-width: 640px) {
+	.contact .col {
+		flex: 1 1 100%;
+	}
+}
+
 /* ==========================================================================
    RESPONSIVE - MAX 992PX
    ========================================================================== */
