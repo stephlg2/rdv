@@ -1,65 +1,14 @@
 <?php
 
-// Activer les shortcodes dans les menus de façon sécurisée
-add_filter('wp_nav_menu_items', function($items) {
-    // Éviter d'appliquer do_shortcode sur les data-attributes et href
-    // On applique seulement sur le texte visible
-    return preg_replace_callback('/>(.*?)</', function($matches) {
-        return '>' . do_shortcode($matches[1]) . '<';
-    }, $items);
-}, 99);
-
 // Enqueue styles du thème enfant
 function theme_enqueue_styles() {
     wp_enqueue_style( 'child-style', get_stylesheet_directory_uri() . '/style.css', [] );
+    wp_enqueue_script( 'sticky-toolbar', get_stylesheet_directory_uri() . '/sticky-toolbar.js', array(), '1.0.0', true );
+    
+    // WebP Loader - Remplace automatiquement les images par leur version WebP
+    wp_enqueue_script( 'webp-loader', get_stylesheet_directory_uri() . '/webp-loader.js', array(), '1.0.0', true );
 }
 add_action( 'wp_enqueue_scripts', 'theme_enqueue_styles', 20 );
-
-// Fix pour sprintf manquant dans Tripzzy admin
-function fix_tripzzy_sprintf_issue() {
-    if ( is_admin() && function_exists('get_current_screen') ) {
-        $screen = get_current_screen();
-        if ( $screen && $screen->post_type === 'tripzzy' ) {
-            // S'assurer que wp-i18n est chargé avec sprintf
-            wp_enqueue_script('wp-i18n');
-            wp_add_inline_script('wp-i18n', '
-                if (typeof window.wp === "undefined") { window.wp = {}; }
-                if (typeof window.wp.i18n === "undefined") { window.wp.i18n = {}; }
-                if (typeof window.wp.i18n.sprintf === "undefined") {
-                    // Fallback sprintf simple
-                    window.wp.i18n.sprintf = function(str) {
-                        var args = Array.prototype.slice.call(arguments, 1);
-                        return str.replace(/%[sd]/g, function() {
-                            return args.shift();
-                        });
-                    };
-                }
-                // Exposer sprintf globalement pour les scripts qui en ont besoin
-                if (typeof window.sprintf === "undefined") {
-                    window.sprintf = window.wp.i18n.sprintf;
-                }
-            ', 'before');
-        }
-    }
-}
-add_action('admin_enqueue_scripts', 'fix_tripzzy_sprintf_issue', 5);
-
-// Forcer l'éditeur Gutenberg pour les voyages Tripzzy
-add_filter( 'get_edit_post_link', function( $link, $post_id, $context ) {
-    if ( ! $post_id ) {
-        return $link;
-    }
-    
-    $post_type = get_post_type( $post_id );
-    if ( 'tripzzy' === $post_type ) {
-        // Ajouter le paramètre gutenberg-editor si ce n'est pas déjà présent
-        if ( strpos( $link, 'gutenberg-editor' ) === false ) {
-            $link = add_query_arg( 'gutenberg-editor', '', $link );
-        }
-    }
-    
-    return $link;
-}, 10, 3 );
 
 // Chargement des traductions du thème enfant
 function avada_lang_setup() {
@@ -113,20 +62,6 @@ function rdvasie_add_header_classique( $classes ) {
     return $classes;
 }
 
-// Forcer page_classique pour les pages de recherche, blog et archives
-add_filter( 'body_class', 'rdvasie_add_page_classique_to_body' );
-function rdvasie_add_page_classique_to_body( $classes ) {
-    // Ajouter page_classique pour les pages de recherche, blog et archives
-    if ( is_search() || is_home() || is_archive() ) {
-        $classes[] = 'page_classique';
-        
-        // Supprimer header_classique si présent
-        $classes = array_diff( $classes, array( 'header_classique' ) );
-    }
-    
-    return $classes;
-}
-
 // Shortcode pour FAQ par slug
 function faq_by_slug_shortcode( $atts ) {
     $atts = shortcode_atts( array(
@@ -154,6 +89,20 @@ add_action('wp_footer', function() {
         }
     }
 }, 999);
+
+// -----------------------------------------------------------------
+// Tripzzy : personnalisation du format de prix
+// -----------------------------------------------------------------
+
+// Modifier le format de prix : "2650.00 €" au lieu de "€2,650.00"
+add_filter( 'tripzzy_filter_settings', 'rdvasie_tripzzy_price_format' );
+function rdvasie_tripzzy_price_format( $settings ) {
+    // Format : montant suivi du symbole (ex: 2650.00 €)
+    $settings['amount_display_format'] = '%DISPLAY_AMOUNT% %CURRENCY_SYMBOL%';
+    // Pas de séparateur de milliers
+    $settings['thousand_separator'] = '';
+    return $settings;
+}
 
 // -----------------------------------------------------------------
 // Tripzzy : bloquer mises à jour et personnaliser affichage
@@ -185,134 +134,104 @@ add_filter( 'all_plugins', function( $plugins ) {
     return $plugins;
 });
 
-// Forcer le format français pour l'affichage des montants (€ après le chiffre)
-add_filter('tripzzy_filter_settings', function($settings) {
-    $settings['amount_display_format'] = '%DISPLAY_AMOUNT% %CURRENCY_SYMBOL%';
-    return $settings;
-}, 99);
-
-// Script pour forcer la restauration des URLs Google (anti-WebP)
-add_action('wp_footer', function() {
-    ?>
-    <script>
-    (function() {
-        function restoreGoogleUrls() {
-            // Trouver toutes les images avec data-no-webp ou contenant google.com/googlelogo
-            document.querySelectorAll('img').forEach(function(img) {
-                var shouldRestore = false;
-                var isGoogle = false;
-                
-                // Vérifier si l'image doit être restaurée
-                if (img.hasAttribute('data-no-webp')) {
-                    shouldRestore = true;
-                }
-                
-                // Liste des attributs à vérifier
-                var attrs = ['src', 'data-src', 'data-orig-src', 'srcset', 'data-srcset'];
-                
-                attrs.forEach(function(attr) {
-                    var url = img.getAttribute(attr);
-                    if (!url) return;
-                    
-                    // Vérifier si c'est une URL Google
-                    if (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1) {
-                        isGoogle = true;
-                        shouldRestore = true;
-                    }
-                    
-                    // Si l'URL a été convertie en .webp et doit être restaurée
-                    if (shouldRestore && url.indexOf('.webp') !== -1) {
-                        // Restaurer l'extension originale (.png pour Google logo)
-                        var originalUrl = url.replace(/\.webp(\?|$)/i, '.png$1');
-                        img.setAttribute(attr, originalUrl);
-                        
-                        // Forcer le rechargement si c'est l'attribut src
-                        if (attr === 'src') {
-                            img.src = originalUrl;
-                        }
-                    }
-                });
-            });
+// Ajouter automatiquement le paramètre gutenberg-editor aux liens d'édition des voyages
+add_filter( 'get_edit_post_link', function( $link, $post_id, $context ) {
+    if ( ! $post_id ) {
+        return $link;
+    }
+    
+    $post_type = get_post_type( $post_id );
+    if ( 'tripzzy' === $post_type ) {
+        // Ajouter le paramètre gutenberg-editor si ce n'est pas déjà présent
+        if ( strpos( $link, 'gutenberg-editor' ) === false ) {
+            $link = add_query_arg( 'gutenberg-editor', '', $link );
         }
-        
-        // Exécuter immédiatement
-        restoreGoogleUrls();
-        
-        // Exécuter après le chargement complet
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', restoreGoogleUrls);
-        }
-        
-        // Exécuter après le chargement de toutes les ressources
-        window.addEventListener('load', function() {
-            setTimeout(restoreGoogleUrls, 100);
-        });
-        
-        // Observer les mutations du DOM pour les images ajoutées dynamiquement
-        var observer = new MutationObserver(function(mutations) {
-            var shouldRestore = false;
-            mutations.forEach(function(mutation) {
-                mutation.addedNodes.forEach(function(node) {
-                    if (node.tagName === 'IMG') {
-                        shouldRestore = true;
-                    } else if (node.querySelectorAll && node.querySelectorAll('img').length > 0) {
-                        shouldRestore = true;
-                    }
-                });
-            });
-            if (shouldRestore) {
-                setTimeout(restoreGoogleUrls, 50);
-            }
-        });
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-        
-        // Exécuter périodiquement pour forcer la restauration (en dernier recours)
-        setInterval(function() {
-            document.querySelectorAll('img[data-no-webp], img[src*="google.com"], img[src*="googlelogo"]').forEach(function(img) {
-                var attrs = ['src', 'data-src', 'data-orig-src'];
-                attrs.forEach(function(attr) {
-                    var url = img.getAttribute(attr);
-                    if (url && url.indexOf('.webp') !== -1 && (url.indexOf('google.com') !== -1 || url.indexOf('googlelogo') !== -1)) {
-                        var originalUrl = url.replace(/\.webp(\?|$)/i, '.png$1');
-                        img.setAttribute(attr, originalUrl);
-                        if (attr === 'src') {
-                            img.src = originalUrl;
-                        }
-                    }
-                });
-            });
-        }, 500);
-    })();
-    </script>
-    <?php
-}, 9999);
+    }
+    
+    return $link;
+}, 10, 3 );
 
-// Configuration de la barre d'état iOS en orange de la charte
-function rdvasie_ios_status_bar_style() {
-    // Couleur orange de la charte
-    $orange_color = '#de5b09';
+// Charger le fichier de configuration ACF pour les guides des voyages
+require_once get_stylesheet_directory() . '/acf-voyages-guides.php';
+
+// -----------------------------------------------------------------
+// Synchroniser les demandes Tripzzy vers Devis Pro
+// -----------------------------------------------------------------
+add_action( 'tripzzy_after_enquiry', 'sync_tripzzy_enquiry_to_devis_pro', 20, 2 );
+function sync_tripzzy_enquiry_to_devis_pro( $enquiry_id, $data ) {
+    // Vérifier que Devis Pro est actif
+    if ( ! class_exists( 'Devis_Pro' ) ) {
+        return;
+    }
     
-    // Meta tag pour la barre d'état iOS (black-translucent permet de voir la couleur de fond)
-    echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
+    global $wpdb;
+    $table = $wpdb->prefix . 'devis_pro';
     
-    // Meta tag theme-color pour Android et iOS
-    echo '<meta name="theme-color" content="' . esc_attr( $orange_color ) . '">' . "\n";
+    // Vérifier que la table existe
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) !== $table ) {
+        return;
+    }
     
-    // CSS pour que le haut de la page ait un fond orange visible à travers la barre translucide
-    echo '<style>' . "\n";
-    echo '        /* Fond orange pour la barre d\'etat iOS */' . "\n";
-    echo '        @supports (-webkit-touch-callout: none) {' . "\n";
-    echo '            html {' . "\n";
-    echo '                background-color: ' . esc_attr( $orange_color ) . ';' . "\n";
-    echo '            }' . "\n";
-    echo '            body {' . "\n";
-    echo '                background-color: #fff;' . "\n";
-    echo '            }' . "\n";
-    echo '        }' . "\n";
-    echo '    </style>' . "\n";
+    // Extraire le nom et prénom du full_name
+    $full_name = isset( $data['full_name'] ) ? $data['full_name'] : '';
+    $name_parts = explode( ' ', $full_name, 2 );
+    $prenom = isset( $name_parts[0] ) ? $name_parts[0] : '';
+    $nom = isset( $name_parts[1] ) ? $name_parts[1] : '';
+    
+    // Récupérer l'ID du voyage depuis les métadonnées
+    $trip_id = get_post_meta( $enquiry_id, 'tripzzy_trip_id', true );
+    
+    // Préparer les données pour Devis Pro
+    $devis_data = array(
+        'voyage'      => $trip_id ? $trip_id : '',
+        'destination' => '',
+        'depart'      => isset( $data['trip_date'] ) ? $data['trip_date'] : '',
+        'retour'      => '',
+        'duree'       => '',
+        'budget'      => 0,
+        'adulte'      => isset( $data['no_of_adults'] ) ? intval( $data['no_of_adults'] ) : 1,
+        'enfant'      => isset( $data['no_of_children'] ) ? intval( $data['no_of_children'] ) : 0,
+        'bebe'        => 0,
+        'vol'         => '',
+        'message'     => isset( $data['message'] ) ? $data['message'] : '',
+        'civ'         => '',
+        'nom'         => $nom,
+        'prenom'      => $prenom,
+        'email'       => isset( $data['email'] ) ? sanitize_email( $data['email'] ) : '',
+        'cp'          => isset( $data['country'] ) ? $data['country'] : '',
+        'ville'       => '',
+        'tel'         => isset( $data['phone'] ) ? $data['phone'] : '',
+        'status'      => 0,
+        'montant'     => 0,
+        'demande'     => current_time( 'mysql' ),
+        'langue'      => 'fr',
+        'token'       => '',
+        'mac'         => ''
+    );
+    
+    // Insérer dans Devis Pro
+    $wpdb->insert( $table, $devis_data );
+    $devis_id = $wpdb->insert_id;
+    
+    // Ajouter à l'historique si la table existe
+    $history_table = $wpdb->prefix . 'devis_pro_history';
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '$history_table'" ) === $history_table ) {
+        $wpdb->insert( $history_table, array(
+            'devis_id'    => $devis_id,
+            'action'      => 'creation',
+            'description' => 'Demande reçue via Tripzzy (Enquiry #' . $enquiry_id . ')',
+            'user_id'     => null,
+            'created_at'  => current_time( 'mysql' )
+        ));
+    }
+    
+    // Envoyer les notifications par email via Devis Pro
+    if ( class_exists( 'Devis_Pro_Email' ) && class_exists( 'Devis_Pro_DB' ) ) {
+        $db = new Devis_Pro_DB();
+        $devis = $db->get_devis( $devis_id );
+        if ( $devis ) {
+            $email = new Devis_Pro_Email();
+            $email->send_new_request_notification( $devis );
+        }
+    }
 }
-add_action( 'wp_head', 'rdvasie_ios_status_bar_style', 1 );
