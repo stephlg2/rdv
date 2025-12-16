@@ -673,8 +673,10 @@ a.tripzzy-accordion-expand-close:hover {
 
 .demande-devis-top a span {
     background: #de5b09;
-    padding: 5px 10px;
-    border-radius: 20px;
+    padding: 5px 20px;
+    line-height: 15px;
+    border-radius: 10px;
+    text-transform: uppercase;
 }
 .page_classique .demande-devis-top a span {
     background: #fff ;

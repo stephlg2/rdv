@@ -331,8 +331,8 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 
             <div class="form-row">
                 <div class="form-group full-width">
-                    <label for="destinations-display"><?php _e('Quelle(s) destination(s) vous intéresse(nt) ?', 'devis-pro'); ?></label>
-                    <div class="destinations-tags-wrapper" id="destinations-tags-wrapper">
+                    <label for="destinations-display"><?php _e('Quelle(s) destination(s) vous intéresse(nt) ?', 'devis-pro'); ?> <span class="required">*</span></label>
+                    <div class="destinations-tags-wrapper" id="destinations-tags-wrapper" data-required="true">
                         <div class="destinations-tags-container" id="destinations-tags-container"></div>
                         <input type="text" 
                                id="destinations-display" 
@@ -482,12 +482,12 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="cp"><?php _e('Code postal', 'devis-pro'); ?></label>
-                    <input type="text" id="cp" name="cp">
+                    <label for="cp"><?php _e('Code postal', 'devis-pro'); ?> <span class="required">*</span></label>
+                    <input type="text" id="cp" name="cp" required>
                 </div>
                 <div class="form-group">
-                    <label for="ville"><?php _e('Ville', 'devis-pro'); ?></label>
-                    <input type="text" id="ville" name="ville">
+                    <label for="ville"><?php _e('Ville', 'devis-pro'); ?> <span class="required">*</span></label>
+                    <input type="text" id="ville" name="ville" required>
                 </div>
             </div>
             
@@ -505,7 +505,7 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
                 <?php _e('Envoyer ma demande de devis', 'devis-pro'); ?>
             </button>
             <p class="form-note">
-                <?php _e('Réponse sous 48h · Sans engagement · Devis gratuit', 'devis-pro'); ?>
+                <?php _e('Sans engagement · Devis gratuit', 'devis-pro'); ?>
             </p>
         </div>
     </form>
@@ -819,6 +819,12 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
             hiddenInput.value = ids;
             tagsWrapper.classList.add('has-tags');
         }
+        
+        // Retirer l'erreur visuelle si une destination est sélectionnée
+        if (selectedDestinations.length > 0) {
+            tagsWrapper.style.borderColor = '';
+            tagsWrapper.style.boxShadow = '';
+        }
     }
     
     // Supprimer une destination
@@ -972,6 +978,39 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
         
         if (isSubmitting) {
             return;
+        }
+
+        // Valider le champ de destination (obligatoire)
+        var destinationsInput = document.getElementById('destinations-values');
+        var destinationOtherInput = document.getElementById('destination-other');
+        var destinationsWrapper = document.getElementById('destinations-tags-wrapper');
+        var hasDestinations = false;
+        
+        if (destinationsInput && destinationsInput.value.trim() !== '') {
+            hasDestinations = true;
+        }
+        if (destinationOtherInput && destinationOtherInput.value.trim() !== '') {
+            hasDestinations = true;
+        }
+        
+        if (!hasDestinations) {
+            // Afficher une erreur visuelle
+            if (destinationsWrapper) {
+                destinationsWrapper.style.borderColor = '#e00';
+                destinationsWrapper.style.boxShadow = '0 0 0 4px rgba(238, 0, 0, 0.1)';
+            }
+            alert('Veuillez sélectionner au moins une destination');
+            // Scroll vers le champ de destination
+            if (destinationsWrapper) {
+                destinationsWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        } else {
+            // Retirer l'erreur visuelle si présente
+            if (destinationsWrapper) {
+                destinationsWrapper.style.borderColor = '';
+                destinationsWrapper.style.boxShadow = '';
+            }
         }
 
         // Valider le formulaire avant envoi
