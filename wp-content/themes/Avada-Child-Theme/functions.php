@@ -274,3 +274,25 @@ function rdvasie_process_menu_output_shortcodes( $item_output, $item, $depth, $a
     }
     return $item_output;
 }
+
+// Désactiver la pagination sur la page de résultats de recherche Tripzzy
+// et afficher tous les voyages filtrés
+add_filter( 'tripzzy_filter_trip_query_args', 'rdvasie_tripzzy_disable_pagination', 10, 2 );
+function rdvasie_tripzzy_disable_pagination( $args, $data ) {
+    // Vérifier si on est sur la page de résultats de recherche Tripzzy
+    if ( function_exists( 'Tripzzy\\Core\\Helpers\\Page::is' ) ) {
+        if ( \Tripzzy\Core\Helpers\Page::is( 'search-result' ) ) {
+            // Afficher tous les résultats sans pagination
+            $args['posts_per_page'] = -1;
+            $args['paged'] = 1;
+        }
+    }
+    
+    // Alternative : vérifier via l'URL
+    if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], 'tz-search-result' ) !== false ) {
+        $args['posts_per_page'] = -1;
+        $args['paged'] = 1;
+    }
+    
+    return $args;
+}

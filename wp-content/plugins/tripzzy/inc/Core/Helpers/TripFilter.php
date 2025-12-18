@@ -1124,11 +1124,10 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 				return array();
 			}
 
-			if ( ! Nonce::verify() ) {
-				return array();
-			}
-			// Nonce already verified using Nonce::verify method.
-			$terms = isset( $_GET[ $taxonomy ] ) ? array_map( 'sanitize_text_field', wp_unslash( $_GET[ $taxonomy ] ) ) : array(); // @codingStandardsIgnoreLine
+			// Récupérer les termes depuis $_GET sans vérification stricte du nonce
+			// car ce sont des paramètres publics de filtrage (pas de modification de données)
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$terms = isset( $_GET[ $taxonomy ] ) ? array_map( 'sanitize_text_field', wp_unslash( $_GET[ $taxonomy ] ) ) : array();
 			return $terms;
 		}
 	}

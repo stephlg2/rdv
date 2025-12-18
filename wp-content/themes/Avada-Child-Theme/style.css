@@ -1365,7 +1365,9 @@ a.fusion-button:hover {
 	text-align: center;
 	margin-top: 20px;
 }
-
+.wpcf7-spinner {
+    position: absolute;
+}
 /* Mobile : 1 colonne */
 @media (max-width: 640px) {
 	.contact .col {
