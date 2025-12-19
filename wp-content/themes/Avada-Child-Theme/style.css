@@ -1383,7 +1383,9 @@ a.fusion-button:hover {
     .single-tripzzy h1.entry-title {
         margin: 0 30px !important;
     }
-
+.destination_mobile {
+    margin: 15px 0 10px 0px !important;
+}
     .home .home-index {
         height: 100vh !important;
     }
