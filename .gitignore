@@ -134,3 +134,4 @@ OLD/
 Sauvegarde regulieres/wp-content/debug.log
 .DS_Store
 wp-content/plugins/.DS_Store
+*.backup
