@@ -95,7 +95,9 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 				if ( TripMap::is_enabled( 'google_map' ) ) {
 					wp_enqueue_script( 'google-map-api' ); // Search place autocomplete.
 				}
+				wp_enqueue_script( 'tripzzy-admin-trips-fix' );
 				wp_enqueue_script( 'tripzzy-admin-trips' );
+				wp_enqueue_script( 'tripzzy-admin-trips-fix' );
 			endif;
 		}
 
@@ -178,14 +180,14 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 				'src'       => self::$assets_url . 'dist/settings.js',
 				'deps'      => array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			$scripts['tripzzy-admin-main']      = array(
 				'src'       => self::$assets_url . 'dist/admin-main.js',
 				'deps'      => array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill', 'wp-pointer' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 			$styles['tripzzy-admin-main']       = array(
 				'src'     => self::$assets_url . 'dist/admin-main' . $rtl_suffix . '.css',
@@ -204,7 +206,7 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 				'src'       => self::$assets_url . 'dist/admin-bookings.js',
 				'deps'      => array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill', 'wp-pointer' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			$styles['tripzzy-admin-block-editor'] = array(
@@ -218,35 +220,42 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 				'src'       => self::$assets_url . 'dist/admin-homepage.js',
 				'deps'      => array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill', 'wp-pointer' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			$scripts['tripzzy-admin-forms'] = array(
 				'src'       => self::$assets_url . 'dist/admin-forms.js',
 				'deps'      => array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill', 'wp-pointer' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			$scripts['tripzzy-admin-trip-date-price'] = array(
 				'src'       => self::$assets_url . 'js/admin-date-prices.js',
 				'deps'      => array( 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			$scripts['tripzzy-admin-coupons'] = array(
 				'src'       => self::$assets_url . 'dist/admin-coupons.js',
 				'deps'      => array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill', 'wp-pointer' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			$scripts['tripzzy-admin-trips'] = array(
 				'src'       => self::$assets_url . 'dist/admin-trips.js',
 				'deps'      => array( 'tripzzy-admin-trip-date-price', 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill', 'wp-pointer' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
+			);
+
+			$scripts['tripzzy-admin-trips-fix'] = array(
+				'src'       => self::$assets_url . 'js/admin-trips-fix.js',
+				'deps'      => array( 'jquery' ), // Charger avant admin-trips.js pour définir sprintf
+				'version'   => TRIPZZY_VERSION . '.1',
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			// Frontend Scripts and Styles.
@@ -254,19 +263,19 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 				'src'       => self::$assets_url . 'dist/trips.js',
 				'deps'      => array( 'jquery', 'wp-util', 'wp-dom-ready', 'wp-element', 'tripzzy-lightbox', 'tripzzy-nouislider' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 			$scripts['tripzzy-enquiry-prefill'] = array(
 				'src'       => self::$assets_url . 'js/enquiry-prefill.js',
 				'deps'      => array( 'tripzzy-trips' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 			$scripts['tripzzy-dashboard'] = array(
 				'src'       => self::$assets_url . 'dist/dashboard.js',
 				'deps'      => array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-hooks', 'wp-i18n', 'wp-polyfill' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 			$styles['tripzzy-trips']      = array(
 				'src'     => self::$assets_url . 'dist/trips' . $rtl_suffix . '.css',
@@ -301,7 +310,7 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 				'src'       => self::$assets_url . 'js/swiper/swiper.min.js',
 				'deps'      => array( 'jquery' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 			$styles['tripzzy-swiper']  = array(
 				'src'     => self::$assets_url . 'styles/swiper/swiper.min.css',
@@ -314,14 +323,14 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 				'src'       => self::$assets_url . 'dist/multi-select-dropdown.js',
 				'deps'      => array( 'wp-i18n' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 
 			$scripts['tripzzy-lightbox'] = array(
 				'src'       => self::$assets_url . 'js/glightbox/glightbox.min.js',
 				'deps'      => array( 'jquery' ),
 				'version'   => TRIPZZY_VERSION,
-				'in_footer' => true,
+				'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 			);
 			$styles['tripzzy-lightbox']  = array(
 				'src'     => self::$assets_url . 'styles/glightbox/glightbox.min.css',
@@ -349,7 +358,7 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 					'src'       => 'https://maps.googleapis.com/maps/api/js?libraries=places&key=' . $api_key,
 					'deps'      => array(),
 					'version'   => TRIPZZY_VERSION,
-					'in_footer' => true,
+					'in_footer' => false, // Charger dans le header pour être disponible avant admin-trips.js
 				);
 			}
 
