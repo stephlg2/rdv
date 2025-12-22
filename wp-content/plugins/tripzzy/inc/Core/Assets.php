@@ -125,6 +125,67 @@ if ( ! class_exists( 'Tripzzy\Core\Assets' ) ) {
 
 			wp_enqueue_style( 'tripzzy-swiper' );
 			wp_enqueue_script( 'tripzzy-swiper' );
+			
+			// Initialiser GLightbox pour la galerie Tripzzy
+			wp_enqueue_style( 'tripzzy-lightbox' );
+			wp_enqueue_script( 'tripzzy-lightbox' );
+			$lightbox_init = "
+			(function() {
+				function initTripzzyLightbox() {
+					if (typeof GLightbox !== 'undefined') {
+						var lightbox = GLightbox({
+							selector: '.tripzzy-glightbox'
+						});
+					}
+				}
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initTripzzyLightbox);
+				} else {
+					initTripzzyLightbox();
+				}
+			})();
+			";
+			wp_add_inline_script( 'tripzzy-lightbox', $lightbox_init );
+			
+			// Initialiser la sticky tab
+			$sticky_tab_init = "
+			(function() {
+				function initStickyTab() {
+					var stickyTab = document.getElementById('tripzzy-sticky-tab');
+					if (!stickyTab) return;
+					
+					var stickyTabPosition = (typeof tripzzy !== 'undefined' && tripzzy.sticky_tab_position) ? tripzzy.sticky_tab_position : 0;
+					var lastScrollTop = 0;
+					
+					function handleScroll() {
+						var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+						
+						if (scrollTop > stickyTabPosition) {
+							// Show sticky tab
+							stickyTab.style.transform = 'translateY(0)';
+							stickyTab.style.opacity = '1';
+						} else {
+							// Hide sticky tab
+							stickyTab.style.transform = 'translateY(-100%)';
+							stickyTab.style.opacity = '0';
+						}
+						
+						lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+					}
+					
+					window.addEventListener('scroll', handleScroll, { passive: true });
+					handleScroll(); // Check initial position
+				}
+				
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initStickyTab);
+				} else {
+					initStickyTab();
+				}
+			})();
+			";
+			wp_add_inline_script( 'tripzzy-trips', $sticky_tab_init );
+			
 			// RTL custom.
 			if ( is_rtl() ) {
 				wp_enqueue_style( 'tripzzy-trips-custom-rtl' );

@@ -171,6 +171,35 @@ class Devis_Pro_Email {
 
         $subject = 'Nous avons bien reçu votre demande de voyage !';
 
+        // Préparer le descriptif du projet si présent
+        $descriptif_html = '';
+        if (!empty($devis->message)) {
+            $descriptif_html = '
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Descriptif de votre projet :</strong> <em style="color:#666;">' . nl2br(esc_html($devis->message)) . '</em></li>
+            ';
+        }
+
+        // Préparer l'adresse complète
+        $adresse_complete = trim($devis->cp . ' ' . $devis->ville);
+        if (empty($adresse_complete)) {
+            $adresse_complete = '-';
+        }
+
+        // Préparer l'affichage de la destination et du voyage
+        $destination_html = '';
+        if (!empty($devis->destination)) {
+            $destination_html = '
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Destination(s) :</strong> ' . esc_html($devis->destination) . '</li>
+            ';
+        }
+        
+        $voyage_html = '';
+        if (!empty($voyage) && $voyage !== 'Voyage en Asie') {
+            $voyage_html = '
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Voyage :</strong> ' . esc_html($voyage) . '</li>
+            ';
+        }
+
         $message = '
             <h2 style="color:#de5b09;margin-top:0;">Merci pour votre demande !</h2>
             <p>Bonjour ' . esc_html($devis->prenom) . ',</p>
@@ -180,16 +209,29 @@ class Devis_Pro_Email {
             <h3 style="color:#333;border-bottom:2px solid #de5b09;padding-bottom:10px;">Récapitulatif de votre demande</h3>
             
             <ul style="list-style:none;padding:0;">
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Voyage :</strong> ' . esc_html($voyage) . '</li>
+                ' . $destination_html . '
+                ' . $voyage_html . '
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Dates :</strong> ' . esc_html($devis->depart) . ' → ' . esc_html($devis->retour) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Durée :</strong> ' . esc_html($devis->duree) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Participants :</strong> ' . intval($devis->adulte) . ' adulte(s), ' . intval($devis->enfant) . ' enfant(s), ' . intval($devis->bebe) . ' bébé(s)</li>
-                <li style="padding:8px 0;"><strong>Vol inclus :</strong> ' . esc_html($devis->vol) . '</li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Vol inclus :</strong> ' . esc_html($devis->vol) . '</li>
+                ' . $descriptif_html . '
+            </ul>
+            
+            <h3 style="color:#333;border-bottom:2px solid #de5b09;padding-bottom:10px;margin-top:30px;">Vos coordonnées</h3>
+            
+            <ul style="list-style:none;padding:0;">
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Nom :</strong> ' . esc_html($devis->prenom . ' ' . $devis->nom) . '</li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Email :</strong> <a href="mailto:' . esc_attr($devis->email) . '" style="color:#de5b09;">' . esc_html($devis->email) . '</a></li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Téléphone :</strong> ' . esc_html($devis->tel) . '</li>
+                <li style="padding:8px 0;"><strong>Adresse :</strong> ' . esc_html($adresse_complete) . '</li>
             </ul>
             
             <p style="text-align:center;margin:30px 0 20px;">
                 <a href="' . esc_url($access_url) . '" style="display:inline-block;background:#de5b09;color:#fff;padding:15px 40px;text-decoration:none;border-radius:8px;font-size:16px;font-weight:bold;">Accéder à mon espace client</a>
             </p>
+            
+            <p style="color:#666;font-size:13px;margin-top:20px;">Une erreur dans vos coordonnées ? N\'hésitez pas à nous contacter par mail à <a href="mailto:contact@rdvasie.com" style="color:#de5b09;">contact@rdvasie.com</a></p>
             
             <p style="margin-top:30px;">À très bientôt !</p>
             <p><strong>L\'équipe Rendez-vous avec l\'Asie</strong></p>
