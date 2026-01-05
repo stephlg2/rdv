@@ -315,7 +315,7 @@ $settings = get_option('devis_pro_settings');
         <h3><?php _e('Une question ?', 'devis-pro'); ?></h3>
         <p>
             <?php _e('Notre équipe est à votre disposition', 'devis-pro'); ?><br>
-            <a href="tel:0272644034">02 72 64 40 34</a> • 
+            <a href="tel:0272644034">02 14 00 12 53</a> • 
             <a href="mailto:contact@rdvasie.com">contact@rdvasie.com</a>
         </p>
     </div>

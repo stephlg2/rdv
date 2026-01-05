@@ -96,7 +96,8 @@ class Devis_Pro_Email {
      */
     public function send_new_request_notification($devis) {
         $admin_email = $this->settings['email_admin'] ?? get_option('admin_email');
-        $voyage = $this->get_voyage_title($devis->voyage);
+        // Utiliser la destination renseignée par l'internaute en priorité
+        $voyage = !empty($devis->destination) ? $devis->destination : $this->get_voyage_title($devis->voyage);
 
         $subject = sprintf('[Nouveau devis] Demande de %s %s', $devis->prenom, $devis->nom);
 
