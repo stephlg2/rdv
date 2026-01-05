@@ -160,9 +160,9 @@ $show_page_title = apply_filters( 'tripzzy_filter_display_single_page_title', tr
 							</div>
 						</div>-->
 						<?php endif; ?>
-						<?php if ( $has_itineraries ) : ?>
+						<!-- <?php if ( $has_itineraries ) : ?>
 							<span class='tripzzy-view-itinerary' ><a href='#tripzzy-itineraries-section' data-tripzzy-smooth-scroll><?php echo esc_html( $labels['view_itinerary'] ?? '' ); ?></a></span>
-						<?php endif; ?>
+						<?php endif; ?> -->
 					</div>
 					<?php do_action( 'tripzzy_single_page_content' ); ?>
 					
