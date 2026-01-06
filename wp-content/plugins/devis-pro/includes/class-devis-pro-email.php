@@ -96,8 +96,7 @@ class Devis_Pro_Email {
      */
     public function send_new_request_notification($devis) {
         $admin_email = $this->settings['email_admin'] ?? get_option('admin_email');
-        // Utiliser la destination renseignée par l'internaute en priorité
-        $voyage = !empty($devis->destination) ? $devis->destination : $this->get_voyage_title($devis->voyage);
+        $voyage = $this->get_voyage_title($devis->voyage);
 
         $subject = sprintf('[Nouveau devis] Demande de %s %s', $devis->prenom, $devis->nom);
 
@@ -186,21 +185,6 @@ class Devis_Pro_Email {
             $adresse_complete = '-';
         }
 
-        // Préparer l'affichage de la destination et du voyage
-        $destination_html = '';
-        if (!empty($devis->destination)) {
-            $destination_html = '
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Destination(s) :</strong> ' . esc_html($devis->destination) . '</li>
-            ';
-        }
-        
-        $voyage_html = '';
-        if (!empty($voyage) && $voyage !== 'Voyage en Asie') {
-            $voyage_html = '
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Voyage :</strong> ' . esc_html($voyage) . '</li>
-            ';
-        }
-
         $message = '
             <h2 style="color:#de5b09;margin-top:0;">Merci pour votre demande !</h2>
             <p>Bonjour ' . esc_html($devis->prenom) . ',</p>
@@ -210,8 +194,7 @@ class Devis_Pro_Email {
             <h3 style="color:#333;border-bottom:2px solid #de5b09;padding-bottom:10px;">Récapitulatif de votre demande</h3>
             
             <ul style="list-style:none;padding:0;">
-                ' . $destination_html . '
-                ' . $voyage_html . '
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Voyage :</strong> ' . esc_html($voyage) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Dates :</strong> ' . esc_html($devis->depart) . ' → ' . esc_html($devis->retour) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Durée :</strong> ' . esc_html($devis->duree) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Participants :</strong> ' . intval($devis->adulte) . ' adulte(s), ' . intval($devis->enfant) . ' enfant(s), ' . intval($devis->bebe) . ' bébé(s)</li>
@@ -222,7 +205,7 @@ class Devis_Pro_Email {
             <h3 style="color:#333;border-bottom:2px solid #de5b09;padding-bottom:10px;margin-top:30px;">Vos coordonnées</h3>
             
             <ul style="list-style:none;padding:0;">
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Nom :</strong> ' . esc_html($devis->prenom . ' ' . $devis->nom) . '</li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Nom :</strong> ' . esc_html($devis->civ . ' ' . $devis->prenom . ' ' . $devis->nom) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Email :</strong> <a href="mailto:' . esc_attr($devis->email) . '" style="color:#de5b09;">' . esc_html($devis->email) . '</a></li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Téléphone :</strong> ' . esc_html($devis->tel) . '</li>
                 <li style="padding:8px 0;"><strong>Adresse :</strong> ' . esc_html($adresse_complete) . '</li>
