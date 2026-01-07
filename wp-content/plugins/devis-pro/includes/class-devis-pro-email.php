@@ -95,8 +95,33 @@ class Devis_Pro_Email {
      * Envoyer la notification admin pour une nouvelle demande
      */
     public function send_new_request_notification($devis) {
+        if (!$devis || !isset($devis->email)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[Devis Pro Email] send_new_request_notification: devis invalide');
+            }
+            return false;
+        }
+        
         $admin_email = $this->settings['email_admin'] ?? get_option('admin_email');
-        $voyage = $this->get_voyage_title($devis->voyage);
+        if (empty($admin_email)) {
+            $admin_email = get_option('admin_email');
+        }
+        
+        if (empty($admin_email)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[Devis Pro Email] send_new_request_notification: admin_email vide');
+            }
+            return false;
+        }
+        
+        try {
+            $voyage = $this->get_voyage_title($devis->voyage);
+        } catch (Exception $e) {
+            $voyage = !empty($devis->destination) ? $devis->destination : 'Voyage en Asie';
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[Devis Pro Email] Erreur get_voyage_title: ' . $e->getMessage());
+            }
+        }
 
         $subject = sprintf('[Nouveau devis] Demande de %s %s', $devis->prenom, $devis->nom);
 
@@ -156,14 +181,41 @@ class Devis_Pro_Email {
             </p>
         ';
 
-        return $this->send($admin_email, $subject, $message);
+        $result = $this->send($admin_email, $subject, $message);
+        
+        if (!$result && defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[Devis Pro Email] Échec envoi notification admin à: ' . $admin_email);
+        }
+        
+        return $result;
     }
 
     /**
      * Envoyer la confirmation au client
      */
     public function send_confirmation_to_client($devis) {
+        if (!$devis || !isset($devis->email) || empty($devis->email)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[Devis Pro Email] send_confirmation_to_client: devis invalide ou email vide');
+            }
+            return false;
+        }
+        
+        // Essayer de récupérer le titre du voyage
         $voyage = $this->get_voyage_title($devis->voyage);
+        
+        // Si le titre n'a pas pu être récupéré, utiliser la destination
+        if (empty($voyage) || $voyage === 'Voyage en Asie' || $voyage === $devis->voyage) {
+            if (!empty($devis->destination)) {
+                $voyage = $devis->destination;
+            } else {
+                $voyage = 'Voyage en Asie';
+            }
+        }
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[Devis Pro Email] send_confirmation_to_client - voyage: ' . $voyage . ' | destination: ' . ($devis->destination ?? 'vide') . ' | voyage_data: ' . ($devis->voyage ?? 'vide'));
+        }
         
         // Générer le lien d'accès direct à l'espace client
         $token = md5($devis->email . wp_salt());
@@ -221,7 +273,13 @@ class Devis_Pro_Email {
             <p><strong>L\'équipe Rendez-vous avec l\'Asie</strong></p>
         ';
 
-        return $this->send($devis->email, $subject, $message);
+        $result = $this->send($devis->email, $subject, $message);
+        
+        if (!$result && defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[Devis Pro Email] Échec envoi confirmation client à: ' . $devis->email);
+        }
+        
+        return $result;
     }
 
     /**
@@ -488,21 +546,31 @@ class Devis_Pro_Email {
      */
     private function get_voyage_title($voyage_data) {
         if (empty($voyage_data)) {
-            return 'Voyage en Asie';
+            return '';
+        }
+
+        // Si c'est déjà un texte (pas un ID), le retourner tel quel
+        if (!is_numeric($voyage_data) && strpos($voyage_data, '-;-') === false) {
+            return $voyage_data;
         }
 
         $ids = explode("-;-", $voyage_data);
         $titles = array();
 
         foreach ($ids as $id) {
+            $id = trim($id);
             if (!empty($id) && is_numeric($id)) {
-                $title = get_the_title($id);
-                if ($title) {
-                    $titles[] = $title;
+                // Essayer d'abord avec le post_type 'tripzzy'
+                $post = get_post($id);
+                if ($post && ($post->post_type === 'tripzzy' || $post->post_type === 'product')) {
+                    $title = get_the_title($id);
+                    if ($title && $title !== 'Auto Draft' && $title !== '') {
+                        $titles[] = $title;
+                    }
                 }
             }
         }
 
-        return !empty($titles) ? implode(', ', $titles) : $voyage_data;
+        return !empty($titles) ? implode(', ', $titles) : '';
     }
 }

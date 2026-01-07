@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="204px" height="204px" viewBox="0 0 204 204" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g fill="#000000">
+            <path d="M178.683443,70.0837307 L203.579547,45.1876276 L158.812372,0.420453434 L133.903265,25.3295613 C154.14541,33.7345934 170.322322,49.8967078 178.683443,70.0837307 Z M70.8060587,177.961115 L45.1876276,203.579547 L0.420453434,158.812372 L25.6121662,133.62066 C34.1549737,153.713232 50.4697727,169.737424 70.8060587,177.961115 Z"></path>
+            <ellipse cx="101.497537" cy="102" rx="70.3448276" ry="70"></ellipse>
+        </g>
+    </g>
+</svg>

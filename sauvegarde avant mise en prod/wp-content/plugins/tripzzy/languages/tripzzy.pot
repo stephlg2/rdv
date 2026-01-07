@@ -1,0 +1,5051 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Localazy (https://localazy.com)\n"
+"Project-Id-Version: RDV\n"
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n==0 || n==1) ? 0 : 1;\n"
+
+#: inc/Core/Helpers/UserProfile.php:177
+msgid "\"%s\" is a required field."
+msgstr "«%s\" est un champ obligatoire."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:676
+msgid "%1$s &#8220;%2$s&#8221; already exists."
+msgstr "%1$s« %2$s » existe déjà."
+
+#: inc/Admin/Views/SystemInfoView.php:187
+msgid "%1$s - Recommend  PHP version of %2$s. See:"
+msgstr "%1$s- Recommander la version PHP de%2$s. Voir :"
+
+#: inc/Admin/Views/SystemInfoView.php:264
+msgid "%1$s - We recommend a minimum MySQL version of 5.7. See:"
+msgstr "%1$s- Nous recommandons une version minimale de MySQL 5.7. Voir :"
+
+#: inc/Core/Bases/TaxonomyBase.php:92
+msgid "%s added."
+msgstr "%sajouté."
+
+#: inc/Core/Bases/TaxonomyBase.php:94 inc/Core/Bases/TaxonomyBase.php:102
+msgid "%s deleted."
+msgstr "%ssupprimé."
+
+#: inc/Core/Helpers/Strings.php:361
+msgid "%s is required field!"
+msgstr "%sest un champ obligatoire !"
+
+#: inc/Core/Bases/TaxonomyBase.php:98
+msgid "%s not added."
+msgstr "%snon ajouté."
+
+#: inc/Core/Bases/TaxonomyBase.php:100
+msgid "%s not updated."
+msgstr "%snon mis à jour."
+
+#: inc/Core/Helpers/ErrorMessage.php:86
+msgid "%s password is empty."
+msgstr "%sle mot de passe est vide."
+
+#: inc/Core/Helpers/ErrorMessage.php:88
+msgid "%s password is incorrect."
+msgstr "%sle mot de passe est incorrect."
+
+#: inc/Core/Bases/TaxonomyBase.php:96
+msgid "%s updated."
+msgstr "%smis à jour."
+
+#: inc/Admin/Notices/Notices.php:22
+msgid "'Tripzzy' requires minimum PHP version %1$s+. Please update PHP version to %2$s+."
+msgstr "« Tripzzy » nécessite une version minimale de PHP +. %1$s Veuillez mettre à jour la version de PHP vers %2$s +."
+
+#: inc/Admin/Notices/Notices.php:24
+msgid "'Tripzzy' requires minimum WordPress version %1$s+. Please update WordPress version to %2$s+."
+msgstr "« Tripzzy » nécessite une version minimale de WordPress +. %1$s Veuillez mettre à jour la version de WordPress vers %2$s +."
+
+#: inc/Core/Helpers/Strings.php:332
+msgid "* Please click publish/save button to save."
+msgstr "* Cliquez sur le bouton Publier/Enregistrer pour enregistrer."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:314
+msgid "- Select -"
+msgstr "- Sélectionnez -"
+
+#: inc/Admin/Views/Layouts/HelpTab.php:54
+msgid "<a href=\"https://docs.wptripzzy.com\" target=\"_blank\">Documentation</a> <br/>Stuck somewhere, please refer to our official documentation for assistence. It will help you to build a travel website using tripzzy."
+msgstr "<a href=\"https://docs.wptripzzy.com\" target=\"_blank\">Documentation </a> <br/> bloquée quelque part, veuillez consulter notre documentation officielle pour obtenir de l'aide. Il vous aidera à créer un site Web de voyage à l'aide de tripzzy."
+
+#: inc/Admin/Views/Layouts/HelpTab.php:55
+msgid "<a href=\"https://wordpress.org/support/plugin/tripzzy/\" target=\"_blank\">Support</a> <br/>If you need assistance in Tripzzy plugin, please submit your query without hesitation. Our support representative will answer your query as soon as possible."
+msgstr "<a href=\"https://wordpress.org/support/plugin/tripzzy/\" target=\"_blank\">Assistance </a> <br/> Si vous avez besoin d'aide avec le plugin Tripzzy, veuillez soumettre votre demande sans hésitation. Notre représentant du support répondra à votre demande dès que possible."
+
+#: inc/Core/Helpers/TemplateHooks.php:221
+#: inc/Core/Helpers/TemplateHooks.php:227
+msgid "<strong>Error:</strong> The password field is empty."
+msgstr "<strong>Erreur : </strong> le champ du mot de passe est vide."
+
+#: inc/Core/Helpers/TemplateHooks.php:220
+#: inc/Core/Helpers/TemplateHooks.php:224
+msgid "<strong>Error:</strong> The username field is empty."
+msgstr "<strong>Erreur : </strong> le champ du nom d'utilisateur est vide."
+
+#: inc/Core/Helpers/TemplateHooks.php:231
+msgid "<strong>Error:</strong> Username or password is incorrect."
+msgstr "<strong>Erreur : le </strong> nom d'utilisateur ou le mot de passe est incorrect."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1319
+msgid "A new version of this importer is available. Please update to version %s to ensure compatibility with newer export files."
+msgstr "Une nouvelle version de cet importateur est disponible. Veuillez passer à la version %s pour garantir la compatibilité avec les nouveaux fichiers d'exportation."
+
+#: inc/Core/Ajax/ImportExportAjax.php:68 inc/Core/Ajax/ImportExportAjax.php:120
+msgid "Access denied."
+msgstr "Accès refusé."
+
+#: inc/Core/Helpers/TripInfos.php:334 inc/Core/Seeder/TripIncludesSeeder.php:58
+msgid "Accomodation"
+msgstr "Hébergement"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:102
+msgid "Account Details"
+msgstr "Détails du compte"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:108
+msgid "Account Name"
+msgstr "Nom du compte"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:113
+msgid "Account Number"
+msgstr "Numéro de compte"
+
+#: inc/Admin/Views/SystemInfoView.php:422
+msgid "Active Plugins"
+msgstr "Plug-ins actifs"
+
+#: inc/Core/PostTypes/BookingPostType.php:416
+msgid "Add"
+msgstr "Ajouter"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:142
+msgid "Add Account"
+msgstr "AJOUTER UN COMPTE"
+
+#: inc/Core/PostTypes/BookingPostType.php:90
+msgid "Add Booking"
+msgstr "Ajouter une réservation"
+
+#: inc/Core/Helpers/Strings.php:120
+msgid "Add Category"
+msgstr "Ajouter une catégorie"
+
+#: inc/Core/Helpers/Strings.php:121
+msgid "Add Date"
+msgstr "Ajouter une date"
+
+#: inc/Core/Helpers/Strings.php:122
+msgid "Add Excludes"
+msgstr "Ajouter des exclusions"
+
+#: inc/Core/Helpers/Strings.php:123
+msgid "Add FAQ"
+msgstr "Ajouter une FAQ"
+
+#: inc/Core/Helpers/Strings.php:124
+msgid "Add Highlight"
+msgstr "Ajouter un surlignage"
+
+#: inc/Core/Forms/Inputs/Image.php:151
+msgid "Add Image"
+msgstr "Ajouter une image"
+
+#: inc/Core/Helpers/Strings.php:125
+msgid "Add Images In Gallery"
+msgstr "Ajouter des images dans la galerie"
+
+#: inc/Core/Helpers/Strings.php:126
+msgid "Add Includes"
+msgstr "Ajouter des inclusions"
+
+#: inc/Core/Helpers/Strings.php:127
+msgid "Add Info"
+msgstr "Ajouter des informations"
+
+#: inc/Core/Helpers/Strings.php:128
+msgid "Add Itinerary"
+msgstr "Ajouter un itinéraire"
+
+#: inc/Core/PostTypes/CouponPostType.php:71
+msgid "Add New Coupon"
+msgstr "Ajouter un nouveau coupon"
+
+#: inc/Core/PostTypes/CustomerPostType.php:63
+msgid "Add New Customer"
+msgstr "Ajouter un nouveau client"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:45
+msgid "Add New Email Trackback"
+msgstr "Ajouter un nouvel e-mail Trackback"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:67
+msgid "Add New Enquiry"
+msgstr "Ajouter une nouvelle demande"
+
+#: inc/Core/PostTypes/FormPostType.php:107
+msgid "Add New Form"
+msgstr "Ajouter un nouveau formulaire"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:70
+msgid "Add New Keyword"
+msgstr "Ajouter un nouveau mot clé"
+
+#: inc/Core/PostTypes/PaymentPostType.php:45
+msgid "Add New Payment"
+msgstr "Ajouter un nouveau paiement"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:70
+msgid "Add New Price Category"
+msgstr "Ajouter une nouvelle catégorie de prix"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:77
+msgid "Add New Trip"
+msgstr "Ajouter un nouveau voyage"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:90
+msgid "Add New Trip Activities"
+msgstr "Ajouter de nouvelles activités de voyage"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:90
+msgid "Add New Trip Destination"
+msgstr "Ajouter une nouvelle destination de voyage"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:80
+msgid "Add New Trip Exclude"
+msgstr "Ajouter un nouveau voyage Exclure"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:81
+msgid "Add New Trip Include"
+msgstr "Ajouter un nouveau voyage Inclure"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:90
+msgid "Add New Trip Type"
+msgstr "Ajouter un nouveau type de voyage"
+
+#: inc/Core/Helpers/Strings.php:130
+msgid "Add Package"
+msgstr "Ajouter un package"
+
+#: inc/Core/Helpers/Strings.php:131
+msgid "Add Schedule"
+msgstr "Ajouter un calendrier"
+
+#: inc/Core/Helpers/Strings.php:129
+msgid "Add new filter"
+msgstr "Ajouter un nouveau filtre"
+
+#: inc/Core/PostTypes/BookingPostType.php:407
+msgid "Add note"
+msgstr "Ajouter une note"
+
+#: templates/layouts/default/partials/coupon-form.php:27
+msgid "Add your coupon code below to get your discount."
+msgstr "Ajoutez votre code promo ci-dessous pour bénéficier de votre réduction."
+
+#: inc/Core/Ajax/CartAjax.php:241
+msgid "Added to cart successfully."
+msgstr "Ajouté au panier avec succès."
+
+#: inc/Core/Forms/CheckoutForm.php:262
+msgid "Additional information"
+msgstr "Informations supplementaires"
+
+#: inc/Core/Helpers/Strings.php:48
+msgid "Address 2"
+msgstr "Adresse 2"
+
+#: inc/Core/Helpers/Strings.php:132
+msgid "Admin Templates"
+msgstr "Modèles d'administration"
+
+#: inc/Core/Seeder/PriceCategorySeeder.php:56
+msgid "Adult"
+msgstr "Adulte"
+
+#: inc/Core/Helpers/Strings.php:133
+msgid "Advanced"
+msgstr "Avancé"
+
+#: inc/Core/Helpers/Countries.php:67
+msgid "Afghanistan"
+msgstr "Afghanistan"
+
+#: inc/Core/Helpers/TripInfos.php:418
+msgid "Age Requirements"
+msgstr "Exigences relatives à l'âge"
+
+#: inc/Core/Helpers/Countries.php:69
+msgid "Albania"
+msgstr "Albanie"
+
+#: inc/Core/Helpers/Countries.php:70
+msgid "Algeria"
+msgstr "Algérie"
+
+#: inc/Core/Helpers/Strings.php:49
+msgid "All"
+msgstr "Tous"
+
+#: inc/Core/PostTypes/CustomerPostType.php:208
+msgid "All Bookings"
+msgstr "Toutes les réservations"
+
+#: inc/Core/Traits/AdminMenuTrait.php:134
+#: inc/Core/Traits/AdminMenuTrait.php:137
+msgid "All Coupons"
+msgstr "Tous les coupons"
+
+#: inc/Core/Traits/AdminMenuTrait.php:125
+#: inc/Core/Traits/AdminMenuTrait.php:128
+msgid "All Customers"
+msgstr "Tous les clients"
+
+#: inc/Core/Traits/AdminMenuTrait.php:116
+#: inc/Core/Traits/AdminMenuTrait.php:119
+msgid "All Enquiries"
+msgstr "Toutes les demandes"
+
+#: inc/Core/Traits/AdminMenuTrait.php:152
+#: inc/Core/Traits/AdminMenuTrait.php:155
+msgid "All Filters"
+msgstr "Tous les filtres"
+
+#: inc/Core/Traits/AdminMenuTrait.php:143
+#: inc/Core/Traits/AdminMenuTrait.php:146
+msgid "All Forms"
+msgstr "Tous les formulaires"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:65
+msgid "All Keywords"
+msgstr "Tous les mots clés"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:65
+msgid "All Price Categories"
+msgstr "Toutes les catégories de prix"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:85
+msgid "All Trip Activities"
+msgstr "Toutes les activités du voyage"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:85
+msgid "All Trip Destination"
+msgstr "Destination de tous les voyages"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:75
+msgid "All Trip Excludes"
+msgstr "Tous les voyages sont exclus"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:76
+msgid "All Trip Includes"
+msgstr "Tout le voyage comprend"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:85
+msgid "All Trip Types"
+msgstr "Tous les types de voyages"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:78
+#: inc/Core/Traits/AdminMenuTrait.php:107
+#: inc/Core/Traits/AdminMenuTrait.php:110
+msgid "All Trips"
+msgstr "Tous les voyages"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:151
+msgid "All done."
+msgstr "Tout est fait"
+
+#: inc/Core/Helpers/Countries.php:71
+msgid "American Samoa"
+msgstr "Samoa américaines"
+
+#: inc/Core/Helpers/Strings.php:134
+msgid "Amount Display Format"
+msgstr "Format d'affichage des montants"
+
+#: inc/Core/Helpers/ErrorMessage.php:63 inc/Core/Helpers/Strings.php:356
+msgid "An Error has occur!!"
+msgstr "Une erreur s'est produite !"
+
+#: inc/Core/Helpers/Countries.php:72
+msgid "Andorra"
+msgstr "Andorre"
+
+#: inc/Core/Helpers/Countries.php:73
+msgid "Angola"
+msgstr "Angola"
+
+#: inc/Core/Helpers/Countries.php:74
+msgid "Anguilla"
+msgstr "Anguilla"
+
+#: inc/Core/Helpers/Strings.php:135
+msgid "Answer"
+msgstr "Réponse"
+
+#: inc/Core/Helpers/Countries.php:75
+msgid "Antarctica"
+msgstr "Antarctique"
+
+#: inc/Core/Helpers/Countries.php:76
+msgid "Antigua and Barbuda"
+msgstr "Antigua-et-Barbuda"
+
+#: templates/layouts/default/partials/coupon-form.php:33
+msgid "Apply"
+msgstr "Appliquer"
+
+#: inc/Core/Helpers/DropdownOptions.php:132
+msgid "April"
+msgstr "avril"
+
+#: inc/Core/Helpers/Strings.php:378
+msgid "Are you sure to delete %s?"
+msgstr "Êtes-vous sûr de vouloir supprimer %s ?"
+
+#: inc/Core/Helpers/Countries.php:77
+msgid "Argentina"
+msgstr "Argentine"
+
+#: inc/Core/Helpers/CategoryPricing.php:42
+#: inc/Core/Helpers/TripPackageCategory.php:56
+msgid "Arguments array must contains `id`"
+msgstr "Le tableau d'arguments doit contenir `id`"
+
+#: inc/Core/Helpers/Countries.php:78
+msgid "Armenia"
+msgstr "Arménie"
+
+#: inc/Core/Helpers/Countries.php:79
+msgid "Aruba"
+msgstr "Aruba"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:241
+msgid "Assign Authors"
+msgstr "Attribuer des auteurs"
+
+#: inc/Core/Helpers/DropdownOptions.php:148
+msgid "August"
+msgstr "août"
+
+#: inc/Core/Helpers/Countries.php:80
+msgid "Australia"
+msgstr "Australie"
+
+#: inc/Core/Helpers/Countries.php:81
+msgid "Austria"
+msgstr "Autriche"
+
+#: inc/Admin/Views/SystemInfoView.php:499
+msgid "Author URL"
+msgstr "URL de l'auteur"
+
+#: inc/Core/Helpers/Trip.php:345 inc/Core/Helpers/TripStickyTab.php:120
+#: templates/layouts/default/partials/single-dates.php:20
+msgid "Availability"
+msgstr "Disponibilité"
+
+#: inc/Core/Helpers/Strings.php:136
+msgid "Available Variables"
+msgstr "Variables disponibles"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:281
+msgid "Awaiting Bank Transfer payment. Booking status changed from \"%1$s\" to \"%2$s\"."
+msgstr "En attente de paiement par virement bancaire. Le statut de la réservation est passé de %1$s « » à « %2$s »."
+
+#: inc/Core/Helpers/Countries.php:82
+msgid "Azerbaijan"
+msgstr "Azerbaïdjan"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:134
+msgid "BIC / Swift"
+msgstr "BIC/SWIFT"
+
+#: inc/Core/Helpers/Countries.php:83
+msgid "Bahamas"
+msgstr "Bahamas"
+
+#: inc/Core/Helpers/Countries.php:84
+msgid "Bahrain"
+msgstr "Bahreïn"
+
+#: inc/Core/Helpers/Countries.php:85
+msgid "Bangladesh"
+msgstr "Bangladesh"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:119
+msgid "Bank Name"
+msgstr "Nom de la banque"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:57
+msgid "Bank Transfer"
+msgstr "Virement Bancaire"
+
+#: inc/Core/Helpers/Countries.php:86
+msgid "Barbados"
+msgstr "Barbade"
+
+#: inc/Core/Helpers/Countries.php:87
+msgid "Belarus"
+msgstr "Biélorussie"
+
+#: inc/Core/Helpers/Countries.php:89
+msgid "Belau"
+msgstr "Belau"
+
+#: inc/Core/Helpers/Countries.php:88
+msgid "Belgium"
+msgstr "Belgique"
+
+#: inc/Core/Helpers/Countries.php:90
+msgid "Belize"
+msgstr "Bélize"
+
+#: inc/Core/Helpers/Countries.php:91
+msgid "Benin"
+msgstr "Bénin"
+
+#: inc/Core/Helpers/Countries.php:92
+msgid "Bermuda"
+msgstr "Bermudes"
+
+#: inc/Core/Helpers/Settings.php:347
+msgid "Best price guaranteed."
+msgstr "Meilleur prix garanti."
+
+#: inc/Core/Helpers/TripInfos.php:394
+msgid "Best season"
+msgstr "Meilleure saison"
+
+#: inc/Core/Helpers/Countries.php:93
+msgid "Bhutan"
+msgstr "Bhoutan"
+
+#: inc/Core/Forms/CheckoutForm.php:243
+msgid "Billing Detail"
+msgstr "Détails de facturation"
+
+#: inc/Core/Helpers/Strings.php:50
+msgid "Billing Details"
+msgstr "Détails de facturation"
+
+#: inc/Core/Helpers/Countries.php:94
+msgid "Bolivia"
+msgstr "Bolivie"
+
+#: inc/Core/Helpers/Countries.php:95
+msgid "Bonaire, Saint Eustatius and Saba"
+msgstr "Bonaire, Saint-Eustache et Saba "
+
+#: inc/Core/Helpers/Strings.php:51
+#: inc/Core/Shortcodes/CheckoutPageShortcode.php:138
+#: inc/Core/Shortcodes/CheckoutPageShortcode.php:141
+#: src/blocks/trip-slider/render.php:38
+msgid "Book Now"
+msgstr "Réservez maintenant"
+
+#: inc/Core/Ajax/TripAjax.php:316
+msgctxt "Book Now Button"
+msgid "Book Now"
+msgstr "Réservez maintenant"
+
+#: inc/Core/Ajax/TripAjax.php:316
+msgctxt "Display Price Category for checkout."
+msgid "Book Now"
+msgstr "Réservez maintenant"
+
+#: inc/Core/Payment/PaymentGateways/BookNowPayLater.php:55
+msgid "Book Now Pay Later"
+msgstr "Réservez maintenant Payez plus tard"
+
+#: inc/Core/Payment/PaymentGateways/BookNowPayLater.php:80
+msgid "Book Your trips without payment."
+msgstr "Réservez vos voyages sans paiement."
+
+#: inc/Core/Bookings.php:846
+msgid "Booked"
+msgstr "Réservé"
+
+#: inc/Core/PostTypes/BookingPostType.php:528
+msgid "Booked Date"
+msgstr "Date réservée"
+
+#: inc/Core/Helpers/Customer.php:302 inc/Core/Helpers/Strings.php:52
+msgid "Booked on"
+msgstr "Réservé le"
+
+#: inc/Core/Helpers/Strings.php:53
+msgid "Booking"
+msgstr "Réservation"
+
+#: inc/Core/PostTypes/BookingPostType.php:95
+msgctxt "add new on admin bar"
+msgid "Booking"
+msgstr "Réservation"
+
+#: inc/Core/PostTypes/BookingPostType.php:101
+msgctxt "post type singular name"
+msgid "Booking"
+msgstr "Réservation"
+
+#: inc/Core/Helpers/Strings.php:55
+msgid "Booking #%d Details"
+msgstr "%dDétails du numéro de réservation"
+
+#: inc/Core/Helpers/Settings.php:296
+msgid "Booking Canceled (#%s)"
+msgstr "Réservation annulée (#%s)"
+
+#: inc/Core/Bookings.php:282 inc/Core/Helpers/Strings.php:56
+msgid "Booking Date"
+msgstr "Date de réservation"
+
+#: inc/Core/Bookings.php:333 inc/Core/Shortcodes/ThankyouPageShortcode.php:90
+msgid "Booking Detail"
+msgstr "Détail de la réservation"
+
+#: inc/Core/PostTypes/BookingPostType.php:200
+msgid "Booking Details"
+msgstr "Détails réservation"
+
+#: inc/Core/PostTypes/CustomerPostType.php:128
+msgid "Booking History"
+msgstr "Historique des réservations"
+
+#: inc/Core/Bookings.php:278
+msgid "Booking ID"
+msgstr "ID de réservation"
+
+#: inc/Core/Emails/AdminBookingEmail.php:216
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:182
+#: inc/Core/Emails/CustomerBookingEmail.php:218
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:182
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:182
+msgid "Booking ID of trip."
+msgstr "Numéro de réservation du voyage."
+
+#: inc/Core/Helpers/Settings.php:302
+msgid "Booking Refunded (#%s)"
+msgstr "Réservation remboursée (#%s)"
+
+#: inc/Core/PostTypes/BookingPostType.php:525
+msgid "Booking Status"
+msgstr "État de la réservation"
+
+#: inc/Core/Bookings.php:275
+msgid "Booking Summary"
+msgstr "Récapitulatif de la réservation"
+
+#: inc/Core/PostTypes/BookingPostType.php:204
+msgid "Booking Trips"
+msgstr "Réservation de voyages"
+
+#: inc/Core/PostTypes/BookingPostType.php:212
+msgid "Booking notes"
+msgstr "Notes de réservation"
+
+#: inc/Core/Helpers/Settings.php:299
+msgid "Booking on Hold (#%s)"
+msgstr "Réservation en attente (#%s)"
+
+#: inc/Core/SendEmails.php:146
+msgid "Booking status changed from \"%1$s\" to \"%2$s\"."
+msgstr "Le statut de la réservation est passé de %1$s « » à « %2$s »."
+
+#: inc/Admin/Views/Layouts/Header.php:79 inc/Core/Helpers/Customer.php:301
+#: inc/Core/Helpers/Strings.php:57 inc/Core/PostTypes/BookingPostType.php:91
+msgid "Bookings"
+msgstr "Réservations"
+
+#: inc/Core/PostTypes/BookingPostType.php:94
+msgctxt "post type general name"
+msgid "Bookings"
+msgstr "Réservations"
+
+#: inc/Core/Helpers/Countries.php:96
+msgid "Bosnia and Herzegovina"
+msgstr "Bosnie-Herzégovine"
+
+#: inc/Core/Helpers/Countries.php:97
+msgid "Botswana"
+msgstr "Botswana"
+
+#: inc/Core/Helpers/Countries.php:98
+msgid "Bouvet Island"
+msgstr "Île Bouvet"
+
+#: inc/Core/Helpers/Countries.php:99
+msgid "Brazil"
+msgstr "Brésil"
+
+#: inc/Core/Helpers/Countries.php:100
+msgid "British Indian Ocean Territory"
+msgstr "Territoire britannique de l'océan Indien"
+
+#: inc/Core/Helpers/Countries.php:101
+msgid "Brunei"
+msgstr "Brunéi"
+
+#: inc/Core/Helpers/SearchForm.php:51 inc/Core/Helpers/SearchForm.php:55
+#: inc/Core/Helpers/TripFilter.php:298
+msgid "Budget"
+msgstr "Budget"
+
+#: inc/Core/Helpers/Countries.php:102
+msgid "Bulgaria"
+msgstr "Bulgarie"
+
+#: inc/Core/Helpers/Countries.php:103
+msgid "Burkina Faso"
+msgstr "Burkina Faso"
+
+#: inc/Core/Helpers/Countries.php:104
+msgid "Burundi"
+msgstr "Burundi"
+
+#: inc/Core/Helpers/Countries.php:105
+msgid "Cambodia"
+msgstr "Cambodge"
+
+#: inc/Core/Helpers/Countries.php:106
+msgid "Cameroon"
+msgstr "Cameroun"
+
+#: inc/Core/Helpers/Countries.php:107
+msgid "Canada"
+msgstr "Canada"
+
+#: inc/Core/Ajax/TripAjax.php:316
+msgctxt "Booking cancel button."
+msgid "Cancel"
+msgstr "Annuler"
+
+#: inc/Core/Bookings.php:847
+msgid "Canceled"
+msgstr "Annulé"
+
+#: inc/Core/Helpers/Countries.php:108
+msgid "Cape Verde"
+msgstr "Cap Vert"
+
+#: inc/Core/Helpers/Strings.php:137 inc/Core/Helpers/TripFilter.php:143
+msgid "Category"
+msgstr "Catégorie"
+
+#: inc/Core/Helpers/Countries.php:109
+msgid "Cayman Islands"
+msgstr "Îles Caïmans"
+
+#: inc/Core/Helpers/Countries.php:110
+msgid "Central African Republic"
+msgstr "République centrafricaine"
+
+#: inc/Core/Helpers/Countries.php:111
+msgid "Chad"
+msgstr "Tchad"
+
+#: inc/Core/Helpers/Strings.php:58
+msgid "Change Password"
+msgstr "Changer de mot de passe"
+
+#: inc/Core/Helpers/Strings.php:59
+msgid "Check availability"
+msgstr "Vérifiez la disponibilité"
+
+#: inc/Core/Helpers/Strings.php:138
+msgid "Check to reset."
+msgstr "Cochez pour réinitialiser."
+
+#: inc/Core/Helpers/Strings.php:60 inc/Core/Helpers/Strings.php:139
+msgid "Checkout"
+msgstr "Commander"
+
+#: inc/Core/Seeder/PageSeeder.php:71
+msgctxt "Page title"
+msgid "Checkout"
+msgstr "Commander"
+
+#: inc/Admin/Hooks.php:95
+msgid "Checkout Form"
+msgstr "Formulaire de paiement"
+
+#: inc/Core/Seeder/FormFieldsSeeder.php:78
+msgctxt "Page title"
+msgid "Checkout Form"
+msgstr "Formulaire de paiement"
+
+#: inc/Admin/Views/SystemInfoView.php:503
+msgid "Child Theme"
+msgstr "Thème pour enfants"
+
+#: inc/Core/Seeder/PriceCategorySeeder.php:60
+msgid "Children"
+msgstr "Enfants"
+
+#: inc/Core/Helpers/Countries.php:112
+msgid "Chile"
+msgstr "Chili"
+
+#: inc/Core/Helpers/Countries.php:113
+msgid "China"
+msgstr "Chine"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1335
+msgid "Choose a WXR (.xml) file to upload, then click Upload file and import."
+msgstr "Choisissez un fichier WXR (.xml) à charger, puis cliquez sur Charger le fichier et l'importer."
+
+#: inc/Core/Helpers/Strings.php:334
+msgid "Choose your accepted payment currency."
+msgstr "Choisissez la devise de paiement que vous acceptez."
+
+#: inc/Core/Helpers/Countries.php:114
+msgid "Christmas Island"
+msgstr "Île Christmas"
+
+#: inc/Core/Helpers/Strings.php:62
+#: templates/layouts/default/partials/coupon-form.php:31
+msgid "Clear"
+msgstr "Transparent"
+
+#: inc/Core/Helpers/Strings.php:341
+msgid "Click on the point to change difficulty level. You can change the difficulty level like Easy, Medium from the settings."
+msgstr "Cliquez sur le point pour modifier le niveau de difficulté. Vous pouvez modifier le niveau de difficulté comme Facile, Moyen dans les paramètres."
+
+#: inc/Core/Helpers/TripFaqs.php:103 inc/Core/Helpers/TripItineraries.php:110
+msgid "Close all"
+msgstr "Tout fermer"
+
+#: inc/Core/Helpers/Countries.php:115
+msgid "Cocos (Keeling) Islands"
+msgstr "Îles Cocos (Keeling)"
+
+#: inc/Core/Helpers/Countries.php:116
+msgid "Colombia"
+msgstr "Colombie"
+
+#: inc/Admin/Views/ThemesView.php:134
+msgid "Coming Soon"
+msgstr "Prochainement"
+
+#: inc/Core/Helpers/Countries.php:117
+msgid "Comoros"
+msgstr "Comores"
+
+#: inc/Core/Payment/PaymentGateways/PayPalPayment.php:85
+msgid "Complete your booking by paying with PayPal."
+msgstr "Finalisez votre réservation en payant avec PayPal."
+
+#: inc/Core/Helpers/Strings.php:140
+msgid "Config"
+msgstr "Configuration"
+
+#: inc/Core/Helpers/Strings.php:63
+msgid "Confirm Password"
+msgstr "Confirmer mot de passe"
+
+#: inc/Core/Helpers/Countries.php:118
+msgid "Congo (Brazzaville)"
+msgstr "Congo (Brazzaville)"
+
+#: inc/Core/Helpers/Countries.php:119
+msgid "Congo (Kinshasa)"
+msgstr "Congo (Kinshasa)"
+
+#: inc/Core/Helpers/Countries.php:120
+msgid "Cook Islands"
+msgstr "Îles Cook"
+
+#: inc/Core/Helpers/Countries.php:121
+msgid "Costa Rica"
+msgstr "Costa Rica"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1075
+msgid "Could not create temporary file."
+msgstr "Impossible de créer un fichier temporaire."
+
+#: inc/Core/Cart.php:476
+msgid "Couldn't add trip to the cart."
+msgstr "Impossible d'ajouter le voyage au panier."
+
+#: inc/Admin/Views/SystemInfoView.php:198
+msgid "Couldn't determine PHP version because phpversion() doesn't exist."
+msgstr "Impossible de déterminer la version de PHP car phpversion () n'existe pas."
+
+#: inc/Core/Helpers/Strings.php:61
+msgid "Country/Region"
+msgstr "Pays / Région"
+
+#: inc/Core/Forms/CheckoutForm.php:104
+msgid "Country / Region"
+msgstr "Pays/Région"
+
+#: inc/Core/Forms/Inputs/CountryDropdown.php:59
+msgid "Country Dropdown"
+msgstr "Liste déroulante des pays"
+
+#: inc/Core/Helpers/Strings.php:141
+msgid "Coupon"
+msgstr "Coupon"
+
+#: inc/Core/PostTypes/CouponPostType.php:76
+msgctxt "add new on admin bar"
+msgid "Coupon"
+msgstr "Coupon"
+
+#: inc/Core/PostTypes/CouponPostType.php:82
+msgctxt "post type singular name"
+msgid "Coupon"
+msgstr "Coupon"
+
+#: inc/Core/Helpers/ErrorMessage.php:73
+msgid "Coupon already expired !"
+msgstr "Le coupon a déjà expiré !"
+
+#: inc/Core/Helpers/ErrorMessage.php:77
+msgid "Coupon amount is more than trip amount !"
+msgstr "Le montant du coupon est supérieur au montant du voyage !"
+
+#: inc/Core/PostTypes/CouponPostType.php:162
+#: templates/layouts/default/partials/coupon-form.php:29
+msgid "Coupon code"
+msgstr "Code promo"
+
+#: inc/Core/Helpers/ErrorMessage.php:74
+msgid "Coupon limit exceed !"
+msgstr "La limite des coupons est dépassée !"
+
+#: inc/Core/PostTypes/CouponPostType.php:166
+msgid "Coupon status"
+msgstr "État du coupon"
+
+#: inc/Core/PostTypes/CouponPostType.php:163
+msgid "Coupon value"
+msgstr "Valeur du coupon"
+
+#: inc/Core/PostTypes/CouponPostType.php:72
+#: inc/Core/PostTypes/CouponPostType.php:124
+msgid "Coupons"
+msgstr "Coupons"
+
+#: inc/Core/PostTypes/CouponPostType.php:74
+msgctxt "admin menu"
+msgid "Coupons"
+msgstr "Coupons"
+
+#: inc/Core/PostTypes/CouponPostType.php:75
+msgctxt "post type general name"
+msgid "Coupons"
+msgstr "Coupons"
+
+#: inc/Core/Helpers/Countries.php:122
+msgid "Croatia"
+msgstr "Croatie"
+
+#: inc/Core/Helpers/Countries.php:123
+msgid "Cuba"
+msgstr "Cuba"
+
+#: inc/Core/Helpers/Countries.php:124
+msgid "Cura&ccedil;ao"
+msgstr "Curaçao"
+
+#: inc/Core/Helpers/Strings.php:142
+msgid "Currency"
+msgstr "Devise"
+
+#: inc/Core/Helpers/Strings.php:143
+msgid "Currency Settings"
+msgstr "Paramètres de devise"
+
+#: inc/Core/Helpers/Strings.php:64
+msgid "Current Password"
+msgstr "Mot de passe actuel"
+
+#: inc/Core/Emails/AdminBookingEmail.php:222
+#: inc/Core/Emails/AdminEnquiryEmail.php:226
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:188
+#: inc/Core/Emails/CustomerBookingEmail.php:224
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:188
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:188
+msgid "Current website name."
+msgstr "Nom du site Web actuel."
+
+#: inc/Core/Helpers/Strings.php:144
+msgid "Custom Filters"
+msgstr "Filtres personnalisés"
+
+#: inc/Core/Helpers/User.php:93
+msgid "Customer"
+msgstr "Client"
+
+#: inc/Core/PostTypes/CustomerPostType.php:68
+msgctxt "add new on admin bar"
+msgid "Customer"
+msgstr "Client"
+
+#: inc/Core/PostTypes/CustomerPostType.php:74
+msgctxt "post type singular name"
+msgid "Customer"
+msgstr "Client"
+
+#: inc/Core/PostTypes/CustomerPostType.php:123
+msgid "Customer Details"
+msgstr "Informations sur le client"
+
+#: inc/Core/PostTypes/CustomerPostType.php:206
+msgid "Customer ID"
+msgstr "Client ID"
+
+#: inc/Core/PostTypes/CustomerPostType.php:205
+msgid "Customer Name"
+msgstr "Nom du client"
+
+#: inc/Core/Helpers/Strings.php:145
+msgid "Customer Templates"
+msgstr "Modèles pour clients"
+
+#: inc/Core/PostTypes/CustomerPostType.php:64
+msgid "Customers"
+msgstr "Les clients"
+
+#: inc/Core/PostTypes/CustomerPostType.php:66
+msgctxt "admin menu"
+msgid "Customers"
+msgstr "Les clients"
+
+#: inc/Core/PostTypes/CustomerPostType.php:67
+msgctxt "post type general name"
+msgid "Customers"
+msgstr "Les clients"
+
+#: inc/Core/Helpers/Strings.php:146
+msgid "Cut-off Time"
+msgstr "Heure limite"
+
+#: inc/Core/Helpers/Strings.php:397
+msgid "Cut-off time determines the latest booking time before a trip starts."
+msgstr "L'heure limite détermine l'heure de réservation la plus récente avant le début d'un voyage."
+
+#: inc/Core/Helpers/Countries.php:125
+msgid "Cyprus"
+msgstr "Chypre"
+
+#: inc/Core/Helpers/Countries.php:126
+msgid "Czech Republic"
+msgstr "République Tchèque"
+
+#: inc/Core/Seeder/PageSeeder.php:94
+msgctxt "Page title"
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:159
+#: templates/layouts/default/partials/mini-cart.php:47
+msgid "Date"
+msgstr "Date"
+
+#: inc/Core/Helpers/Strings.php:319
+msgid "Date is only recommended for the fixed dated trips. You can disable it by going to `Settings > Trip Settings > Trip Itineraries`, if you don't need it."
+msgstr "La date n'est recommandée que pour les voyages à date fixe. Vous pouvez le désactiver en accédant à « Paramètres > Paramètres du voyage > Itinéraires de voyage », si vous n'en avez pas besoin."
+
+#: inc/Core/Helpers/Strings.php:147
+msgid "Dates"
+msgstr "Dates"
+
+#: inc/Core/Helpers/Strings.php:148
+msgid "Day"
+msgstr "Journée"
+
+#: inc/Core/Helpers/SearchForm.php:41 inc/Core/Helpers/Strings.php:149
+#: inc/Core/Helpers/Trip.php:694 inc/Core/Helpers/TripFilter.php:330
+msgid "Days"
+msgstr "Journées"
+
+#: inc/Core/Helpers/DropdownOptions.php:164
+msgid "December"
+msgstr "décembre"
+
+#: inc/Core/Helpers/Strings.php:150
+msgid "Decimal Separator"
+msgstr "Séparateur décimal"
+
+#: inc/Core/Ajax/TripAjax.php:404 inc/Core/Functions/TemplateMarkups.php:233
+msgid "Decrease"
+msgstr "Diminution"
+
+#: inc/Core/Helpers/Strings.php:151
+msgid "Default Filters"
+msgstr "Filtres par défaut"
+
+#: inc/Core/Helpers/Strings.php:342
+msgid "Default Packge to display Price. Only one package can select as default. If selected, Price from this packge is displayed as default price."
+msgstr "Package par défaut pour afficher le prix. Un seul package peut être sélectionné par défaut. Si cette option est sélectionnée, le prix de ce package est affiché comme prix par défaut."
+
+#: inc/Admin/Views/SystemInfoView.php:284
+msgid "Default Timezone is UTC"
+msgstr "Le fuseau horaire par défaut est UTC"
+
+#: inc/Admin/Views/SystemInfoView.php:296
+msgid "Default timezone is %s - it should be UTC"
+msgstr "Le fuseau horaire par défaut est %s - il doit être UTC"
+
+#: inc/Admin/Views/FilterPlusView.php:158
+msgid "Delete"
+msgstr "Delete"
+
+#: inc/Core/Ajax/NotesAjax.php:91 inc/Core/PostTypes/BookingPostType.php:392
+msgid "Delete note"
+msgstr "Supprimer la note"
+
+#: inc/Core/Helpers/Countries.php:127
+msgid "Denmark"
+msgstr "Danemark"
+
+#: inc/Core/Helpers/Strings.php:65
+msgid "Dep"
+msgstr "Dep"
+
+#: inc/Core/Helpers/TripInfos.php:370
+msgid "Departure from"
+msgstr "Départ de"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:86
+#: inc/Core/Payment/PaymentGateways/BookNowPayLater.php:78
+#: inc/Core/Payment/PaymentGateways/PayPalPayment.php:83
+msgid "Description"
+msgstr "Descriptif"
+
+#: inc/Core/PostTypes/BookingPostType.php:107
+#: inc/Core/PostTypes/CouponPostType.php:88
+#: inc/Core/PostTypes/CustomerPostType.php:80
+#: inc/Core/PostTypes/EnquiryPostType.php:84
+#: inc/Core/PostTypes/FormPostType.php:124
+#: inc/Core/PostTypes/TripzzyPostType.php:94
+msgid "Description."
+msgstr "Descriptif."
+
+#: inc/Core/Helpers/SearchForm.php:109 inc/Core/Helpers/SearchForm.php:113
+msgid "Destination"
+msgstr "Destination"
+
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser.php:46
+msgid "Details are shown above. The importer will now try again with a different parser..."
+msgstr "Les détails sont présentés ci-dessus. L'importateur va maintenant réessayer avec un autre analyseur..."
+
+#: inc/Core/Emails/AdminBookingEmail.php:217
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:183
+#: inc/Core/Emails/CustomerBookingEmail.php:219
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:183
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:183
+msgid "Details of customers who booked the trip."
+msgstr "Informations sur les clients qui ont réservé le voyage."
+
+#: inc/Core/Helpers/Strings.php:152
+msgid "Difficulties"
+msgstr "Difficultés"
+
+#: inc/Core/Helpers/Strings.php:153
+msgid "Disabled"
+msgstr "Désactivé"
+
+#: inc/Core/Bookings.php:449 inc/Core/Bookings.php:811
+#: templates/layouts/default/partials/mini-cart.php:68
+msgid "Discount"
+msgstr "Escompte"
+
+#: inc/Core/Helpers/Amount.php:32
+msgid "Display Amount figure without any formating."
+msgstr "Afficher le chiffre du montant sans aucun formatage."
+
+#: inc/Core/Helpers/Amount.php:30
+msgid "Display Currency Code."
+msgstr "Afficher le code de devise."
+
+#: inc/Core/Helpers/Amount.php:31
+msgid "Display Currency Symbol."
+msgstr "Afficher le symbole de la devise."
+
+#: inc/Core/Helpers/TripFilter.php:371
+msgid "Display Duration in the search filter section of archive page or Trip search form."
+msgstr "Afficher la durée dans la section du filtre de recherche de la page d'archive ou du formulaire de recherche de voyage."
+
+#: inc/Core/Helpers/Amount.php:33
+msgid "Display amount with amount format as per settings."
+msgstr "Afficher le montant avec le format du montant selon les paramètres."
+
+#: inc/Core/Helpers/Strings.php:333
+msgid "Display as section title in frontend trip detail page."
+msgstr "Afficher en tant que titre de section sur la page détaillée du voyage en façade."
+
+#: inc/Core/Helpers/Strings.php:317
+msgid "Display duration units like '2 Days' or '2 Hours' in the search or filter."
+msgstr "Affichez des unités de durée telles que « 2 jours » ou « 2 heures » dans la recherche ou le filtre."
+
+#: inc/Core/Helpers/Strings.php:343
+msgid "Display this price on the front end as default. Only one category can select as from price."
+msgstr "Affichez ce prix sur le front-end par défaut. Une seule catégorie peut être sélectionnée à partir du prix."
+
+#: inc/Core/BlockTemplateUtils.php:408
+msgid "Displays Trip archive."
+msgstr "Affiche les archives des voyages."
+
+#: inc/Core/BlockTemplateUtils.php:404
+msgid "Displays a Trip Details."
+msgstr "Affiche les détails d'un trajet."
+
+#: inc/Core/Helpers/Countries.php:128
+msgid "Djibouti"
+msgstr "Djibouti"
+
+#: inc/Core/Helpers/Strings.php:380
+msgid "Do you really want to "
+msgstr "Est-ce que tu veux vraiment "
+
+#: inc/Core/Helpers/Strings.php:154
+msgid "Documentation"
+msgstr "Documentation"
+
+#: inc/Core/Helpers/Countries.php:129
+msgid "Dominica"
+msgstr "Dominique"
+
+#: inc/Core/Helpers/Countries.php:130
+msgid "Dominican Republic"
+msgstr "dominicaine (la République)"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:257
+msgid "Download and import file attachments"
+msgstr "Télécharger et importer des pièces jointes"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1137
+msgid "Downloaded file has incorrect size"
+msgstr "La taille du fichier téléchargé est incorrecte"
+
+#: inc/Core/Helpers/Strings.php:306
+msgid "Drop Images here to upload in gallery."
+msgstr "Déposez les images ici pour les télécharger dans la galerie."
+
+#: inc/Core/Forms/Inputs/Dropdown.php:57
+msgid "Dropdown"
+msgstr "Liste déroulante"
+
+#: inc/Core/Helpers/Strings.php:66
+msgid "Due"
+msgstr "En raison"
+
+#: inc/Core/Helpers/SearchForm.php:80 inc/Core/Helpers/SearchForm.php:84
+#: inc/Core/Helpers/Strings.php:67 inc/Core/Helpers/TripFilter.php:306
+msgid "Duration"
+msgstr "Durée"
+
+#: inc/Core/Helpers/Strings.php:155
+msgid "Duration Filter Config"
+msgstr "Configuration du filtre de durée"
+
+#: inc/Core/Helpers/Settings.php:319
+msgid "Easy"
+msgstr "Facile"
+
+#: inc/Core/Helpers/Countries.php:131
+msgid "Ecuador"
+msgstr "Équateur"
+
+#: inc/Admin/Views/FilterPlusView.php:155
+msgid "Edit"
+msgstr "Edit"
+
+#: inc/Core/PostTypes/BookingPostType.php:92
+msgid "Edit Booking"
+msgstr "Modifier la réservation"
+
+#: inc/Core/PostTypes/CouponPostType.php:73
+msgid "Edit Coupon"
+msgstr "Modifier le coupon"
+
+#: inc/Core/PostTypes/CustomerPostType.php:65
+msgid "Edit Customer"
+msgstr "Modifier le client"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:47
+msgid "Edit Email Trackback"
+msgstr "Modifier le trackback des e-mails"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:69
+msgid "Edit Enquiry"
+msgstr "Modifier la demande"
+
+#: inc/Core/PostTypes/FormPostType.php:109
+msgid "Edit Form"
+msgstr "Modifier le formulaire"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:68
+msgid "Edit Keyword"
+msgstr "Modifier le mot clé"
+
+#: inc/Core/PostTypes/PaymentPostType.php:47
+msgid "Edit Payment"
+msgstr "Modifier le paiement"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:68
+msgid "Edit Price Category"
+msgstr "Modifier la catégorie de prix"
+
+#: inc/Core/Helpers/Strings.php:68
+msgid "Edit Profile"
+msgstr "Modification du profil"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:79
+msgid "Edit Trip"
+msgstr "Modifier le voyage"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:88
+msgid "Edit Trip Activities"
+msgstr "Modifier les activités du voyage"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:88
+msgid "Edit Trip Destination"
+msgstr "Modifier la destination du voyage"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:78
+msgid "Edit Trip Exclude"
+msgstr "Modifier l'exclusion d'un voyage"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:79
+msgid "Edit Trip Include"
+msgstr "Modifier le voyage et inclure"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:88
+msgid "Edit Trip Type"
+msgstr "Modifier le type de voyage"
+
+#: inc/Core/Helpers/Countries.php:132
+msgid "Egypt"
+msgstr "Égypte"
+
+#: inc/Core/Helpers/Strings.php:399
+msgid "Either show Trip slider or Featured image at the top of section."
+msgstr "Affichez le curseur Trip ou l'image en vedette en haut de la section."
+
+#: inc/Core/Helpers/Countries.php:133
+msgid "El Salvador"
+msgstr "El Salvador"
+
+#: inc/Core/Bookings.php:290 inc/Core/Forms/CheckoutForm.php:222
+#: inc/Core/Forms/EnquiryForm.php:79 inc/Core/Forms/Inputs/Email.php:46
+#: inc/Core/Helpers/Strings.php:156 inc/Core/PostTypes/CustomerPostType.php:207
+msgid "Email"
+msgstr "Courrier électronique"
+
+#: inc/Core/Helpers/Strings.php:69
+msgid "Email Address"
+msgstr "Adresse d'envoi d'e-mails"
+
+#: inc/Core/Helpers/Strings.php:157
+msgid "Email Config"
+msgstr "Configuration de l'e-mail"
+
+#: inc/Core/Emails/AdminEnquiryEmail.php:224
+msgid "Email ID."
+msgstr "ID de courrier électronique."
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:46
+msgid "Email Trackback"
+msgstr "Trackback des e-mails"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:50
+msgctxt "add new on admin bar"
+msgid "Email Trackback"
+msgstr "Trackback des e-mails"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:48
+msgctxt "admin menu"
+msgid "Email Trackback"
+msgstr "Trackback des e-mails"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:49
+msgctxt "post type general name"
+msgid "Email Trackback"
+msgstr "Trackback des e-mails"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:56
+msgctxt "post type singular name"
+msgid "Email Trackback"
+msgstr "Trackback des e-mails"
+
+#: inc/Core/Helpers/ErrorMessage.php:79
+msgid "Email is required !"
+msgstr "L'adresse e-mail est obligatoire !"
+
+#: inc/Core/Helpers/Strings.php:158
+msgid "Enable"
+msgstr "Activer"
+
+#: inc/Core/Helpers/Strings.php:160
+msgid "Enable Cut-off Time"
+msgstr "Activer l'heure limite"
+
+#: inc/Core/Helpers/Strings.php:159
+msgid "Enable Trip Slider"
+msgstr "Activer Trip Slider"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:81
+#: inc/Core/Payment/PaymentGateways/BookNowPayLater.php:73
+#: inc/Core/Payment/PaymentGateways/PayPalPayment.php:77
+msgid "Enabled"
+msgstr "Activée"
+
+#: inc/Admin/Views/Layouts/Header.php:80
+#: inc/Core/PostTypes/EnquiryPostType.php:68
+msgid "Enquiries"
+msgstr "Demandes"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:70
+msgctxt "admin menu"
+msgid "Enquiries"
+msgstr "Demandes"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:71
+msgctxt "post type general name"
+msgid "Enquiries"
+msgstr "Demandes"
+
+#: inc/Core/Helpers/Strings.php:70
+msgid "Enquiry"
+msgstr "Demande"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:72
+msgctxt "add new on admin bar"
+msgid "Enquiry"
+msgstr "Demande"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:78
+msgctxt "post type singular name"
+msgid "Enquiry"
+msgstr "Demande"
+
+#: inc/Admin/Hooks.php:97
+msgid "Enquiry Form"
+msgstr "Formulaire de demande"
+
+#: inc/Core/Seeder/FormFieldsSeeder.php:84
+msgctxt "Page title"
+msgid "Enquiry Form"
+msgstr "Formulaire de demande"
+
+#: inc/Core/Emails/AdminEnquiryEmail.php:222
+msgid "Enquiry ID."
+msgstr "ID de demande."
+
+#: inc/Core/Emails/AdminEnquiryEmail.php:225
+msgid "Enquiry Message."
+msgstr "Message de demande."
+
+#: inc/Core/Ajax/EnquiryAjax.php:92
+msgid "Enquiry sent successfully!"
+msgstr "Demande envoyée avec succès !"
+
+#: inc/Core/Helpers/Countries.php:134
+msgid "Equatorial Guinea"
+msgstr "Guinée équatoriale"
+
+#: inc/Core/Helpers/Countries.php:135
+msgid "Eritrea"
+msgstr "Érythrée"
+
+#: inc/Core/Helpers/Countries.php:136
+msgid "Estonia"
+msgstr "Estonie"
+
+#: inc/Core/Helpers/Countries.php:278
+msgid "Eswatini"
+msgstr "Eswatini"
+
+#: inc/Core/Helpers/Countries.php:137
+msgid "Ethiopia"
+msgstr "Éthiopie"
+
+#: inc/Core/Helpers/Cron.php:46
+msgid "Every 15 Days"
+msgstr "Tous les 15 jours"
+
+#: inc/Core/Helpers/Cron.php:50
+msgid "Every minute"
+msgstr "Toutes les minutes"
+
+#: inc/Core/Helpers/TripFaqs.php:103 inc/Core/Helpers/TripItineraries.php:110
+msgid "Expand all"
+msgstr "Tout étendre"
+
+#: inc/Core/PostTypes/CouponPostType.php:165
+msgid "Expiry date"
+msgstr "Date d'expiration"
+
+#: inc/Core/Helpers/Strings.php:161
+msgid "Export Tripzzy"
+msgstr "Exporter Tripzzy"
+
+#: inc/Core/Bookings.php:463 inc/Core/Bookings.php:796
+msgid "Extras"
+msgstr "Suppléments"
+
+#: inc/Core/Helpers/Settings.php:332
+msgid "Extreme"
+msgstr "Extrême"
+
+#: inc/Core/Helpers/Trip.php:340
+msgid "FAQ's"
+msgstr "FAQ"
+
+#: inc/Core/Helpers/TripFaqs.php:99
+msgid "FAQs"
+msgstr "FAQs"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:373
+msgid "Failed to create new user for %s. Their posts will be attributed to the current user."
+msgstr "Impossible de créer un nouvel utilisateur pour%s. Leurs publications seront attribuées à l'utilisateur actuel."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:544
+#: inc/Lib/wordpress-importer/class-wp-import.php:792
+msgid "Failed to import %1$s %2$s"
+msgstr "Impossible d'importer %1$s %2$s"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:753
+msgid "Failed to import %1$s &#8220;%2$s&#8221;"
+msgstr "Impossible d'importer %1$s « %2$s »"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:635
+msgid "Failed to import &#8220;%1$s&#8221;: Invalid post type %2$s"
+msgstr "Impossible d'importer « %1$s » : type de publication non valide %2$s"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:213
+msgid "Failed to import author %s. Their posts will be attributed to the current user."
+msgstr "Impossible d'importer l'auteur%s. Leurs publications seront attribuées à l'utilisateur actuel."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:432
+msgid "Failed to import category %s"
+msgstr "Impossible d'importer la catégorie %s"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:483
+msgid "Failed to import post tag %s"
+msgstr "Impossible d'importer le tag de publication %s"
+
+#: inc/Core/Helpers/Countries.php:138
+msgid "Falkland Islands"
+msgstr "Îles Malouines"
+
+#: inc/Core/Helpers/Strings.php:162 inc/Core/Helpers/TripStickyTab.php:128
+msgid "Faqs"
+msgstr "FAQs"
+
+#: inc/Core/Helpers/Countries.php:139
+msgid "Faroe Islands"
+msgstr "Îles Féroé"
+
+#: inc/Core/Helpers/Strings.php:71 inc/Core/PostTypes/TripzzyPostType.php:160
+msgid "Featured"
+msgstr "En vedette"
+
+#: inc/Core/Helpers/Strings.php:163
+msgid "Features"
+msgstr "Caractéristiques"
+
+#: inc/Core/Helpers/DropdownOptions.php:124
+msgid "February"
+msgstr "février"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1013
+msgid "Fetching attachments is not enabled"
+msgstr "La récupération des pièces jointes n'est pas activée"
+
+#: inc/Core/Helpers/Strings.php:164
+msgid "Field Label"
+msgstr "Label du champ"
+
+#: inc/Core/Helpers/Strings.php:165
+msgid "Field Name"
+msgstr "Nom du champ"
+
+#: inc/Core/Helpers/Strings.php:166
+msgid "Field Type"
+msgstr "Type de champ"
+
+#: inc/Core/Helpers/Strings.php:167
+msgid "Fields"
+msgstr "Champs"
+
+#: inc/Core/Helpers/Countries.php:140
+msgid "Fiji"
+msgstr "Fidji"
+
+#: inc/Core/Helpers/Strings.php:170
+msgid "Filter/Category Label"
+msgstr "Étiquette de filtre/catégorie"
+
+#: inc/Core/Helpers/Strings.php:171
+msgid "Filter/Category Slug"
+msgstr "Filtre/Catégorie Slug"
+
+#: inc/Core/Helpers/Strings.php:168
+msgid "Filter Config"
+msgstr "Configuration du filtre"
+
+#: inc/Core/Helpers/Strings.php:169
+msgid "Filter Duration In"
+msgstr "Durée du filtre en"
+
+#: inc/Core/Helpers/Strings.php:72
+msgid "Filter by"
+msgstr "Filtrer par"
+
+#: inc/Core/Traits/AdminMenuTrait.php:39 inc/Core/Traits/AdminMenuTrait.php:40
+msgid "Filters +"
+msgstr "Filtres +"
+
+#: inc/Core/Helpers/Countries.php:141
+msgid "Finland"
+msgstr "Finlande"
+
+#: inc/Core/Forms/CheckoutForm.php:71 inc/Core/Helpers/Strings.php:73
+#: inc/Core/Helpers/UserProfile.php:166
+msgid "First Name"
+msgstr " Prénom"
+
+#: inc/Core/Emails/AdminBookingEmail.php:219
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:185
+#: inc/Core/Emails/CustomerBookingEmail.php:221
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:185
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:185
+msgid "First name of the customer."
+msgstr "Prénom du client."
+
+#: inc/Core/Helpers/Strings.php:172
+msgid "Fixed Dates"
+msgstr "Dates fixes"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:113
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:114
+msgid "Fontawesome Class"
+msgstr "Classe Fontawesome"
+
+#: inc/Core/PostTypes/FormPostType.php:118
+msgctxt "post type singular name"
+msgid "Form"
+msgstr "Formulaire"
+
+#: inc/Core/Helpers/Strings.php:173 inc/Core/PostTypes/FormPostType.php:164
+msgid "Form Fields"
+msgstr "Champs de formulaire"
+
+#: inc/Core/PostTypes/FormPostType.php:108
+msgid "Forms"
+msgstr "Formulaires"
+
+#: inc/Core/PostTypes/FormPostType.php:110
+msgctxt "admin menu"
+msgid "Forms"
+msgstr "Formulaires"
+
+#: inc/Core/PostTypes/FormPostType.php:111
+msgctxt "post type general name"
+msgid "Forms"
+msgstr "Formulaires"
+
+#: inc/Core/Helpers/Countries.php:142
+msgid "France"
+msgstr "France"
+
+#: inc/Core/Helpers/Countries.php:143
+msgid "French Guiana"
+msgstr "Guyane française"
+
+#: inc/Core/Helpers/Countries.php:144
+msgid "French Polynesia"
+msgstr "Polynésie française"
+
+#: inc/Core/Helpers/Countries.php:145
+msgid "French Southern Territories"
+msgstr "Terres australes françaises"
+
+#: inc/Core/Helpers/DropdownOptions.php:102
+msgid "Friday"
+msgstr "Vendredi"
+
+#: inc/Core/Helpers/Strings.php:74
+msgid "From"
+msgstr "à partir de"
+
+#: inc/Core/Forms/EnquiryForm.php:62
+msgid "Full Name"
+msgstr "Nom complet"
+
+#: inc/Core/Emails/AdminEnquiryEmail.php:223
+msgid "Full Name."
+msgstr "Nom complet."
+
+#: inc/Core/Helpers/ErrorMessage.php:78
+msgid "Full name is required !"
+msgstr "Le nom complet est obligatoire !"
+
+#: inc/Core/Emails/AdminBookingEmail.php:218
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:184
+#: inc/Core/Emails/CustomerBookingEmail.php:220
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:184
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:184
+msgid "Full name of the customer."
+msgstr "Nom complet du client."
+
+#: inc/Core/Helpers/Countries.php:146
+msgid "Gabon"
+msgstr "Gabon"
+
+#: inc/Core/Helpers/Strings.php:174 inc/Core/Helpers/Trip.php:341
+#: inc/Core/Helpers/TripGallery.php:104 inc/Core/Helpers/TripStickyTab.php:112
+#: inc/Core/Shortcodes/GalleryShortcode.php:61
+msgid "Gallery"
+msgstr "Galerie"
+
+#: inc/Core/Helpers/Countries.php:147
+msgid "Gambia"
+msgstr "Gambie"
+
+#: inc/Core/Helpers/Strings.php:75
+msgid "General"
+msgstr "Général"
+
+#: inc/Admin/Views/FilterPlusView.php:78
+msgid "General name for the filter, usually plural."
+msgstr "Nom général du filtre, généralement au pluriel."
+
+#: inc/Core/Helpers/Countries.php:148
+msgid "Georgia"
+msgstr "Géorgie"
+
+#: inc/Core/Helpers/Countries.php:149
+msgid "Germany"
+msgstr "Allemagne"
+
+#: inc/Core/Helpers/Countries.php:150
+msgid "Ghana"
+msgstr "Ghana"
+
+#: inc/Core/Helpers/Countries.php:151
+msgid "Gibraltar"
+msgstr "Gibraltar"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:93
+msgid "Go to Destinations"
+msgstr "Accéder aux destinations"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:73
+msgid "Go to Keywords"
+msgstr "Accédez aux mots clés"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:73
+msgid "Go to Price Categories"
+msgstr "Accéder aux catégories de prix"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:93
+msgid "Go to Trip Activities"
+msgstr "Accéder aux activités du voyage"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:83
+msgid "Go to Trip Excludes"
+msgstr "Accéder à la section Exclusions des voyages"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:84
+msgid "Go to Trip Includes"
+msgstr "Aller au voyage comprend"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:93
+msgid "Go to Trip Types"
+msgstr "Accédez aux types de voyages"
+
+#: inc/Core/Helpers/TripMap.php:106
+msgid "Google Map"
+msgstr "Carte Google"
+
+#: inc/Core/Helpers/Countries.php:152
+msgid "Greece"
+msgstr "Grèce"
+
+#: inc/Core/Helpers/Countries.php:153
+msgid "Greenland"
+msgstr "Groenland"
+
+#: inc/Core/Helpers/Countries.php:154
+msgid "Grenada"
+msgstr "Grenade"
+
+#: inc/Core/Bookings.php:445
+msgid "Gross Total"
+msgstr "Total brut"
+
+#: inc/Core/Helpers/Strings.php:175 inc/Core/Helpers/Trip.php:913
+msgid "Group"
+msgstr "Groupe"
+
+#: inc/Core/Helpers/Strings.php:176
+msgid "Group Price"
+msgstr "Prix de groupe"
+
+#: inc/Core/Helpers/Strings.php:177
+msgid "Group Sale Price"
+msgstr "Prix de vente de groupe"
+
+#: inc/Core/Helpers/Countries.php:155
+msgid "Guadeloupe"
+msgstr "Guadeloupe"
+
+#: inc/Core/Helpers/Countries.php:156
+msgid "Guam"
+msgstr "Guam"
+
+#: inc/Core/Helpers/Countries.php:157
+msgid "Guatemala"
+msgstr "Guatemala"
+
+#: inc/Core/Helpers/Countries.php:158
+msgid "Guernsey"
+msgstr "Guernesey"
+
+#: inc/Core/Ajax/NotesAjax.php:67 inc/Core/PostTypes/BookingPostType.php:370
+msgid "Guest Note"
+msgstr "Note à l'invité"
+
+#: inc/Core/Helpers/TripInfos.php:382
+msgid "Guiding method"
+msgstr "Méthode de guidage"
+
+#: inc/Core/Helpers/Countries.php:159
+msgid "Guinea"
+msgstr "Guinée"
+
+#: inc/Core/Helpers/Countries.php:160
+msgid "Guinea-Bissau"
+msgstr "Guinée-Bissau"
+
+#: inc/Core/Helpers/Countries.php:161
+msgid "Guyana"
+msgstr "Guyane"
+
+#: inc/Core/Helpers/Countries.php:162
+msgid "Haiti"
+msgstr "Haïti"
+
+#: inc/Core/Helpers/Settings.php:327
+msgid "Hard"
+msgstr "dur"
+
+#: inc/Core/Helpers/Strings.php:376
+#: templates/layouts/default/partials/coupon-form.php:25
+msgid "Have a Coupon code?"
+msgstr "Vous avez un code promo ?"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:151
+msgid "Have fun!"
+msgstr "Amusez-vous bien !"
+
+#: inc/Core/Helpers/Countries.php:163
+msgid "Heard Island and McDonald Islands"
+msgstr "Îles Heard et McDonald"
+
+#: inc/Admin/Views/Layouts/HelpTab.php:49
+#: inc/Admin/Views/Layouts/HelpTab.php:51
+msgid "Help & Support"
+msgstr "AIDE &amp; SUPPORT"
+
+#: inc/Core/Forms/Inputs/Hidden.php:46 inc/Core/Helpers/Strings.php:178
+msgid "Hidden"
+msgstr "Caché"
+
+#: inc/Core/Helpers/Strings.php:179
+msgid "Hierarchical"
+msgstr "hiérarchique"
+
+#: inc/Core/Helpers/Strings.php:180 inc/Core/Helpers/Trip.php:342
+#: inc/Core/Helpers/TripHighlights.php:102
+#: inc/Core/Helpers/TripStickyTab.php:72
+msgid "Highlights"
+msgstr "Highlights"
+
+#: inc/Core/Traits/AdminMenuTrait.php:32
+msgid "Home"
+msgstr "home"
+
+#: inc/Admin/Views/SystemInfoView.php:86
+msgid "Home URL"
+msgstr "URL d'accueil"
+
+#: inc/Core/Traits/AdminMenuTrait.php:31
+msgid "Homepage"
+msgstr "Page d'accueil"
+
+#: inc/Core/Helpers/Countries.php:164
+msgid "Honduras"
+msgstr "Honduras"
+
+#: inc/Core/Helpers/Countries.php:165
+msgid "Hong Kong"
+msgstr "Hong-Kong"
+
+#: inc/Core/Helpers/SearchForm.php:44 inc/Core/Helpers/Strings.php:181
+#: inc/Core/Helpers/Trip.php:696 inc/Core/Helpers/TripFilter.php:333
+msgid "Hours"
+msgstr "Heures"
+
+#: inc/Admin/Views/SystemInfoView.php:512
+msgid "How to create a child theme"
+msgstr "Comment créer un thème pour enfant"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1334
+msgid "Howdy! Upload your WordPress eXtended RSS (WXR) file and we&#8217;ll import the posts, pages, comments, custom fields, categories, and tags into this site."
+msgstr "Salut ! Téléchargez votre fichier WordPress eXtended RSS (WXR) et nous importerons les articles, les pages, les commentaires, les champs personnalisés, les catégories et les balises sur ce site."
+
+#: inc/Core/Helpers/Countries.php:166
+msgid "Hungary"
+msgstr "Hongrie"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:129
+msgid "IBAN"
+msgstr "IBAN"
+
+#: inc/Core/Helpers/Countries.php:167
+msgid "Iceland"
+msgstr "Islande"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:244
+msgid "If a new user is created by WordPress, a new password will be randomly generated and the new user&#8217;s role will be set as %s. Manually changing the new user&#8217;s details will be necessary."
+msgstr "Si un nouvel utilisateur est créé par WordPress, un nouveau mot de passe sera généré de manière aléatoire et le rôle du nouvel utilisateur sera défini comme%s. Il sera nécessaire de modifier manuellement les informations du nouvel utilisateur."
+
+#: inc/Admin/Views/FilterPlusView.php:93
+msgid "If checked the filter will be available as filter by option."
+msgstr "Si cette case est cochée, le filtre sera disponible en tant que filtre par option."
+
+#: inc/Admin/Views/FilterPlusView.php:88
+msgid "If checked the new filter will be treated as WordPress deafult categories else as tags."
+msgstr "S'il est coché, le nouveau filtre sera traité comme les catégories par défaut de WordPress, sinon comme des balises."
+
+#: inc/Core/Helpers/Strings.php:336
+msgid "If this set as false, filter item as per input selected."
+msgstr "Si ce paramètre est défini sur faux, filtrez l'élément en fonction de l'entrée sélectionnée."
+
+#: inc/Admin/Views/SystemInfoView.php:510
+msgid "If you're want to modifying a theme, it safe to create a child theme.  See:"
+msgstr "Si vous souhaitez modifier un thème, vous pouvez créer un thème enfant en toute sécurité. Voir :"
+
+#: inc/Core/Helpers/Strings.php:309
+msgid "If your trip requires 1 day for preparation, please add 1 day to the cut-off time."
+msgstr "Si la préparation de votre voyage nécessite 1 jour, veuillez ajouter 1 jour à l'heure limite."
+
+#: inc/Core/Helpers/Strings.php:310
+msgid "If your trip requires 3 hours for preparation, please add 3 hours to the cut-off time."
+msgstr "Si la préparation de votre voyage nécessite 3 heures, veuillez ajouter 3 heures à l'heure limite."
+
+#: inc/Core/Helpers/TripMap.php:103
+msgid "Iframe"
+msgstr "Iframe"
+
+#: inc/Core/Forms/Inputs/Image.php:59 inc/Core/Helpers/TripMap.php:102
+msgid "Image"
+msgstr "Image"
+
+#: inc/Core/Helpers/Strings.php:182
+msgid "Import/Export"
+msgstr "Importation/Exportation"
+
+#: inc/Lib/wordpress-importer/wordpress-importer.php:50
+msgid "Import <strong>posts, pages, comments, custom fields, categories, and tags</strong> from a WordPress export file."
+msgstr "Importez <strong> des articles, des pages, des commentaires, des champs personnalisés, des catégories et des balises </strong> à partir d'un fichier d'exportation WordPress."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:254
+msgid "Import Attachments"
+msgstr "Importer des pièces jointes"
+
+#: inc/Core/Helpers/Strings.php:183
+msgid "Import Tripzzy"
+msgstr "Importer Tripzzy"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1312
+msgid "Import WordPress"
+msgstr "Importer WordPress"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:275
+msgid "Import author:"
+msgstr "Auteur de l'importation :"
+
+#: inc/Core/Helpers/Strings.php:184
+msgid "Includes/Excludes"
+msgstr "Inclut/Exclut"
+
+#: inc/Core/Helpers/TripStickyTab.php:104
+msgid "Includes & Excludes"
+msgstr "Inclut et exclut"
+
+#: inc/Core/Ajax/TripAjax.php:406 inc/Core/Functions/TemplateMarkups.php:235
+msgid "Increase"
+msgstr "Augmentation"
+
+#: inc/Core/Helpers/Countries.php:168
+msgid "India"
+msgstr "Inde"
+
+#: inc/Core/Helpers/Countries.php:169
+msgid "Indonesia"
+msgstr "Indonésie"
+
+#: inc/Admin/Views/Layouts/HelpTab.php:23
+msgid "Information"
+msgstr "Informations"
+
+#: inc/Core/Helpers/Strings.php:185
+msgid "Infos"
+msgstr "Infos"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:94
+msgid "Instruction"
+msgstr "Instruction"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:97
+msgid "Instruction that will be added to the thankyou page."
+msgstr "Instruction qui sera ajoutée à la page de remerciement."
+
+#: inc/Core/Helpers/ErrorMessage.php:82
+msgid "Invalid Booking ID."
+msgstr "Numéro de réservation non valide."
+
+#: inc/Core/Helpers/ErrorMessage.php:81
+msgid "Invalid Key."
+msgstr "Clé non valide."
+
+#: inc/Core/Helpers/ErrorMessage.php:72
+msgid "Invalid coupon !"
+msgstr "Invalid coupon !"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1031
+msgid "Invalid file type"
+msgstr "Invalid file type"
+
+#: inc/Core/Helpers/Countries.php:170
+msgid "Iran"
+msgstr "Iran"
+
+#: inc/Core/Helpers/Countries.php:171
+msgid "Iraq"
+msgstr "Irak"
+
+#: inc/Core/Helpers/Countries.php:172
+msgid "Ireland"
+msgstr "Irlande"
+
+#: inc/Core/Helpers/Strings.php:186
+msgid "Is Sticky"
+msgstr "Is Sticky"
+
+#: inc/Core/Helpers/Countries.php:173
+msgid "Isle of Man"
+msgstr "Île de Man"
+
+#: inc/Core/Helpers/Countries.php:174
+msgid "Israel"
+msgstr "Israël"
+
+#: inc/Core/Helpers/Countries.php:175
+msgid "Italy"
+msgstr "Italie"
+
+#: inc/Core/Helpers/Strings.php:188 inc/Core/Helpers/Trip.php:343
+#: inc/Core/Helpers/TripItineraries.php:105
+#: inc/Core/Helpers/TripStickyTab.php:88
+msgid "Itineraries"
+msgstr "Itineraries"
+
+#: inc/Core/Helpers/Strings.php:189
+msgid "Itinerary Date"
+msgstr "Itinerary Date"
+
+#: inc/Core/Helpers/Strings.php:190
+msgid "Itinerary Description"
+msgstr "Itinerary Description"
+
+#: inc/Core/Helpers/Strings.php:191
+msgid "Itinerary Schedules"
+msgstr "Itinerary Schedules"
+
+#: inc/Core/Helpers/Strings.php:192
+msgid "Itinerary Title"
+msgstr "Itinerary Title"
+
+#: inc/Core/Helpers/Countries.php:176
+msgid "Ivory Coast"
+msgstr "Côte d’Ivoire"
+
+#: inc/Core/Helpers/Countries.php:177
+msgid "Jamaica"
+msgstr "Jamaïque"
+
+#: inc/Core/Helpers/DropdownOptions.php:120
+msgid "January"
+msgstr "janvier"
+
+#: inc/Core/Helpers/Countries.php:178
+msgid "Japan"
+msgstr "Japon"
+
+#: inc/Core/Helpers/Countries.php:179
+msgid "Jersey"
+msgstr "Jersey"
+
+#: inc/Core/Helpers/Countries.php:180
+msgid "Jordan"
+msgstr "Jordanie"
+
+#: inc/Core/Helpers/DropdownOptions.php:144
+msgid "July"
+msgstr "juillet"
+
+#: inc/Core/Helpers/DropdownOptions.php:140
+msgid "June"
+msgstr "juin"
+
+#: inc/Core/Helpers/Countries.php:181
+msgid "Kazakhstan"
+msgstr "Kazakhstan"
+
+#: inc/Core/Helpers/Countries.php:182
+msgid "Kenya"
+msgstr "Kenya"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:63
+msgctxt "taxonomy singular name"
+msgid "Keyword"
+msgstr "Keyword"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:72
+msgid "Keywords"
+msgstr "Keywords"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:62
+msgctxt "taxonomy general name"
+msgid "Keywords"
+msgstr "Keywords"
+
+#: inc/Core/Helpers/Countries.php:183
+msgid "Kiribati"
+msgstr "Kiribati"
+
+#: inc/Core/Helpers/Countries.php:184
+msgid "Kuwait"
+msgstr "Koweit"
+
+#: inc/Core/Helpers/Countries.php:185
+msgid "Kyrgyzstan"
+msgstr "Kirghizistan"
+
+#: inc/Core/Helpers/Strings.php:193
+msgid "Label"
+msgstr "Label"
+
+#: inc/Admin/Views/SystemInfoView.php:131 inc/Core/Helpers/TripInfos.php:406
+msgid "Language"
+msgstr "Langue"
+
+#: inc/Core/Helpers/Countries.php:186
+msgid "Laos"
+msgstr "Laos"
+
+#: inc/Core/PostTypes/CustomerPostType.php:211
+msgid "Last Active"
+msgstr "Last Active"
+
+#: inc/Core/Forms/CheckoutForm.php:88 inc/Core/Helpers/Strings.php:76
+#: inc/Core/Helpers/UserProfile.php:167
+msgid "Last Name"
+msgstr "Last Name"
+
+#: inc/Core/Emails/AdminBookingEmail.php:220
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:186
+#: inc/Core/Emails/CustomerBookingEmail.php:222
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:186
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:186
+msgid "Last name of the customer."
+msgstr "Last name of the customer."
+
+#: inc/Core/Helpers/Countries.php:187
+msgid "Latvia"
+msgstr "Latvia"
+
+#: inc/Core/Helpers/Reviews.php:82
+msgid "Leave a review"
+msgstr "Leave a review"
+
+#: inc/Core/Helpers/Countries.php:188
+msgid "Lebanon"
+msgstr "Lebanon"
+
+#: inc/Core/Helpers/Countries.php:189
+msgid "Lesotho"
+msgstr "Lesotho"
+
+#: inc/Core/Helpers/Countries.php:190
+msgid "Liberia"
+msgstr "Liberia"
+
+#: inc/Core/Helpers/Countries.php:191
+msgid "Libya"
+msgstr "Libya"
+
+#: inc/Core/Helpers/Countries.php:192
+msgid "Liechtenstein"
+msgstr "Liechtenstein"
+
+#: inc/Core/Helpers/Countries.php:193
+msgid "Lithuania"
+msgstr "Lithuania"
+
+#: inc/Core/Payment/PaymentGateways/PayPalPayment.php:89
+msgid "Live Client ID"
+msgstr "Live Client ID"
+
+#: inc/Core/Helpers/Strings.php:77
+msgid "Load more"
+msgstr "Load more"
+
+#: inc/Core/Helpers/Strings.php:78
+msgid "Loading..."
+msgstr "Loading..."
+
+#: inc/Core/Helpers/Strings.php:79
+msgid "Log out"
+msgstr "Log out"
+
+#: inc/Core/Helpers/User.php:485
+msgid "Lost your password?"
+msgstr "Lost your password?"
+
+#: inc/Core/Helpers/Countries.php:194
+msgid "Luxembourg"
+msgstr "Luxembourg"
+
+#: inc/Core/Helpers/Countries.php:195
+msgid "Macao"
+msgstr "Macao"
+
+#: inc/Core/Helpers/Countries.php:197
+msgid "Madagascar"
+msgstr "Madagascar"
+
+#: inc/Core/Helpers/Strings.php:80
+msgid "Make an Enquiry"
+msgstr "Make an Enquiry"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:88
+msgid "Make your payment directly into our bank account. Please use your Booking ID as the payment reference."
+msgstr "Make your payment directly into our bank account. Please use your Booking ID as the payment reference."
+
+#: inc/Core/Helpers/Countries.php:198
+msgid "Malawi"
+msgstr "Malawi"
+
+#: inc/Core/Helpers/Countries.php:199
+msgid "Malaysia"
+msgstr "Malaysia"
+
+#: inc/Core/Helpers/Countries.php:200
+msgid "Maldives"
+msgstr "Maldives"
+
+#: inc/Core/Helpers/Countries.php:201
+msgid "Mali"
+msgstr "Mali"
+
+#: inc/Core/Helpers/Countries.php:202
+msgid "Malta"
+msgstr "Malta"
+
+#: inc/Core/Helpers/User.php:84
+msgid "Manager"
+msgstr "Manager"
+
+#: inc/Core/Helpers/Strings.php:194 inc/Core/Helpers/Trip.php:344
+#: inc/Core/Helpers/TripMap.php:170 inc/Core/Helpers/TripStickyTab.php:80
+msgid "Map"
+msgstr "Map"
+
+#: inc/Core/Helpers/Strings.php:196
+msgid "Map Latitude"
+msgstr "Map Latitude"
+
+#: inc/Core/Helpers/Strings.php:197
+msgid "Map Location"
+msgstr "Map Location"
+
+#: inc/Core/Helpers/Strings.php:198
+msgid "Map Longitude"
+msgstr "Map Longitude"
+
+#: inc/Core/Helpers/Strings.php:200
+msgid "Map Preview"
+msgstr "Map Preview"
+
+#: inc/Core/Helpers/Strings.php:199
+msgid "Map Type"
+msgstr "Map Type"
+
+#: inc/Core/Helpers/Strings.php:201
+msgid "Map Zoom"
+msgstr "Map Zoom"
+
+#: inc/Core/Helpers/Strings.php:195
+msgid "Maps"
+msgstr "Maps"
+
+#: inc/Core/Helpers/DropdownOptions.php:128
+msgid "March"
+msgstr "March"
+
+#: inc/Core/Helpers/Strings.php:202
+msgid "Marker Description"
+msgstr "Marker Description"
+
+#: inc/Core/Helpers/Strings.php:203
+msgid "Marker Latitude"
+msgstr "Marker Latitude"
+
+#: inc/Core/Helpers/Strings.php:204
+msgid "Marker Location"
+msgstr "Marker Location"
+
+#: inc/Core/Helpers/Strings.php:205
+msgid "Marker Longitude"
+msgstr "Marker Longitude"
+
+#: inc/Core/Helpers/Strings.php:206
+msgid "Markers"
+msgstr "Markers"
+
+#: inc/Core/Helpers/Countries.php:203
+msgid "Marshall Islands"
+msgstr "Marshall Islands"
+
+#: inc/Core/Helpers/Countries.php:204
+msgid "Martinique"
+msgstr "Martinique"
+
+#: inc/Core/Helpers/Countries.php:205
+msgid "Mauritania"
+msgstr "Mauritania"
+
+#: inc/Core/Helpers/Countries.php:206
+msgid "Mauritius"
+msgstr "Mauritius"
+
+#: inc/Core/Helpers/Strings.php:207
+msgid "Max"
+msgstr "Max"
+
+#: inc/Core/Helpers/Strings.php:208
+msgid "Max People"
+msgstr "Max People"
+
+#: inc/Admin/Views/SystemInfoView.php:279
+msgid "Max Upload Size"
+msgstr "Max Upload Size"
+
+#: inc/Core/Helpers/Strings.php:322
+msgid "Maximum no of recommended people for the trip."
+msgstr "Maximum no of recommended people for the trip."
+
+#: inc/Core/Helpers/DropdownOptions.php:136
+msgid "May"
+msgstr "May"
+
+#: inc/Core/Ajax/ImportExportAjax.php:78
+msgid "Maybe invalid file. Contents empty."
+msgstr "Maybe invalid file. Contents empty."
+
+#: inc/Core/Helpers/Countries.php:207
+msgid "Mayotte"
+msgstr "Mayotte"
+
+#: inc/Core/Helpers/TripInfos.php:346
+msgid "Meals"
+msgstr "Meals"
+
+#: inc/Core/Helpers/Settings.php:323
+msgid "Medium"
+msgstr "Medium"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:946
+msgid "Menu item skipped due to invalid menu slug: %s"
+msgstr "Menu item skipped due to invalid menu slug: %s"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:939
+msgid "Menu item skipped due to missing menu slug"
+msgstr "Menu item skipped due to missing menu slug"
+
+#: inc/Core/Forms/EnquiryForm.php:96
+msgid "Message"
+msgstr "Message"
+
+#: inc/Core/Helpers/ErrorMessage.php:80
+msgid "Message is required !"
+msgstr "Message is required !"
+
+#: inc/Core/Helpers/Countries.php:208
+msgid "Mexico"
+msgstr "Mexico"
+
+#: inc/Core/Helpers/Countries.php:209
+msgid "Micronesia"
+msgstr "Micronesia"
+
+#: inc/Core/Helpers/Strings.php:209
+msgid "Min"
+msgstr "Min"
+
+#: inc/Core/Helpers/Strings.php:215
+msgid "Min People"
+msgstr "Min People"
+
+#: inc/Core/Helpers/Strings.php:210 inc/Core/Helpers/Trip.php:697
+msgid "Minutes"
+msgstr "Minutes"
+
+#: inc/Core/Helpers/Strings.php:211
+msgid "Misc"
+msgstr "Misc"
+
+#: inc/Core/Helpers/Strings.php:212
+msgid "Modules"
+msgstr "Modules"
+
+#: inc/Core/Helpers/Countries.php:210
+msgid "Moldova"
+msgstr "Moldova"
+
+#: inc/Core/Helpers/Countries.php:211
+msgid "Monaco"
+msgstr "Monaco"
+
+#: inc/Core/Helpers/DropdownOptions.php:86
+msgid "Monday"
+msgstr "Monday"
+
+#: inc/Core/Helpers/Countries.php:212
+msgid "Mongolia"
+msgstr "Mongolia"
+
+#: inc/Core/Helpers/Countries.php:213
+msgid "Montenegro"
+msgstr "Montenegro"
+
+#: inc/Core/Helpers/Strings.php:213
+msgid "Month"
+msgstr "Month"
+
+#: inc/Core/Helpers/Strings.php:214
+msgid "Month Day"
+msgstr "Month Day"
+
+#: inc/Core/Helpers/Cron.php:42
+msgid "Monthly"
+msgstr "Monthly"
+
+#: inc/Core/Helpers/Countries.php:214
+msgid "Montserrat"
+msgstr "Montserrat"
+
+#: inc/Core/Helpers/Strings.php:81
+msgid "More Photos"
+msgstr "More Photos"
+
+#: inc/Core/Helpers/Strings.php:82
+msgid "More Videos"
+msgstr "More Videos"
+
+#: inc/Core/Helpers/Countries.php:215
+msgid "Morocco"
+msgstr "Morocco"
+
+#: inc/Core/Helpers/Countries.php:216
+msgid "Mozambique"
+msgstr "Mozambique"
+
+#: inc/Admin/Views/SystemInfoView.php:252
+msgid "MySQL Version"
+msgstr "MySQL Version"
+
+#: inc/Core/Helpers/Countries.php:217
+msgid "Myanmar"
+msgstr "Myanmar"
+
+#: inc/Admin/Views/SystemInfoView.php:224 inc/Core/Bookings.php:862
+#: inc/Core/Bookings.php:870 inc/Core/Helpers/Strings.php:83
+#: inc/Core/Payment.php:179
+msgid "N/A"
+msgstr "N/A"
+
+#: inc/Admin/Views/SystemInfoView.php:491
+msgid "Name"
+msgstr "Name"
+
+#: inc/Core/Functions/TemplateMarkups.php:41
+msgid "Name asc"
+msgstr "Name asc"
+
+#: inc/Core/Functions/TemplateMarkups.php:42
+msgid "Name desc"
+msgstr "Name desc"
+
+#: inc/Core/Helpers/Countries.php:218
+msgid "Namibia"
+msgstr "Namibia"
+
+#: inc/Core/Helpers/Countries.php:219
+msgid "Nauru"
+msgstr "Nauru"
+
+#: inc/Core/Helpers/Countries.php:220
+msgid "Nepal"
+msgstr "Nepal"
+
+#: inc/Core/Helpers/Countries.php:221
+msgid "Netherlands"
+msgstr "Netherlands"
+
+#: inc/Core/PostTypes/BookingPostType.php:96
+msgid "New Booking"
+msgstr "New Booking"
+
+#: inc/Core/PostTypes/BookingPostType.php:89
+msgctxt "tripzzy"
+msgid "New Booking"
+msgstr "New Booking"
+
+#: inc/Core/Helpers/Settings.php:290 inc/Core/Helpers/Settings.php:293
+msgid "New Booking (#%s)"
+msgstr "New Booking (#%s)"
+
+#: inc/Core/Helpers/Countries.php:222
+msgid "New Caledonia"
+msgstr "New Caledonia"
+
+#: inc/Core/PostTypes/CouponPostType.php:77
+msgid "New Coupon"
+msgstr "New Coupon"
+
+#: inc/Core/PostTypes/CouponPostType.php:70
+msgctxt "tripzzy"
+msgid "New Coupon"
+msgstr "New Coupon"
+
+#: inc/Core/PostTypes/CustomerPostType.php:69
+msgid "New Customer"
+msgstr "New Customer"
+
+#: inc/Core/PostTypes/CustomerPostType.php:62
+msgctxt "tripzzy"
+msgid "New Customer"
+msgstr "New Customer"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:51
+msgid "New Email Trackback"
+msgstr "New Email Trackback"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:44
+msgctxt "tripzzy"
+msgid "New Email Trackback"
+msgstr "New Email Trackback"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:73
+msgid "New Enquiry"
+msgstr "New Enquiry"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:66
+msgctxt "tripzzy"
+msgid "New Enquiry"
+msgstr "New Enquiry"
+
+#: inc/Core/Helpers/Settings.php:305
+msgid "New Enquiry (#%s)"
+msgstr "New Enquiry (#%s)"
+
+#: inc/Core/PostTypes/FormPostType.php:113
+msgid "New Form"
+msgstr "New Form"
+
+#: inc/Core/PostTypes/FormPostType.php:106
+msgctxt "tripzzy"
+msgid "New Form"
+msgstr "New Form"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:71
+msgid "New Keyword"
+msgstr "New Keyword"
+
+#: inc/Core/Helpers/Strings.php:84
+msgid "New Password"
+msgstr "New Password"
+
+#: inc/Core/PostTypes/PaymentPostType.php:51
+msgid "New Payment"
+msgstr "New Payment"
+
+#: inc/Core/PostTypes/PaymentPostType.php:44
+msgctxt "tripzzy"
+msgid "New Payment"
+msgstr "New Payment"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:71
+msgid "New Price Category"
+msgstr "New Price Category"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:83
+#: inc/Core/Traits/AdminMenuTrait.php:98 inc/Core/Traits/AdminMenuTrait.php:101
+msgid "New Trip"
+msgstr "New Trip"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:76
+msgctxt "tripzzy"
+msgid "New Trip"
+msgstr "New Trip"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:91
+msgid "New Trip Activities"
+msgstr "New Trip Activities"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:91
+msgid "New Trip Destination"
+msgstr "New Trip Destination"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:81
+msgid "New Trip Exclude"
+msgstr "New Trip Exclude"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:82
+msgid "New Trip Include"
+msgstr "New Trip Include"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:91
+msgid "New Trip Type"
+msgstr "New Trip Type"
+
+#: inc/Core/Helpers/Countries.php:223
+msgid "New Zealand"
+msgstr "New Zealand"
+
+#: inc/Core/Helpers/ErrorMessage.php:90
+msgid "New password doesn't match with confirm password."
+msgstr "New password doesn't match with confirm password."
+
+#: inc/Core/Helpers/Countries.php:224
+msgid "Nicaragua"
+msgstr "Nicaragua"
+
+#: inc/Core/Helpers/Countries.php:225
+msgid "Niger"
+msgstr "Niger"
+
+#: inc/Core/Helpers/Countries.php:226
+msgid "Nigeria"
+msgstr "Nigeria"
+
+#: inc/Core/Helpers/Strings.php:216 inc/Core/Helpers/Trip.php:695
+msgid "Nights"
+msgstr "Nights"
+
+#: inc/Core/Helpers/Countries.php:227
+msgid "Niue"
+msgstr "Niue"
+
+#: inc/Admin/Views/FilterPlusView.php:146 inc/Core/Helpers/Strings.php:85
+msgid "No"
+msgstr "No"
+
+#: inc/Core/Helpers/Strings.php:323
+msgid "No. of minimum required people for the trip."
+msgstr "No. of minimum required people for the trip."
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:141
+msgid "No Accounts!!"
+msgstr "No Accounts!!"
+
+#: inc/Core/PostTypes/BookingPostType.php:97
+msgid "No Bookings found."
+msgstr "No Bookings found."
+
+#: inc/Core/PostTypes/BookingPostType.php:98
+msgid "No Bookings found in Trash."
+msgstr "No Bookings found in Trash."
+
+#: inc/Core/PostTypes/CouponPostType.php:78
+msgid "No Coupons found."
+msgstr "No Coupons found."
+
+#: inc/Core/PostTypes/CouponPostType.php:79
+msgid "No Coupons found in Trash."
+msgstr "No Coupons found in Trash."
+
+#: inc/Core/PostTypes/CustomerPostType.php:70
+msgid "No Customers found."
+msgstr "No Customers found."
+
+#: inc/Core/PostTypes/CustomerPostType.php:71
+msgid "No Customers found in Trash."
+msgstr "No Customers found in Trash."
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:52
+msgid "No Email Trackback found."
+msgstr "No Email Trackback found."
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:53
+msgid "No Email Trackback found in Trash."
+msgstr "No Email Trackback found in Trash."
+
+#: inc/Core/PostTypes/EnquiryPostType.php:74
+msgid "No Enquiries found."
+msgstr "No Enquiries found."
+
+#: inc/Core/PostTypes/EnquiryPostType.php:75
+msgid "No Enquiries found in Trash."
+msgstr "No Enquiries found in Trash."
+
+#: inc/Core/PostTypes/FormPostType.php:114
+msgid "No Forms found."
+msgstr "No Forms found."
+
+#: inc/Core/PostTypes/FormPostType.php:115
+msgid "No Forms found in Trash."
+msgstr "No Forms found in Trash."
+
+#: inc/Core/PostTypes/PaymentPostType.php:52
+msgid "No Payment found."
+msgstr "No Payment found."
+
+#: inc/Core/PostTypes/PaymentPostType.php:53
+msgid "No Payment found in Trash."
+msgstr "No Payment found in Trash."
+
+#: inc/Core/PostTypes/TripzzyPostType.php:84
+msgid "No Trips found."
+msgstr "No Trips found."
+
+#: inc/Core/PostTypes/TripzzyPostType.php:85
+msgid "No Trips found in Trash."
+msgstr "No Trips found in Trash."
+
+#: inc/Core/Helpers/Settings.php:351
+msgid "No booking fees."
+msgstr "No booking fees."
+
+#: inc/Core/Helpers/ErrorMessage.php:84
+msgid "No changes were made %s"
+msgstr "No changes were made %s"
+
+#: inc/Admin/Views/FilterPlusView.php:170
+msgid "No filters found."
+msgstr "No filters found."
+
+#: inc/Core/Helpers/Reviews.php:147
+msgid "No reviews."
+msgstr "No reviews."
+
+#: inc/Core/BlockTemplateUtils.php:154
+msgid "No theme is defined for this template."
+msgstr "No theme is defined for this template."
+
+#: inc/Core/Ajax/TripAjax.php:183
+msgid "No trips found."
+msgstr "No trips found."
+
+#: inc/Core/Helpers/Strings.php:358
+msgid "Nonce verification failed!!"
+msgstr "Nonce verification failed!!"
+
+#: inc/Core/Helpers/Countries.php:228
+msgid "Norfolk Island"
+msgstr "Norfolk Island"
+
+#: inc/Core/Helpers/Countries.php:230
+msgid "North Korea"
+msgstr "North Korea"
+
+#: inc/Core/Helpers/Countries.php:196
+msgid "North Macedonia"
+msgstr "North Macedonia"
+
+#: inc/Core/Helpers/Countries.php:229
+msgid "Northern Mariana Islands"
+msgstr "Northern Mariana Islands"
+
+#: inc/Core/Helpers/Countries.php:231
+msgid "Norway"
+msgstr "Norway"
+
+#: inc/Core/Helpers/Strings.php:316
+msgid "Note: You can not modify the type for default field."
+msgstr "Note: You can not modify the type for default field."
+
+#: inc/Core/PostTypes/BookingPostType.php:414
+msgid "Note to guest"
+msgstr "Note to guest"
+
+#: inc/Core/PostTypes/BookingPostType.php:411
+msgid "Note type"
+msgstr "Note type"
+
+#: inc/Core/Forms/CheckoutForm.php:278
+msgid "Notes"
+msgstr "Notes"
+
+#: inc/Core/PostTypes/BookingPostType.php:257
+msgid "Notify"
+msgstr "Notify"
+
+#: inc/Core/PostTypes/BookingPostType.php:259
+msgid "Notify guest"
+msgstr "Notify guest"
+
+#: inc/Core/Helpers/DropdownOptions.php:160
+msgid "November"
+msgstr "November"
+
+#: inc/Core/Forms/Inputs/Number.php:46
+msgid "Number"
+msgstr "Number"
+
+#: inc/Core/Helpers/Strings.php:217
+msgid "Number of Decimals"
+msgstr "Number of Decimals"
+
+#: inc/Core/Helpers/DropdownOptions.php:156
+msgid "October"
+msgstr "October"
+
+#: inc/Core/Helpers/Strings.php:218
+msgid "Offset"
+msgstr "Offset"
+
+#: inc/Core/Helpers/Countries.php:232
+msgid "Oman"
+msgstr "Oman"
+
+#: inc/Core/Bookings.php:845
+msgid "On Hold"
+msgstr "On Hold"
+
+#: inc/Core/Helpers/Strings.php:219
+msgid "Options"
+msgstr "Options"
+
+#: templates/layouts/default/partials/mini-cart.php:27
+msgid "Order Summary"
+msgstr "Order Summary"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:225
+msgid "Our bank details"
+msgstr "Our bank details"
+
+#: inc/Admin/Views/Layouts/HelpTab.php:33
+#: inc/Admin/Views/Layouts/HelpTab.php:35
+msgid "Overview"
+msgstr "Overview"
+
+#: inc/Admin/Views/SystemInfoView.php:307
+msgid "PHP Error Log File Location"
+msgstr "PHP Error Log File Location"
+
+#: inc/Admin/Views/SystemInfoView.php:213
+msgid "PHP Max Input Vars"
+msgstr "PHP Max Input Vars"
+
+#: inc/Admin/Views/SystemInfoView.php:205
+msgid "PHP Post Max Size"
+msgstr "PHP Post Max Size"
+
+#: inc/Admin/Views/SystemInfoView.php:209
+msgid "PHP Time Limit"
+msgstr "PHP Time Limit"
+
+#: inc/Admin/Views/SystemInfoView.php:175
+msgid "PHP Version"
+msgstr "PHP Version"
+
+#: inc/Core/Bookings.php:794
+#: templates/layouts/default/partials/mini-cart.php:51
+msgid "Package"
+msgstr "Package"
+
+#: inc/Core/Helpers/Strings.php:221
+msgid "Package & Date"
+msgstr "Package & Date"
+
+#: inc/Core/Helpers/Strings.php:222
+msgid "Package Categories"
+msgstr "Package Categories"
+
+#: inc/Core/Helpers/Strings.php:223
+msgid "Package Name"
+msgstr "Package Name"
+
+#: inc/Core/Helpers/Strings.php:86 inc/Core/Helpers/Strings.php:224
+msgid "Packages"
+msgstr "Packages"
+
+#: inc/Core/Helpers/Strings.php:225
+msgid "Page Settings"
+msgstr "Page Settings"
+
+#: inc/Core/Helpers/ErrorMessage.php:64
+msgid "Page session expired. Please reload the page!!"
+msgstr "Page session expired. Please reload the page!!"
+
+#: inc/Core/Helpers/Strings.php:226
+msgid "Pages"
+msgstr "Pages"
+
+#: inc/Core/Helpers/Strings.php:87
+msgid "Paid"
+msgstr "Paid"
+
+#: inc/Core/Payment.php:152 inc/Core/PostTypes/BookingPostType.php:527
+msgid "Paid Amount"
+msgstr "Paid Amount"
+
+#: inc/Core/PostTypes/CustomerPostType.php:209
+msgid "Paid Bookings"
+msgstr "Paid Bookings"
+
+#: inc/Core/Helpers/Countries.php:233
+msgid "Pakistan"
+msgstr "Pakistan"
+
+#: inc/Core/Helpers/Countries.php:234
+msgid "Palestinian Territory"
+msgstr "Palestinian Territory"
+
+#: inc/Core/Helpers/Countries.php:235
+msgid "Panama"
+msgstr "Panama"
+
+#: inc/Core/Helpers/Countries.php:236
+msgid "Papua New Guinea"
+msgstr "Papua New Guinea"
+
+#: inc/Core/Helpers/Countries.php:237
+msgid "Paraguay"
+msgstr "Paraguay"
+
+#: inc/Core/PostTypes/BookingPostType.php:99
+msgid "Parent Bookings:"
+msgstr "Parent Bookings:"
+
+#: inc/Core/PostTypes/CouponPostType.php:80
+msgid "Parent Coupons:"
+msgstr "Parent Coupons:"
+
+#: inc/Core/PostTypes/CustomerPostType.php:72
+msgid "Parent Customers:"
+msgstr "Parent Customers:"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:54
+msgid "Parent Email Trackback:"
+msgstr "Parent Email Trackback:"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:76
+msgid "Parent Enquiries:"
+msgstr "Parent Enquiries:"
+
+#: inc/Core/PostTypes/FormPostType.php:116
+msgid "Parent Forms:"
+msgstr "Parent Forms:"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:66
+msgid "Parent Keyword"
+msgstr "Parent Keyword"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:67
+msgid "Parent Keyword:"
+msgstr "Parent Keyword:"
+
+#: inc/Core/PostTypes/PaymentPostType.php:54
+msgid "Parent Payment:"
+msgstr "Parent Payment:"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:66
+msgid "Parent Price Category"
+msgstr "Parent Price Category"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:67
+msgid "Parent Price Category:"
+msgstr "Parent Price Category:"
+
+#: inc/Admin/Views/SystemInfoView.php:531
+msgid "Parent Theme Author URL"
+msgstr "Parent Theme Author URL"
+
+#: inc/Admin/Views/SystemInfoView.php:523
+msgid "Parent Theme Name"
+msgstr "Parent Theme Name"
+
+#: inc/Admin/Views/SystemInfoView.php:527
+msgid "Parent Theme Version"
+msgstr "Parent Theme Version"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:86
+msgid "Parent Trip Activities"
+msgstr "Parent Trip Activities"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:87
+msgid "Parent Trip Activities:"
+msgstr "Parent Trip Activities:"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:86
+msgid "Parent Trip Destination"
+msgstr "Parent Trip Destination"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:87
+msgid "Parent Trip Destination:"
+msgstr "Parent Trip Destination:"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:76
+msgid "Parent Trip Exclude"
+msgstr "Parent Trip Exclude"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:77
+msgid "Parent Trip Exclude:"
+msgstr "Parent Trip Exclude:"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:77
+msgid "Parent Trip Include"
+msgstr "Parent Trip Include"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:78
+msgid "Parent Trip Include:"
+msgstr "Parent Trip Include:"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:86
+msgid "Parent Trip Type"
+msgstr "Parent Trip Type"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:87
+msgid "Parent Trip Type:"
+msgstr "Parent Trip Type:"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:86
+msgid "Parent trips:"
+msgstr "Parent trips:"
+
+#: inc/Core/Ajax/DashboardAjax.php:134
+msgid "Password updated successfully."
+msgstr "Password updated successfully."
+
+#: inc/Core/Payment/PaymentGateways/PayPalPayment.php:56
+msgid "PayPal Payment"
+msgstr "PayPal Payment"
+
+#: inc/Core/Shortcodes/CheckoutPageShortcode.php:144
+msgid "Pay Now"
+msgstr "Pay Now"
+
+#: inc/Core/Helpers/Strings.php:227 inc/Core/PostTypes/PaymentPostType.php:46
+msgid "Payment"
+msgstr "Payment"
+
+#: inc/Core/PostTypes/PaymentPostType.php:50
+msgctxt "add new on admin bar"
+msgid "Payment"
+msgstr "Payment"
+
+#: inc/Core/PostTypes/PaymentPostType.php:48
+msgctxt "admin menu"
+msgid "Payment"
+msgstr "Payment"
+
+#: inc/Core/PostTypes/PaymentPostType.php:49
+msgctxt "post type general name"
+msgid "Payment"
+msgstr "Payment"
+
+#: inc/Core/PostTypes/PaymentPostType.php:56
+msgctxt "post type singular name"
+msgid "Payment"
+msgstr "Payment"
+
+#: inc/Core/Payment.php:150
+msgid "Payment Date"
+msgstr "Payment Date"
+
+#: inc/Core/Bookings.php:500
+msgid "Payment Detail"
+msgstr "Payment Detail"
+
+#: inc/Core/PostTypes/BookingPostType.php:208
+msgid "Payment Info"
+msgstr "Payment Info"
+
+#: inc/Core/Payment.php:151 inc/Core/Shortcodes/CheckoutPageShortcode.php:110
+msgid "Payment Mode"
+msgstr "Payment Mode"
+
+#: inc/Core/Helpers/Settings.php:189 inc/Core/Localize.php:78
+msgid "Payment for tripzzy"
+msgstr "Payment for tripzzy"
+
+#: inc/Core/Bookings.php:294
+msgid "Payment method"
+msgstr "Payment method"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:89
+msgid "Payment method description that the customer will see on your checkout."
+msgstr "Payment method description that the customer will see on your checkout."
+
+#: inc/Core/Bookings.php:844
+msgid "Pending"
+msgstr "Pending"
+
+#: inc/Core/Ajax/CartAjax.php:148 inc/Core/Ajax/CartAjax.php:163
+msgid "People"
+msgstr "People"
+
+#: inc/Core/Helpers/Strings.php:228 inc/Core/Helpers/Trip.php:912
+msgid "Person"
+msgstr "Person"
+
+#: inc/Core/Helpers/Strings.php:88
+msgid "Personal Details"
+msgstr "Personal Details"
+
+#: inc/Core/Helpers/Countries.php:238
+msgid "Peru"
+msgstr "Peru"
+
+#: inc/Core/Helpers/Countries.php:239
+msgid "Philippines"
+msgstr "Philippines"
+
+#: inc/Core/Forms/CheckoutForm.php:206
+msgid "Phone"
+msgstr "Phone"
+
+#: inc/Core/Helpers/Strings.php:89
+msgid "Phone Number"
+msgstr "Phone Number"
+
+#: inc/Core/Helpers/Countries.php:240
+msgid "Pitcairn"
+msgstr "Pitcairn"
+
+#: inc/Core/Helpers/Strings.php:229
+msgid "Placeholder"
+msgstr "Placeholder"
+
+#: inc/Core/Helpers/ErrorMessage.php:66
+msgid "Please add +ve value for Qty!!"
+msgstr "Please add +ve value for Qty!!"
+
+#: inc/Core/Shortcodes/CheckoutPageShortcode.php:83
+msgid "Please add <a href=\"%s\">trips</a> in the cart first!"
+msgstr "Please add <a href=\"%s\">trips</a> in the cart first!"
+
+#: inc/Core/Helpers/Strings.php:305
+msgid "Please add Faqs in the settings."
+msgstr "Please add Faqs in the settings."
+
+#: inc/Core/Helpers/Strings.php:355
+msgid "Please add coupon code!"
+msgstr "Please add coupon code!"
+
+#: inc/Core/Helpers/Strings.php:307
+msgid "Please add gallery images."
+msgstr "Please add gallery images."
+
+#: inc/Core/Helpers/Strings.php:339
+msgid "Please add your fixed dates for the tirp."
+msgstr "Please add your fixed dates for the tirp."
+
+#: inc/Core/Helpers/Strings.php:321
+msgid "Please click to search location for the map."
+msgstr "Please click to search location for the map."
+
+#: inc/Core/Helpers/ErrorMessage.php:71
+msgid "Please enter your coupon !"
+msgstr "Please enter your coupon !"
+
+#: inc/Core/Helpers/Strings.php:308
+msgid "Please right click on the map to add new markers."
+msgstr "Please right click on the map to add new markers."
+
+#: inc/Core/Helpers/ErrorMessage.php:65 inc/Core/Helpers/Strings.php:357
+msgid "Please select atleast one category!!"
+msgstr "Please select atleast one category!!"
+
+#: inc/Core/Helpers/Strings.php:340
+msgid "Please select recurring date options."
+msgstr "Please select recurring date options."
+
+#: inc/Admin/Views/Layouts/HelpTab.php:40
+msgid "Please use the Help & Support tab to get in touch should you find yourself requiring assistance."
+msgstr "Please use the Help & Support tab to get in touch should you find yourself requiring assistance."
+
+#: inc/Core/Helpers/Countries.php:241
+msgid "Poland"
+msgstr "Poland"
+
+#: inc/Core/Helpers/Countries.php:242
+msgid "Portugal"
+msgstr "Portugal"
+
+#: inc/Core/Forms/CheckoutForm.php:189
+msgid "Postcode / ZIP (optional)"
+msgstr "Postcode / ZIP (optional)"
+
+#: inc/Core/Helpers/Strings.php:230
+msgid "Price"
+msgstr "Price"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:72
+msgid "Price Categories"
+msgstr "Price Categories"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:62
+msgctxt "taxonomy general name"
+msgid "Price Categories"
+msgstr "Price Categories"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:63
+msgctxt "taxonomy singular name"
+msgid "Price Category"
+msgstr "Price Category"
+
+#: inc/Core/Helpers/Strings.php:231
+msgid "Price Per"
+msgstr "Price Per"
+
+#: inc/Core/Functions/TemplateMarkups.php:39
+msgid "Price high to low"
+msgstr "Price high to low"
+
+#: inc/Core/Functions/TemplateMarkups.php:40
+msgid "Price low to high"
+msgstr "Price low to high"
+
+#: inc/Core/Ajax/NotesAjax.php:67 inc/Core/PostTypes/BookingPostType.php:370
+msgid "Private Note"
+msgstr "Private Note"
+
+#: inc/Core/PostTypes/BookingPostType.php:413
+msgid "Private note"
+msgstr "Private note"
+
+#: inc/Core/Helpers/Settings.php:355
+msgid "Professional local guide."
+msgstr "Professional local guide."
+
+#: inc/Core/Helpers/Strings.php:90
+msgid "Profile"
+msgstr "Profile"
+
+#: inc/Core/Ajax/DashboardAjax.php:123
+msgid "Profile updated successfully."
+msgstr "Profile updated successfully."
+
+#: inc/Core/Helpers/Countries.php:243
+msgid "Puerto Rico"
+msgstr "Puerto Rico"
+
+#: inc/Core/Helpers/Countries.php:244
+msgid "Qatar"
+msgstr "Qatar"
+
+#: inc/Core/Helpers/Strings.php:91
+msgid "Qty"
+msgstr "Qty"
+
+#: inc/Core/Helpers/Strings.php:232
+msgid "Question"
+msgstr "Question"
+
+#: inc/Core/Forms/Inputs/Range.php:56 inc/Core/Helpers/TripFilter.php:170
+msgid "Range"
+msgstr "Range"
+
+#: inc/Core/Helpers/Reviews.php:157
+msgid "Rated %1$s out of %2$s"
+msgstr "Rated %1$s out of %2$s"
+
+#: inc/Core/Helpers/Reviews.php:143
+msgid "Rated %s out of 5"
+msgstr "Rated %s out of 5"
+
+#: inc/Core/Helpers/Strings.php:92
+msgid "Ratings"
+msgstr "Ratings"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:261
+msgid "Read"
+msgstr "Read"
+
+#: inc/Core/Helpers/Strings.php:233
+msgid "Recurring Dates"
+msgstr "Recurring Dates"
+
+#: inc/Core/Helpers/Strings.php:234
+msgid "Recurring Dates Config"
+msgstr "Recurring Dates Config"
+
+#: inc/Core/Helpers/Strings.php:235
+msgid "Recurring Until"
+msgstr "Recurring Until"
+
+msgid "Refresh Themes"
+msgstr "Refresh Themes"
+
+#: inc/Core/Bookings.php:848
+msgid "Refunded"
+msgstr "Refunded"
+
+#: inc/Core/Helpers/Strings.php:237
+msgid "Regular Price"
+msgstr "Regular Price"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:152
+msgid "Remember to update the passwords and roles of imported users."
+msgstr "Remember to update the passwords and roles of imported users."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1143
+msgid "Remote file is too large, limit is %s"
+msgstr "Remote file is too large, limit is %s"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1125
+msgid "Remote server did not respond"
+msgstr "Remote server did not respond"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1113
+msgid "Remote server returned the following unexpected result: %1$s (%2$s)"
+msgstr "Remote server returned the following unexpected result: %1$s (%2$s)"
+
+#: templates/layouts/default/partials/mini-cart.php:56
+msgid "Remove"
+msgstr "Remove"
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:143
+msgid "Remove Account"
+msgstr "Remove Account"
+
+#: inc/Core/Ajax/CartAjax.php:266
+msgid "Remove from cart successfully."
+msgstr "Remove from cart successfully."
+
+#: inc/Core/Helpers/Strings.php:393
+msgid "Remove from the wishlist."
+msgstr "Remove from the wishlist."
+
+#: inc/Core/Forms/Inputs/Repeator.php:48
+msgid "Repeator"
+msgstr "Repeator"
+
+#: inc/Core/Helpers/Strings.php:93
+msgid "Replies"
+msgstr "Replies"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1097
+msgid "Request failed due to an error: %1$s (%2$s)"
+msgstr "Request failed due to an error: %1$s (%2$s)"
+
+#: inc/Core/Helpers/Strings.php:236
+msgid "Required"
+msgstr "Required"
+
+#: inc/Core/Helpers/Strings.php:238
+msgid "Reset Fields"
+msgstr "Reset Fields"
+
+#: inc/Core/Helpers/Strings.php:239
+msgid "Reset Settings"
+msgstr "Reset Settings"
+
+#: inc/Core/Helpers/Countries.php:245
+msgid "Reunion"
+msgstr "Reunion"
+
+#: inc/Core/Helpers/Strings.php:240
+msgid "Review Settings"
+msgstr "Review Settings"
+
+#: inc/Core/Helpers/Strings.php:94 inc/Core/Helpers/TripStickyTab.php:136
+msgid "Reviews"
+msgstr "Reviews"
+
+#: inc/Core/Helpers/Countries.php:246
+msgid "Romania"
+msgstr "Romania"
+
+#: inc/Core/Helpers/Countries.php:247
+msgid "Russia"
+msgstr "Russia"
+
+#: inc/Core/Helpers/Countries.php:248
+msgid "Rwanda"
+msgstr "Rwanda"
+
+#: inc/Core/Helpers/Countries.php:258
+msgid "S&atilde;o Tom&eacute; and Pr&iacute;ncipe"
+msgstr "S&atilde;o Tom&eacute; and Pr&iacute;ncipe"
+
+#: inc/Core/Helpers/Customer.php:300
+msgid "S/N"
+msgstr "S/N"
+
+#: inc/Admin/Views/SystemInfoView.php:231
+msgid "SUHOSIN Installed"
+msgstr "SUHOSIN Installed"
+
+#: inc/Core/Helpers/Countries.php:249
+msgid "Saint Barth&eacute;lemy"
+msgstr "Saint Barth&eacute;lemy"
+
+#: inc/Core/Helpers/Countries.php:250
+msgid "Saint Helena"
+msgstr "Saint Helena"
+
+#: inc/Core/Helpers/Countries.php:251
+msgid "Saint Kitts and Nevis"
+msgstr "Saint Kitts and Nevis"
+
+#: inc/Core/Helpers/Countries.php:252
+msgid "Saint Lucia"
+msgstr "Saint Lucia"
+
+#: inc/Core/Helpers/Countries.php:254
+msgid "Saint Martin (Dutch part)"
+msgstr "Saint Martin (Dutch part)"
+
+#: inc/Core/Helpers/Countries.php:253
+msgid "Saint Martin (French part)"
+msgstr "Saint Martin (French part)"
+
+#: inc/Core/Helpers/Countries.php:255
+msgid "Saint Pierre and Miquelon"
+msgstr "Saint Pierre and Miquelon"
+
+#: inc/Core/Helpers/Countries.php:256
+msgid "Saint Vincent and the Grenadines"
+msgstr "Saint Vincent and the Grenadines"
+
+#: inc/Core/Helpers/Strings.php:241
+msgid "Sale Price"
+msgstr "Sale Price"
+
+#: inc/Core/Helpers/Countries.php:312
+msgid "Samoa"
+msgstr "Samoa"
+
+#: inc/Core/Helpers/Countries.php:257
+msgid "San Marino"
+msgstr "San Marino"
+
+#: inc/Core/Helpers/DropdownOptions.php:106
+msgid "Saturday"
+msgstr "Saturday"
+
+#: inc/Core/Helpers/Countries.php:259
+msgid "Saudi Arabia"
+msgstr "Saudi Arabia"
+
+#: inc/Core/Helpers/Strings.php:95
+msgid "Save profile"
+msgstr "Save profile"
+
+#: inc/Core/Helpers/Strings.php:243
+msgid "Schedules"
+msgstr "Schedules"
+
+#: inc/Core/Helpers/Strings.php:244
+msgid "Schema"
+msgstr "Schema"
+
+#: inc/Core/Helpers/SearchForm.php:198 inc/Core/Helpers/Strings.php:245
+#: inc/Core/Shortcodes/TripSearchShortcode.php:61
+msgid "Search"
+msgstr "Search"
+
+#: inc/Core/PostTypes/BookingPostType.php:100
+msgid "Search Bookings"
+msgstr "Search Bookings"
+
+#: inc/Core/PostTypes/CouponPostType.php:81
+msgid "Search Coupons"
+msgstr "Search Coupons"
+
+#: inc/Core/PostTypes/CustomerPostType.php:73
+msgid "Search Customers"
+msgstr "Search Customers"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:55
+msgid "Search Email Trackback"
+msgstr "Search Email Trackback"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:77
+msgid "Search Enquiries"
+msgstr "Search Enquiries"
+
+#: inc/Core/PostTypes/FormPostType.php:117
+msgid "Search Forms"
+msgstr "Search Forms"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:64
+msgid "Search Keywords"
+msgstr "Search Keywords"
+
+#: inc/Core/PostTypes/PaymentPostType.php:55
+msgid "Search Payment"
+msgstr "Search Payment"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:64
+msgid "Search Price Categories"
+msgstr "Search Price Categories"
+
+#: inc/Core/Seeder/PageSeeder.php:62
+msgctxt "Page title"
+msgid "Search Result"
+msgstr "Search Result"
+
+#: inc/Core/Helpers/Strings.php:246
+msgid "Search Settings"
+msgstr "Search Settings"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:84
+msgid "Search Trip Activities"
+msgstr "Search Trip Activities"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:84
+msgid "Search Trip Destination"
+msgstr "Search Trip Destination"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:74
+msgid "Search Trip Excludes"
+msgstr "Search Trip Excludes"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:75
+msgid "Search Trip Includes"
+msgstr "Search Trip Includes"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:84
+msgid "Search Trip Types"
+msgstr "Search Trip Types"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:87
+msgid "Search trips"
+msgstr "Search trips"
+
+#: inc/Core/Helpers/Strings.php:247
+msgid "Section Title"
+msgstr "Section Title"
+
+#: inc/Core/Helpers/Strings.php:96 inc/Core/Helpers/TripFilter.php:171
+#: inc/Core/Helpers/TripFilter.php:214 inc/Core/Helpers/TripFilter.php:299
+#: inc/Core/Helpers/TripFilter.php:307 inc/Core/Helpers/TripFilter.php:393
+msgid "Select"
+msgstr "Select"
+
+#: inc/Core/Helpers/Strings.php:248
+msgid "Select Currency"
+msgstr "Select Currency"
+
+#: inc/Core/Helpers/Strings.php:253
+msgid "Select Date"
+msgstr "Select Date"
+
+#: inc/Core/Helpers/Strings.php:249
+msgid "Select Excludes"
+msgstr "Select Excludes"
+
+#: inc/Core/Helpers/Strings.php:250
+msgid "Select Gloabl FAQs"
+msgstr "Select Gloabl FAQs"
+
+#: inc/Core/Helpers/Strings.php:251
+msgid "Select Includes"
+msgstr "Select Includes"
+
+#: inc/Core/Helpers/Strings.php:252
+msgid "Select Info"
+msgstr "Select Info"
+
+#: inc/Core/Forms/CheckoutForm.php:108
+msgid "Select country"
+msgstr "Select country"
+
+#: inc/Core/Helpers/Strings.php:335
+msgid "Selected FAQs will be displayed in current trips"
+msgstr "Selected FAQs will be displayed in current trips"
+
+#: inc/Core/Helpers/Strings.php:97
+msgid "Send Notification"
+msgstr "Send Notification"
+
+#: inc/Core/Bookings.php:620
+msgid "Send Notification on Status Change."
+msgstr "Send Notification on Status Change."
+
+#: inc/Core/Helpers/Countries.php:260
+msgid "Senegal"
+msgstr "Senegal"
+
+#: inc/Core/Helpers/DropdownOptions.php:152
+msgid "September"
+msgstr "September"
+
+#: inc/Core/Helpers/Countries.php:261
+msgid "Serbia"
+msgstr "Serbia"
+
+#: inc/Admin/Views/SystemInfoView.php:166
+msgid "Server Info"
+msgstr "Server Info"
+
+#: inc/Admin/Views/SystemInfoView.php:161
+msgid "Server environment"
+msgstr "Server environment"
+
+#: inc/Core/Helpers/Strings.php:254 inc/Core/Traits/AdminMenuTrait.php:54
+#: inc/Core/Traits/AdminMenuTrait.php:161
+#: inc/Core/Traits/AdminMenuTrait.php:164
+msgid "Settings"
+msgstr "Settings"
+
+#: inc/Core/Traits/AdminMenuTrait.php:53
+msgid "Settings:Tripzzy"
+msgstr "Settings:Tripzzy"
+
+#: inc/Core/Helpers/Countries.php:262
+msgid "Seychelles"
+msgstr "Seychelles"
+
+#: inc/Core/Helpers/TripFilter.php:280
+msgid "Show"
+msgstr "Show"
+
+#: inc/Core/Helpers/Strings.php:255
+msgid "Show Filter Button"
+msgstr "Show Filter Button"
+
+#: inc/Core/Helpers/Strings.php:256
+msgid "Show in Filters"
+msgstr "Show in Filters"
+
+#: inc/Core/Helpers/Countries.php:263
+msgid "Sierra Leone"
+msgstr "Sierra Leone"
+
+#: inc/Core/Helpers/Countries.php:264
+msgid "Singapore"
+msgstr "Singapore"
+
+#: inc/Core/BlockTemplateUtils.php:403
+msgctxt "Template name"
+msgid "Single Tripzzy"
+msgstr "Single Tripzzy"
+
+#: inc/Core/Helpers/Strings.php:315
+msgid "Single word, no spaces. Underscores and dashes allowed."
+msgstr "Single word, no spaces. Underscores and dashes allowed."
+
+#: inc/Admin/Views/SystemInfoView.php:90
+msgid "Site URL"
+msgstr "Site URL"
+
+#: inc/Core/Helpers/Strings.php:258
+msgid "Slider Settings"
+msgstr "Slider Settings"
+
+#: inc/Core/Helpers/Strings.php:257
+msgid "Slider image size"
+msgstr "Slider image size"
+
+#: inc/Core/Helpers/Strings.php:337
+msgid "Slider image size to display slider in trip detail page."
+msgstr "Slider image size to display slider in trip detail page."
+
+#: inc/Core/Helpers/Countries.php:265
+msgid "Slovakia"
+msgstr "Slovakia"
+
+#: inc/Core/Helpers/Countries.php:266
+msgid "Slovenia"
+msgstr "Slovenia"
+
+#: inc/Core/Helpers/Strings.php:259
+msgid "Slug"
+msgstr "Slug"
+
+#: inc/Admin/Views/FilterPlusView.php:83
+msgid "Slug for filter or Category."
+msgstr "Slug for filter or Category."
+
+#: inc/Core/Helpers/Strings.php:260
+msgid "Smooth Scroll"
+msgstr "Smooth Scroll"
+
+#: inc/Core/Helpers/Strings.php:102
+msgid "Sold out"
+msgstr "Sold out"
+
+#: inc/Core/Helpers/Countries.php:267
+msgid "Solomon Islands"
+msgstr "Solomon Islands"
+
+#: inc/Core/Helpers/Countries.php:268
+msgid "Somalia"
+msgstr "Somalia"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:107
+#: inc/Lib/wordpress-importer/class-wp-import.php:116
+#: inc/Lib/wordpress-importer/class-wp-import.php:167
+#: inc/Lib/wordpress-importer/class-wp-import.php:171
+#: inc/Lib/wordpress-importer/class-wp-import.php:180
+msgid "Sorry, there has been an error."
+msgstr "Sorry, there has been an error."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1175
+msgid "Sorry, this file type is not permitted for security reasons."
+msgstr "Sorry, this file type is not permitted for security reasons."
+
+#: inc/Core/Payment/PaymentGateways/BankTransfer.php:124
+msgid "Sort Code"
+msgstr "Sort Code"
+
+#: inc/Core/Functions/TemplateMarkups.php:37
+#: inc/Core/Functions/TemplateMarkups.php:38
+msgid "Sort by"
+msgstr "Sort by"
+
+#: inc/Core/Helpers/Countries.php:269
+msgid "South Africa"
+msgstr "South Africa"
+
+#: inc/Core/Helpers/Countries.php:270
+msgid "South Georgia/Sandwich Islands"
+msgstr "South Georgia/Sandwich Islands"
+
+#: inc/Core/Helpers/Countries.php:271
+msgid "South Korea"
+msgstr "South Korea"
+
+#: inc/Core/Helpers/Countries.php:272
+msgid "South Sudan"
+msgstr "South Sudan"
+
+#: inc/Core/Helpers/Countries.php:273
+msgid "Spain"
+msgstr "Spain"
+
+#: inc/Core/Helpers/Countries.php:274
+msgid "Sri Lanka"
+msgstr "Sri Lanka"
+
+#: inc/Core/Helpers/Strings.php:261
+msgid "Start Date"
+msgstr "Start Date"
+
+#: inc/Core/Helpers/Strings.php:98
+msgid "State/Zone"
+msgstr "State/Zone"
+
+#: inc/Core/Forms/CheckoutForm.php:172
+msgid "State / Zone"
+msgstr "State / Zone"
+
+#: inc/Core/Helpers/Strings.php:262
+msgid "Status"
+msgstr "Status"
+
+#: inc/Core/Helpers/Strings.php:187
+msgid "Stick to the top of the trips."
+msgstr "Stick to the top of the trips."
+
+#: inc/Core/Helpers/Strings.php:99
+msgid "Street Address"
+msgstr "Street Address"
+
+#: inc/Core/Forms/CheckoutForm.php:121
+msgid "Street address"
+msgstr "Street address"
+
+#: inc/Core/Helpers/Strings.php:263
+msgid "Sub Fields"
+msgstr "Sub Fields"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:261
+msgid "Submit"
+msgstr "Submit"
+
+#: inc/Core/Helpers/Strings.php:100
+msgid "Submit Enquiry"
+msgstr "Submit Enquiry"
+
+#: inc/Core/Helpers/Reviews.php:83
+msgid "Submit Review"
+msgstr "Submit Review"
+
+#: inc/Core/Helpers/Strings.php:101
+msgid "Submitted On"
+msgstr "Submitted On"
+
+#: inc/Core/Bookings.php:807
+#: templates/layouts/default/partials/mini-cart.php:64
+msgid "Subtotal"
+msgstr "Subtotal"
+
+#: inc/Core/Helpers/Countries.php:275
+msgid "Sudan"
+msgstr "Sudan"
+
+#: inc/Core/Helpers/DropdownOptions.php:82
+msgid "Sunday"
+msgstr "Sunday"
+
+#: inc/Core/Helpers/Strings.php:264
+msgid "Support"
+msgstr "Support"
+
+#: inc/Core/Helpers/Countries.php:276
+msgid "Suriname"
+msgstr "Suriname"
+
+#: inc/Core/Helpers/Countries.php:277
+msgid "Svalbard and Jan Mayen"
+msgstr "Svalbard and Jan Mayen"
+
+#: inc/Core/Helpers/Countries.php:279
+msgid "Sweden"
+msgstr "Sweden"
+
+#: inc/Core/Helpers/Countries.php:280
+msgid "Switzerland"
+msgstr "Switzerland"
+
+#: inc/Core/Helpers/Strings.php:312
+msgid "Symbol to use for decimal separator in displayed Price."
+msgstr "Symbol to use for decimal separator in displayed Price."
+
+#: inc/Core/Helpers/Strings.php:338
+msgid "Symbol to use for thousands separator in displayed Price."
+msgstr "Symbol to use for thousands separator in displayed Price."
+
+#: inc/Core/Helpers/Countries.php:281
+msgid "Syria"
+msgstr "Syria"
+
+#: inc/Core/Helpers/Strings.php:265
+msgid "System Info"
+msgstr "System Info"
+
+#: inc/Core/Traits/AdminMenuTrait.php:61 inc/Core/Traits/AdminMenuTrait.php:62
+msgid "System Information"
+msgstr "System Information"
+
+#: inc/Core/Helpers/Strings.php:266
+msgid "System Status"
+msgstr "System Status"
+
+#: inc/Admin/Views/Layouts/HelpTab.php:27
+msgid "System info"
+msgstr "System info"
+
+#: inc/Core/Helpers/Strings.php:267
+msgid "Tabs"
+msgstr "Tabs"
+
+#: inc/Core/Helpers/Countries.php:282
+msgid "Taiwan"
+msgstr "Taiwan"
+
+#: inc/Core/Helpers/Countries.php:283
+msgid "Tajikistan"
+msgstr "Tajikistan"
+
+#: inc/Core/Helpers/Countries.php:284
+msgid "Tanzania"
+msgstr "Tanzania"
+
+#: inc/Core/Forms/Inputs/TaxonomyDropdown.php:66
+msgid "Taxonomy Dropdown"
+msgstr "Taxonomy Dropdown"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:136
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:136
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:132
+msgid "Taxonomy default thumbnail image"
+msgstr "Taxonomy default thumbnail image"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:126
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:126
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:122
+msgid "Taxonomy image"
+msgstr "Taxonomy image"
+
+#: inc/Core/Forms/Inputs/Tel.php:46
+msgid "Tel"
+msgstr "Tel"
+
+#: inc/Core/Payment/PaymentGateways/PayPalPayment.php:95
+msgid "Test Client ID"
+msgstr "Test Client ID"
+
+#: inc/Core/Shortcodes/CheckoutPageShortcode.php:97
+msgid "Test Mode"
+msgstr "Test Mode"
+
+#: inc/Core/Forms/Inputs/Text.php:54
+msgid "Text"
+msgstr "Text"
+
+#: inc/Core/Forms/Inputs/TextView.php:56
+msgid "Text View"
+msgstr "Text View"
+
+#: inc/Core/Forms/Inputs/Textarea.php:52
+msgid "Textarea"
+msgstr "Textarea"
+
+#: inc/Core/Helpers/Countries.php:285
+msgid "Thailand"
+msgstr "Thailand"
+
+#: inc/Core/Seeder/PageSeeder.php:80
+msgctxt "Page title"
+msgid "Thank you"
+msgstr "Thank you"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:172
+msgid "The export file could not be found at <code>%s</code>. It is likely that this was caused by a permissions problem."
+msgstr "The export file could not be found at <code>%s</code>. It is likely that this was caused by a permissions problem."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:108
+msgid "The file does not exist, please try again."
+msgstr "The file does not exist, please try again."
+
+#: inc/Core/Helpers/Strings.php:311
+msgid "The trip has only a date without time, so, let's assume a trip starts at 10:00 AM and is calculated as: ((24 hr - trip start time) + cut-off time). For example, if your trip begins at 10:00 AM and the cut-off time is 3 hours, you should set the cut-off time to 17 i.e. ((24-10)+3). Note: This calculation is only for the trips that have cut-off time in hours."
+msgstr "The trip has only a date without time, so, let's assume a trip starts at 10:00 AM and is calculated as: ((24 hr - trip start time) + cut-off time). For example, if your trip begins at 10:00 AM and the cut-off time is 3 hours, you should set the cut-off time to 17 i.e. ((24-10)+3). Note: This calculation is only for the trips that have cut-off time in hours."
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1190
+msgid "The uploaded file could not be moved"
+msgstr "The uploaded file could not be moved"
+
+#: inc/Admin/Views/SystemInfoView.php:482
+msgid "Theme"
+msgstr "Theme"
+
+#: inc/Core/Helpers/Strings.php:268 inc/Core/Traits/AdminMenuTrait.php:47
+msgid "Themes"
+msgstr "Themes"
+
+#: inc/Core/Traits/AdminMenuTrait.php:46
+msgid "Themes:Tripzzy"
+msgstr "Themes:Tripzzy"
+
+#: inc/Core/PostTypes/BookingPostType.php:399
+msgid "There are no notes yet."
+msgstr "There are no notes yet."
+
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser-simplexml.php:33
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser-simplexml.php:41
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser.php:45
+msgid "There was an error when reading this WXR file"
+msgstr "There was an error when reading this WXR file"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:188
+msgid "This WXR file (version %s) may not be supported by this version of the importer. Please consider updating."
+msgstr "This WXR file (version %s) may not be supported by this version of the importer. Please consider updating."
+
+#: inc/Core/Helpers/Strings.php:401
+msgid "This controls what currency prices are listed in the displayed prices."
+msgstr "This controls what currency prices are listed in the displayed prices."
+
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser-regex.php:102
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser-simplexml.php:46
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser-simplexml.php:52
+#: inc/Lib/wordpress-importer/parsers/class-wxr-parser-xml.php:107
+msgid "This does not appear to be a WXR file, missing/invalid WXR version number"
+msgstr "This does not appear to be a WXR file, missing/invalid WXR version number"
+
+#: inc/Core/Helpers/Strings.php:314
+msgid "This is the name which will appear on the form."
+msgstr "This is the name which will appear on the form."
+
+#: inc/Core/Helpers/ErrorMessage.php:70 inc/Core/Helpers/Strings.php:359
+msgid "This link has been expired."
+msgstr "This link has been expired."
+
+#: inc/Core/Helpers/Strings.php:331
+msgid "This option will reset your entire settings. This action can not be undone."
+msgstr "This option will reset your entire settings. This action can not be undone."
+
+#: inc/Core/Helpers/Strings.php:330
+msgid "This option will reset your form. This action can not be undone."
+msgstr "This option will reset your form. This action can not be undone."
+
+#: inc/Core/Seeder/PageSeeder.php:76
+msgid "This page is used to display the checkout form for booking a trip."
+msgstr "This page is used to display the checkout form for booking a trip."
+
+#: inc/Core/Seeder/PageSeeder.php:67
+msgid "This page is used to display the search results of trips based on the search criteria."
+msgstr "This page is used to display the search results of trips based on the search criteria."
+
+#: inc/Core/Seeder/PageSeeder.php:90
+msgid "This page is used to display the thank you message after a successful booking."
+msgstr "This page is used to display the thank you message after a successful booking."
+
+#: inc/Core/Seeder/PageSeeder.php:99
+msgid "This page is used to display the user dashboard where users can manage their bookings and profile."
+msgstr "This page is used to display the user dashboard where users can manage their bookings and profile."
+
+#: inc/Core/Helpers/Strings.php:398
+msgid "This sets the decimal seperator of displayed prices."
+msgstr "This sets the decimal seperator of displayed prices."
+
+#: inc/Core/Helpers/Strings.php:329 inc/Core/Helpers/Strings.php:400
+msgid "This sets the number of decimal points shown in displayed prices."
+msgstr "This sets the number of decimal points shown in displayed prices."
+
+#: inc/Core/Helpers/Strings.php:403
+msgid "This sets the thousands seperator of the displayed prices."
+msgstr "This sets the thousands seperator of the displayed prices."
+
+#: inc/Core/Helpers/Strings.php:402
+msgid "This will change the image size of the slider/featured image of the trip detail page."
+msgstr "This will change the image size of the slider/featured image of the trip detail page."
+
+#: inc/Core/Helpers/Strings.php:396
+msgid "This will display the price and currency as per the added variables."
+msgstr "This will display the price and currency as per the added variables."
+
+#: inc/Core/Helpers/Strings.php:313
+msgid "This will enable Trip Slider in Trip detail page."
+msgstr "This will enable Trip Slider in Trip detail page."
+
+#: inc/Core/Helpers/Strings.php:269
+msgid "Thousand Separator"
+msgstr "Thousand Separator"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:154
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:154
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:150
+msgid "Thumbnail"
+msgstr "Thumbnail"
+
+#: inc/Core/Helpers/DropdownOptions.php:98
+msgid "Thursday"
+msgstr "Thursday"
+
+#: templates/layouts/default/partials/mini-cart.php:49
+msgid "Time"
+msgstr "Time"
+
+#: inc/Core/Helpers/Countries.php:286
+msgid "Timor-Leste"
+msgstr "Timor-Leste"
+
+#: inc/Core/Emails/AdminEnquiryEmail.php:228
+msgid "Title of the trip."
+msgstr "Title of the trip."
+
+#: inc/Core/Helpers/Strings.php:103
+msgid "To"
+msgstr "To"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:242
+msgid "To make it simpler for you to edit and save the imported content, you may want to reassign the author of the imported item to an existing user of this site, such as your primary administrator account."
+msgstr "To make it simpler for you to edit and save the imported content, you may want to reassign the author of the imported item to an existing user of this site, such as your primary administrator account."
+
+#: inc/Core/Helpers/User.php:254
+msgid "To set your password, visit the following address:"
+msgstr "To set your password, visit the following address:"
+
+#: inc/Core/Helpers/Countries.php:287
+msgid "Togo"
+msgstr "Togo"
+
+#: inc/Core/Helpers/Countries.php:288
+msgid "Tokelau"
+msgstr "Tokelau"
+
+#: inc/Core/Helpers/Countries.php:289
+msgid "Tonga"
+msgstr "Tonga"
+
+#: inc/Core/Bookings.php:286 inc/Core/Bookings.php:454
+#: inc/Core/Bookings.php:465 inc/Core/Bookings.php:798
+#: inc/Core/Bookings.php:816 inc/Core/Helpers/Strings.php:104
+#: templates/layouts/default/partials/mini-cart.php:82
+msgid "Total"
+msgstr "Total"
+
+#: inc/Core/PostTypes/CustomerPostType.php:210
+msgid "Total Spent"
+msgstr "Total Spent"
+
+#: inc/Core/Helpers/Strings.php:105
+msgid "Town/City"
+msgstr "Town/City"
+
+#: inc/Core/Forms/CheckoutForm.php:155
+msgid "Town / City"
+msgstr "Town / City"
+
+#: inc/Core/Helpers/TripInfos.php:358 inc/Core/Seeder/TripIncludesSeeder.php:78
+msgid "Transportation"
+msgstr "Transportation"
+
+#: inc/Core/Helpers/Countries.php:290
+msgid "Trinidad and Tobago"
+msgstr "Trinidad and Tobago"
+
+#: inc/Core/Helpers/Strings.php:106
+msgid "Trip"
+msgstr "Trip"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:82
+msgctxt "add new on admin bar"
+msgid "Trip"
+msgstr "Trip"
+
+#: inc/Core/Helpers/SearchForm.php:157 inc/Core/Helpers/SearchForm.php:161
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:92
+msgid "Trip Activities"
+msgstr "Trip Activities"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:82
+msgctxt "taxonomy general name"
+msgid "Trip Activities"
+msgstr "Trip Activities"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:83
+msgctxt "taxonomy singular name"
+msgid "Trip Activities"
+msgstr "Trip Activities"
+
+#: inc/Core/Emails/AdminBookingEmail.php:214
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:181
+#: inc/Core/Emails/CustomerBookingEmail.php:216
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:181
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:181
+msgid "Trip Booking details."
+msgstr "Trip Booking details."
+
+#: inc/Core/Helpers/Strings.php:107
+msgid "Trip Code"
+msgstr "Trip Code"
+
+#: inc/Core/Bookings.php:460 inc/Core/Bookings.php:792
+msgid "Trip Date"
+msgstr "Trip Date"
+
+#: inc/Core/Helpers/Strings.php:271
+msgid "Trip Date Type"
+msgstr "Trip Date Type"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:83
+msgctxt "taxonomy singular name"
+msgid "Trip Destination"
+msgstr "Trip Destination"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:92
+msgid "Trip Destinations"
+msgstr "Trip Destinations"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:82
+msgctxt "taxonomy general name"
+msgid "Trip Destinations"
+msgstr "Trip Destinations"
+
+#: inc/Core/Helpers/Strings.php:272
+msgid "Trip Difficulties"
+msgstr "Trip Difficulties"
+
+#: inc/Core/Helpers/Strings.php:273
+msgid "Trip Duration"
+msgstr "Trip Duration"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:124
+msgid "Trip Enquiry"
+msgstr "Trip Enquiry"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:73
+msgctxt "taxonomy singular name"
+msgid "Trip Exclude"
+msgstr "Trip Exclude"
+
+#: inc/Core/Helpers/Strings.php:274
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:82
+msgid "Trip Excludes"
+msgstr "Trip Excludes"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:72
+msgctxt "taxonomy general name"
+msgid "Trip Excludes"
+msgstr "Trip Excludes"
+
+#: inc/Core/Helpers/Strings.php:275
+msgid "Trip FAQs"
+msgstr "Trip FAQs"
+
+#: inc/Core/Helpers/Strings.php:276
+msgid "Trip Filters"
+msgstr "Trip Filters"
+
+#: inc/Core/Helpers/Strings.php:277
+msgid "Trip Gallery"
+msgstr "Trip Gallery"
+
+#: inc/Core/Helpers/Strings.php:278
+msgid "Trip Highlights"
+msgstr "Trip Highlights"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:74
+msgctxt "taxonomy singular name"
+msgid "Trip Include"
+msgstr "Trip Include"
+
+#: inc/Core/Helpers/Strings.php:279
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:83
+msgid "Trip Includes"
+msgstr "Trip Includes"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:73
+msgctxt "taxonomy general name"
+msgid "Trip Includes"
+msgstr "Trip Includes"
+
+#: inc/Core/Helpers/Trip.php:346 inc/Core/Helpers/TripIncludesExcludes.php:144
+msgid "Trip Includes & Excludes"
+msgstr "Trip Includes & Excludes"
+
+#: inc/Core/Helpers/Strings.php:280 inc/Core/Helpers/Trip.php:347
+#: inc/Core/Helpers/TripInfos.php:182 inc/Core/Helpers/TripStickyTab.php:96
+msgid "Trip Infos"
+msgstr "Trip Infos"
+
+#: inc/Core/Helpers/Strings.php:281
+msgid "Trip Itineraries"
+msgstr "Trip Itineraries"
+
+#: inc/Admin/Permalinks.php:90
+msgid "Trip Keyword base"
+msgstr "Trip Keyword base"
+
+#: inc/Core/Bookings.php:461 inc/Core/Bookings.php:793
+#: inc/Core/Forms/EnquiryForm.php:46 inc/Core/PostTypes/BookingPostType.php:524
+#: inc/Core/PostTypes/EnquiryPostType.php:303
+msgid "Trip Name"
+msgstr "Trip Name"
+
+#: inc/Core/Helpers/TripPackage.php:62
+msgid "Trip Package must contains `package id`"
+msgstr "Trip Package must contains `package id`"
+
+#: inc/Core/Helpers/TripPackage.php:66
+msgid "Trip Package must contains `trip id`"
+msgstr "Trip Package must contains `trip id`"
+
+#: inc/Core/Helpers/Strings.php:282
+msgid "Trip Packages"
+msgstr "Trip Packages"
+
+#: inc/Core/Emails/AdminBookingEmail.php:215
+#: inc/Core/Emails/CustomerBookingEmail.php:217
+msgid "Trip Payment details."
+msgstr "Trip Payment details."
+
+#: inc/Core/Helpers/Strings.php:283
+msgid "Trip Price"
+msgstr "Trip Price"
+
+#: inc/Core/Helpers/Strings.php:284
+msgid "Trip Saved"
+msgstr "Trip Saved"
+
+#: inc/Core/Helpers/Strings.php:285
+msgid "Trip Settings"
+msgstr "Trip Settings"
+
+#: inc/Core/Helpers/Strings.php:286
+msgid "Trip Slider"
+msgstr "Trip Slider"
+
+#: inc/Core/PostTypes/BookingPostType.php:526
+msgid "Trip Total"
+msgstr "Trip Total"
+
+#: inc/Core/Helpers/SearchForm.php:133 inc/Core/Helpers/SearchForm.php:137
+msgid "Trip Type"
+msgstr "Trip Type"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:83
+msgctxt "taxonomy singular name"
+msgid "Trip Type"
+msgstr "Trip Type"
+
+#: inc/Core/Helpers/Strings.php:108 inc/Core/Taxonomies/TripTypeTaxonomy.php:92
+msgid "Trip Types"
+msgstr "Trip Types"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:82
+msgctxt "taxonomy general name"
+msgid "Trip Types"
+msgstr "Trip Types"
+
+#: inc/Admin/Permalinks.php:85
+msgid "Trip activities base"
+msgstr "Trip activities base"
+
+#: inc/Admin/Permalinks.php:70
+msgid "Trip base"
+msgstr "Trip base"
+
+#: inc/Admin/Permalinks.php:80
+msgid "Trip destination base"
+msgstr "Trip destination base"
+
+#: inc/Admin/Permalinks.php:75
+msgid "Trip type base"
+msgstr "Trip type base"
+
+#: inc/Admin/Views/Layouts/Header.php:81
+msgid "Trips"
+msgstr "Trips"
+
+#: inc/Core/BlockTemplateUtils.php:407
+msgctxt "Template name"
+msgid "Trips"
+msgstr "Trips"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:80
+msgctxt "admin menu"
+msgid "Trips"
+msgstr "Trips"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:81
+msgctxt "post type general name"
+msgid "Trips"
+msgstr "Trips"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:88
+msgctxt "post type singular name"
+msgid "Trips"
+msgstr "Trips"
+
+msgid "Tripzzy"
+msgstr "Tripzzy"
+
+#: inc/Core/PostTypes/BookingPostType.php:93
+msgctxt "admin menu"
+msgid "Tripzzy"
+msgstr "Tripzzy"
+
+#: inc/Core/Helpers/User.php:116
+msgid "Tripzzy %s"
+msgstr "Tripzzy %s"
+
+#: inc/Core/Seeder/PageSeeder.php:75
+msgid "Tripzzy Checkout Page"
+msgstr "Tripzzy Checkout Page"
+
+#: inc/Core/Seeder/PageSeeder.php:98
+msgid "Tripzzy Dashboard Page"
+msgstr "Tripzzy Dashboard Page"
+
+#: inc/Core/Bases/EmailBase.php:305
+msgid "Tripzzy Email"
+msgstr "Tripzzy Email"
+
+#: inc/Core/PostTypes/FormPostType.php:112
+msgctxt "add new on admin bar"
+msgid "Tripzzy Form"
+msgstr "Tripzzy Form"
+
+#: inc/Core/Seeder/PageSeeder.php:66
+msgid "Tripzzy Search Result Page"
+msgstr "Tripzzy Search Result Page"
+
+#: inc/Admin/Views/SettingsView.php:32
+msgid "Tripzzy Settings"
+msgstr "Tripzzy Settings"
+
+#: inc/Core/Image.php:140
+msgid "Tripzzy Slider Thumbnail"
+msgstr "Tripzzy Slider Thumbnail"
+
+#: inc/Core/Seeder/PageSeeder.php:89
+msgid "Tripzzy Thankyou Page"
+msgstr "Tripzzy Thankyou Page"
+
+#: inc/Core/Image.php:134
+msgid "Tripzzy Thumbnail"
+msgstr "Tripzzy Thumbnail"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:129
+msgid "Tripzzy Trip Options"
+msgstr "Tripzzy Trip Options"
+
+#: inc/Admin/Views/SystemInfoView.php:82
+msgid "Tripzzy Version"
+msgstr "Tripzzy Version"
+
+msgid "Tripzzy is a free travel booking WordPress plugin for creating travel and tour packages for tour operators and agencies quickly and easily."
+msgstr "Tripzzy is a free travel booking WordPress plugin for creating travel and tour packages for tour operators and agencies quickly and easily."
+
+#: inc/Admin/Views/Layouts/HelpTab.php:52
+msgid "Tripzzy is always willing to help you with your plugin. We want you to ensure you have a seamless and enjoyable experience while using the Tripzzy Plugin. If you run into any difficulties, there are several places you can find help:"
+msgstr "Tripzzy is always willing to help you with your plugin. We want you to ensure you have a seamless and enjoyable experience while using the Tripzzy Plugin. If you run into any difficulties, there are several places you can find help:"
+
+#: inc/Core/Helpers/DropdownOptions.php:90
+msgid "Tuesday"
+msgstr "Tuesday"
+
+#: inc/Core/Helpers/Countries.php:291
+msgid "Tunisia"
+msgstr "Tunisia"
+
+#: inc/Core/Helpers/Countries.php:292
+msgid "Turkey"
+msgstr "Turkey"
+
+#: inc/Core/Helpers/Countries.php:293
+msgid "Turkmenistan"
+msgstr "Turkmenistan"
+
+#: inc/Core/Helpers/Countries.php:294
+msgid "Turks and Caicos Islands"
+msgstr "Turks and Caicos Islands"
+
+#: inc/Core/Helpers/Countries.php:295
+msgid "Tuvalu"
+msgstr "Tuvalu"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:123
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:124
+msgid "Type any fontawesome 5 class here"
+msgstr "Type any fontawesome 5 class here"
+
+#: inc/Core/Helpers/Strings.php:287
+msgid "UI"
+msgstr "UI"
+
+#: inc/Core/Emails/AdminBookingEmail.php:221
+#: inc/Core/Emails/CustomerBookingCancelationEmail.php:187
+#: inc/Core/Emails/CustomerBookingEmail.php:223
+#: inc/Core/Emails/CustomerBookingOnHoldEmail.php:187
+#: inc/Core/Emails/CustomerBookingRefundedEmail.php:187
+msgid "URL of Dashboard where list of bookings are listed."
+msgstr "URL of Dashboard where list of bookings are listed."
+
+#: inc/Core/Emails/AdminEnquiryEmail.php:227
+msgid "URL of the trip."
+msgstr "URL of the trip."
+
+#: inc/Core/Helpers/Countries.php:296
+msgid "Uganda"
+msgstr "Uganda"
+
+#: inc/Core/Helpers/Countries.php:297
+msgid "Ukraine"
+msgstr "Ukraine"
+
+#: inc/Core/Helpers/ErrorMessage.php:69 inc/Core/Helpers/Strings.php:362
+msgid "Unable to add trip in the cart!!"
+msgstr "Unable to add trip in the cart!!"
+
+#: inc/Core/Ajax/EnquiryAjax.php:79
+msgid "Unable to create enquiry"
+msgstr "Unable to create enquiry"
+
+#: inc/Core/Ajax/CartAjax.php:54
+msgid "Unable to retrieve cart."
+msgstr "Unable to retrieve cart."
+
+#: inc/Core/Helpers/Countries.php:298
+msgid "United Arab Emirates"
+msgstr "United Arab Emirates"
+
+#: inc/Core/Helpers/Countries.php:299
+msgid "United Kingdom (UK)"
+msgstr "United Kingdom (UK)"
+
+#: inc/Core/Helpers/Countries.php:300
+msgid "United States (US)"
+msgstr "United States (US)"
+
+#: inc/Core/Helpers/Countries.php:301
+msgid "United States (US) Minor Outlying Islands"
+msgstr "United States (US) Minor Outlying Islands"
+
+#: inc/Core/PostTypes/CouponPostType.php:207
+msgid "Unlimited"
+msgstr "Unlimited"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:261
+msgid "Unread"
+msgstr "Unread"
+
+#: inc/Core/Helpers/TripItineraries.php:115
+msgid "Untitled"
+msgstr "Untitled"
+
+#: inc/Core/Helpers/Strings.php:291
+msgid "Update Filter"
+msgstr "Update Filter"
+
+#: inc/Core/Taxonomies/KeywordsTaxonomy.php:69
+msgid "Update Keyword"
+msgstr "Update Keyword"
+
+#: inc/Core/Taxonomies/PriceCategoryTaxonomy.php:69
+msgid "Update Price Category"
+msgstr "Update Price Category"
+
+#: inc/Core/Taxonomies/TripActivitiesTaxonomy.php:89
+msgid "Update Trip Activities"
+msgstr "Update Trip Activities"
+
+#: inc/Core/Taxonomies/TripDestinationTaxonomy.php:89
+msgid "Update Trip Destination"
+msgstr "Update Trip Destination"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:79
+msgid "Update Trip Exclude"
+msgstr "Update Trip Exclude"
+
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:80
+msgid "Update Trip Include"
+msgstr "Update Trip Include"
+
+#: inc/Core/Taxonomies/TripTypeTaxonomy.php:89
+msgid "Update Trip Type"
+msgstr "Update Trip Type"
+
+#: inc/Admin/Views/SystemInfoView.php:136
+msgid "Upload Directory  Location"
+msgstr "Upload Directory  Location"
+
+#: inc/Core/Helpers/Countries.php:302
+msgid "Uruguay"
+msgstr "Uruguay"
+
+#: inc/Core/Helpers/Strings.php:288
+msgid "Use as Default Package"
+msgstr "Use as Default Package"
+
+#: inc/Core/Helpers/Strings.php:289
+msgid "Use as Default Price"
+msgstr "Use as Default Price"
+
+#: inc/Core/Helpers/Strings.php:318
+msgid "Use this price for trip when price per is set as group."
+msgstr "Use this price for trip when price per is set as group."
+
+#: inc/Core/Helpers/Strings.php:290
+msgid "User"
+msgstr "User"
+
+#: inc/Core/Helpers/User.php:253
+msgid "Username: %s"
+msgstr "Username: %s"
+
+#: inc/Core/PostTypes/CouponPostType.php:164
+msgid "Uses"
+msgstr "Uses"
+
+#: inc/Core/Helpers/Countries.php:303
+msgid "Uzbekistan"
+msgstr "Uzbekistan"
+
+#: inc/Core/Helpers/Countries.php:304
+msgid "Vanuatu"
+msgstr "Vanuatu"
+
+#: inc/Core/Helpers/Countries.php:305
+msgid "Vatican"
+msgstr "Vatican"
+
+#: inc/Core/Helpers/Countries.php:306
+msgid "Venezuela"
+msgstr "Venezuela"
+
+#: inc/Admin/Views/SystemInfoView.php:495
+msgid "Version"
+msgstr "Version"
+
+#: inc/Admin/Views/Layouts/HelpTab.php:25
+msgid "Version %s"
+msgstr "Version %s"
+
+#: inc/Core/Helpers/Countries.php:307
+msgid "Vietnam"
+msgstr "Vietnam"
+
+#: inc/Core/Helpers/Strings.php:109
+msgid "View"
+msgstr "View"
+
+#: inc/Core/PostTypes/BookingPostType.php:102
+msgid "View Booking"
+msgstr "View Booking"
+
+#: inc/Core/PostTypes/CouponPostType.php:83
+msgid "View Coupon"
+msgstr "View Coupon"
+
+#: inc/Core/PostTypes/CustomerPostType.php:75
+msgid "View Customer"
+msgstr "View Customer"
+
+#: inc/Core/Helpers/Strings.php:110
+msgid "View Details"
+msgstr "View Details"
+
+#: inc/Core/PostTypes/EmailTrackbackPostType.php:57
+msgid "View Email Trackback"
+msgstr "View Email Trackback"
+
+#: inc/Core/PostTypes/EnquiryPostType.php:79
+msgid "View Enquiry"
+msgstr "View Enquiry"
+
+#: inc/Core/PostTypes/FormPostType.php:119
+msgid "View Form"
+msgstr "View Form"
+
+#: inc/Core/Helpers/Strings.php:111
+msgid "View Itineraries"
+msgstr "View Itineraries"
+
+#: inc/Core/PostTypes/PaymentPostType.php:57
+msgid "View Payment"
+msgstr "View Payment"
+
+#: inc/Core/PostTypes/TripzzyPostType.php:89
+msgid "View Trip"
+msgstr "View Trip"
+
+#: inc/Admin/Views/Layouts/HelpTab.php:26
+msgid "View details"
+msgstr "View details"
+
+#: inc/Core/Helpers/Strings.php:112
+msgid "View more departure"
+msgstr "View more departure"
+
+#: inc/Core/Helpers/Countries.php:308
+msgid "Virgin Islands (British)"
+msgstr "Virgin Islands (British)"
+
+#: inc/Core/Helpers/Countries.php:309
+msgid "Virgin Islands (US)"
+msgstr "Virgin Islands (US)"
+
+#: inc/Admin/Views/SystemInfoView.php:447
+msgid "Visit plugin homepage"
+msgstr "Visit plugin homepage"
+
+#: inc/Admin/Views/SystemInfoView.php:126
+msgid "WP Cron"
+msgstr "WP Cron"
+
+#: inc/Admin/Views/SystemInfoView.php:122
+msgid "WP Debug Mode"
+msgstr "WP Debug Mode"
+
+#: inc/Admin/Views/SystemInfoView.php:94
+msgid "WP Memory Limit"
+msgstr "WP Memory Limit"
+
+#: inc/Admin/Views/SystemInfoView.php:118
+msgid "WP Multisite"
+msgstr "WP Multisite"
+
+#: inc/Admin/Views/SystemInfoView.php:78
+msgid "WP Version"
+msgstr "WP Version"
+
+#: inc/Core/Helpers/Countries.php:310
+msgid "Wallis and Futuna"
+msgstr "Wallis and Futuna"
+
+#: inc/Admin/Notices/Notices.php:25
+msgid "We do not recommend you to use forcefully. If you still want to use 'Tripzzy' forcefully. Please <a href=\"#\" class=\"tripzzy-use-forcefully\" data-use=\"yes\" >click here</a>."
+msgstr ""
+
+#: inc/Core/Helpers/DropdownOptions.php:94
+msgid "Wednesday"
+msgstr "Wednesday"
+
+#: inc/Core/Helpers/UserProfile.php:233
+msgid "Welcome, %s"
+msgstr "Welcome, %s"
+
+#: inc/Admin/Pointers.php:156
+msgid "Welcome to Tripzzy"
+msgstr "Welcome to Tripzzy"
+
+#: inc/Core/Helpers/Countries.php:311
+msgid "Western Sahara"
+msgstr "Western Sahara"
+
+#: inc/Core/Helpers/Strings.php:113
+msgid "Wishlist"
+msgstr "Wishlist"
+
+#: inc/Core/Helpers/Strings.php:114
+msgid "Wishlists"
+msgstr "Wishlists"
+
+#: inc/Admin/Views/SystemInfoView.php:189
+#: inc/Admin/Views/SystemInfoView.php:266
+msgid "WordPress Requirements"
+msgstr "WordPress Requirements"
+
+#: inc/Admin/Views/SystemInfoView.php:73
+msgid "WordPress environment"
+msgstr "WordPress environment"
+
+#: inc/Core/Forms/Inputs/Wrapper.php:48
+msgid "Wrapper"
+msgstr "Wrapper"
+
+#: inc/Core/Helpers/Countries.php:313
+msgid "Yemen"
+msgstr "Yemen"
+
+#: inc/Admin/Views/FilterPlusView.php:146 inc/Core/Helpers/Strings.php:115
+msgid "Yes"
+msgstr "Yes"
+
+#: inc/Core/Shortcodes/CheckoutPageShortcode.php:97
+msgid "You are currently in sandbox mode. This box only visible in sandbox mode."
+msgstr "You are currently in sandbox mode. This box only visible in sandbox mode."
+
+#: inc/Core/Helpers/ErrorMessage.php:75
+msgid "You are not allowed to use this coupon !"
+msgstr "You are not allowed to use this coupon !"
+
+#: inc/Core/Helpers/ErrorMessage.php:76
+msgid "You are not allowed to use this coupon in this trips !"
+msgstr "You are not allowed to use this coupon in this trips !"
+
+#: inc/Core/Ajax/DashboardAjax.php:162 inc/Core/Ajax/DashboardAjax.php:229
+#: inc/Core/Ajax/DashboardAjax.php:279
+msgid "You are not logged in."
+msgstr "You are not logged in."
+
+#: inc/Admin/Notices/Notices.php:27
+msgid "You are still in uncompatible mode for 'Tripzzy'. Please <a href=\"#\" class=\"tripzzy-use-forcefully\" data-use=\"no\" >Click here</a> to update compatibility mode."
+msgstr ""
+
+#: inc/Admin/Notices/Notices.php:26
+msgid "You are using uncompatible version of 'Tripzzy'. Please <a href=\"#\" class=\"tripzzy-use-forcefully\" data-use=\"no\" >Click here</a> to undo the current action."
+msgstr "Tu utilises une version incompatible de 'Tripzzy'. Merci de <a href=\"#\" class=\"tripzzy-use-forcefully\" data-use=\"no\" >Cliquer ici</a> pour annuler l'action en cours."
+
+#: inc/Core/Helpers/Strings.php:320
+msgid "You can add more schedule by clicking Add Schedule button."
+msgstr "You can add more schedule by clicking Add Schedule button."
+
+#: inc/Core/Helpers/ErrorMessage.php:89
+msgid "You can not set your current password as a new password."
+msgstr "You can not set your current password as a new password."
+
+#: inc/Core/Helpers/Strings.php:326
+msgid "You don't have FAQs yet. Please add some FAQs now."
+msgstr "You don't have FAQs yet. Please add some FAQs now."
+
+#: inc/Core/Helpers/Strings.php:325
+msgid "You don't have Packages yet. Click Add package button to add new package."
+msgstr "You don't have Packages yet. Click Add package button to add new package."
+
+#: inc/Core/Helpers/Strings.php:328
+msgid "You don't have Trip date yet. Please add trip date now."
+msgstr "You don't have Trip date yet. Please add trip date now."
+
+#: inc/Core/Helpers/Strings.php:327
+msgid "You don't have trip highlights yet. Please add some highlights now."
+msgstr "You don't have trip highlights yet. Please add some highlights now."
+
+#: inc/Core/Helpers/Strings.php:324
+msgid "You have not added the Package category yet. Please add a category now."
+msgstr "You have not added the Package category yet. Please add a category now."
+
+#: inc/Core/Helpers/ErrorMessage.php:68
+msgid "You must select atleast %1$d %2$s!!"
+msgstr "You must select atleast %1$d %2$s!!"
+
+#: inc/Core/Forms/EnquiryForm.php:83
+msgid "Your Email"
+msgstr "Your Email"
+
+#: inc/Core/Forms/EnquiryForm.php:66
+msgid "Your Full name"
+msgstr "Your Full name"
+
+#: inc/Core/Helpers/Strings.php:242
+msgid "Your Schedule"
+msgstr "Your Schedule"
+
+#: inc/Core/Forms/CheckoutForm.php:125
+msgid "Your address"
+msgstr "Your address"
+
+#: inc/Core/Forms/CheckoutForm.php:142
+msgid "Your address 2"
+msgstr "Your address 2"
+
+#: inc/Core/Forms/CheckoutForm.php:159
+msgid "Your city"
+msgstr "Your city"
+
+#: inc/Core/Forms/CheckoutForm.php:226
+msgid "Your email"
+msgstr "Your email"
+
+#: inc/Core/Forms/CheckoutForm.php:75
+msgid "Your first name"
+msgstr "Your first name"
+
+#: inc/Core/Forms/CheckoutForm.php:92
+msgid "Your last name"
+msgstr "Your last name"
+
+#: inc/Core/Forms/EnquiryForm.php:100
+msgid "Your message"
+msgstr "Your message"
+
+#: inc/Core/Forms/CheckoutForm.php:282
+msgid "Your note"
+msgstr "Your note"
+
+#: inc/Core/Forms/CheckoutForm.php:210
+msgid "Your phone"
+msgstr "Your phone"
+
+#: inc/Core/Forms/CheckoutForm.php:193
+msgid "Your postcode"
+msgstr "Your postcode"
+
+#: inc/Admin/Views/SystemInfoView.php:345
+msgid "Your server does not have the %s class enabled - HTML/Multipart emails, and also some extensions, will not work without DOMDocument."
+msgstr "Your server does not have the %s class enabled - HTML/Multipart emails, and also some extensions, will not work without DOMDocument."
+
+#: inc/Admin/Views/SystemInfoView.php:335
+msgid "Your server does not have the %s class enabled - some gateway plugins which use SOAP may not work as expected."
+msgstr "Your server does not have the %s class enabled - some gateway plugins which use SOAP may not work as expected."
+
+#: inc/Admin/Views/SystemInfoView.php:355
+msgid "Your server does not support the %s function - this is required to use the GeoIP database from MaxMind."
+msgstr "Your server does not support the %s function - this is required to use the GeoIP database from MaxMind."
+
+#: inc/Admin/Views/SystemInfoView.php:365
+msgid "Your server does not support the %s functions - this is required for better character encoding. Some fallbacks will be used instead for it."
+msgstr "Your server does not support the %s functions - this is required for better character encoding. Some fallbacks will be used instead for it."
+
+#: inc/Core/Forms/CheckoutForm.php:176
+msgid "Your state"
+msgstr "Your state"
+
+#: inc/Core/Helpers/Strings.php:363
+msgid "Your wishlist is empty!"
+msgstr "Your wishlist is empty!"
+
+#: inc/Core/Helpers/Countries.php:314
+msgid "Zambia"
+msgstr "Zambia"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:1132
+msgid "Zero size file downloaded"
+msgstr "Zero size file downloaded"
+
+#: inc/Core/Helpers/Countries.php:315
+msgid "Zimbabwe"
+msgstr "Zimbabwe"
+
+#: inc/Core/Helpers/Strings.php:116
+msgid "Zip/Postal Code"
+msgstr "Zip/Postal Code"
+
+#: inc/Core/Helpers/User.php:266
+msgid "[%s] Login Details"
+msgstr "[%s] Login Details"
+
+#: inc/Core/Helpers/TemplateHooks.php:298
+msgid "( Min: %d )"
+msgstr "( Min: %d )"
+
+#: inc/Admin/Views/SystemInfoView.php:457
+msgctxt "plugin version"
+msgid " %1$s %2$s %3$s"
+msgstr " %1$s %2$s %3$s"
+
+#: inc/Core/Ajax/NotesAjax.php:82 inc/Core/PostTypes/BookingPostType.php:383
+msgid "added on %1$s at %2$s"
+msgstr "added on %1$s at %2$s"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:293
+msgid "as a new user:"
+msgstr "as a new user:"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:303
+msgid "assign posts to an existing user:"
+msgstr "assign posts to an existing user:"
+
+#: inc/Core/Bookings.php:706
+msgid "at"
+msgstr "at"
+
+#: inc/Core/PostTypes/BookingPostType.php:389
+msgid "by %s"
+msgstr "by %s"
+
+#: inc/Admin/Views/SystemInfoView.php:455
+msgctxt "by author"
+msgid "by %s"
+msgstr "by %s"
+
+#: inc/Core/Ajax/NotesAjax.php:88
+msgid "by %s "
+msgstr "by %s "
+
+#: inc/Admin/Views/SystemInfoView.php:217
+msgid "cURL Version"
+msgstr "cURL Version"
+
+#: inc/Core/Seeder/FormFieldsSeeder.php:77
+msgctxt "Page slug"
+msgid "checkout-form"
+msgstr "checkout-form"
+
+#: inc/Core/Seeder/FormFieldsSeeder.php:83
+msgctxt "Page slug"
+msgid "enquiry-form"
+msgstr "enquiry-form"
+
+#: inc/Core/Taxonomies/TripExcludesTaxonomy.php:117
+#: inc/Core/Taxonomies/TripIncludesTaxonomy.php:118
+msgid "fa-solid fa-book"
+msgstr "fa-solid fa-book"
+
+msgid "https://refreshthemes.com"
+msgstr "https://refreshthemes.com"
+
+msgid "https://wptripzzy.com"
+msgstr "https://wptripzzy.com"
+
+#: inc/Core/Helpers/Strings.php:220
+msgid "or"
+msgstr "or"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:305
+msgid "or assign posts to an existing user:"
+msgstr "or assign posts to an existing user:"
+
+#: inc/Lib/wordpress-importer/class-wp-import.php:290
+msgid "or create new user with login name:"
+msgstr "or create new user with login name:"
+
+#: inc/Core/Shortcodes/TripTaxonomiesShortcode.php:104
+#: src/blocks/trip-taxonomies/render.php:80
+msgid "%d trip"
+msgid_plural "%d trips"
+msgstr[0] "%d trip"
+msgstr[1] "%d trips"
+
+#: templates/review-single-tripzzy.php:30
+msgctxt "Reviews title"
+msgid "%s review"
+msgid_plural "%s reviews"
+msgstr[0] "%s review"
+msgstr[1] "%s reviews"
+
+#: inc/Core/Ajax/TripAjax.php:191
+msgid "%s trip found."
+msgid_plural "%s trips found."
+msgstr[0] "%s trip found."
+msgstr[1] "%s trips found."
+
+#: inc/Core/Helpers/TemplateHooks.php:300
+msgid "Please select minimum %d person"
+msgid_plural "Please select minimum %d people."
+msgstr[0] "Please select minimum %d person"
+msgstr[1] "Please select minimum %d people."
+
+#: inc/Core/Helpers/ErrorMessage.php:104
+msgid "You must select atleast %d person!!"
+msgid_plural "You must select atleast %d people!!"
+msgstr[0] "You must select atleast %d person!!"
+msgstr[1] "You must select atleast %d people!!"
+
+#: inc/Core/Helpers/Reviews.php:145
+msgid " (%d Review)"
+msgid_plural " (%d Reviews)"
+msgstr[0] " (%d Review)"
+msgstr[1] " (%d Reviews)"
+
+#: inc/Core/Ajax/DashboardAjax.php:142
+msgid "to your profile."
+msgstr "to your profile."
+
+#: inc/Admin/Permalinks.php:142
+msgctxt "slug"
+msgid "trip-activities"
+msgstr "trip-activities"
+
+#: inc/Admin/Permalinks.php:130
+msgctxt "slug"
+msgid "trip-destination"
+msgstr "trip-destination"
+
+#: inc/Admin/Permalinks.php:154
+msgctxt "slug"
+msgid "trip-keyword"
+msgstr "trip-keyword"
+
+#: inc/Admin/Permalinks.php:118
+msgctxt "slug"
+msgid "trip-type"
+msgstr "trip-type"
+
+#: inc/Admin/Permalinks.php:107
+msgctxt "slug"
+msgid "tripzzy"
+msgstr "tripzzy"
+
+#: inc/Core/Seeder/PageSeeder.php:70
+msgctxt "Page slug"
+msgid "tz-checkout"
+msgstr "tz-checkout"
+
+#: inc/Core/Seeder/PageSeeder.php:93
+msgctxt "Page slug"
+msgid "tz-dashboard"
+msgstr "tz-dashboard"
+
+#: inc/Core/Seeder/PageSeeder.php:61
+msgctxt "Page slug"
+msgid "tz-search-result"
+msgstr "tz-search-result"
+
+#: inc/Core/Seeder/PageSeeder.php:79
+msgctxt "Page slug"
+msgid "tz-thank-you"
+msgstr "tz-thank-you"
+
+#: inc/Core/Helpers/Countries.php:68
+msgid "Åland Islands"
+msgstr "Åland Islands"

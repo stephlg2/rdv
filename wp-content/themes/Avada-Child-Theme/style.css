@@ -101,7 +101,7 @@ Text Domain: Avada
         left: 0;
         width: 225px;
         height: 100px;
-        background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2026/01/rdv-asie-blanc.png');
+        background-image: url('/wp-content/uploads/2026/01/rdv-asie-blanc.png');
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
@@ -111,7 +111,7 @@ Text Domain: Avada
 }
 
 .header_classique .separator-image-post {
-    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    background-image: url(/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
     height: 87px;
     position: absolute;
     bottom: 0px;
@@ -383,7 +383,7 @@ span.tripzzy-view-itinerary {
 .tripzzy-section-inner,
 .tripzzy-pricing-date-list {
     box-shadow: none !important;
-    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    background-image: url(/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
     background-position: bottom center;
     background-repeat: no-repeat;
     background-size: contain;
@@ -713,7 +713,7 @@ a.tripzzy-accordion-expand-close:hover {
 
 .separator-image-post {
     width: 100%;
-    background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png');
+    background-image: url('/wp-content/uploads/2025/07/sep-background-haut-beige2.png');
     position: absolute;
     height: 88px;
     bottom: 0;
@@ -733,7 +733,7 @@ a.tripzzy-accordion-expand-close:hover {
 }
 
 .photo-masque {
-    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    background-image: url(/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
     background-repeat: no-repeat;
     background-size: 100%;
     background-position: bottom left;
@@ -746,11 +746,11 @@ a.tripzzy-accordion-expand-close:hover {
 }
 
 .photo-masque-orange-haut {
-    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-orange.png) !important;
+    background-image: url(/wp-content/uploads/2025/07/sep-background-haut-orange.png) !important;
 }
 
 .photo-masque-orange-bas {
-    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-bas-orange.png) !important;
+    background-image: url(/wp-content/uploads/2025/07/sep-background-bas-orange.png) !important;
     bottom: -7vh !important;
 }
 
@@ -1814,7 +1814,7 @@ a.fusion-button:hover {
         left: 0;
         width: 50%;
         height: 55px;
-        background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
+        background-image: url('/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
         background-size: contain;
     }
 
@@ -1883,7 +1883,7 @@ a.fusion-button:hover {
         display: none !important;
         width: 100%;
         height: 55px;
-        background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
+        background-image: url('/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
         background-size: contain;
     }
 

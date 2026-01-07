@@ -365,8 +365,8 @@ $document_type = 'FACTURE'; // Toujours "FACTURE" car accessible uniquement pour
     <div class="invoice-container">
         <div class="invoice-header">
             <div class="company-info">
-                <img src="https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png" alt="Logo" class="company-logo">
-                <img src="https://preprod.rdvasie.com/wp-content/uploads/2025/11/voyage-rendez-vous-avec-l-asie-logo.png" alt="Logo" class="company-logo-print">
+                <img src="/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png" alt="Logo" class="company-logo">
+                <img src="/wp-content/uploads/2025/11/voyage-rendez-vous-avec-l-asie-logo.png" alt="Logo" class="company-logo-print">
                 <div>
                     <h1>Rendez-vous avec l'Asie</h1>
                     <p>Agence de voyages spécialiste de l'Asie</p>

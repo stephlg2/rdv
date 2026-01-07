@@ -1,0 +1,2223 @@
+﻿/*
+Theme Name: Avada Child
+Description: Child theme for Avada theme
+Author: ThemeFusion
+Author URI: https://theme-fusion.com
+Template: Avada
+Version: 1.0.0
+Text Domain:  Avada
+*/
+
+
+
+
+.header_classique .fusion-header-wrapper, .header_classique .fusion-top-header .fusion-header {
+    background: transparent !important;
+    height: 0;
+    position: absolute;
+    width: 100%;
+}
+.info-pratique{}
+.masque-image {
+    z-index: 1;
+    bottom: -2px;
+}
+.header_classique .col-logo {
+    position:absolute;
+    z-index:1000;
+}
+.header_classique .fusion-page-title-row h1{
+        padding-top: 29vh;
+}
+.header_classique .col-menu {
+
+    padding: 40px 0;
+}
+
+.header_classique .panel-body.toggle-content.post-content {
+    margin: 0;
+}
+.header_classique .fusion-header {
+    background-color: transparent !important;
+    border: none !important;
+}
+.fusion-header {
+    border-bottom: 1px solid #ddd ;
+}
+ .header_classique .degrades-image-post {
+    position: absolute;
+    background: #000;
+    background: -webkit-linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.32) 100%);
+    background: -moz-linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.32) 100%);
+    background: linear-gradient(180deg, rgb(0 0 0 / 71%) 0%, rgb(0 0 0 / 0%) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#000000", endColorstr="#000000", GradientType=0);
+    width: 100%;
+    height: 45vh;
+    top: 0;
+    display:block;
+}
+
+.page_classique .post-content {
+    max-width: 1140px;
+    margin: 30px auto;
+}
+.toutes-destinations-menu{
+    background-color: #2a2a2a;
+    color: #fff;
+    padding: 5px 10px;
+    width: auto;
+}
+.toutes-destinations-menu:hover{
+    background-color: #de5b09;
+    color: #fff !important;
+}
+
+
+.page_classique h3 {
+    text-transform: none !important;
+    margin-top: 30px !important;
+}
+
+.encadre {
+    background: #f6efe6;
+    padding: 15px;
+}
+.encadre p{
+    padding:0;
+    margin: 0;
+}
+.page_classique .fusion-breadcrumbs {
+    position: absolute;
+    left: 0;
+    bottom: -50px;
+    width: 100%;
+}
+.degrades-image-post {
+    display: none;
+}
+
+.separator-image-post {
+    width: 100%;
+    background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png');
+    position: absolute;
+    height: 88px;
+    bottom:0;
+    left: 0;
+}
+.masque_bas {
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    margin: 0;
+    height: auto;
+    z-index: 10;
+    padding: 0;
+    background-position: bottom;
+    background-size: cover !important;
+}
+ .header_classique .fusion-logo {
+  display: block !important;
+  width: 225px; /* ajuste selon besoin */
+  height: 100px;
+  content: none !important; /* annule le content si présent */
+  visibility: hidden; /* masque l'image d'origine */
+  position: relative;
+  max-height:100px !important;
+}
+
+ .header_classique .fusion-logo ::after {
+  content: '';
+  visibility: visible;
+  position: absolute;
+  top: 0; left: 0;
+  width: 225px; /* même largeur que ci-dessus */
+  height: 100px;
+  background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.fusion-logo {
+  width: 225px; /* ajuste selon besoin */
+  height: 100px;
+  max-height:100px !important;
+}
+
+.fusion-logo img {
+    width: 100%;
+}
+ .header_classique .fusion-top-header  {
+    background-color: transparent;
+}
+
+ .header_classique .fusion-secondary-header {
+    background: transparent;
+}
+
+  .header_classique #mega-menu-wrap-main_navigation #mega-menu-main_navigation > li.mega-menu-item > a.mega-menu-link {
+    color: #fff !important;
+}
+
+h4{
+    font-weight:500 !important;
+}
+.tripzzy-trips-page .tripzzy-section h2{
+    font-size: 2.2vw;
+    margin: 0;
+}
+.photo-masque {
+    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: bottom left;
+    position: absolute !important;
+    width: 100% !important;
+    height: 90px;
+    bottom: -19px !important;
+    margin: 0;
+    z-index: 1 !important;
+}
+.photo-masque-orange-haut{
+        background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-orange.png) !important;
+
+}
+.photo-masque-orange-bas {
+    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-bas-orange.png) !important;
+    bottom: -7vh !important;
+}
+.tz-toolbar {
+    box-shadow: none;
+    border-top: 1px solid #ddd;
+}
+h1.fusion-title-heading.title-heading-center {
+    padding-top: 10vh !important;
+}
+
+.header_classique .fusion-page-title-row h1 {
+    padding-top: 10vh;
+}
+.tripzzy-trip-listings article h3 {
+    text-transform: none;
+    font-size: 18px;
+    font-weight: 500;
+}
+.tripzzy-after-title {
+    display: inline-flex;
+    flex-wrap: inherit;
+    align-items: center;
+    justify-content: space-between !important;
+    width: 100%;
+}
+.liste-voyages .tripzzy-meta-item {
+    padding: 0;
+}
+.liste-voyages .tripzzy-review-price-wrapper {
+    margin: 0;
+}
+.liste-voyages .tripzzy-price-from-label {
+    font-size: 11px;
+}
+.tripzzy-trip-listings article a.tz-btn.tz-btn-solid.tm-book-now-btn {
+    display: none;
+}
+
+.tripzzy-meta svg {
+    margin-right: 5px;
+}
+.sommaire .fusion-one-page-text-link {
+    background: #fff;
+    margin: 0 0 10px 0;
+    padding: 5px 0px 5px 12px;
+    border-radius: 20px;
+}
+
+.tripzzy-archive-title {
+    margin: 20px 0 30px 0 !important;
+}
+.demande-devis-top {
+    border: none !important;
+}
+.demande-devis-top a span {
+    background: #ffffff38;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.tripzzy-entry-header h2 {
+    margin: 0;
+}
+.tripzzy-entry-header{
+    width: 100%;
+    display: block;
+    text-align: center;
+        margin: 20px 0 0 0;
+}
+.tripzzy-review-wrapper {
+    display: none;
+}
+.tripzzy-meta-wrapper {
+    display: block;
+    margin:0;
+}
+.tripzzy-trip-type-list-container .tripzzy-view-itinerary>a {
+
+    text-decoration: underline;
+}
+.fusion-page-title-row .tripzzy-duration{
+    display:none !important;
+}
+.single-tripzzy .tripzzy-duration{
+    display:inline-block !important;
+}
+.tripzzy-trip-type-list-container .tripzzy-view-itinerary>a:hover {
+
+    text-decoration: none;
+}
+.sous-titre-post-trip{
+    display:block;
+    font-size: 25px;
+    font-weight: 100;
+    margin-bottom: 20px;
+}
+.fusion-page-title-captions .tripzzy-duration {
+    background: #f6efe6;
+    display: inline-block;
+    padding: 10px 20px 10px 40px;
+    border-radius: 20px;
+}
+.fusion-page-title-captions .tripzzy-booking-price-area {
+    background: #f6efe6;
+    display: inline-block;
+    padding: 10px 20px 10px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    margin-left: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+
+.fusion-page-title-captions .tripzzy-duration::before {
+    content: "";
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #1d2327;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg width=%2737%27 height=%2737%27 viewBox=%270 0 37 37%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M9.07199 9.07191C6.89075 11.2531 5.53331 14.1232 5.23095 17.1931C4.92859 20.263 5.70003 23.3427 7.41382 25.9076C9.12761 28.4725 11.6777 30.3638 14.6296 31.2592C17.5815 32.1547 20.7526 31.9989 23.6025 30.8184C26.4525 29.6379 28.8049 27.5058 30.259 24.7853C31.7132 22.0648 32.179 18.9243 31.5772 15.8988C30.9754 12.8733 29.3432 10.1501 26.9587 8.1932C24.5741 6.23626 21.5848 5.16667 18.5001 5.16667%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 18.5L9.25 9.25%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 4.625V7.70833%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M32.375 18.5L29.2917 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 29.2917V32.375%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M7.70825 18.5L4.62492 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3C/svg%3E%0A");
+    mask: url("data:image/svg+xml,%3Csvg width=%2737%27 height=%2737%27 viewBox=%270 0 37 37%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M9.07199 9.07191C6.89075 11.2531 5.53331 14.1232 5.23095 17.1931C4.92859 20.263 5.70003 23.3427 7.41382 25.9076C9.12761 28.4725 11.6777 30.3638 14.6296 31.2592C17.5815 32.1547 20.7526 31.9989 23.6025 30.8184C26.4525 29.6379 28.8049 27.5058 30.259 24.7853C31.7132 22.0648 32.179 18.9243 31.5772 15.8988C30.9754 12.8733 29.3432 10.1501 26.9587 8.1932C24.5741 6.23626 21.5848 5.16667 18.5001 5.16667%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 18.5L9.25 9.25%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 4.625V7.70833%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M32.375 18.5L29.2917 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 29.2917V32.375%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M7.70825 18.5L4.62492 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3C/svg%3E%0A");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100%;
+    mask-size: 100%;
+}
+a.tripzzy-accordion-expand-close {
+    text-decoration: underline;
+}
+a.tripzzy-accordion-expand-close:hover {
+    text-decoration: none;
+}
+.container-mega-menu {
+    display: inline-flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+.tripzzy-section-inner, .tripzzy-pricing-date-list {
+    box-shadow: none !important;
+}
+.tripzzy-trip-type-list-content ul.tripzzy-trip-type-list a {
+
+    background: #fff;
+    border-radius: 20px;padding: 5px 20px;
+}
+.tripzzy-section-inner, .tripzzy-pricing-date-list {
+    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    padding-bottom: 46px;
+}
+
+div#tripzzy-check-availability {
+    position: sticky;
+    top: 115px;
+    background: #fff;
+}
+.fusion-page-title-bar-center {
+    padding: 0 !important;
+}
+.fusion-page-title-bar {
+	background-size: cover;
+}
+
+.fusion-page-title-bar .fusion-page-title-row h1 {
+    z-index: 1;
+    position: relative;
+    text-shadow: 0px 1px 12px #0000006e;
+}
+.mega-menu-link:hover {
+    color: #de5b09 !important;
+}
+
+div#tripzzy-check-availability {
+    position: sticky;
+    top: 115px;
+}
+.tripzzy-thumbnail .tripzzy-wishlist {
+    display: none;
+}
+
+
+/* ==========================================================================
+   MENU / NAVIGATION
+   ========================================================================== */
+
+.toutes-destinations-menu {
+    transition: background-color 1s;
+    background-color: #2a2a2a;
+    color: #fff;
+    padding: 5px 10px;
+    width: auto;
+}
+
+.toutes-destinations-menu:hover {
+    background-color: #de5b09;
+    color: #fff !important;
+}
+
+.toutes-destinations-menu a {
+    background: #df5b08 !important;
+    color: #fff !important;
+    display: inline-block !important;
+    padding: 7px 13px !important;
+    border-radius: 5px !important;
+    border: 2px solid #df5b08 !important;
+}
+
+.toutes-destinations-menu a:hover {
+    background: #fff !important;
+    color: #df5b08 !important;
+}
+
+.container-mega-menu {
+    display: inline-flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mega-menu-link:hover {
+    color: #de5b09 !important;
+}
+
+.menu-sticky .fusion-row {
+    max-width: 900px !important;
+    background-color: #fff;
+    position: relative;
+    top: -80px;
+    border-radius: 20px;
+    box-shadow: -1px 1px 10px 1px #0000001c;
+}
+
+
+
+.tripzzy-trip-search .container {
+    overflow: visible;
+    width: 100%;
+    margin: 0 auto;
+}
+input.tripzzy-input {
+    border-radius: 0 !important;
+    padding-left: 35px !important;
+}
+input.tz-btn.tz-btn-solid {
+    border-radius: 0 !important;
+}
+.tripzzy-trip-search form .tripzzy-advanced-search-form .tripzzy-form-field.has-before-field .tripzzy-before-field i {
+    position: unset;
+    color: #de5b09;
+}
+
+.home .home-index {
+    height: 100vh !important;
+}
+div.tripzzy-form-field[title="Durée"] {
+  display: none !important;
+}
+div.tripzzy-form-field[title="Activités voyage"] {
+  display: none !important;
+}
+.recherche_home {
+    max-width: 800px;
+    margin: 0 auto !important;
+}
+.home-index{
+    height: 100vh !important;
+}
+
+.orange {
+    color: #de5b09;
+}
+.bloc_newsletter input[type="email"] {
+    border-radius: 0;
+}
+.champ-newsletter {
+    position: relative;
+}
+.champ-newsletter button {
+    position: absolute;
+    right: 0;
+    height: 50px;
+    width: 50px;
+    border: 1px solid #de5b09;
+    background: #de5b09;
+    color: #fff;
+    font-size: 22px;
+}
+.champ-newsletter {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.a-la-une .tm-book-now-btn {
+    display: none;
+}
+.a-la-une .tripzzy-review-price-wrapper {
+    display: none;
+}
+.a-la-une .tz-cols-7-md {
+    position: absolute;
+    z-index: 2;
+    background: #0000008c;
+    width: 100%;
+    bottom: 0;
+    padding: 20px 0 0 0;
+}
+.a-la-une .tripzzy-trip {
+    position: relative;
+}
+.a-la-une h3.tripzzy-trip-title {
+    color: #fff;
+    margin: 0 !important;
+    font-size: 18px;
+    padding: 0;
+}
+.a-la-une .tripzzy-wishlist {
+display:none;
+}
+.a-la-une .tripzzy-ribbon-group {
+display:none;
+}
+.a-la-une .tripzzy-trip-button-wrapper {
+display:none;
+}
+.a-la-une .tripzzy-meta {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #fff;
+}
+.a-la-une .tripzzy-meta-item {
+    color: #fff;
+}
+.a-la-une .tripzzy-trips.grid-view .tripzzy-content-wrapper {
+    padding: 0 15px !important;
+}
+.a-la-une .tripzzy-thumbnail-wrapper {
+    padding: 0 !important;
+}
+.a-la-une .tripzzy-meta-container {
+    margin: 0;
+    height: 10px;
+}
+.a-la-une .tripzzy-trip-title a {
+    white-space: inherit !important;
+    overflow: inherit !important;
+    text-overflow: inherit !important;
+    display: block  !important;
+    max-width: 100%;
+    font-size: 14px;
+    text-transform: math-auto;
+    margin-bottom: 10px;
+}
+.a-la-une .tripzzy-before-content {
+    display: none;
+}
+.a-la-une .tripzzy-meta.destination {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+}
+.et-aussi {
+    width: 31%;
+    position: absolute;
+    right: 22px;
+    height: 35%;
+    display: inline-grid;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+.et-aussi p a{
+    text-decoration:underline;
+}
+.bouton-toute-destination{
+    text-decoration:none;
+}
+.bouton-toute-destination a{
+    text-decoration:none;
+}
+
+.bloc-formule h3{
+    font-weight:600;
+}
+.bloc-formule p{
+    font-size: 14px;
+}
+.decouvrir-formule {
+    font-size: 14px;
+    display: block;
+    margin: 0;
+    text-align: right;
+    padding: 0;
+}
+.decouvrir-formule a{
+    color:#de5b08;
+    text-decoration:underline;
+}
+.decouvrir-formule a:hover{
+    text-decoration:none;
+}
+.accordion-content.itinerary-content img {
+    margin: 0 auto;
+    display: block;
+}
+.accordion-content.itinerary-content figure {
+    margin: 0;
+    display: block !important;
+    width: 100%;
+}
+
+
+/* RECUP EDITEUR AVADA*/
+
+.header_classique .fusion-header-wrapper, .header_classique .fusion-top-header .fusion-header {
+    background: transparent !important;
+    height: 0;
+    position: absolute;
+    width: 100%;
+}
+.fusion-page-title-bar-left .fusion-page-title-secondary {
+    margin-left: 10px;
+    text-align: left;
+    margin-top: 4px;
+}
+.fusion-page-title-wrapper {
+    display: block;
+    align-items: center;
+    text-align: left;
+}
+.fusion-page-title-bar {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+.rmwp-button-wrap {
+    display: block;
+    text-align: center;
+}
+.post-content p a{
+    color:#de5b09;
+}
+#tripzzy-trip-listings .tm-book-now-btn {
+    display: none;
+}
+.rmwp-button-wrap button {
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-radius: 0;
+    text-align: center;
+    font-size: 15px;
+    color: #de5b09 !important;
+    border-color: #de5b09 !important;
+    background: transparent !important;
+}
+.tz-toolbar .tz-view-mode {
+    display: none;
+}
+#map-header {
+    display: none !important;
+}
+.tripzzy__qty-counter-input {
+
+    align-items: center;
+}
+span.tripzzy-required {
+    position: absolute;
+    right: 34px;
+    color: orange;
+}
+
+h3.tripzzy-trip-title {
+    font-size: 16px;
+}
+.tz-filter-widget-area form {
+    position: relative;
+}
+.tripzzy-archive-title {
+    margin: 0;
+}
+.header_classique .col-logo {
+    position:absolute;
+    z-index:1000;
+}
+.tz-filter-toggle{
+    display:none;
+}
+.header_classique .col-menu {
+    padding: 40px 0;
+}
+.header_classique .fusion-header {
+    background-color: transparent;
+    border: none !important;
+}
+.fusion-header {
+    border-bottom: 1px solid #ddd ;
+}
+ .header_classique .degrades-image-post {
+    position: absolute;
+    background: #000;
+    background: -webkit-linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.32) 100%);
+    background: -moz-linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.32) 100%);
+    background: linear-gradient(180deg, rgb(0 0 0 / 71%) 0%, rgb(0 0 0 / 0%) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#000000", endColorstr="#000000", GradientType=0);
+    width: 100%;
+    height: 45vh;
+    top: 0;
+    display:block;
+    z-index:0;
+}
+.degrades-image-post {
+    display: none;
+}
+/*
+.separator-image-post {
+    width: 100%;
+    background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png');
+    position: absolute;
+    height: 88px;
+    bottom:0;
+    left: 0;
+}*/
+.masque_bas {
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    margin: 0;
+    height: auto;
+    z-index: 10;
+    padding: 0;
+    background-position: bottom;
+    background-size: cover !important;
+}
+ .header_classique .fusion-logo {
+  display: block !important;
+  width: 225px; /* ajuste selon besoin */
+  height: 100px;
+  content: none !important; /* annule le content si présent */
+  visibility: hidden; /* masque l'image d'origine */
+  position: relative;
+  max-height:100px !important;
+}
+
+ .header_classique .fusion-logo ::after {
+  content: '';
+  visibility: visible;
+  position: absolute;
+  top: 0; left: 0;
+  width: 225px; /* même largeur que ci-dessus */
+  height: 100px;
+  background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.tripzzy-banner-section .tripzzy-wishlist {
+    display: none;
+}
+.tripzzy-banner-section .tripzzy-gallery-buttons {
+    z-index: 0;
+}
+.tripzzy-departure-months {
+    height: auto;
+}
+div#tripzzy-check-availability {
+    top: inherit;
+    z-index: 10;
+}
+
+.fusion-logo {
+  width: 225px; /* ajuste selon besoin */
+  height: 100px;
+  max-height:100px !important;
+}
+.tripzzy-includes-excludes ul li ul {
+    padding-left: 0;
+}
+.fusion-logo img {
+    width: 100% !important;
+}
+
+.tripzzy-itineraries-wrapper ul.tripzzy-itineraries {
+    margin-left: 1em;
+    padding-left: 30px;
+}
+
+ .header_classique .fusion-top-header  {
+    background-color: transparent;
+}
+
+ .header_classique .fusion-secondary-header {
+    background: transparent;
+}
+
+  .header_classique #mega-menu-wrap-main_navigation #mega-menu-main_navigation > li.mega-menu-item > a.mega-menu-link {
+    color: #fff !important;
+}
+
+
+
+
+
+
+
+
+
+div#tz-filter-widget-area {
+    position: sticky;
+    top: 5vh;
+}
+
+
+
+.tripzzy-entry-header h2 {
+    margin: 0;
+}
+.tripzzy-entry-header{
+    width: 100%;
+    display: block;
+    text-align: center;
+        margin: 20px 0 0 0;
+}
+
+.tripzzy-trip-infos ul li span.info-title[title="Hébergement"] {
+    display:block;
+
+}
+.tripzzy-review-wrapper {
+    display: none;
+}
+.tripzzy-meta-wrapper {
+    display: block;
+    margin:0;
+}
+.tripzzy-trip-type-list-container .tripzzy-view-itinerary>a {
+
+    text-decoration: underline;
+}
+.fusion-page-title-row .tripzzy-duration{
+    display:none !important;
+}
+.single-tripzzy .tripzzy-duration{
+    display:inline-block !important;
+}
+.tripzzy-trip-type-list-container .tripzzy-view-itinerary>a:hover {
+
+    text-decoration: none;
+}
+.sous-titre-post-trip{
+    display:block;
+    font-size: 25px;
+    font-weight: 100;
+    margin-bottom: 20px;
+}
+.fusion-page-title-captions .tripzzy-duration {
+    background: #f6efe6;
+    display: inline-block;
+    padding: 10px 20px 10px 40px;
+    border-radius: 20px;
+}
+.fusion-page-title-captions .tripzzy-booking-price-area {
+    background: #f6efe6;
+    display: inline-block;
+    padding: 10px 20px 10px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    margin-left: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+
+.fusion-page-title-captions .tripzzy-duration::before {
+    content: "";
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #1d2327;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg width=%2737%27 height=%2737%27 viewBox=%270 0 37 37%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M9.07199 9.07191C6.89075 11.2531 5.53331 14.1232 5.23095 17.1931C4.92859 20.263 5.70003 23.3427 7.41382 25.9076C9.12761 28.4725 11.6777 30.3638 14.6296 31.2592C17.5815 32.1547 20.7526 31.9989 23.6025 30.8184C26.4525 29.6379 28.8049 27.5058 30.259 24.7853C31.7132 22.0648 32.179 18.9243 31.5772 15.8988C30.9754 12.8733 29.3432 10.1501 26.9587 8.1932C24.5741 6.23626 21.5848 5.16667 18.5001 5.16667%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 18.5L9.25 9.25%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 4.625V7.70833%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M32.375 18.5L29.2917 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 29.2917V32.375%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M7.70825 18.5L4.62492 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3C/svg%3E%0A");
+    mask: url("data:image/svg+xml,%3Csvg width=%2737%27 height=%2737%27 viewBox=%270 0 37 37%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M9.07199 9.07191C6.89075 11.2531 5.53331 14.1232 5.23095 17.1931C4.92859 20.263 5.70003 23.3427 7.41382 25.9076C9.12761 28.4725 11.6777 30.3638 14.6296 31.2592C17.5815 32.1547 20.7526 31.9989 23.6025 30.8184C26.4525 29.6379 28.8049 27.5058 30.259 24.7853C31.7132 22.0648 32.179 18.9243 31.5772 15.8988C30.9754 12.8733 29.3432 10.1501 26.9587 8.1932C24.5741 6.23626 21.5848 5.16667 18.5001 5.16667%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 18.5L9.25 9.25%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 4.625V7.70833%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M32.375 18.5L29.2917 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M18.5 29.2917V32.375%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M7.70825 18.5L4.62492 18.5%27 stroke=%27%233EB368%27 stroke-width=%272%27 stroke-linecap=%27round%27/%3E%3C/svg%3E%0A");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100%;
+    mask-size: 100%;
+}
+a.tripzzy-accordion-expand-close {
+    text-decoration: underline;
+}
+a.tripzzy-accordion-expand-close:hover {
+    text-decoration: none;
+}
+.menu-sticky .fusion-row{
+    max-width: 900px !important;
+    background-color: #fff;
+    position: relative;
+    top: -80px;
+    border-radius: 20px;
+    box-shadow: -1px 1px 10px 1px #0000001c;
+}
+.container-mega-menu {
+    display: inline-flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+.tripzzy-section-inner, .tripzzy-pricing-date-list {
+    box-shadow: none !important;
+}
+.tripzzy-trip-type-list-content ul.tripzzy-trip-type-list a {
+
+    background: #fff;
+    border-radius: 20px;padding: 5px 20px;
+}
+.tripzzy-section-inner, .tripzzy-pricing-date-list {
+    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    padding-bottom: 46px;
+}
+
+.header_classique .separator-image-post {
+    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    height: 87px;
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    z-index: 10;
+}
+
+div#tripzzy-check-availability {
+    position: sticky;
+    top: 115px;
+    background: #fff;
+}
+.fusion-page-title-bar-center {
+    padding: 0 !important;
+}
+.fusion-page-title-bar {
+	background-size: cover;
+}
+
+.fusion-page-title-bar .fusion-page-title-row h1 {
+    z-index: 1;
+    position: relative;
+}
+.mega-menu-link:hover {
+    color: #de5b09 !important;
+}
+
+div#tripzzy-check-availability {
+    position: sticky;
+    top: 115px;
+}
+
+.sommaire .fusion-one-page-text-link:hover {
+    background: #cecac1;
+    color: #fff;
+}
+
+.awb-icon-plus {
+    border-radius: 50px;
+    padding: 8px !important;
+}
+.awb-icon-minus{
+    border-radius: 50px;
+    padding: 8px !important;
+}
+
+.tripzzy-trip-search .container {
+    overflow: visible;
+    width: 100%;
+    margin: 0 auto;
+}
+input.tripzzy-input {
+    border-radius: 0 !important;
+    padding-left: 35px !important;
+}
+input.tz-btn.tz-btn-solid {
+    border-radius: 0 !important;
+}
+.tripzzy-trip-search form .tripzzy-advanced-search-form .tripzzy-form-field.has-before-field .tripzzy-before-field i {
+    position: unset;
+    color: #de5b09;
+}
+
+
+div.tripzzy-form-field[title="Durée"] {
+  display: none !important;
+}
+div.tripzzy-form-field[title="Activités voyage"] {
+  display: none !important;
+}
+.recherche_home {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.orange {
+    color: #de5b09;
+}
+.bloc_newsletter input[type="email"] {
+    border-radius: 0;
+}
+.champ-newsletter {
+    position: relative;
+}
+.champ-newsletter button {
+    position: absolute;
+    right: 0;
+    height: 50px;
+    width: 50px;
+    border: 1px solid #de5b09;
+    background: #de5b09;
+    color: #fff;
+    font-size: 22px;
+}
+.champ-newsletter {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.a-la-une .tm-book-now-btn {
+    display: none;
+}
+.a-la-une .tripzzy-review-price-wrapper {
+    display: none;
+}
+.a-la-une .tz-cols-7-md {
+    position: absolute;
+    z-index: 2;
+    background: #0000008c;
+    width: 100%;
+    bottom: 0;
+    padding: 20px 0 0 0;
+}
+.tripzzy-acf-hebergement {
+    border-top: 1px solid #ddd;
+    margin-top: 20px;
+}
+.tripzzy-acf-hebergement h4 {
+    margin: 20px 0 0 0;
+    color: #de5b09;
+}
+.tripzzy-acf-hebergement a {
+    color: #de5b09;
+    text-decoration:underline;
+}
+.tripzzy-acf-hebergement a:hover {
+    text-decoration:none;
+}
+.a-la-une .tripzzy-trip {
+    position: relative;
+}
+.a-la-une h3.tripzzy-trip-title {
+    color: #fff;
+    margin: 0 !important;
+    font-size: 18px;
+    padding: 0;
+}
+.footer-custom, .footer-custom p, .footer-custom a, .footer-custom .fa{
+    color: #fff;
+}
+.footer-custom a, .footer-custom p {
+    font-size: 13px;
+}
+.footer-custom hr {
+    border: none;
+    height: 1px;
+    background: #ffffff69;
+}
+.footer-custom a:hover {
+    color: #fff !important;
+    text-decoration: underline;
+}
+.footer-custom .titres p {
+    font-weight: 600 !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    text-transform: uppercase;
+    margin: 0;
+}
+.a-la-une .tripzzy-wishlist {
+display:none;
+}
+.a-la-une .tripzzy-ribbon-group {
+display:none;
+}
+.a-la-une .tripzzy-trip-button-wrapper {
+display:none;
+}
+.a-la-une .tripzzy-meta {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #fff;
+}
+a.fusion-button:hover {
+    text-decoration: none !important;
+}
+.tz-filter-header {
+    margin: 0 0 15px;
+}
+.encadre{
+    border-radius: 10px;
+}
+.encadre-dark{
+    background-color: #cecac1;
+}
+.a-la-une .tripzzy-meta-item {
+    color: #fff;
+}
+.a-la-une .tripzzy-trips.grid-view .tripzzy-content-wrapper {
+    padding: 0 15px !important;
+}
+.a-la-une .tripzzy-thumbnail-wrapper {
+    padding: 0 !important;
+}
+.tripzzy-trip-infos ul li:first-child {
+    display: block;
+    margin-bottom: 20px;
+}
+.a-la-une .tripzzy-trip-title a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block; /* ou block selon le contexte */
+  max-width: 100%; /* ou une largeur fixe si nécessaire */
+}
+
+.et-aussi {
+    width: 31%;
+    position: absolute;
+    right: 22px;
+    height: 35%;
+    display: inline-grid;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+.et-aussi p a{
+    text-decoration:underline;
+}
+.bouton-toute-destination{
+    text-decoration:none;
+}
+.bouton-toute-destination a{
+    text-decoration:none;
+}
+
+.bloc-formule h3{
+    font-weight:600;
+}
+.bloc-formule p{
+    font-size: 14px;
+}
+.decouvrir-formule {
+    font-size: 14px;
+    display: block;
+    margin: 0;
+    text-align: right;
+    padding: 0;
+}
+.decouvrir-formule a{
+    color:#de5b08;
+    text-decoration:underline;
+}
+.decouvrir-formule a:hover{
+    text-decoration:none;
+}
+
+.fusion-page-title-bar p {
+    color: #fff;
+    position: relative;
+    z-index: 1;
+}
+.hundred-percent-height {
+    height: calc(-32px + 65vh) !important;
+}
+p .small {
+    font-size: 12px;
+}
+.coordonnees .fa-solid {
+    color: #de5b09;
+    margin-right: 7px;
+}
+.coordonnees a {
+    color: #de5b09;
+text-decoration:underline;
+}
+.coordonnees a:hover {
+text-decoration:none;
+}
+a.tz-btn.tz-btn-sm, button.tz-btn.tz-btn-sm, .tz-btn.tz-btn-sm {
+    display: none;
+}
+
+.lieux {
+    border-left: 1px solid #ddd;
+    padding-left: 10px;
+    height: 100%;
+    display: block;
+    position: relative;
+}
+
+.lieux ul {
+    margin: 0;
+    padding-left: 20px;
+}
+.lieux li a {
+    margin-left: 5px;
+}
+.lieux ::marker {
+  content: "➔"; 
+  margin-right: 5px;
+}
+.info-pratique {
+    position: absolute !important;
+    top: 0;
+    right: 85px !important;
+    color: #fff !important;
+}
+.compose-voyage {
+    line-height: 27px;
+}
+.info-pratique ul{
+    width: 100% !important;
+    padding: 0 !important;
+}
+.info-pratique ul a{
+   color: #000 !important;
+
+}
+.info-pratique ul a:hover{
+   color: #de5b09 !important;
+
+}
+
+.info-pratique a{
+    color: #fff !important;
+    text-transform: none !important;
+    font-size: 12px !important;
+}
+.info-pratique a:hover{
+    color: #fff !important;
+}
+.home h1.fusion-title-heading.title-heading-center br{
+    display: none;
+}
+@media screen and (max-width: 992px) {
+
+    .home .home-index {
+    height: 75vh !important;
+}
+
+.info-pratique{
+    display: none;
+}
+#mega-menu-wrap-max_mega_menu_1 {
+   display: none;
+}
+.tripzzy_search-result-page .fusion-header-wrapper{
+    position: relative !important;
+}
+.fusion-secondary-header {
+    background: none !important;
+}
+.tripzzy_search-result-page .col-menu {
+    top: -20px;
+}
+.tripzzy_search-result-page .tz-toolbar {
+    padding: 10px 0px;
+}
+
+.tripzzy_search-result-page .tz-filter-toggle {
+    display: contents;
+    position: relative;
+    top: 0vh;
+}
+    .fusion-secondary-header a {
+    color: #000 !important;
+}
+ul#menu-menu-top a {
+    color: #fff !important;
+}
+.fusion-secondary-menu>ul>li{
+    border-color: #fff !important;
+}
+.home h1.fusion-title-heading.title-heading-center {
+    padding-top: 5vh !important;
+    margin-bottom: 5vh !important;
+    line-height: 5vh !important;
+}
+.home h1.fusion-title-heading.title-heading-center br{
+    display: block;
+}
+.photo-masque-orange-bas {
+    bottom: -15px !important;
+}
+.fusion-social-links-header {
+    background: #cecac1;
+    margin: 0 !important;
+    padding: 10px 0;
+}
+h1 {
+    font-size: 8vw !important;
+    margin: 0 0 10px 0 !important;
+    line-height: 7vw !important;
+}
+h1.fusion-title-heading.title-heading-center {
+    padding-top: 22vh !important;
+}
+.header_classique .fusion-header {
+    background-color: #fff !important;
+
+}
+.header_classique .degrades-image-post {
+    top: 154px !important;
+    left: 0;
+}
+    .header_classique .fusion-page-title-row h1 {
+    padding-top: 8vh;
+}
+.menu-sticky .fusion-flex-column {
+    width: 20% !important;
+
+}
+.tripzzy-archive-title {
+
+    line-height: 35px !important;
+}
+.menu-sticky {
+    margin: 0;
+    padding: 0 10px;
+}
+.menu-sticky .fb-icon-element.fontawesome-icon {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 13px;
+    line-height: 30px !important;
+}
+.menu-sticky p {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 11px !important;
+    line-height: 14px;
+}
+
+    #main {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.tripzzy-content h2 {
+    font-size: 7vw !important;
+    margin: 0;
+    height: auto;
+    padding: 0;
+}
+.page_classique .post-content {
+            padding: 0 30px;
+}
+.page_classique section.avada-page-titlebar-wrapper {
+    padding-top: 160px;
+}
+.page_classique h2 {
+    margin: 22px 0;
+    font-size: 7vw !important;
+}
+
+.et-aussi {
+    width: auto;
+    position: relative;
+    right: 0;
+    height: auto;
+    display: block;
+    bottom: inherit;
+    align-items: center;
+    margin-top: 19px;
+    margin-bottom: 10px;
+    justify-content: center;
+}
+
+/*RECUP EDITEUR AVADA*/
+
+.tripzzy-trips-page .tripzzy-section h2 {
+    font-size: 5vw;
+    margin: 0;
+}
+
+   .header_classique .fusion-logo ::after {
+
+    background: none !important;
+
+}
+.et-aussi {
+    width: auto;
+    position: relative;
+    right: 0;
+    height: auto;
+    display: block;
+    bottom: inherit;
+    align-items: center;
+    margin-top: 19px;
+    margin-bottom: 10px;
+    justify-content: center;
+}
+#mega-menu-wrap-main_navigation .mega-menu-toggle ~ button.mega-close:before { 
+width: 50px; height: 50px; font-size: 32px; font-weight: 100;}
+.header_classique .fusion-logo {
+    visibility: visible !important;
+}
+.header_classique .col-logo {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    height: 70px !important;
+    top: inherit !important;
+    left: inherit !important;
+    background:#fff !important;
+}
+.fusion-logo img {
+    max-height: 109px !important;
+    width: 125px !important;
+    top: 13px;
+    position: relative;
+    right: 15px;
+    float: right;
+}
+.fusion-contact-info {
+    background: #f6efe6;
+    color: #000;
+}
+.fusion-contact-info a{
+    color: #000;
+}
+.fusion-secondary-menu ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: #de5b09;
+}
+    .header_classique .col-logo {
+    position: absolute;
+    z-index: 0;
+    width: 100%;
+    height: 55px;
+    top: 0;
+    left: 0;
+
+}
+.fusion-body .fusion-page-title-bar h1 {
+    padding-top: 0vh !important;
+    font-size: 7vw;
+}
+.dispo-btn{
+    display: none !important;
+}
+.tripzzy-drawer__wrapper{
+    width: 85%;
+}
+.tz-filter-header button.tz-btn.tz-btn-reset {
+    background: none;
+    padding: 0;
+    text-indent: -1000px;
+    color: #666;
+    font-size: 20px;
+    font-weight: 100;
+}
+.tz-filter-toggle {
+    display: block;
+    float: right;
+    background: none;
+    border: none;
+    font-size: 16px;
+    position: relative;
+    top: 1vh;
+    z-index: 0;
+}
+.tripzzy-trip-content p {
+    margin: 0;
+}
+.tz-filter-widget-area.collapsed { display: none; }
+.tz-filter-widget-area.collapsed {
+    display: none;
+}
+
+/* ===== Filtres Tripzzy : Drawer sur mobile UNIQUEMENT ===== */
+@media (max-width: 768px) {
+    /* Masquer la colonne de filtres fixe sur mobile */
+    .tripzzy-section .tz-col.tz-cols-3-lg {
+        display: none !important;
+    }
+    
+    /* Les résultats prennent toute la largeur sur mobile */
+    .tripzzy-section .tz-col.tz-cols-9-lg {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Drawer des filtres sur mobile - même système que tripzzy-drawer */
+    #tz-filter-widget-area {
+        position: fixed !important;
+        top: 0 !important;
+        right: -100% !important;
+        width: 85% !important;
+        max-width: 400px !important;
+        height: 100vh !important;
+        background: #fff !important;
+        z-index: 99999 !important;
+        overflow-y: auto !important;
+        transition: right 0.3s ease-in-out !important;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.3) !important;
+        padding: 20px !important;
+    }
+    
+    #tz-filter-widget-area:not(.collapsed) {
+        right: 0 !important;
+    }
+    
+    /* Overlay sombre derrière la sidebar */
+    #tz-filter-overlay {
+        display: none !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.5) !important;
+        z-index: 99998 !important;
+    }
+    
+    #tz-filter-overlay.active {
+        display: block !important;
+    }
+}
+
+.tripzzy-itineraries-wrapper ul.tripzzy-itineraries>li .accordion-title {
+    font-size: 3.5vw;
+    padding: 3vw 0;
+}
+
+.fusion-mobile-menu-design-modern.fusion-header-v3 .fusion-header {
+    padding: 0;
+    height: 77px;
+    background: #fff;
+}
+.mega-sub-menu .widget_media_image{
+    display: none !important;
+}
+#mega-menu-wrap-main_navigation #mega-menu-main_navigation li.mega-menu-item-has-children > a.mega-menu-link > span.mega-indicator:after {
+    font-size: 17px;
+}
+.header_classique .fusion-logo {
+    width: 100%;
+    height: 50px;
+    content: none !important;
+    visibility: hidden;
+    position: relative;
+    max-height: inherit !important;
+}
+.header_classique .col-menu {
+    width: 51px;
+    padding: 0;
+    position: absolute;
+    top: -21px;
+    display: block;
+    left: 10px;
+}
+.header_classique .fusion-logo ::after {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 55px;
+    background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
+    background-size: contain;
+}
+
+.ancres-mobiles .fusion-text {
+    background: #fff;
+    padding: 10px;
+    border-radius: 20px;
+}
+.ancres-mobiles .fusion-text p {
+    margin: 0;
+}
+.ancres-mobiles .fusion-text .fas {
+    background: #f6efe6;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    line-height: 24px;
+    border-radius: 50%;
+}
+.fusion-logo {
+    width: 100%;
+    height: 50px;
+    content: none !important;
+    visibility: hidden;
+    position: relative;
+    max-height: inherit !important;
+}
+.col-logo {
+    position: absolute;
+    z-index: 0;
+    width: 100%;
+    height: 70px;
+    top: inherit;
+    left: 0;
+}
+.fusion-logo {
+    visibility: visible;
+}
+.tripzzy_trips-page .col-menu {
+    top: -20px;
+}
+.col-menu {
+width: 51px;
+        padding: 0;
+        position: absolute;
+        top: 0px;
+        display: block;
+        left: 10px;
+}
+.fusion-logo ::after {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 55px;
+    background-image: url('https://preprod.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png');
+    background-size: contain;
+}
+.image-banner {
+    height: 92vh !important;
+    padding-top: 10vh;
+}
+.fusion-mobile-menu-design-flyout .fusion-alignleft, .fusion-mobile-menu-design-modern .fusion-alignleft {
+    border-bottom: none;
+}
+
+    h2.fusion-title-heading {
+    font-size: 8vw !important;
+}
+.swiper {
+    z-index: 0;
+}
+    #main {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.tripzzy-entry-header h2 {
+    margin: 0;
+    font-size: 5vw;
+}
+.post-content {
+    padding-top: 145px;
+}
+.tz-toolbar-left {
+    position: relative;
+}
+h2#tripzzy-filter-found-posts {
+    position: absolute;
+    top: -7px;
+    width: 156px;
+    font-size: 14px;
+}
+  .header_classique #mega-menu-wrap-main_navigation #mega-menu-main_navigation > li.mega-menu-item > a.mega-menu-link {
+    color: #000 !important;
+}
+.header_classique .fusion-page-title-bar {
+    height:100vh !important;
+}
+.header_classique .fusion-page-title-row {
+    height: 100vh;
+}
+.header_classique .fusion-page-title-wrapper {
+    flex-wrap: wrap;
+    padding: 15vh 15px 0 15px;
+}
+h3.tripzzy-section-title {
+    font-size: 6vw;
+}
+.fusion-page-title-captions .tripzzy-duration {
+    margin-bottom: 15px;
+}
+.tripzzy-entry-content .tripzzy-booking-actions {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    z-index: 10000000;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0px -1px 10px 2px #00000024;
+}
+.tripzzy-sticky-tab {
+    display: block;
+    width: 100%;
+    overflow-x: scroll;
+    overflow: scroll;
+    white-space: nowrap;
+}
+.tripzzy-sticky-tab .tripzzy-container {
+    margin-top: 12px;
+    margin-bottom: -8px;
+    width: max-content;
+}
+
+.sous-titre-post-trip {
+    display: block;
+    font-size: 4vw;
+    font-weight: 100;
+    margin-bottom: 20px;
+}
+
+#mega-menu-wrap-main_navigation .mega-menu-toggle .mega-toggle-block-0 .mega-toggle-animated-inner, #mega-menu-wrap-main_navigation .mega-menu-toggle .mega-toggle-block-0 .mega-toggle-animated-inner::before, #mega-menu-wrap-main_navigation .mega-menu-toggle .mega-toggle-block-0 .mega-toggle-animated-inner::after {
+
+    height: 2px;
+    background-color: #000;
+    border-radius: 0;
+}
+
+.tz-filter-header {
+    position: relative;
+    display: block;
+    gap: 0;
+}
+
+a.tz-btn.tz-btn-sm, button.tz-btn.tz-btn-sm, .tz-btn.tz-btn-sm {
+    padding: 0;
+    font-size: 20px;
+    gap: 0;
+    position: absolute;
+    right: -10px;
+    display: block;
+    text-align: right;
+    width: 30px;
+    height: 30px;
+    background: #de5b09;
+    text-align: center;
+    color: #fff;
+    line-height: 30px;
+    top: 0;
+}
+}
+
+
+
+
+
+.tripzzy-thumbnail .tripzzy-wishlist {
+    display: none;
+}
+
+/* ==========================================================================
+   TRIPZZY GENERAL
+   ========================================================================== */
+
+.tripzzy-drawer__title .date-devis {
+    display: block;
+    font-size: 14px;
+    font-weight: normal;
+    text-transform: capitalize;
+}
+
+.tripzzy-trips-page .tripzzy-section h2 {
+    font-size: 2.2vw;
+    margin: 0;
+}
+
+.tripzzy-trip-listings article h3 {
+    text-transform: none;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.tripzzy-trip-listings article a.tz-btn.tz-btn-solid.tm-book-now-btn {
+    display: none;
+}
+
+.tripzzy-meta .icon {
+    font-size: 1.5em;
+    margin-right: 2px;
+}
+
+.tripzzy-includes-excludes ul li ul {
+    display: block;
+    padding-left: 0;
+}
+
+.tripzzy-archive-title {
+    margin: 20px 0 30px 0 !important;
+}
+
+.tripzzy-entry-header h2 {
+    margin: 0;
+}
+
+.tripzzy-entry-header {
+    width: 100%;
+    display: block;
+    text-align: center;
+    margin: 20px 0 0 0;
+}
+
+.tripzzy-review-wrapper {
+    display: none;
+}
+
+.tripzzy-meta-wrapper {
+    display: block;
+    margin: 11px 0 0 0;
+}
+
+.tripzzy-trip-type-list-container {
+    display: block;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 30px;
+    gap: 0;
+}
+
+.tripzzy-trip-type-list-container .tripzzy-view-itinerary > a {
+    text-decoration: underline;
+}
+
+.tripzzy-trip-type-list-container .tripzzy-view-itinerary > a:hover {
+    text-decoration: none;
+}
+
+span.tripzzy-view-itinerary {
+    float: right;
+    position: relative;
+    top: 12px;
+    right: 10px;
+}
+
+.single-tripzzy .tripzzy-duration {
+    display: inline-block !important;
+}
+
+.tripzzy-section-inner,
+.tripzzy-pricing-date-list {
+    box-shadow: none !important;
+    background-image: url(https://preprod.rdvasie.com/wp-content/uploads/2025/07/sep-background-haut-beige2.png);
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    padding-bottom: 46px;
+}
+
+.tripzzy-trip-type-list-content ul.tripzzy-trip-type-list a {
+    background: #fff;
+    border-radius: 20px;
+    padding: 5px 20px;
+}
+
+.tripzzy-thumbnail .tripzzy-wishlist {
+    display: none;
+}
+
+.tripzzy-trip-code {
+    display: none;
+}
+
+.tripzzy-container {
+    margin-bottom: 50px;
+}
+
+.tripzzy-section {
+    position: relative;
+}
+
+.tripzzy-cross-selling-section {
+    margin: 50px 0;
+}
+
+.tripzzy-banner-section .tripzzy-wishlist {
+    display: none;
+}
+
+.tripzzy-banner-section .tripzzy-gallery-buttons {
+    z-index: 0;
+}
+
+.tripzzy-departure-months {
+    height: auto;
+}
+
+.tripzzy-itineraries-wrapper ul.tripzzy-itineraries {
+    margin-left: 1em;
+    padding-left: 30px;
+}
+
+h3.tripzzy-trip-title {
+    font-size: 16px;
+}
+
+.tripzzy-content-wrapper .tripzzy-trip-content p {
+    margin: 0;
+}
+
+.tripzzy-trip .tripzzy-meta-item {
+    padding-left: 0;
+}
+
+/* ==========================================================================
+   TRIPZZY CHECK AVAILABILITY
+   ========================================================================== */
+
+div#tripzzy-check-availability {
+    position: sticky;
+    top: inherit;
+    background: #fff;
+    z-index: 10;
+}
+
+/* ==========================================================================
+   TRIPZZY BOOKING
+   ========================================================================== */
+
+.tripzzy-booking-features {
+    padding: 16px 14px !important;
+    border: none;
+    background: #f6efe691;
+    border-radius: 7px;
+}
+
+.tripzzy-booking-features ul {
+    margin: 0 !important;
+}
+
+/* ==========================================================================
+   TRIPZZY ACF HEBERGEMENT
+   ========================================================================== */
+
+.tripzzy-acf-hebergement {
+    border-top: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+.tripzzy-acf-hebergement h4 {
+    margin: 20px 0 0 0;
+    color: #de5b09;
+}
+
+.tripzzy-acf-hebergement a {
+    color: #de5b09;
+    text-decoration: underline;
+}
+
+.tripzzy-acf-hebergement a:hover {
+    text-decoration: none;
+}
+
+.tripzzy-trip-infos ul li span.info-title[title="Hébergement"] {
+    display: block;
+}
+
+.tripzzy-trip-infos ul li:first-child {
+    display: block;
+    margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   TRIPZZY FILTERS / TOOLBAR
+   ========================================================================== */
+
+.tz-toolbar {
+    box-shadow: none;
+}
+
+.tz-toolbar .tz-view-mode {
+    display: none;
+}
+
+.tz-filter-widget-area input.tripzzy-input.sm {
+    padding-left: 15px !important;
+}
+
+.tz-filter-widget-area form {
+    position: relative;
+}
+
+.tz-filter-toggle {
+    display: none;
+}
+
+.tz-filter-header {
+    margin: 0 0 15px;
+}
+
+a#tz-filter-clear-all {
+    text-align: center;
+    margin-top: 16px;
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   TRIPZZY SEARCH
+   ========================================================================== */
+
+.tripzzy-trip-search .container {
+    overflow: visible;
+    width: 100%;
+    margin: 0 auto;
+}
+
+input.tripzzy-input {
+    border-radius: 0 !important;
+    padding-left: 35px !important;
+}
+
+input.tz-btn.tz-btn-solid {
+    border-radius: 0 !important;
+}
+
+.tripzzy-trip-search form .tripzzy-advanced-search-form .tripzzy-form-field.has-before-field .tripzzy-before-field i {
+    position: unset;
+    color: #de5b09;
+}
+
+div.tripzzy-form-field[title="Durée"] {
+    display: none !important;
+}
+
+div.tripzzy-form-field[title="Activités voyage"] {
+    display: none !important;
+}
+
+.recherche_home {
+    max-width: 800px;
+    margin: 0 auto !important;
+}
+
+#tripzzy-trip-listings .tm-book-now-btn {
+    display: none;
+}
+
+/* ==========================================================================
+   TRIPZZY QTY / COUNTER
+   ========================================================================== */
+
+.tripzzy__qty-counter-input {
+    align-items: center;
+}
+
+span.tripzzy-required {
+    position: absolute;
+    right: 34px;
+    color: orange;
+}
+
+/* ==========================================================================
+   TRIPZZY META
+   ========================================================================== */
+
+.tripzzy-meta-item .duration svg {
+    margin-right: 6px;
+    position: relative;
+    top: 0px;
+    width: 18px;
+    height: 17px;
+}
+
+/* ==========================================================================
+   TRIPZZY ACCORDIONS
+   ========================================================================== */
+
+a.tripzzy-accordion-expand-close {
+    text-decoration: underline;
+    float: right;
+    position: absolute;
+    right: 15px;
+    top: 0;
+}
+
+a.tripzzy-accordion-expand-close:hover {
+    text-decoration: none;
+}
+
+.accordion-content.itinerary-content img {
+    margin: 0 auto;
+    display: block;
+}
+
+.accordion-content.itinerary-content figure {
+    margin: 0;
+    display: block !important;
+    width: 100%;
+}
+
+
+
+/* ============================================
+   PAGE DEMANDE DE DEVIS - PLEINE LARGEUR
+   ============================================ */
+.page-devis .fusion-column-wrapper {
+    display: block !important;
+}
+
+/* ============================================
+   CONTENU ACF APRÈS LISTE DES DESTINATIONS
+   ============================================ */
+.contenu-apres-liste {
+    margin-top: 40px;
+    padding: 30px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    line-height: 1.8;
+}
+
+.contenu-apres-liste h2,
+.contenu-apres-liste h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.contenu-apres-liste p {
+    margin-bottom: 1em;
+}
+
+@media (max-width: 768px) {
+    .contenu-apres-liste {
+        margin-top: 30px;
+        padding: 20px;
+    }
+}
+
+/* ============================================
+   ALIGNEMENT PAYS ET PRIX SUR MOBILE
+   ============================================ */
+@media (max-width: 768px) {
+ .liste-voyages .tripzzy-after-title {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+    background: #efefef;
+    padding: 10px;
+    border-radius: 10px;
+}
+   .liste-voyages .tripzzy-meta-wrapper {
+    margin: 0;
+}
+    .liste-voyages .tripzzy-meta-container {
+        flex: 0 1 auto;
+    }
+    
+    .liste-voyages .tripzzy-review-price-wrapper {
+        flex: 0 1 auto;
+        margin-left: auto;
+    }
+}
+
+/* ============================================
+   DRAWER MOBILE POUR FILTRES - SYSTÈME TRIPZZY
+   ============================================ */
+@media (max-width: 768px) {
+    /* Overlay pour le drawer */
+    .tz-filter-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #00000070 !important;
+        z-index: 9998;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .tz-filter-overlay.active {
+        opacity: 1;
+    }
+
+    /* Drawer latéral */
+    .tz-filter-widget-area {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 85%;
+        max-width: 400px;
+        height: 100%;
+        background: #fff;
+        z-index: 100000;
+        overflow-y: auto;
+        transition: right 0.3s ease;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .tz-filter-widget-area.active {
+        right: 0;
+    }
+
+    .tz-filter-widget-area.collapsed {
+        right: -100%;
+    }
+
+    .tz-filter-header {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 10;
+        padding: 15px;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tz-btn-close-filter {
+        background: none !important;
+        border: none !important;
+        font-size: 24px !important;
+        cursor: pointer;
+        padding: 5px 10px !important;
+        color: #333 !important;
+    }
+
+    .tz-btn-close-filter:hover {
+        color: #de5b09 !important;
+    }
+}
+}
+/*

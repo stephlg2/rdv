@@ -1,0 +1,133 @@
+# Ignorer les fichiers de configuration sensibles
+wp-config.php
+*.log
+*.cache
+*.tmp
+*.temp
+wp-content/cache/
+wp-content/uploads/cache/
+wp-content/plugins/*/cache/
+wp-content/plugins/*/tmp/
+wp-content/plugins/*/logs/
+wp-content/uploads/
+node_modules/
+vendor/
+.DS_Store
+Thumbs.db
+*.bak
+*.swp
+*.swo
+*.orig
+error_log
+php_error.log
+xdebug-profiler.out
+composer.lock
+composer.phar
+.idea/
+.vscode/
+deploy.shwp-config.php
+
+# Ignorer les fichiers temporaires et caches
+*.log
+*.cache
+*.tmp
+*.temp
+
+# Ignorer les dossiers de cache de plugins et thèmes
+wp-content/cache/
+wp-content/uploads/cache/
+wp-content/plugins/*/cache/
+wp-content/plugins/*/tmp/
+wp-content/plugins/*/logs/
+
+# Ignorer le dossier des uploads (fichiers médias)
+wp-content/uploads/
+
+# Ignorer les dossiers node_modules et vendor (si tu utilises npm ou composer)
+node_modules/
+vendor/
+
+# Ignorer les fichiers système macOS et Windows
+.DS_Store
+Thumbs.db
+
+# Ignorer les fichiers de sauvegarde et d’éditeur
+*.bak
+*.swp
+*.swo
+*.orig
+
+# Ignorer les logs et rapports d’erreurs
+error_log
+php_error.log
+
+# Ignorer les fichiers de debug de Xdebug
+xdebug-profiler.out
+
+# Ignorer les fichiers générés par composer
+composer.lock
+composer.phar
+
+# Ignorer les fichiers de configuration IDE
+.idea/
+.vscode/
+
+# Ignorer les fichiers de déploiement ou scripts personnels
+deploy.shOLD/
+wp-config.php
+.htaccess
+wp-config.php
+.DS_Store
+wp-config.php
+# Ignorer les fichiers de configuration sensibles
+wp-config.php
+
+# Ignorer les fichiers temporaires et caches
+*.log
+*.cache
+*.tmp
+*.temp
+
+# Ignorer les dossiers de cache de plugins et thèmes
+wp-content/cache/
+wp-content/uploads/cache/
+wp-content/plugins/*/cache/
+wp-content/plugins/*/tmp/
+wp-content/plugins/*/logs/
+
+# Ignorer le dossier des uploads (fichiers médias)
+wp-content/uploads/
+
+# Ignorer les dossiers node_modules et vendor (si tu utilises npm ou composer)
+node_modules/
+vendor/
+
+# Ignorer les fichiers système macOS et Windows
+.DS_Store
+Thumbs.db
+
+# Ignorer les fichiers de sauvegarde et d’éditeur
+*.bak
+*.swp
+*.swo
+*.orig
+
+# Ignorer les logs et rapports d’erreurs
+error_log
+php_error.log
+
+# Ignorer les fichiers de debug de Xdebug
+xdebug-profiler.out
+
+# Ignorer les fichiers générés par composer
+composer.lock
+composer.phar
+
+# Ignorer les fichiers de configuration IDE
+.idea/
+.vscode/
+
+# Ignorer les fichiers de déploiement ou scripts personnels
+deploy.sh
+>>>>>>> 3abea34b899d18903c1655fcbf7b4847ea15382b
+OLD/

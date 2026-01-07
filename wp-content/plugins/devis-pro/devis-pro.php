@@ -29,6 +29,8 @@ require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-email.php';
 require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-export.php';
 require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-stats.php';
 require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-security.php';
+require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-clients.php';
+require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-clients-table.php';
 
 /**
  * Classe principale du plugin
@@ -81,6 +83,8 @@ class Devis_Pro {
         add_action('wp_ajax_nopriv_devis_pro_search_voyages', array($this, 'ajax_search_voyages'));
         add_action('wp_ajax_devis_pro_get_voyage', array($this, 'ajax_get_voyage'));
         add_action('wp_ajax_nopriv_devis_pro_get_voyage', array($this, 'ajax_get_voyage'));
+        add_action('wp_ajax_devis_pro_get_destinations', array($this, 'ajax_get_destinations'));
+        add_action('wp_ajax_nopriv_devis_pro_get_destinations', array($this, 'ajax_get_destinations'));
         
         // AJAX pour soumission formulaire front-end (sidebar)
         add_action('wp_ajax_devis_pro_submit_form', array($this, 'ajax_submit_form'));
@@ -223,11 +227,21 @@ class Devis_Pro {
         
         add_submenu_page(
             'devis-pro',
-            'Migration',
-            'Migration',
+            'Clients',
+            'Clients',
             'manage_options',
-            'devis-pro-migration',
-            array($this, 'page_migration')
+            'devis-pro-clients',
+            array($this, 'page_clients')
+        );
+        
+        // Page cachée pour le détail d'un client
+        add_submenu_page(
+            null,
+            'Détail du client',
+            'Détail client',
+            'manage_options',
+            'devis-pro-client-detail',
+            array($this, 'page_client_detail')
         );
         
         // Pages cachées
@@ -357,10 +371,108 @@ class Devis_Pro {
     }
 
     /**
-     * Page Migration
+     * Page Clients
      */
-    public function page_migration() {
-        include DEVIS_PRO_PATH . 'admin/views/migration.php';
+    public function page_clients() {
+        // Gérer l'export CSV - DOIT être fait AVANT tout autre traitement
+        if (isset($_GET['action']) && $_GET['action'] === 'export' && check_admin_referer('export_clients')) {
+            // Nettoyer tous les buffers
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            $clients_handler = new Devis_Pro_Clients();
+            $clients_handler->export_clients_csv();
+            // exit est déjà dans export_clients_csv()
+            return;
+        }
+        
+        $clients_table = new Devis_Pro_Clients_Table();
+        $clients_table->prepare_items();
+        
+        // Debug: vérifier les items
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('Devis Pro Clients: total_items=' . $clients_table->get_pagination_arg('total_items'));
+            error_log('Devis Pro Clients: items count=' . count($clients_table->items));
+            if (!empty($clients_table->items)) {
+                error_log('Devis Pro Clients: first item=' . print_r($clients_table->items[0], true));
+            }
+        }
+        
+        include DEVIS_PRO_PATH . 'admin/views/clients.php';
+    }
+
+    /**
+     * Page Détail d'un client
+     */
+    public function page_client_detail() {
+        // Traiter la mise à jour du client
+        if (isset($_POST['update_client']) && check_admin_referer('update_client_' . $_POST['client_email'])) {
+            $this->update_client_from_admin();
+        }
+        
+        if (!isset($_GET['email']) || empty($_GET['email'])) {
+            wp_die(__('Email client non fourni', 'devis-pro'));
+        }
+        
+        $email = sanitize_email($_GET['email']);
+        if (!is_email($email)) {
+            wp_die(__('Email invalide', 'devis-pro'));
+        }
+        
+        $clients_handler = new Devis_Pro_Clients();
+        $client = $clients_handler->get_client_details($email);
+        
+        if (!$client) {
+            wp_die(__('Client non trouvé', 'devis-pro'));
+        }
+        
+        include DEVIS_PRO_PATH . 'admin/views/client-detail.php';
+    }
+    
+    /**
+     * Mettre à jour un client depuis l'admin
+     */
+    private function update_client_from_admin() {
+        $email = sanitize_email($_POST['client_email']);
+        
+        if (!is_email($email)) {
+            add_settings_error('devis_pro', 'invalid_email', __('Email invalide', 'devis-pro'), 'error');
+            return;
+        }
+        
+        $clients_handler = new Devis_Pro_Clients();
+        
+        // Préparer les données
+        $data = array(
+            'civ' => sanitize_text_field($_POST['civ'] ?? ''),
+            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
+            'prenom' => sanitize_text_field($_POST['prenom'] ?? ''),
+            'tel' => sanitize_text_field($_POST['tel'] ?? ''),
+            'cp' => sanitize_text_field($_POST['cp'] ?? ''),
+            'ville' => sanitize_text_field($_POST['ville'] ?? ''),
+        );
+        
+        // Si l'email change
+        if (!empty($_POST['new_email']) && is_email($_POST['new_email']) && $_POST['new_email'] !== $email) {
+            $data['email'] = sanitize_email($_POST['new_email']);
+        }
+        
+        // Mettre à jour les coordonnées
+        $result = $clients_handler->update_client_info($email, $data);
+        
+        // Mettre à jour la newsletter
+        $newsletter = isset($_POST['newsletter']) && $_POST['newsletter'] == '1' ? true : false;
+        $newsletter_result = $clients_handler->update_client_newsletter($data['email'] ?? $email, $newsletter);
+        
+        if ($result || $newsletter_result) {
+            // Rediriger vers la page de détail avec le nouvel email si changé
+            $redirect_email = $data['email'] ?? $email;
+            wp_redirect(admin_url('admin.php?page=devis-pro-client-detail&email=' . urlencode($redirect_email) . '&updated=1'));
+            exit;
+        } else {
+            add_settings_error('devis_pro', 'update_failed', __('Erreur lors de la mise à jour', 'devis-pro'), 'error');
+        }
     }
 
     /**
@@ -536,8 +648,49 @@ class Devis_Pro {
      * Sanitizer les données du devis
      */
     private function sanitize_devis_data($post) {
+        // Traiter les destinations
+        $destination = '';
+        
+        // Si on a le champ 'destinations' (nouveau formulaire avec sélection multiple)
+        if (!empty($post['destinations']) || !empty($post['destination_other'])) {
+            $destinations_list = array();
+            
+            // Récupérer les destinations sélectionnées (IDs)
+            if (!empty($post['destinations'])) {
+                $destinations_ids = explode(',', $post['destinations']);
+                foreach ($destinations_ids as $dest_id) {
+                    $dest_id = trim($dest_id);
+                    if (!empty($dest_id) && is_numeric($dest_id)) {
+                        // Récupérer le nom de la destination depuis la taxonomie
+                        $term = get_term($dest_id, 'tripzzy_trip_destination');
+                        if ($term && !is_wp_error($term)) {
+                            $destinations_list[] = $term->name;
+                        }
+                    }
+                }
+            }
+            
+            // Ajouter les destinations "Autre" si présentes
+            if (!empty($post['destination_other'])) {
+                $other_destinations = explode(',', $post['destination_other']);
+                foreach ($other_destinations as $other_dest) {
+                    $other_dest = trim($other_dest);
+                    if (!empty($other_dest)) {
+                        $destinations_list[] = $other_dest;
+                    }
+                }
+            }
+            
+            if (!empty($destinations_list)) {
+                $destination = implode(', ', $destinations_list);
+            }
+        } else {
+            // Fallback sur l'ancien champ 'destination'
+            $destination = sanitize_text_field($post['destination'] ?? '');
+        }
+        
         $data = array(
-            'destination' => sanitize_text_field($post['destination'] ?? ''),
+            'destination' => $destination,
             'voyage' => sanitize_text_field($post['voyage'] ?? ''),
             'depart' => sanitize_text_field($post['depart'] ?? ''),
             'retour' => sanitize_text_field($post['retour'] ?? ''),
@@ -1064,6 +1217,36 @@ class Devis_Pro {
             'thumbnail' => $thumbnail ?: ''
         ));
     }
+
+    /**
+     * AJAX: Obtenir la liste des destinations
+     */
+    public function ajax_get_destinations() {
+        check_ajax_referer('devis_pro_search', 'nonce');
+        
+        // Récupérer les termes de la taxonomie tripzzy_trip_destination
+        $terms = get_terms(array(
+            'taxonomy' => 'tripzzy_trip_destination',
+            'hide_empty' => false,
+            'orderby' => 'name',
+            'order' => 'ASC'
+        ));
+        
+        if (is_wp_error($terms) || empty($terms)) {
+            wp_send_json_success(array());
+        }
+        
+        $destinations = array();
+        foreach ($terms as $term) {
+            $destinations[] = array(
+                'id' => $term->term_id,
+                'name' => $term->name,
+                'slug' => $term->slug
+            );
+        }
+        
+        wp_send_json_success($destinations);
+    }
     
     /**
      * Traiter l'ancien formulaire (compatibilité)
@@ -1441,10 +1624,19 @@ class Devis_Pro {
             $this->db->add_history($id, 'creation', $history_message);
             
             // Envoyer les emails
-            $email_handler = new Devis_Pro_Email();
             $devis = $this->db->get_devis($id);
-            $email_handler->send_new_request_notification($devis);
-            $email_handler->send_confirmation_to_client($devis);
+            if ($devis) {
+                try {
+                    $email_handler = new Devis_Pro_Email();
+                    $email_handler->send_new_request_notification($devis);
+                    $email_handler->send_confirmation_to_client($devis);
+                } catch (Exception $e) {
+                    // Logger l'erreur mais ne pas bloquer
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('[Devis Pro] Erreur envoi email: ' . $e->getMessage());
+                    }
+                }
+            }
             
             // Newsletter Mailchimp si cochée
             if (!empty($post['newsletter']) && $post['newsletter'] == '1') {
