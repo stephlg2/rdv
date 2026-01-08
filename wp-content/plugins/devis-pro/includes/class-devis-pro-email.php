@@ -95,33 +95,8 @@ class Devis_Pro_Email {
      * Envoyer la notification admin pour une nouvelle demande
      */
     public function send_new_request_notification($devis) {
-        if (!$devis || !isset($devis->email)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[Devis Pro Email] send_new_request_notification: devis invalide');
-            }
-            return false;
-        }
-        
         $admin_email = $this->settings['email_admin'] ?? get_option('admin_email');
-        if (empty($admin_email)) {
-            $admin_email = get_option('admin_email');
-        }
-        
-        if (empty($admin_email)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[Devis Pro Email] send_new_request_notification: admin_email vide');
-            }
-            return false;
-        }
-        
-        try {
-            $voyage = $this->get_voyage_title($devis->voyage);
-        } catch (Exception $e) {
-            $voyage = !empty($devis->destination) ? $devis->destination : 'Voyage en Asie';
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[Devis Pro Email] Erreur get_voyage_title: ' . $e->getMessage());
-            }
-        }
+        $voyage = $this->get_voyage_title($devis->voyage);
 
         $subject = sprintf('[Nouveau devis] Demande de %s %s', $devis->prenom, $devis->nom);
 
@@ -149,6 +124,10 @@ class Devis_Pro_Email {
                 <tr>
                     <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Ville</strong></td>
                     <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->ville) . '</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Destination</strong></td>
+                    <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->destination ?: '-') . '</td>
                 </tr>
                 <tr>
                     <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Voyage</strong></td>
@@ -181,41 +160,14 @@ class Devis_Pro_Email {
             </p>
         ';
 
-        $result = $this->send($admin_email, $subject, $message);
-        
-        if (!$result && defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[Devis Pro Email] Échec envoi notification admin à: ' . $admin_email);
-        }
-        
-        return $result;
+        return $this->send($admin_email, $subject, $message);
     }
 
     /**
      * Envoyer la confirmation au client
      */
     public function send_confirmation_to_client($devis) {
-        if (!$devis || !isset($devis->email) || empty($devis->email)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[Devis Pro Email] send_confirmation_to_client: devis invalide ou email vide');
-            }
-            return false;
-        }
-        
-        // Essayer de récupérer le titre du voyage
         $voyage = $this->get_voyage_title($devis->voyage);
-        
-        // Si le titre n'a pas pu être récupéré, utiliser la destination
-        if (empty($voyage) || $voyage === 'Voyage en Asie' || $voyage === $devis->voyage) {
-            if (!empty($devis->destination)) {
-                $voyage = $devis->destination;
-            } else {
-                $voyage = 'Voyage en Asie';
-            }
-        }
-        
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[Devis Pro Email] send_confirmation_to_client - voyage: ' . $voyage . ' | destination: ' . ($devis->destination ?? 'vide') . ' | voyage_data: ' . ($devis->voyage ?? 'vide'));
-        }
         
         // Générer le lien d'accès direct à l'espace client
         $token = md5($devis->email . wp_salt());
@@ -237,6 +189,7 @@ class Devis_Pro_Email {
             $adresse_complete = '-';
         }
 
+        // Construire le message avec la destination et le voyage
         $message = '
             <h2 style="color:#de5b09;margin-top:0;">Merci pour votre demande !</h2>
             <p>Bonjour ' . esc_html($devis->prenom) . ',</p>
@@ -246,7 +199,15 @@ class Devis_Pro_Email {
             <h3 style="color:#333;border-bottom:2px solid #de5b09;padding-bottom:10px;">Récapitulatif de votre demande</h3>
             
             <ul style="list-style:none;padding:0;">
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Voyage :</strong> ' . esc_html($voyage) . '</li>
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Destination :</strong> ' . esc_html($devis->destination ?: 'Non spécifiée') . '</li>';
+        
+        // Afficher le voyage seulement s'il est renseigné
+        if (!empty($voyage)) {
+            $message .= '
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Voyage :</strong> ' . esc_html($voyage) . '</li>';
+        }
+        
+        $message .= '
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Dates :</strong> ' . esc_html($devis->depart) . ' → ' . esc_html($devis->retour) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Durée :</strong> ' . esc_html($devis->duree) . '</li>
                 <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Participants :</strong> ' . intval($devis->adulte) . ' adulte(s), ' . intval($devis->enfant) . ' enfant(s), ' . intval($devis->bebe) . ' bébé(s)</li>
@@ -273,13 +234,7 @@ class Devis_Pro_Email {
             <p><strong>L\'équipe Rendez-vous avec l\'Asie</strong></p>
         ';
 
-        $result = $this->send($devis->email, $subject, $message);
-        
-        if (!$result && defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[Devis Pro Email] Échec envoi confirmation client à: ' . $devis->email);
-        }
-        
-        return $result;
+        return $this->send($devis->email, $subject, $message);
     }
 
     /**
@@ -549,28 +504,18 @@ class Devis_Pro_Email {
             return '';
         }
 
-        // Si c'est déjà un texte (pas un ID), le retourner tel quel
-        if (!is_numeric($voyage_data) && strpos($voyage_data, '-;-') === false) {
-            return $voyage_data;
-        }
-
         $ids = explode("-;-", $voyage_data);
         $titles = array();
 
         foreach ($ids as $id) {
-            $id = trim($id);
             if (!empty($id) && is_numeric($id)) {
-                // Essayer d'abord avec le post_type 'tripzzy'
-                $post = get_post($id);
-                if ($post && ($post->post_type === 'tripzzy' || $post->post_type === 'product')) {
-                    $title = get_the_title($id);
-                    if ($title && $title !== 'Auto Draft' && $title !== '') {
-                        $titles[] = $title;
-                    }
+                $title = get_the_title($id);
+                if ($title) {
+                    $titles[] = $title;
                 }
             }
         }
 
-        return !empty($titles) ? implode(', ', $titles) : '';
+        return !empty($titles) ? implode(', ', $titles) : $voyage_data;
     }
 }

@@ -336,6 +336,29 @@ class Devis_Pro_DB {
         return $result;
     }
 
+    public function get_devis_by_reference($reference) {
+        global $wpdb;
+
+        // Chercher d'abord dans la nouvelle table
+        $result = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$this->table_devis} WHERE mac = %s",
+            $reference
+        ));
+
+        // Si non trouvé, chercher dans l'ancienne table (compatibilité)
+        if (!$result) {
+            $old_table = $wpdb->prefix . 'devis';
+            if ($wpdb->get_var("SHOW TABLES LIKE '$old_table'")) {
+                $result = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM $old_table WHERE mac = %s",
+                    $reference
+                ));
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * Obtenir les devis par email
      */

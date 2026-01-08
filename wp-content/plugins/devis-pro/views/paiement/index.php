@@ -7,18 +7,64 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Récupérer le titre du voyage
-$voyage_ids = explode("-;-", $devis->voyage);
-$voyage_titles = array();
-foreach ($voyage_ids as $id) {
-    if (!empty($id) && is_numeric($id)) {
-        $title = get_the_title($id);
-        if ($title) {
-            $voyage_titles[] = $title;
-        }
+// Vérifier que $devis est défini
+if (!isset($devis) || !is_object($devis)) {
+    echo '<div style="text-align:center;padding:40px;"><p>Erreur: Devis non trouvé. Veuillez contacter notre équipe.</p><p><a href="mailto:contact@rdvasie.com">contact@rdvasie.com</a> | <a href="tel:0214001253">02 14 00 12 53</a></p></div>';
+    return;
+}
+
+
+// S'assurer que toutes les propriétés essentielles existent avec des valeurs par défaut
+$default_properties = array(
+    'voyage' => '',
+    'destination' => '',
+    'montant' => 0,
+    'status' => 0,
+    'depart' => '',
+    'retour' => '',
+    'duree' => '',
+    'adulte' => 0,
+    'enfant' => 0,
+    'bebe' => 0,
+    'vol' => '',
+    'civ' => '',
+    'nom' => '',
+    'prenom' => '',
+    'email' => '',
+    'tel' => '',
+    'cp' => '',
+    'ville' => '',
+    'demande' => '',
+    'message' => ''
+);
+
+foreach ($default_properties as $prop => $default_value) {
+    if (!property_exists($devis, $prop)) {
+        $devis->$prop = $default_value;
     }
 }
-$voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis->destination ?: __('Votre voyage', 'devis-pro'));
+
+// Récupérer le titre du voyage
+$voyage_title = __('Votre voyage', 'devis-pro');
+if (!empty($devis->voyage)) {
+    $voyage_ids = explode("-;-", $devis->voyage);
+    $voyage_titles = array();
+    foreach ($voyage_ids as $id) {
+        if (!empty($id) && is_numeric($id)) {
+            $title = get_the_title($id);
+            if ($title) {
+                $voyage_titles[] = $title;
+            }
+        }
+    }
+    if (!empty($voyage_titles)) {
+        $voyage_title = implode(', ', $voyage_titles);
+    } elseif (!empty($devis->destination)) {
+        $voyage_title = $devis->destination;
+    }
+} elseif (!empty($devis->destination)) {
+    $voyage_title = $devis->destination;
+}
 ?>
 
 <style>
@@ -374,15 +420,16 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
                     <div class="payment-amount">
                         <?php echo number_format($devis->montant, 0, ',', ' '); ?><small> €</small>
                     </div>
+
+                    <!-- https://p.monetico-services.com/paiement.cgi -->
                     
-                    <form method="post" action="https://p.monetico-services.com/paiement.cgi" class="payment-form">
+                    <form method="post" action=" https://p.monetico-services.com/paiement.cgi" class="payment-form">
                         <input type="hidden" name="version" value="3.0">
                         <input type="hidden" name="TPE" value="<?php echo esc_attr($payment_data['tpe']); ?>">
                         <input type="hidden" name="date" value="<?php echo esc_attr($payment_data['date']); ?>">
                         <input type="hidden" name="montant" value="<?php echo esc_attr($payment_data['montant']); ?>">
                         <input type="hidden" name="reference" value="<?php echo esc_attr($payment_data['reference']); ?>">
                         <input type="hidden" name="MAC" value="<?php echo esc_attr($payment_data['mac']); ?>">
-                        <input type="hidden" name="url_retour" value="<?php echo home_url(); ?>">
                         <input type="hidden" name="url_retour_ok" value="<?php echo home_url('/paiement-accepte/'); ?>">
                         <input type="hidden" name="url_retour_err" value="<?php echo home_url('/paiement-annule/'); ?>">
                         <input type="hidden" name="lgue" value="FR">
@@ -403,7 +450,7 @@ $voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : ($devis
                     </div>
                     
                     <div class="payment-logo">
-                        <img src="https://www.rdvasie.com/wp-content/uploads/2019/01/paiement-securise.png" alt="Paiement sécurisé">
+                        <img src="https://www.rdvasie.com/wp-content/uploads/2026/01/paiement-securise.webp" alt="Paiement sécurisé">
                     </div>
                 </div>
             <?php else : ?>

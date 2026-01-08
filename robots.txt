@@ -1,0 +1,19 @@
+# robots.txt – Optimisé SEO Google (WordPress)
+
+User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+
+Disallow: /xmlrpc.php
+Disallow: /readme.html
+Disallow: /license.txt
+
+Disallow: /?s=
+Disallow: /search/
+Disallow: /trackback/
+Disallow: /comments/
+Disallow: */feed/
+
+Allow: /wp-content/uploads/
+
+Sitemap: https://www.rdvasie.com/sitemap.xml
