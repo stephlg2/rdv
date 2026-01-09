@@ -646,11 +646,8 @@ class Devis_Pro
                     }
                     break;
 
-                case 4: // Payé
-                    $email_sent = $email->send_payment_confirmation($updated_devis);
-                    if ($email_sent) {
-                        $this->db->add_history($id, 'email', __('Email "Paiement confirmé" envoyé au client', 'devis-pro'));
-                    }
+                case 4: // Payé - Email désactivé (le client reçoit déjà une confirmation de la banque)
+                    // Ne plus envoyer d'email de confirmation de paiement même si la checkbox est cochée
                     break;
 
                 case 5: // Annulé
@@ -1979,9 +1976,9 @@ class Devis_Pro
                         $this->db->update_devis($devis_id, array('status' => 4)); // Payé
                         $this->db->add_history($devis_id, 'payment', __('Paiement accepté', 'devis-pro'));
 
-                        // Envoyer email de confirmation
-                        $email = new Devis_Pro_Email();
-                        $email->send_payment_confirmation($devis);
+                        // Email de confirmation désactivé (le client reçoit déjà une confirmation de la banque)
+                        // $email = new Devis_Pro_Email();
+                        // $email->send_payment_confirmation($devis);
                     }
                 }
             }
@@ -2321,13 +2318,13 @@ class Devis_Pro
                     $new_status = $settings['statuses'][$data['status']]['label'] ?? 'Inconnu';
                     $this->db->add_history($id, 'status_change', sprintf(__('Statut modifié : %s → %s', 'devis-pro'), $old_status, $new_status));
 
-                    // Envoyer un email si demandé et si le statut a changé
-                    $updated_devis = $this->db->get_devis($id);
-                    $email = new Devis_Pro_Email();
-                    $email_sent = $email->send_payment_confirmation($updated_devis);
-                    if ($email_sent) {
-                        $this->db->add_history($id, 'email', __('Email "Paiement confirmé" envoyé au client', 'devis-pro'));
-                    }
+                    // Email de confirmation de paiement désactivé (le client reçoit déjà une confirmation de la banque)
+                    // $updated_devis = $this->db->get_devis($id);
+                    // $email = new Devis_Pro_Email();
+                    // $email_sent = $email->send_payment_confirmation($updated_devis);
+                    // if ($email_sent) {
+                    //     $this->db->add_history($id, 'email', __('Email "Paiement confirmé" envoyé au client', 'devis-pro'));
+                    // }
 
 
                     $result = "version=2\ncdr=0";

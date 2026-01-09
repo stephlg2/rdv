@@ -124,15 +124,27 @@ class Devis_Pro_Email {
                 <tr>
                     <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Ville</strong></td>
                     <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->ville) . '</td>
-                </tr>
+                </tr>';
+        
+        // Afficher la ligne "Destination" seulement si elle n'est pas vide
+        if (!empty($devis->destination) && trim($devis->destination) !== '') {
+            $message .= '
                 <tr>
                     <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Destination</strong></td>
-                    <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->destination ?: '-') . '</td>
-                </tr>
+                    <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->destination) . '</td>
+                </tr>';
+        }
+        
+        // Afficher la ligne "Voyage" seulement si elle n'est pas vide
+        if (!empty($voyage)) {
+            $message .= '
                 <tr>
                     <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Voyage</strong></td>
                     <td style="padding:10px;border:1px solid #ddd;">' . esc_html($voyage) . '</td>
-                </tr>
+                </tr>';
+        }
+        
+        $message .= '
                 <tr>
                     <td style="padding:10px;border:1px solid #ddd;background:#f9f9f9;"><strong>Dates</strong></td>
                     <td style="padding:10px;border:1px solid #ddd;">' . esc_html($devis->depart) . ' → ' . esc_html($devis->retour) . '</td>
@@ -470,13 +482,13 @@ class Devis_Pro_Email {
             <p><strong>L\'équipe Rendez-vous avec l\'Asie</strong></p>
         ';
 
-        // Envoyer au client
-        $result = $this->send($devis->email, $subject, $message);
+        // Envoyer au client - DÉSACTIVÉ (le client reçoit déjà une confirmation de la banque)
+        // $result = $this->send($devis->email, $subject, $message);
 
         // Notifier l'admin
         $admin_email = $this->settings['email_admin'] ?? get_option('admin_email');
         $admin_subject = sprintf('[Paiement reçu] Devis #%d - %s %s - %s€', $devis->id, $devis->prenom, $devis->nom, number_format($devis->montant, 0, ',', ' '));
-        $this->send($admin_email, $admin_subject, $message);
+        $result = $this->send($admin_email, $admin_subject, $message);
 
         return $result;
     }

@@ -123,10 +123,12 @@ $current_status = $settings['statuses'][$devis->status] ?? array('label' => 'Inc
                 </div>
                 <div class="card-body">
                     <div class="voyage-info-grid">
+                        <?php if (!empty($voyage_title) && trim($voyage_title) !== '') : ?>
                         <div class="info-group full-width">
                             <label><?php _e('Voyage', 'devis-pro'); ?></label>
                             <p><strong><?php echo esc_html($voyage_title); ?></strong></p>
                         </div>
+                        <?php endif; ?>
                         <div class="info-group">
                             <label><?php _e('Date de départ', 'devis-pro'); ?></label>
                             <p><?php echo esc_html($devis->depart ?: '-'); ?></p>
@@ -409,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentStatus = <?php echo $devis->status; ?>;
     
     // Statuts qui peuvent envoyer un email : 2 (Accepté), 4 (Payé), 5 (Annulé)
+    // Note: Le statut 4 (Payé) est désactivé côté serveur mais on garde l'option pour cohérence
     const emailStatuses = [2, 4, 5];
     
     function updateEmailOption() {

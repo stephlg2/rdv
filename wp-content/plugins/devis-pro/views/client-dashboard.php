@@ -213,7 +213,7 @@ $settings = get_option('devis_pro_settings');
 
 <div class="client-dashboard">
     <div class="client-header">
-        <h1><?php _e('Vos devis', 'devis-pro'); ?></h1>
+        <h1><?php _e('Vos voyages', 'devis-pro'); ?></h1>
         <p><?php echo esc_html($email); ?></p>
     </div>
 
@@ -271,14 +271,14 @@ $settings = get_option('devis_pro_settings');
                             </a>
                             <?php endif; ?>
                             
-                            <?php if ($devis->status == 4 && $devis->montant > 0 && $devis->token) : ?>
+                           <!-- <?php if ($devis->status == 4 && $devis->montant > 0 && $devis->token) : ?>
                             <a href="<?php echo home_url('/?facture=1&token=' . $devis->token); ?>" target="_blank" class="download-invoice-link">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 <?php _e('Télécharger ma facture', 'devis-pro'); ?>
                             </a>
-                            <?php endif; ?>
+                            <?php endif; ?>-->
                         </div>
                     </div>
                     
