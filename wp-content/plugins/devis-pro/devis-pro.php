@@ -534,6 +534,8 @@ class Devis_Pro
                 'default_currency' => sanitize_text_field($_POST['default_currency']),
                 'recaptcha_site_key' => sanitize_text_field($_POST['recaptcha_site_key'] ?? ''),
                 'recaptcha_secret_key' => sanitize_text_field($_POST['recaptcha_secret_key'] ?? ''),
+                'mailchimp_api_key' => sanitize_text_field($_POST['mailchimp_api_key'] ?? ''),
+                'mailchimp_list_id' => sanitize_text_field($_POST['mailchimp_list_id'] ?? ''),
                 'statuses' => $statuses
         );
 
@@ -1730,9 +1732,18 @@ class Devis_Pro
      */
     private function subscribe_to_mailchimp($email, $prenom = '', $nom = '')
     {
-        // Configuration Mailchimp
-        $api_key = '882eb2d87143d3f79bbf6eaaad68024c-us7';
-        $list_id = '431ec50da9';
+        // Configuration Mailchimp depuis les paramètres
+        $settings = get_option('devis_pro_settings', array());
+        $api_key = !empty($settings['mailchimp_api_key']) ? $settings['mailchimp_api_key'] : '882eb2d87143d3f79bbf6eaaad68024c-us7';
+        $list_id = !empty($settings['mailchimp_list_id']) ? $settings['mailchimp_list_id'] : '431ec50da9';
+        
+        // Si pas de clé API configurée, ne rien faire
+        if (empty($api_key) || empty($list_id)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[Devis Pro] Mailchimp: Clé API ou List ID non configurée');
+            }
+            return false;
+        }
 
         // Extraire le datacenter de la clé API
         $datacenter = substr($api_key, strpos($api_key, '-') + 1);

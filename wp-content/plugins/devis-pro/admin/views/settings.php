@@ -215,6 +215,46 @@ if (isset($_GET['migrate']) && $_GET['migrate'] == 1) {
                 </div>
             </div>
 
+            <!-- Configuration Mailchimp -->
+            <div class="devis-card">
+                <div class="card-header">
+                    <h2>
+                        <span class="dashicons dashicons-email-alt"></span>
+                        <?php _e('Configuration Mailchimp', 'devis-pro'); ?>
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="description" style="margin-bottom:15px;">
+                        <?php _e('Configuration pour l\'inscription automatique à la newsletter Mailchimp lorsque les utilisateurs cochent la case "Abonnement Newsletter" dans les formulaires.', 'devis-pro'); ?>
+                    </p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="mailchimp_api_key"><?php _e('Clé de l\'API', 'devis-pro'); ?></label>
+                            </th>
+                            <td>
+                                <input type="password" id="mailchimp_api_key" name="mailchimp_api_key" value="<?php echo esc_attr($settings['mailchimp_api_key'] ?? ''); ?>" class="regular-text">
+                                <p class="description">
+                                    <?php _e('la clé API pour la connexion à votre compte MailChimp', 'devis-pro'); ?>
+                                    <a href="https://mailchimp.com/help/about-api-keys/" target="_blank"><?php _e('Récupérez votre clé API ici.', 'devis-pro'); ?></a>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="mailchimp_list_id"><?php _e('ID de la liste', 'devis-pro'); ?></label>
+                            </th>
+                            <td>
+                                <input type="text" id="mailchimp_list_id" name="mailchimp_list_id" value="<?php echo esc_attr($settings['mailchimp_list_id'] ?? ''); ?>" class="regular-text">
+                                <p class="description">
+                                    <?php _e('L\'ID de votre liste Mailchimp (Audience ID)', 'devis-pro'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
             <!-- Statuts -->
             <div class="devis-card">
                 <div class="card-header">
