@@ -526,6 +526,7 @@ if ( ! class_exists( 'Tripzzy\Core\Ajax\TripAjax' ) ) {
 								'taxonomy' => $taxonomy,
 								'field'    => 'slug',
 								'terms'    => $terms,
+								'operator' => 'IN', // IN pour les termes multiples dans une même taxonomie (OR logique)
 							);
 						}
 					}

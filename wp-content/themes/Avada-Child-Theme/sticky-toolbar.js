@@ -38,110 +38,70 @@
 
   function initFilterResultsInButton() {
     var filterPosts = document.getElementById('tripzzy-filter-found-posts');
-    var submitBtn = document.getElementById('tz-filter-form-submit-btn');
     var clearAllBtn = document.getElementById('tz-filter-clear-all');
     
-    if (!submitBtn) return;
-
     // Masquer tripzzy-filter-found-posts
     if (filterPosts) {
       filterPosts.style.display = 'none';
     }
 
-    var defaultText = 'Afficher les résultats';
-
-    function getFilterCount() {
-      // Chercher dans TOUS les inputs du formulaire qui ont une valeur avec (nombre)
-      var allInputs = document.querySelectorAll('#tripzzy-filter-form input.tripzzy-input');
-      var totalCount = 0;
-      var hasCount = false;
-      
-      for (var i = 0; i < allInputs.length; i++) {
-        var input = allInputs[i];
-        var val = input.value || '';
-        var placeholder = input.placeholder || '';
-        
-        // Ignorer placeholder ou vide
-        if (!val || val === placeholder || val.toLowerCase().indexOf('select') !== -1 || val.toLowerCase().indexOf('sélect') !== -1) {
-          continue;
-        }
-        
-        // Chercher tous les (nombre) dans la valeur et les additionner
-        var regex = /\((\d+)\)/g;
-        var match;
-        while ((match = regex.exec(val)) !== null) {
-          var num = parseInt(match[1]);
-          if (!isNaN(num)) {
-            totalCount += num;
-            hasCount = true;
-          }
-        }
-      }
-      
-      return hasCount ? totalCount : null;
-    }
-
+    // La mise à jour du bouton est maintenant gérée par TripFilter.php
+    // On garde juste la détection des filtres actifs pour afficher/masquer le bouton "Réinitialiser"
     function hasActiveFilter() {
-      var allInputs = document.querySelectorAll('#tripzzy-filter-form input.tripzzy-input');
-      for (var i = 0; i < allInputs.length; i++) {
-        var input = allInputs[i];
-        var val = input.value || '';
-        var placeholder = input.placeholder || '';
-        if (val && val !== placeholder && val.toLowerCase().indexOf('select') === -1 && val.toLowerCase().indexOf('sélect') === -1) {
-          // Vérifier qu'il y a un (nombre)
-          if (/\(\d+\)/.test(val)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function updateButton() {
-      var count = getFilterCount();
-      var hasFilter = hasActiveFilter();
+      var hasActive = false;
       
-      if (hasFilter && count !== null) {
-        submitBtn.textContent = defaultText + ' (' + count + ')';
-        if (clearAllBtn) clearAllBtn.style.display = 'block';
-      } else {
-        submitBtn.textContent = defaultText;
-        if (clearAllBtn) clearAllBtn.style.display = 'none';
-      }
-    }
-
-    // Polling toutes les 200ms pour détecter les changements
-    setInterval(updateButton, 200);
-
-    // Gérer le clic sur "tout effacer"
-    if (clearAllBtn) {
-      clearAllBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // Reset le formulaire
-        var form = document.getElementById('tripzzy-filter-form');
-        if (form) {
-          form.reset();
-        }
-        
-        // Cliquer sur tous les boutons de suppression de tags
-        var removeBtns = document.querySelectorAll('#tripzzy-filter-form .multiselect-dropdown .optext .optdel');
-        removeBtns.forEach(function(btn) {
-          btn.click();
-        });
-        
-        // Attendre puis soumettre
-        setTimeout(function() {
-          var submitBtnEl = document.getElementById('tz-filter-form-submit-btn');
-          if (submitBtnEl) {
-            submitBtnEl.click();
+      // Vérifier les selects avec des options sélectionnées
+      var selects = document.querySelectorAll('#tripzzy-filter-form select.tripzzy-filter-dropdown');
+      selects.forEach(function(select) {
+        if (select.multiple) {
+          var selected = Array.from(select.selectedOptions).filter(function(opt) {
+            return opt.value && opt.value !== '';
+          });
+          if (selected.length > 0) {
+            hasActive = true;
           }
-        }, 100);
+        } else if (select.value && select.value !== '') {
+          hasActive = true;
+        }
       });
+      
+      // Vérifier les tags sélectionnés dans les multiselects (affichage visuel)
+      var selectedTags = document.querySelectorAll('#tripzzy-filter-form .multiselect-dropdown .optext');
+      if (selectedTags.length > 0) {
+        hasActive = true;
+      }
+      
+      // Vérifier les sliders (prix et durée)
+      var priceSlider = document.querySelector('#tripzzy-filter-form [name="tripzzy_price"]');
+      if (priceSlider && priceSlider.noUiSlider) {
+        var priceValues = priceSlider.noUiSlider.get();
+        var priceMin = priceSlider.noUiSlider.options.range.min;
+        var priceMax = priceSlider.noUiSlider.options.range.max;
+        if (priceValues[0] != priceMin || priceValues[1] != priceMax) {
+          hasActive = true;
+        }
+      }
+      
+      var durationSlider = document.querySelector('#tripzzy-filter-form [name="tripzzy_trip_duration"]');
+      if (durationSlider && durationSlider.noUiSlider) {
+        var durationValues = durationSlider.noUiSlider.get();
+        var durationMin = durationSlider.noUiSlider.options.range.min;
+        var durationMax = durationSlider.noUiSlider.options.range.max;
+        if (durationValues[0] != durationMin || durationValues[1] != durationMax) {
+          hasActive = true;
+        }
+      }
+      
+      return hasActive;
     }
 
-    // Mise à jour initiale
-    updateButton();
+    // Mettre à jour la visibilité du bouton "Réinitialiser" toutes les 200ms
+    setInterval(function() {
+      var hasFilter = hasActiveFilter();
+      if (clearAllBtn) {
+        clearAllBtn.style.display = hasFilter ? 'block' : 'none';
+      }
+    }, 200);
   }
 
   if (document.readyState === 'loading') {

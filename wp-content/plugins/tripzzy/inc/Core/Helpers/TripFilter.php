@@ -239,7 +239,7 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 					$term_class = $children ? 'child-term' : '';
 					?>
 					<option value="<?php echo esc_attr( $term->slug ); ?>" class="<?php echo esc_attr( $term_class ); ?>" <?php echo esc_attr( in_array( $term->slug, $selected_terms, true ) ? 'selected' : '' ); ?> >
-						<?php echo esc_attr( $term->name ); ?> (<?php echo esc_html( $term->count ); ?>)
+						<?php echo esc_attr( $term->name ); ?>
 					</option>
 					<?php
 					if ( is_array( $term->children ) && count( $term->children ) > 0 ) {
@@ -532,24 +532,30 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 					  clearAllBtn.addEventListener('click', function(e){
 						e.preventDefault();
 						
-						// Réinitialiser tous les selects
-						var selects = filterArea.querySelectorAll('select.tripzzy-filter-dropdown');
-						if (typeof jQuery !== 'undefined') {
-						  selects.forEach(function(select) {
-							jQuery(select).val(null).trigger('change');
-						  });
-						} else {
-						  selects.forEach(function(select) {
-							if (select.multiple) {
-							  Array.from(select.options).forEach(function(option) {
-								option.selected = false;
-							  });
-							} else {
-							  select.selectedIndex = 0;
-							}
-							select.dispatchEvent(new Event('change'));
-						  });
+						// Annuler toute requête AJAX en cours
+						if (activeAjaxController) {
+						  activeAjaxController.abort();
+						  activeAjaxController = null;
 						}
+						
+						// Annuler le timeout de updateButtonWithCount
+						if (updateButtonTimeout) {
+						  clearTimeout(updateButtonTimeout);
+						  updateButtonTimeout = null;
+						}
+						
+						// Réinitialiser tous les selects (sans déclencher les événements change)
+						var selects = filterArea.querySelectorAll('select.tripzzy-filter-dropdown');
+						selects.forEach(function(select) {
+						  if (select.multiple) {
+							Array.from(select.options).forEach(function(option) {
+							  option.selected = false;
+							});
+						  } else {
+							select.selectedIndex = 0;
+						  }
+						  // Ne pas déclencher l'événement change pour éviter updateButtonWithCount
+						});
 						
 						// Réinitialiser les sliders de prix et durée
 						var priceSlider = filterArea.querySelector('[name="tripzzy_price"]');
@@ -593,12 +599,18 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						}
 						
 						// Recharger la page pour réinitialiser complètement
-						window.location.href = window.location.pathname;
+						// Attendre un peu pour s'assurer que la requête est bien annulée
+						setTimeout(function() {
+						  window.location.href = window.location.pathname;
+						}, 100);
 					  });
 					}
 					
-					// Fonction pour mettre à jour le texte du bouton avec le nombre de résultats
+					// Variables globales pour la gestion des requêtes AJAX
 					var updateButtonTimeout;
+					var activeAjaxController = null;
+					
+					// Fonction pour mettre à jour le texte du bouton avec le nombre de résultats
 					function updateButtonWithCount() {
 					  // Annuler le timeout précédent (debounce)
 					  if (updateButtonTimeout) {
@@ -607,18 +619,19 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 					  
 					  // Attendre 300ms après le dernier changement avant de faire la requête
 					  updateButtonTimeout = setTimeout(function() {
+						// Récupérer les données du formulaire
+						var form = document.querySelector('#tripzzy-filter-form');
+						if (!form || typeof jQuery === 'undefined') {
+						  return;
+						}
+						
 						if (!hasActiveFilters()) {
 						  // Pas de filtres actifs, remettre le texte par défaut
 						  var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
 						  if (submitBtnText) {
 							submitBtnText.textContent = '<?php esc_html_e( 'Afficher les résultats', 'tripzzy' ); ?>';
+							submitBtnText.innerHTML = '<?php esc_html_e( 'Afficher les résultats', 'tripzzy' ); ?>';
 						  }
-						  return;
-						}
-						
-						// Récupérer les données du formulaire
-						var form = document.querySelector('#tripzzy-filter-form');
-						if (!form || typeof jQuery === 'undefined') {
 						  return;
 						}
 						
@@ -682,13 +695,15 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						});
 						
 						// Récupérer les valeurs des sliders et les ajouter
-						var priceSlider = filterArea.querySelector('[name="tripzzy_price"]');
-						var durationSlider = filterArea.querySelector('[name="tripzzy_trip_duration"]');
+						// Chercher dans le formulaire d'abord, puis dans filterArea
+						var priceSlider = form.querySelector('[name="tripzzy_price"]') || filterArea.querySelector('[name="tripzzy_price"]');
+						var durationSlider = form.querySelector('[name="tripzzy_trip_duration"]') || filterArea.querySelector('[name="tripzzy_trip_duration"]');
 						
 						if (priceSlider && priceSlider.noUiSlider) {
 						  var priceValues = priceSlider.noUiSlider.get();
 						  var priceMin = priceSlider.noUiSlider.options.range.min;
 						  var priceMax = priceSlider.noUiSlider.options.range.max;
+						  // Toujours inclure les valeurs si elles sont différentes des min/max
 						  if (priceValues[0] != priceMin || priceValues[1] != priceMax) {
 							data['tripzzy_price[]'] = priceValues;
 							data.tripzzy_price_changed = true;
@@ -699,6 +714,7 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						  var durationValues = durationSlider.noUiSlider.get();
 						  var durationMin = durationSlider.noUiSlider.options.range.min;
 						  var durationMax = durationSlider.noUiSlider.options.range.max;
+						  // Toujours inclure les valeurs si elles sont différentes des min/max
 						  if (durationValues[0] != durationMin || durationValues[1] != durationMax) {
 							data['tripzzy_trip_duration[]'] = durationValues;
 							data.tripzzy_trip_duration_changed = true;
@@ -712,8 +728,22 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						data.is_trips = true;
 						data.is_taxonomy = false;
 						
-						// Debug: afficher les données envoyées (à retirer en production)
-						console.log('Données brutes:', data);
+						// Debug: afficher les données envoyées
+						console.log('=== TRIPZZY FILTER === Données brutes:', data);
+						
+						// Vérifier qu'on a au moins une taxonomie ou un filtre
+						var hasAnyFilter = false;
+						for (var key in data) {
+						  if (data.hasOwnProperty(key) && key !== 'action' && key !== 'loadDataFromFilters' && key !== 'paged' && key !== 'is_trips' && key !== 'is_taxonomy' && key !== 'tripzzy_nonce') {
+							hasAnyFilter = true;
+							break;
+						  }
+						}
+						
+						if (!hasAnyFilter) {
+						  console.log('=== TRIPZZY FILTER === Aucun filtre actif, arrêt de la requête');
+						  return;
+						}
 						
 						// Préparer les données pour l'envoi AJAX
 						// Les taxonomies doivent être envoyées comme tableaux sans []
@@ -734,7 +764,7 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						  }
 						}
 						
-						console.log('Données formatées pour AJAX:', ajaxData);
+						console.log('=== TRIPZZY FILTER === Données formatées pour AJAX:', ajaxData);
 						
 						// Le backend attend les données en JSON dans le body (INPUT_PAYLOAD)
 						// Récupérer le nonce depuis le formulaire
@@ -756,12 +786,22 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						
 						// Faire la requête AJAX en JSON avec fetch (comme le code original)
 						if (typeof fetch !== 'undefined') {
+						  // Annuler la requête précédente si elle existe
+						  if (activeAjaxController) {
+							activeAjaxController.abort();
+						  }
+						  
+						  // Créer un nouveau AbortController pour cette requête
+						  activeAjaxController = new AbortController();
+						  var signal = activeAjaxController.signal;
+						  
 						  fetch(urlWithParams, {
 							method: 'POST',
 							headers: {
 							  'Content-Type': 'application/json; charset=utf-8'
 							},
-							body: JSON.stringify(ajaxData)
+							body: JSON.stringify(ajaxData),
+							signal: signal
 						  })
 						  .then(function(response) {
 							if (!response.ok) {
@@ -771,28 +811,39 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFilter' ) ) {
 						  })
 						  .then(function(data) {
 							console.log('Réponse AJAX:', data);
+							var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
+							
 							if (data && data.success && data.data) {
 							  var count = data.data.found_posts || 0;
-							  var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
 							  
 							  console.log('Nombre de voyages trouvés:', count);
 							  
 							  if (submitBtnText) {
 								if (count > 0) {
-								  if (count === 1) {
-									submitBtnText.textContent = '<?php esc_html_e( 'Afficher le voyage', 'tripzzy' ); ?>';
-								  } else {
-									submitBtnText.textContent = '<?php echo esc_js( __( 'Afficher les', 'tripzzy' ) ); ?> ' + count + ' <?php echo esc_js( __( 'voyages', 'tripzzy' ) ); ?>';
-								  }
+								  // Format: "Afficher les résultats (X)"
+								  var newText = 'Afficher les résultats (' + count + ')';
+								  submitBtnText.textContent = newText;
+								  submitBtnText.innerHTML = newText; // Utiliser aussi innerHTML pour forcer la mise à jour
 								} else {
-								  submitBtnText.textContent = '<?php esc_html_e( 'Aucun résultat', 'tripzzy' ); ?>';
+								  submitBtnText.textContent = 'Aucun résultat';
+								  submitBtnText.innerHTML = 'Aucun résultat';
 								}
 							  }
 							} else {
 							  console.error('Réponse invalide:', data);
+							  // En cas de réponse invalide, ne pas changer le texte du bouton
+							  // ou afficher un message d'erreur
+							  if (submitBtnText && !submitBtnText.textContent.match(/Afficher les résultats \(\d+\)/)) {
+								submitBtnText.textContent = '<?php esc_html_e( 'Afficher les résultats', 'tripzzy' ); ?>';
+							  }
 							}
 						  })
 						  .catch(function(error) {
+							// Ignorer les erreurs d'abort (requête annulée intentionnellement)
+							if (error.name === 'AbortError') {
+							  return;
+							}
+							
 							console.error('Erreur AJAX:', error);
 							// En cas d'erreur, garder le texte par défaut
 							var submitBtnText = document.querySelector('#tz-filter-form-submit-btn .tz-submit-btn-text');
