@@ -13,12 +13,21 @@ $voyage_titles = array();
 foreach ($voyage_ids as $id) {
     if (!empty($id) && is_numeric($id)) {
         $title = get_the_title($id);
-        if ($title) {
+        if ($title && $title !== 'Auto Draft' && $title !== 'Aucun titre') {
             $voyage_titles[] = $title;
         }
     }
 }
-$voyage_title = !empty($voyage_titles) ? implode(', ', $voyage_titles) : $devis->voyage;
+// Utiliser les titres trouvés, sinon le champ voyage, sinon la destination
+if (!empty($voyage_titles)) {
+    $voyage_title = implode(', ', $voyage_titles);
+} elseif (!empty($devis->voyage) && trim($devis->voyage) !== '') {
+    $voyage_title = $devis->voyage;
+} elseif (!empty($devis->destination) && trim($devis->destination) !== '') {
+    $voyage_title = $devis->destination;
+} else {
+    $voyage_title = '';
+}
 
 $current_status = $settings['statuses'][$devis->status] ?? array('label' => 'Inconnu', 'color' => '#6c757d');
 ?>
@@ -123,12 +132,10 @@ $current_status = $settings['statuses'][$devis->status] ?? array('label' => 'Inc
                 </div>
                 <div class="card-body">
                     <div class="voyage-info-grid">
-                        <?php if (!empty($voyage_title) && trim($voyage_title) !== '') : ?>
                         <div class="info-group full-width">
                             <label><?php _e('Voyage', 'devis-pro'); ?></label>
-                            <p><strong><?php echo esc_html($voyage_title); ?></strong></p>
+                            <p><strong><?php echo !empty($voyage_title) && trim($voyage_title) !== '' ? esc_html($voyage_title) : '-'; ?></strong></p>
                         </div>
-                        <?php endif; ?>
                         <div class="info-group">
                             <label><?php _e('Date de départ', 'devis-pro'); ?></label>
                             <p><?php echo esc_html($devis->depart ?: '-'); ?></p>

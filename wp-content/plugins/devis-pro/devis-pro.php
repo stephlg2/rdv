@@ -1731,7 +1731,7 @@ class Devis_Pro
     private function subscribe_to_mailchimp($email, $prenom = '', $nom = '')
     {
         // Configuration Mailchimp
-        $api_key = 'a3f93d63cb54bbc41ac09b517556d2f7-us7';
+        $api_key = '882eb2d87143d3f79bbf6eaaad68024c-us7';
         $list_id = '431ec50da9';
 
         // Extraire le datacenter de la clé API

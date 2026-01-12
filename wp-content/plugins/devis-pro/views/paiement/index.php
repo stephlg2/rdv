@@ -309,6 +309,81 @@ if (!empty($devis->voyage)) {
 .payment-processed .contact-info a:hover {
     text-decoration: underline;
 }
+
+.payment-reassurance {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 40px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+    border: 1px solid #e5e5e5;
+    text-align: center;
+}
+
+.payment-reassurance h3 {
+    font-size: 22px !important;
+    color: #333 !important;
+    margin: 0 0 10px !important;
+    font-weight: 600 !important;
+}
+
+.payment-reassurance p {
+    color: #666;
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+.payment-reassurance .reassurance-title {
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.payment-reassurance .reassurance-subtitle {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.payment-reassurance .reassurance-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.payment-reassurance .reassurance-contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 15px;
+    color: #555;
+}
+
+.payment-reassurance .reassurance-contact-item a {
+    color: #de5b09;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.payment-reassurance .reassurance-contact-item a:hover {
+    color: #c44d07;
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .payment-reassurance {
+        padding: 25px 20px;
+    }
+    
+    .payment-reassurance .reassurance-contact {
+        flex-direction: column;
+        align-items: center;
+    }
+}
 </style>
 
 <div class="devis-payment-wrapper">
@@ -475,6 +550,24 @@ if (!empty($devis->voyage)) {
                     </div>
                 </div>
             <?php endif; ?>
+        </div>
+
+        <!-- Bloc de réassurance -->
+        <div class="payment-reassurance">
+            <h3><?php _e('Une question ?', 'devis-pro'); ?></h3>
+            <p class="reassurance-subtitle"><?php _e('Notre équipe vous accompagne :', 'devis-pro'); ?></p>
+            <div class="reassurance-contact">
+                <div class="reassurance-contact-item">
+                    <span><?php _e('Par téléphone :', 'devis-pro'); ?></span>
+                    <a href="tel:0272644034">02 72 64 40 34</a>
+                    <span>/</span>
+                    <a href="tel:0214001253">02 14 00 12 53</a>
+                </div>
+                <div class="reassurance-contact-item">
+                    <span><?php _e('Ou par mail :', 'devis-pro'); ?></span>
+                    <a href="mailto:contact@rdvasie.com">contact@rdvasie.com</a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
