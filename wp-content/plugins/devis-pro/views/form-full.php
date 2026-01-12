@@ -1043,6 +1043,9 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
         var formData = new FormData(form);
         formData.append('action', 'devis_pro_submit_form');
         
+        // Envoyer l'URL actuelle pour déterminer si on doit rediriger
+        formData.append('current_url', window.location.href);
+        
         // S'assurer que les destinations sont bien envoyées
         var destinationsInput = document.getElementById('destinations-values');
         if (destinationsInput && destinationsInput.value) {
@@ -1086,54 +1089,20 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
                 submitBtn.style.opacity = '1';
                 submitBtn.style.cursor = 'default';
                 
-                // Réinitialiser le formulaire après 3 secondes
-                setTimeout(function() {
-                    form.reset();
-                    submitBtn.textContent = originalBtnText;
-                    submitBtn.style.backgroundColor = '';
-                    submitBtn.style.opacity = '';
-                    submitBtn.style.cursor = '';
-                    submitBtn.disabled = false;
-                    isSubmitting = false;
-                    
-                    // Réinitialiser les destinations
-                    var destinationsInput = document.getElementById('destinations-values');
-                    var destinationsDisplay = document.getElementById('destinations-display');
-                    var destinationOtherInput = document.getElementById('destination-other');
-                    var destinationOtherTextInput = document.getElementById('destination-other-input');
-                    var destinationOtherWrapper = document.getElementById('destination-other-wrapper');
-                    var destinationOtherCheckbox = document.getElementById('destination-other-checkbox');
-                    
-                    if (destinationsInput) {
-                        destinationsInput.value = '';
+                // Rediriger uniquement si on est sur la page demande-de-devis
+                if (data.data && data.data.redirect) {
+                    // Redirection pour la page demande-de-devis
+                    setTimeout(function() {
+                        window.location.href = data.data.redirect;
+                    }, 1000);
+                } else if (data.data && data.data.html) {
+                    // Pour les formulaires des fiches voyage, afficher le message de succès
+                    // Le formulaire reste dans la sidebar/modal
+                    var formWrapper = form.closest('.devis-full-form') || form.parentElement;
+                    if (formWrapper) {
+                        formWrapper.innerHTML = data.data.html;
                     }
-                    if (destinationsDisplay) {
-                        destinationsDisplay.value = '';
-                    }
-                    if (destinationOtherInput) {
-                        destinationOtherInput.value = '';
-                    }
-                    if (destinationOtherTextInput) {
-                        destinationOtherTextInput.value = '';
-                    }
-                    if (destinationOtherWrapper) {
-                        destinationOtherWrapper.style.display = 'none';
-                    }
-                    if (destinationOtherCheckbox) {
-                        destinationOtherCheckbox.checked = false;
-                    }
-                    
-                    // Réinitialiser selectedDestinations via la fonction globale si disponible
-                    if (window.selectedDestinations !== undefined) {
-                        window.selectedDestinations.length = 0;
-                    }
-                    
-                    // Décocher toutes les checkboxes de destinations
-                    var allCheckboxes = document.querySelectorAll('#destinations-grid input[type="checkbox"]');
-                    allCheckboxes.forEach(function(checkbox) {
-                        checkbox.checked = false;
-                    });
-                }, 3000);
+                }
             } else {
                 // Erreur
                 alert(data.data?.message || 'Erreur lors de l\'envoi du formulaire');

@@ -227,6 +227,8 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
             
             var formData = new FormData(form);
             formData.append('action', 'devis_pro_submit_form');
+            // Envoyer l'URL actuelle pour déterminer si on doit rediriger
+            formData.append('current_url', window.location.href);
             
             fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                 method: 'POST',
@@ -235,11 +237,19 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
             .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data.success) {
-                    // Remplacer par le message de succès
-                    if (formWrapper) {
-                        formWrapper.innerHTML = data.data.html;
-                    } else {
-                        form.innerHTML = data.data.html;
+                    // Rediriger uniquement si on est sur la page demande-de-devis
+                    if (data.data && data.data.redirect) {
+                        // Redirection pour la page demande-de-devis
+                        setTimeout(function() {
+                            window.location.href = data.data.redirect;
+                        }, 1000);
+                    } else if (data.data && data.data.html) {
+                        // Pour les formulaires des fiches voyage, afficher le message de succès
+                        if (formWrapper) {
+                            formWrapper.innerHTML = data.data.html;
+                        } else {
+                            form.innerHTML = data.data.html;
+                        }
                     }
                 } else {
                     alert(data.data || 'Une erreur est survenue');

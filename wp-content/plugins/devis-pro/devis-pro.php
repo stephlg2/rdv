@@ -1133,9 +1133,17 @@ class Devis_Pro
         if (!wp_doing_ajax() && isset($_POST['devis_pro_submit']) && isset($_POST['devis_pro_nonce']) && wp_verify_nonce($_POST['devis_pro_nonce'], 'devis_pro_form')) {
             $result = $this->process_front_form($_POST, $atts);
             if ($result['success']) {
-                ob_start();
-                include DEVIS_PRO_PATH . 'views/form-success.php';
-                return ob_get_clean();
+                // Rediriger vers la page de confirmation uniquement si on est sur la page demande-de-devis
+                $current_url = isset($_SERVER['REQUEST_URI']) ? esc_url_raw($_SERVER['REQUEST_URI']) : '';
+                if (strpos($current_url, '/demande-de-devis/') !== false) {
+                    wp_redirect(home_url('/votre-demande-de-devis-a-bien-ete-envoyee/'));
+                    exit;
+                } else {
+                    // Pour les autres pages, afficher le message de succès
+                    ob_start();
+                    include DEVIS_PRO_PATH . 'views/form-success.php';
+                    return ob_get_clean();
+                }
             }
             $error = $result['error'];
         }
@@ -1159,9 +1167,17 @@ class Devis_Pro
         if (isset($_POST['devis_pro_submit']) && isset($_POST['devis_pro_nonce']) && wp_verify_nonce($_POST['devis_pro_nonce'], 'devis_pro_form')) {
             $result = $this->process_front_form($_POST, $atts);
             if ($result['success']) {
-                ob_start();
-                include DEVIS_PRO_PATH . 'views/form-success.php';
-                return ob_get_clean();
+                // Rediriger vers la page de confirmation uniquement si on est sur la page demande-de-devis
+                $current_url = isset($_SERVER['REQUEST_URI']) ? esc_url_raw($_SERVER['REQUEST_URI']) : '';
+                if (strpos($current_url, '/demande-de-devis/') !== false) {
+                    wp_redirect(home_url('/votre-demande-de-devis-a-bien-ete-envoyee/'));
+                    exit;
+                } else {
+                    // Pour les autres pages, afficher le message de succès
+                    ob_start();
+                    include DEVIS_PRO_PATH . 'views/form-success.php';
+                    return ob_get_clean();
+                }
             }
             $error = $result['error'];
         }
@@ -1596,15 +1612,27 @@ class Devis_Pro
         }
 
         if ($result['success']) {
-            // Retourner le HTML du message de succès
-            ob_start();
-            include DEVIS_PRO_PATH . 'views/form-success.php';
-            $html = ob_get_clean();
-
-            wp_send_json_success(array(
-                    'message' => __('Demande envoyée avec succès !', 'devis-pro'),
-                    'html' => $html
-            ));
+            // Vérifier si on est sur la page demande-de-devis pour rediriger
+            $current_url = isset($_POST['current_url']) ? esc_url_raw($_POST['current_url']) : '';
+            $is_demande_devis_page = (strpos($current_url, '/demande-de-devis/') !== false);
+            
+            if ($is_demande_devis_page) {
+                // Rediriger vers la page de confirmation uniquement pour la page demande-de-devis
+                $redirect_url = home_url('/votre-demande-de-devis-a-bien-ete-envoyee/');
+                wp_send_json_success(array(
+                        'message' => __('Demande envoyée avec succès !', 'devis-pro'),
+                        'redirect' => $redirect_url
+                ));
+            } else {
+                // Pour les formulaires des fiches voyage, retourner le HTML de succès
+                ob_start();
+                include DEVIS_PRO_PATH . 'views/form-success.php';
+                $html = ob_get_clean();
+                wp_send_json_success(array(
+                        'message' => __('Demande envoyée avec succès !', 'devis-pro'),
+                        'html' => $html
+                ));
+            }
         } else {
             wp_send_json_error($result['error']);
         }

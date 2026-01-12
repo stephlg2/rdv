@@ -210,8 +210,13 @@ class Devis_Pro_Email {
             
             <h3 style="color:#333;border-bottom:2px solid #de5b09;padding-bottom:10px;">Récapitulatif de votre demande</h3>
             
-            <ul style="list-style:none;padding:0;">
-                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Destination :</strong> ' . esc_html($devis->destination ?: 'Non spécifiée') . '</li>';
+            <ul style="list-style:none;padding:0;">';
+        
+        // Afficher la destination seulement si elle est renseignée et non vide
+        if (!empty(trim($devis->destination)) && trim($devis->destination) !== '-') {
+            $message .= '
+                <li style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Destination :</strong> ' . esc_html($devis->destination) . '</li>';
+        }
         
         // Afficher le voyage seulement s'il est renseigné
         if (!empty($voyage)) {
