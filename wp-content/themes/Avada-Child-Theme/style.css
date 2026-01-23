@@ -1407,6 +1407,10 @@ a.fusion-button:hover {
    ========================================================================== */
 
 @media screen and (max-width: 992px) {
+
+    .sous-titre-intro {
+    font-size: 3.5vw !important;
+}
     .single-tripzzy h1.entry-title {
         margin: 0 30px !important;
     }
@@ -1509,9 +1513,10 @@ a.fusion-button:hover {
     }
 
     .home h1.fusion-title-heading.title-heading-center {
-        padding-top: 5vh !important;
-        margin-bottom: 5vh !important;
+        padding-top: 15vh !important;
+        margin-bottom: 2vh !important;
         line-height: 5vh !important;
+        font-size: 7vw !important;
     }
 
     .home h1.fusion-title-heading.title-heading-center br {

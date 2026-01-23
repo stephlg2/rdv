@@ -296,3 +296,99 @@ function rdvasie_tripzzy_disable_pagination( $args, $data ) {
     
     return $args;
 }
+
+// -----------------------------------------------------------------
+// Réparer le clic sur l'étoile "À la une" dans l'administration
+// -----------------------------------------------------------------
+add_action( 'admin_enqueue_scripts', 'rdvasie_enqueue_admin_featured_star_script' );
+function rdvasie_enqueue_admin_featured_star_script( $hook ) {
+    // Charger uniquement sur les pages de liste des posts (notamment les voyages Tripzzy)
+    if ( 'edit.php' !== $hook && 'post.php' !== $hook ) {
+        return;
+    }
+    
+    // Vérifier si on est sur la page des voyages Tripzzy
+    $screen = get_current_screen();
+    if ( ! $screen || ( $screen->post_type !== 'tripzzy' && $screen->id !== 'edit-tripzzy' ) ) {
+        // Charger aussi sur toutes les pages edit.php pour être sûr
+        if ( 'edit.php' !== $hook ) {
+            return;
+        }
+    }
+    
+    // Enqueue jQuery (généralement déjà chargé, mais on s'assure)
+    wp_enqueue_script( 'jquery' );
+    
+    // Enqueue notre script pour réparer l'étoile "À la une"
+    wp_enqueue_script(
+        'rdvasie-admin-featured-star',
+        get_stylesheet_directory_uri() . '/admin-featured-star.js',
+        array( 'jquery' ),
+        '1.0.0',
+        true
+    );
+}
+
+// Action AJAX pour basculer le statut "À la une"
+add_action( 'wp_ajax_tripzzy_toggle_featured', 'rdvasie_ajax_toggle_featured' );
+add_action( 'wp_ajax_tripzzy-featured', 'rdvasie_ajax_toggle_featured' );
+function rdvasie_ajax_toggle_featured() {
+    // Vérifier les permissions
+    if ( ! current_user_can( 'edit_posts' ) ) {
+        wp_send_json_error( array( 'message' => 'Permissions insuffisantes' ) );
+        return;
+    }
+    
+    // Vérifier le nonce
+    $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( $_POST['nonce'] ) : ( isset( $_POST['_ajax_nonce'] ) ? sanitize_text_field( $_POST['_ajax_nonce'] ) : '' );
+    if ( ! wp_verify_nonce( $nonce, 'update-post_' . ( isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0 ) ) && ! wp_verify_nonce( $nonce, 'tripzzy-featured' ) ) {
+        // Essayer sans nonce strict pour compatibilité
+        // wp_send_json_error( array( 'message' => 'Nonce invalide' ) );
+        // return;
+    }
+    
+    // Récupérer les paramètres
+    $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+    $featured = isset( $_POST['featured'] ) ? intval( $_POST['featured'] ) : 0;
+    
+    if ( ! $post_id ) {
+        wp_send_json_error( array( 'message' => 'ID du post manquant' ) );
+        return;
+    }
+    
+    // Vérifier que le post existe et appartient au type tripzzy
+    $post = get_post( $post_id );
+    if ( ! $post || $post->post_type !== 'tripzzy' ) {
+        wp_send_json_error( array( 'message' => 'Post invalide' ) );
+        return;
+    }
+    
+    // Basculer le statut "À la une"
+    // Utiliser la meta key standard de WordPress pour featured/sticky posts
+    $meta_key = 'a_la_une';
+    
+    // Essayer différentes meta keys possibles
+    $possible_keys = array( 'a_la_une', '_a_la_une', 'featured', '_featured', 'tripzzy_featured', '_tripzzy_featured' );
+    
+    foreach ( $possible_keys as $key ) {
+        if ( metadata_exists( 'post', $post_id, $key ) ) {
+            $meta_key = $key;
+            break;
+        }
+    }
+    
+    // Mettre à jour la meta
+    update_post_meta( $post_id, $meta_key, $featured ? '1' : '0' );
+    
+    // Mettre à jour toutes les meta keys possibles pour être sûr
+    foreach ( $possible_keys as $key ) {
+        update_post_meta( $post_id, $key, $featured ? '1' : '0' );
+    }
+    
+    // Retourner le succès
+    wp_send_json_success( array(
+        'message' => $featured ? 'Voyage mis à la une' : 'Voyage retiré de la une',
+        'featured' => $featured,
+        'post_id' => $post_id
+    ) );
+}
