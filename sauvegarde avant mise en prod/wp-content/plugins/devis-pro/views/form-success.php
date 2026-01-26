@@ -109,7 +109,7 @@ if (!defined('ABSPATH')) {
     <h3>Demande envoyée !</h3>
     
     <p class="main-text">
-        Merci pour votre demande. Notre équipe va l'étudier et vous recontactera très rapidement.
+        Merci pour votre demande. Notre équipe l'étudiera et vous contactera très rapidement.
     </p>
     
     <div class="email-info">

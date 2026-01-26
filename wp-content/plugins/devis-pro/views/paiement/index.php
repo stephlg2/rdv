@@ -559,9 +559,8 @@ if (!empty($devis->voyage)) {
             <div class="reassurance-contact">
                 <div class="reassurance-contact-item">
                     <span><?php _e('Par téléphone :', 'devis-pro'); ?></span>
-                    <a href="tel:0272644034">02 72 64 40 34</a>
-                    <span>/</span>
                     <a href="tel:0214001253">02 14 00 12 53</a>
+           
                 </div>
                 <div class="reassurance-contact-item">
                     <span><?php _e('Ou par mail :', 'devis-pro'); ?></span>

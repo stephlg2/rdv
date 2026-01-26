@@ -7,6 +7,15 @@ function theme_enqueue_styles() {
     
     // WebP Loader - Remplace automatiquement les images par leur version WebP
     wp_enqueue_script( 'webp-loader', get_stylesheet_directory_uri() . '/webp-loader.js', array(), '1.0.0', true );
+    
+    // Message personnalisé pour les filtres Tripzzy sans résultats
+    wp_enqueue_script( 
+        'tripzzy-no-results-message', 
+        get_stylesheet_directory_uri() . '/tripzzy-no-results-message.js', 
+        array( 'jquery' ), 
+        '1.0.0', 
+        true 
+    );
 }
 add_action( 'wp_enqueue_scripts', 'theme_enqueue_styles', 20 );
 

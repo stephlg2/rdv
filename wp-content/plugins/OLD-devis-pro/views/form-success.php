@@ -81,7 +81,7 @@ if (!defined('ABSPATH')) {
     <h3><?php _e('Demande envoyée !', 'devis-pro'); ?></h3>
     
     <p>
-        <?php _e('Merci pour votre demande. Notre équipe va l\'étudier et vous recontactera très rapidement.', 'devis-pro'); ?>
+        <?php _e('Merci pour votre demande. Notre équipe l\'étudiera et vous contactera très rapidement.', 'devis-pro'); ?>
     </p>
     
     <div class="email-info">
