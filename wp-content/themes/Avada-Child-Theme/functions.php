@@ -307,6 +307,80 @@ function rdvasie_tripzzy_disable_pagination( $args, $data ) {
 }
 
 // -----------------------------------------------------------------
+// Ajouter le champ address au schéma Organization/TravelAgency de Yoast SEO
+// -----------------------------------------------------------------
+add_filter( 'wpseo_schema_organization', 'rdvasie_add_address_to_organization_schema' );
+function rdvasie_add_address_to_organization_schema( $data ) {
+    // Toujours transformer Organization en TravelAgency pour une agence de voyage
+    if ( isset( $data['@type'] ) && $data['@type'] === 'Organization' ) {
+        $data['@type'] = 'TravelAgency';
+    }
+    
+    // Toujours ajouter l'adresse si elle n'existe pas déjà
+    if ( ! isset( $data['address'] ) ) {
+        $data['address'] = array(
+            '@type' => 'PostalAddress',
+            'streetAddress' => '6 rue René Viviani – Immeuble KANOA',
+            'addressLocality' => 'Nantes',
+            'postalCode' => '44200',
+            'addressCountry' => 'FR',
+        );
+    }
+    
+    // Ajouter le téléphone si manquant
+    if ( ! isset( $data['telephone'] ) ) {
+        $data['telephone'] = '02 14 00 12 53';
+    }
+    
+    // Ajouter le logo/image si manquant
+    if ( ! isset( $data['image'] ) ) {
+        $data['image'] = 'https://www.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png';
+    }
+    
+    // Ajouter priceRange (fourchette de prix)
+    if ( ! isset( $data['priceRange'] ) ) {
+        $data['priceRange'] = '500-5000 EUR';
+    }
+    
+    return $data;
+}
+
+// Ajouter aussi un schéma TravelAgency spécifique sur la page d'accueil si nécessaire
+add_action( 'wp_head', 'rdvasie_add_travelagency_schema_homepage', 5 );
+function rdvasie_add_travelagency_schema_homepage() {
+    // Seulement sur la page d'accueil
+    if ( ! is_front_page() ) {
+        return;
+    }
+    
+    // Vérifier si Yoast SEO génère déjà un schéma Organization/TravelAgency
+    // Si oui, on laisse le filtre ci-dessus s'en occuper
+    // Sinon, on génère un schéma TravelAgency complet
+    
+    $schema = array(
+        '@context' => 'https://schema.org',
+        '@type' => 'TravelAgency',
+        'name' => 'Rendez-vous avec l\'Asie',
+        'url' => home_url('/'),
+        'email' => 'contact@rdvasie.com',
+        'telephone' => '02 14 00 12 53',
+        'image' => 'https://www.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png',
+        'priceRange' => '500-5000 EUR',
+        'address' => array(
+            '@type' => 'PostalAddress',
+            'streetAddress' => '6 rue René Viviani – Immeuble KANOA',
+            'addressLocality' => 'Nantes',
+            'postalCode' => '44200',
+            'addressCountry' => 'FR',
+        ),
+    );
+    
+    echo '<script type="application/ld+json">' . "\n";
+    echo wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+    echo "\n</script>\n";
+}
+
+// -----------------------------------------------------------------
 // Réparer le clic sur l'étoile "À la une" dans l'administration
 // -----------------------------------------------------------------
 add_action( 'admin_enqueue_scripts', 'rdvasie_enqueue_admin_featured_star_script' );

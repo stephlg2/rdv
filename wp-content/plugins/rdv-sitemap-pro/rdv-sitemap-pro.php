@@ -2005,6 +2005,15 @@ class RDV_Sitemap_Pro {
                 'url' => home_url('/'),
                 'email' => $company_email,
                 'telephone' => $company_phone,
+                'image' => 'https://www.rdvasie.com/wp-content/uploads/2025/07/rdv-asie-bmanc-homepage.png',
+                'priceRange' => '500-5000 EUR',
+                'address' => array(
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => '6 rue René Viviani – Immeuble KANOA',
+                    'addressLocality' => 'Nantes',
+                    'postalCode' => '44200',
+                    'addressCountry' => 'FR',
+                ),
             ),
         );
         

@@ -1,0 +1,336 @@
+/* RDV Pop-up Devis - Styles harmonisés avec le site */
+
+/* Variables de couleurs du thème */
+:root {
+    --rdv-popup-primary: #e85d04;
+    --rdv-popup-secondary: #f48c06;
+    --rdv-popup-beige: #f6efe6;
+    --rdv-popup-dark: #1a1a2e;
+    --rdv-popup-text: #333333;
+    --rdv-popup-text-light: #666666;
+    --rdv-popup-white: #ffffff;
+}
+
+/* Overlay */
+.rdv-popup-devis {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: rdv-popup-fade-in 0.3s ease-out;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.rdv-popup-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgb(0 0 0 / 38%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* Container */
+.rdv-popup-container {
+    position: relative;
+    background: var(--rdv-popup-white);
+    border-radius: 12px;
+    box-shadow: 0 25px 70px rgba(26, 26, 46, 0.35);
+    max-width: 520px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 1;
+    animation: rdv-popup-scale-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center;
+    border: 1px solid rgba(232, 93, 4, 0.1);
+}
+
+/* Bouton de fermeture */
+.rdv-popup-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 38px;
+    height: 38px;
+    border: none;
+    background: var(--rdv-popup-beige);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.25s ease;
+    z-index: 10;
+    color: var(--rdv-popup-text-light);
+    font-size: 24px;
+    line-height: 1;
+    padding: 0;
+}
+
+.rdv-popup-close:hover {
+    background: var(--rdv-popup-primary);
+    color: var(--rdv-popup-white);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.rdv-popup-close:focus-visible {
+    outline: 3px solid var(--rdv-popup-primary);
+    outline-offset: 2px;
+}
+
+.rdv-popup-close span {
+    display: block;
+    font-weight: 300;
+    line-height: 1;
+}
+
+/* Contenu */
+.rdv-popup-content {
+    padding: 45px 40px 40px;
+    text-align: center;
+    position: relative;
+}
+
+/* Décoration subtile en arrière-plan */
+.rdv-popup-content::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--rdv-popup-primary) 0%, var(--rdv-popup-secondary) 100%);
+    border-radius: 2px;
+    opacity: 0.3;
+}
+
+.rdv-popup-title {
+    font-family: 'Oswald', Arial, Helvetica, sans-serif;
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--rdv-popup-dark);
+    margin: 0 0 18px 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    text-transform: none;
+}
+
+.rdv-popup-message {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    color: var(--rdv-popup-text);
+    line-height: 1.7;
+    margin: 0 0 35px 0;
+    font-weight: 400;
+}
+
+/* Actions */
+.rdv-popup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.rdv-popup-button {
+    display: inline-block;
+    padding: 18px 36px;
+    background: linear-gradient(135deg, var(--rdv-popup-primary) 0%, var(--rdv-popup-secondary) 100%);
+    color: var(--rdv-popup-white) !important;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 6px 20px rgba(232, 93, 4, 0.35);
+    border: none;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.rdv-popup-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.rdv-popup-button:hover::before {
+    left: 100%;
+}
+
+.rdv-popup-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(232, 93, 4, 0.45);
+    background: linear-gradient(135deg, #d14d00 0%, #e07a00 100%);
+}
+
+.rdv-popup-button:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(232, 93, 4, 0.35);
+}
+
+.rdv-popup-button:focus-visible {
+    outline: 3px solid var(--rdv-popup-primary);
+    outline-offset: 3px;
+}
+
+.rdv-popup-close-text {
+    background: transparent;
+    border: none;
+    color: var(--rdv-popup-text-light);
+    font-size: 14px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    cursor: pointer;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.rdv-popup-close-text:hover {
+    color: var(--rdv-popup-primary);
+    background: var(--rdv-popup-beige);
+    text-decoration: none;
+}
+
+.rdv-popup-close-text:focus-visible {
+    outline: 2px solid var(--rdv-popup-primary);
+    outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes rdv-popup-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes rdv-popup-scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .rdv-popup-container {
+        width: 95%;
+        border-radius: 10px;
+        max-width: none;
+    }
+    
+    .rdv-popup-content {
+        padding: 35px 28px 30px;
+    }
+    
+    .rdv-popup-close {
+        top: 12px;
+        right: 12px;
+        width: 34px;
+        height: 34px;
+        font-size: 22px;
+    }
+    
+    .rdv-popup-title {
+        font-size: 19px;
+        margin-bottom: 15px;
+    }
+    
+    .rdv-popup-message {
+        font-size: 15px;
+        margin-bottom: 28px;
+        line-height: 1.6;
+    }
+    
+    .rdv-popup-button {
+        padding: 16px 30px;
+        font-size: 15px;
+    }
+    
+    .rdv-popup-actions {
+        gap: 12px;
+    }
+}
+
+/* État fermé */
+.rdv-popup-devis.rdv-popup-closing {
+    animation: rdv-popup-fade-out 0.2s ease-out forwards;
+}
+
+.rdv-popup-devis.rdv-popup-closing .rdv-popup-container {
+    animation: rdv-popup-scale-out 0.2s ease-out forwards;
+}
+
+@keyframes rdv-popup-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes rdv-popup-scale-out {
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+/* Accessibilité */
+.rdv-popup-devis[aria-hidden="true"] {
+    display: none !important;
+}
+
+/* Amélioration visuelle avec accent beige */
+.rdv-popup-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--rdv-popup-primary) 0%, var(--rdv-popup-secondary) 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+/* Scrollbar personnalisée pour le container */
+.rdv-popup-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.rdv-popup-container::-webkit-scrollbar-track {
+    background: var(--rdv-popup-beige);
+    border-radius: 4px;
+}
+
+.rdv-popup-container::-webkit-scrollbar-thumb {
+    background: var(--rdv-popup-primary);
+    border-radius: 4px;
+}
+
+.rdv-popup-container::-webkit-scrollbar-thumb:hover {
+    background: var(--rdv-popup-secondary);
+}
