@@ -1453,7 +1453,10 @@ if ( ! function_exists( 'avada_contact_info' ) ) {
 
 		if ( $phone_number || $email ) {
 			$html .= '<div class="fusion-contact-info">';
-			$html .= '<span class="fusion-contact-info-phone-number">' . $phone_number . '</span>';
+			if ( $phone_number ) {
+				$phone_number_clean = preg_replace( '/[^0-9+]/', '', $phone_number );
+				$html .= '<span class="fusion-contact-info-phone-number"><a href="tel:' . esc_attr( $phone_number_clean ) . '">' . $phone_number . '</a></span>';
+			}
 			if ( $phone_number && $email ) {
 				if ( 'top' === $header_position ) {
 					$html .= '<span class="fusion-header-separator">' . apply_filters( 'avada_header_separator', '|' ) . '</span>';
