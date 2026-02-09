@@ -27,9 +27,9 @@ if (! defined('ABSPATH')) {
 				<?php endif; ?>
 				<?php avada_logo(); ?>
 				</div>
-				<div class="col-menu"> 
+				<nav class="col-menu"> 
 					<?php wp_nav_menu(array('theme_location' => 'main_navigation')); ?>
-				</div>
+			</nav>
 				<?php avada_mobile_menu_search(); ?>
 				<?php if ('flyout' === Avada()->settings->get('mobile_menu_design')) : ?>
 		</div>
