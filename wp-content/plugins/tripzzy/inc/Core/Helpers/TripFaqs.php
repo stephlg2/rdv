@@ -77,6 +77,117 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFaqs' ) ) {
 		}
 
 		/**
+		 * Format FAQ answer with proper line breaks and lists.
+		 *
+		 * @param string $answer The FAQ answer text.
+		 * @since 1.0.0
+		 * @return string Formatted answer HTML.
+		 */
+		private static function format_faq_answer( $answer ) {
+			if ( empty( $answer ) ) {
+				return '';
+			}
+
+			// Check if answer already contains HTML tags (from WYSIWYG editor)
+			// Strip tags and compare - if different, HTML is present
+			$stripped = strip_tags( $answer );
+			$has_html = $stripped !== $answer;
+			
+			if ( $has_html ) {
+				// If HTML is present, return it as-is without modification
+				// The HTML from TinyMCE is already properly formatted with <p>, <br>, <strong>, etc.
+				// Just ensure it's properly escaped for output
+				return $answer;
+			}
+
+			// Split by line breaks to process line by line
+			$lines = preg_split( '/\r\n|\r|\n/', $answer );
+			$formatted_parts = array();
+			$current_list = array();
+			$in_list = false;
+			$in_paragraph = false;
+
+			foreach ( $lines as $index => $line ) {
+				$trimmed_line = trim( $line );
+				$is_empty = empty( $trimmed_line );
+				
+				// Check if line starts with a dash (bullet point) - supports -, –, —
+				if ( ! $is_empty && preg_match( '/^[-–—]\s*(.+)$/u', $trimmed_line, $matches ) ) {
+					// Close any open paragraph before starting list
+					if ( $in_paragraph ) {
+						$formatted_parts[] = '</p>';
+						$in_paragraph = false;
+					}
+					
+					if ( ! $in_list ) {
+						$in_list = true;
+						$formatted_parts[] = '<ul>';
+					}
+					$current_list[] = '<li>' . esc_html( trim( $matches[1] ) ) . '</li>';
+				} else {
+					// Not a list item
+					if ( $in_list && ! empty( $current_list ) ) {
+						// Close the list
+						$formatted_parts = array_merge( $formatted_parts, $current_list );
+						$formatted_parts[] = '</ul>';
+						$current_list = array();
+						$in_list = false;
+					}
+					
+					if ( $is_empty ) {
+						// Empty line - close paragraph if open
+						if ( $in_paragraph ) {
+							$formatted_parts[] = '</p>';
+							$in_paragraph = false;
+						}
+						// Add a <br> for spacing if not at the start/end and there's content before
+						if ( ! empty( $formatted_parts ) && $index < count( $lines ) - 1 ) {
+							$last_part = end( $formatted_parts );
+							if ( ! preg_match( '/<\/p>|<\/ul>|<\/li>$/u', $last_part ) ) {
+								$formatted_parts[] = '<br>';
+							}
+						}
+					} else {
+						// Non-empty line
+						if ( ! $in_paragraph ) {
+							$formatted_parts[] = '<p>';
+							$in_paragraph = true;
+						} else {
+							// Add <br> before continuing in same paragraph (for line breaks)
+							$formatted_parts[] = '<br>';
+						}
+						$formatted_parts[] = esc_html( $trimmed_line );
+					}
+				}
+			}
+
+			// Close any open list
+			if ( $in_list && ! empty( $current_list ) ) {
+				$formatted_parts = array_merge( $formatted_parts, $current_list );
+				$formatted_parts[] = '</ul>';
+			}
+
+			// Close any open paragraph
+			if ( $in_paragraph ) {
+				$formatted_parts[] = '</p>';
+			}
+
+			$formatted = implode( '', $formatted_parts );
+			
+			// Clean up empty paragraphs and normalize <br> tags
+			$formatted = preg_replace( '/<p>\s*<\/p>/u', '', $formatted );
+			$formatted = preg_replace( '/<p>\s+/u', '<p>', $formatted );
+			$formatted = preg_replace( '/\s+<\/p>/u', '</p>', $formatted );
+			// Remove <br> tags that are immediately after opening tags or before closing tags
+			$formatted = preg_replace( '/<(p|ul|li)>\s*<br\s*\/?>\s*/iu', '<$1>', $formatted );
+			$formatted = preg_replace( '/\s*<br\s*\/?>\s*<\/(p|ul|li)>/iu', '</$1>', $formatted );
+			// Normalize <br> tags
+			$formatted = preg_replace( '/<br\s*\/?>/iu', '<br>', $formatted );
+
+			return $formatted;
+		}
+
+		/**
 		 * Render Trip infos to display it in frontend.
 		 *
 		 * @param int     $trip_id Trip id.
@@ -107,7 +218,11 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\TripFaqs' ) ) {
 							<li>
 								<span class="accordion-title faq-question"><?php echo esc_html( $faq['question'] ); ?></span>
 								<div class="accordion-content faq-answer">
-									<?php echo wp_kses_post( do_shortcode( wpautop( $faq['answer'] ) ) ); ?>
+									<?php 
+									$formatted_answer = self::format_faq_answer( $faq['answer'] );
+									// Use wp_kses_post which allows all standard post HTML tags (strong, em, a, br, p, ul, li, etc.)
+									echo wp_kses_post( do_shortcode( $formatted_answer ) ); 
+									?>
 								</div>
 							</li>
 						<?php endforeach; ?>

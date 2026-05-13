@@ -475,3 +475,33 @@ function rdvasie_ajax_toggle_featured() {
         'post_id' => $post_id
     ) );
 }
+
+// -----------------------------------------------------------------
+// Accessibilité / SEO : ajouter alt="" aux placeholders Avada (sans mise à jour du thème)
+// Corrige l'erreur Lighthouse "Des éléments d'image n'ont pas d'attribut [alt]"
+// pour les img.fusion-empty-dims-img-placeholder (buffer PHP = HTML corrigé pour les crawlers)
+// -----------------------------------------------------------------
+add_action( 'template_redirect', 'rdvasie_start_ob_for_alt_placeholder', 0 );
+function rdvasie_start_ob_for_alt_placeholder() {
+	if ( is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		return;
+	}
+	ob_start( 'rdvasie_fix_placeholder_alt_callback' );
+}
+
+function rdvasie_fix_placeholder_alt_callback( $html ) {
+	if ( ! is_string( $html ) || $html === '' ) {
+		return $html;
+	}
+	// 1) Alt sur les placeholders Avada
+	$html = preg_replace_callback( '/<img([^>]+)>/i', function( $m ) {
+		$tag = $m[0];
+		if ( strpos( $tag, 'fusion-empty-dims-img-placeholder' ) !== false && strpos( $tag, ' alt=' ) === false ) {
+			return str_replace( '<img', '<img alt=""', $tag );
+		}
+		return $tag;
+	}, $html );
+	// 2) Retirer la barre de navigation scroll section du HTML (plus de masquage CSS)
+	$html = preg_replace( '/<nav[^>]*fusion-scroll-section-nav[^>]*>.*?<\/nav>/is', '', $html );
+	return $html;
+}

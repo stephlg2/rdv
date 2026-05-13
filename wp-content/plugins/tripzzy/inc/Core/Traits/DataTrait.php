@@ -63,10 +63,45 @@ trait DataTrait {
 			return $maybe_json;
 		}
 
+		// WP returns meta values as array of values when using get_post_meta( $id ) without key.
+		// Tripzzy expects JSON string in many metas; clone plugins sometimes store serialized/escaped strings.
+		if ( is_array( $maybe_json ) ) {
+			if ( 1 === count( $maybe_json ) && isset( $maybe_json[0] ) ) {
+				$maybe_json = $maybe_json[0];
+			} elseif ( isset( $maybe_json['0'] ) && 1 === count( $maybe_json ) ) {
+				$maybe_json = $maybe_json['0'];
+			} else {
+				// Fallback: if it is already a structured array/object, just return it.
+				return $maybe_json;
+			}
+		}
+
+		// Try unserialize first (some plugins store PHP-serialized arrays/strings).
+		if ( is_string( $maybe_json ) && function_exists( 'maybe_unserialize' ) ) {
+			$unserialized = maybe_unserialize( $maybe_json );
+			if ( $unserialized !== $maybe_json ) {
+				$maybe_json = $unserialized;
+			}
+		}
+
+		// If we now have an array/object, return it.
+		if ( is_array( $maybe_json ) || is_object( $maybe_json ) ) {
+			return $maybe_json;
+		}
+
+		// Normalize to string for JSON decoding attempts.
 		if ( ! is_string( $maybe_json ) ) {
 			$maybe_json = self::data_to_json( $maybe_json );
 		}
+
+		// Some clone tools add slashes/escape quotes; attempt both raw and stripped.
 		$decoded = json_decode( $maybe_json, true );
+		if ( null === $decoded && is_string( $maybe_json ) ) {
+			$stripped = stripslashes( $maybe_json );
+			if ( $stripped !== $maybe_json ) {
+				$decoded = json_decode( $stripped, true );
+			}
+		}
 
 		if ( ! $decoded && ! is_array( $decoded ) ) { // Do not go inside even empty array as $decoded.
 			return ( $maybe_json );

@@ -54,6 +54,7 @@ final class Tripzzy extends Base {
 		require_once sprintf( '%1$sinc/Core/Helpers/MetaHelpers.php', TRIPZZY_ABSPATH );
 		require_once sprintf( '%1$sinc/Admin/Compatibility/Compatibility.php', TRIPZZY_ABSPATH );
 		require_once sprintf( '%1$sinc/Admin/Compatibility/Ajax.php', TRIPZZY_ABSPATH );
+		require_once sprintf( '%1$sinc/Admin/TripzzyAdminCustomFields.php', TRIPZZY_ABSPATH );
 		// Set up localisation.
 		add_action( 'plugins_loaded', array( 'Tripzzy\Core\Bases\Base', 'load_plugin_textdomain' ) );
 		if ( ! tripzzy_compatibility() ) {

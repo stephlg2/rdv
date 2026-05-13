@@ -90,15 +90,19 @@ if ( ! class_exists( 'Tripzzy\Core\Shortcodes\TripSearchShortcode' ) ) {
 
 			if ( $hide_price ) {
 				$fields['tripzzy_price']['enabled'] = false;
+				$fields['tripzzy_price']['force_enabled'] = false;
 			}
 			if ( $hide_destination ) {
 				$fields['destination']['enabled'] = false;
+				$fields['destination']['force_enabled'] = false;
 			}
 			if ( $hide_trip_type ) {
 				$fields['trip_type']['enabled'] = false;
+				$fields['trip_type']['force_enabled'] = false;
 			}
 			if ( $hide_trip_activities ) {
 				$fields['trip_activities']['enabled'] = false;
+				$fields['trip_activities']['force_enabled'] = false;
 			}
 
 			$attributes = array(

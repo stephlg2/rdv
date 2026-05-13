@@ -520,6 +520,12 @@ if ( ! class_exists( 'Tripzzy\Core\Helpers\Trip' ) ) {
 				$meta = $single ? '' : array();
 			}
 			$meta = self::json_to_data( $meta );
+
+			// Defensive: when caller expects an array (e.g. itineraries/gallery/packages),
+			// ensure we never return a scalar which would break JS `.map()` usage.
+			if ( ! $single && ! is_array( $meta ) ) {
+				$meta = array();
+			}
 			return $meta;
 		}
 
