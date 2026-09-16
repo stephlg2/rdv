@@ -21,7 +21,6 @@ if (isset($_GET['action'])) {
 check_admin_referer('ti-notification');
 $type = sanitize_text_field(wp_unslash($_GET['notification']));
 $action = sanitize_text_field(wp_unslash($_GET['action']));
-
 $options = $pluginManagerInstance->getNotificationOptions($type);
 switch ($action) {
 case 'later':

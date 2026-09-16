@@ -184,7 +184,7 @@ class Fusion_Envato_API {
 		$response = $this->request( $url, $args );
 
 		// @todo Find out which errors could be returned & handle them in the UI.
-		if ( empty( $response ) || ! empty( $response['error'] ) ) {
+		if ( is_wp_error( $response ) || empty( $response ) || ! empty( $response['error'] ) ) {
 			return false;
 		}
 
@@ -212,7 +212,7 @@ class Fusion_Envato_API {
 		$url      = 'https://api.envato.com/v3/market/catalog/item?id=' . $id;
 		$response = $this->request( $url, $args );
 
-		if ( empty( $response ) ) {
+		if ( is_wp_error( $response ) || empty( $response ) ) {
 			return false;
 		}
 
@@ -243,6 +243,9 @@ class Fusion_Envato_API {
 
 		$response = $this->request( $url, $args );
 
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 		if ( empty( $response ) || empty( $response['results'] ) ) {
 			return $themes;
 		}
@@ -293,7 +296,7 @@ class Fusion_Envato_API {
 
 		$response = $this->request( $url, $args );
 
-		if ( empty( $response ) || empty( $response['results'] ) ) {
+		if ( is_wp_error( $response ) || empty( $response ) || empty( $response['results'] ) ) {
 			return $plugins;
 		}
 

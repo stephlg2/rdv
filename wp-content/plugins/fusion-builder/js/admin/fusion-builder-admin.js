@@ -1,4 +1,4 @@
-/* global ajaxurl, fusionBuilderConfig, fusionBuilderAdmin */
+/* global ajaxurl, fusionBuilderConfig */
 jQuery( document ).ready( function() {
 
 	jQuery( '.fusion-builder-admin-toggle-heading' ).on( 'click', function() {
@@ -17,8 +17,6 @@ jQuery( document ).ready( function() {
 
 		jQuery( this ).parent().find( '#enable_builder_ui_by_default' ).val( jQuery( this ).data( 'value' ) );
 		jQuery( this ).parent().find( '#enable_builder_sticky_publish_buttons' ).val( jQuery( this ).data( 'value' ) );
-		jQuery( this ).parent().find( '#remove_empty_attributes' ).val( jQuery( this ).data( 'value' ) );
-		jQuery( this ).parent().find( '#site_data_consent' ).val( jQuery( this ).data( 'value' ) );
 		jQuery( this ).parent().find( '.ui-button' ).removeClass( 'ui-state-active' );
 		jQuery( this ).addClass( 'ui-state-active' );
 	} );
@@ -26,41 +24,6 @@ jQuery( document ).ready( function() {
 	jQuery( '.fusion-check-all' ).on( 'click', function( e ) {
 		e.preventDefault();
 		jQuery( this ).parents( '.fusion-builder-option' ).find( '.fusion-builder-option-field input' ).prop( 'checked', true );
-	} );
-
-	jQuery( '.awb-access-control-dashboard-menu' ).on( 'click', function() {
-		if ( ! jQuery( this ).prop( 'checked' ) ) {
-			jQuery( this ).parents( '.awb-access-items-cpt' ).find( '.awb-access-item-cpt:not(.awb-dashboard-access) input' ).prop( 'checked', false ).attr( 'disabled', true );
-			jQuery( this ).parents( '.awb-access-items-cpt' ).find( '.awb-access-item-cpt:not(.awb-dashboard-access)' ).addClass( 'disabled' );
-		} else {
-			jQuery( this ).parents( '.awb-access-items-cpt' ).find( '.awb-access-item-cpt:not(.awb-dashboard-access) input' ).removeAttr( 'disabled', true );
-			jQuery( this ).parents( '.awb-access-items-cpt' ).find( '.awb-access-item-cpt:not(.awb-dashboard-access)' ).removeClass( 'disabled' );
-		}
-	} );
-
-	jQuery( '.awb-access-control-item-title' ).on( 'click', function() {
-		const parent         = jQuery( this ).closest( '.fusion-builder-option-field' ),
-			target           = jQuery( this ).data( 'target' ),
-			current          = parent.find( '.awb-access-control-item-title.open' ).data( 'target' ),
-			additionalHeight = jQuery( '.avada-db-menu-sticky' ).outerHeight() + jQuery( '#wpadminbar' ).outerHeight();
-
-		// Remove classes.
-		if ( current !== target ) {
-			parent.find( '.awb-access-control-item-accordion' ).slideUp( 50 );
-			parent.find( '.awb-access-control-item-title' ).removeClass( 'open' );
-		}
-
-		// Toggle classes.
-		jQuery( this ).toggleClass( 'open' );
-		parent.find( '#' + target ).slideToggle( 100, function() {
-
-			// Scroll to item.
-			if ( ! jQuery( this ).is( ':hidden' ) ) {
-				jQuery( 'html, body' ).animate( {
-					scrollTop: jQuery( this ).closest( '.awb-access-control-item' ).offset().top - additionalHeight
-				}, 500 );
-			}
-		} );
 	} );
 
 	jQuery( '.fusion-uncheck-all' ).on( 'click', function( e ) {
@@ -92,7 +55,7 @@ jQuery( document ).ready( function() {
 		.done( function( elements ) {
 			var $checkboxes = jQuery( '.fusion-builder-element-checkboxes' );
 			if ( 'object' === typeof elements && 'object' === typeof elements.data ) {
-				jQuery.each( elements.data, function( element, disable ) { // eslint-disable-line no-unused-vars
+				jQuery.each( elements.data, function( index, element ) {
 					var $checkbox = $checkboxes.find( 'input[value="' + element + '"]' );
 					if ( ! $checkbox.closest( 'li' ).hasClass( 'hidden' ) ) {
 						$checkbox.prop( 'checked', false );
@@ -108,9 +71,18 @@ jQuery( document ).ready( function() {
 		} );
 	} );
 
+	jQuery( '.enable-builder-ui .ui-button' ).on( 'click', function( e ) {
+		e.preventDefault();
+
+		jQuery( this ).parent().find( '#enable_builder_ui_by_default' ).val( jQuery( this ).data( 'value' ) );
+		jQuery( this ).parent().find( '#enable_builder_sticky_publish_buttons' ).val( jQuery( this ).data( 'value' ) );
+		jQuery( this ).parent().find( '.ui-button' ).removeClass( 'ui-state-active' );
+		jQuery( this ).addClass( 'ui-state-active' );
+	} );
+
 
 	jQuery( '#fusion-library-type' ).on( 'change', function( event ) {
-		if ( 'templates' === jQuery( event.target ).val() || 'post_cards' === jQuery( event.target ).val() || 'mega_menus' === jQuery( event.target ).val()  ) {
+		if ( 'templates' === jQuery( event.target ).val() || 'post_cards' === jQuery( event.target ).val() ) {
 			jQuery( '#fusion-global-field' ).css( { display: 'none' } );
 		} else {
 			jQuery( '#fusion-global-field' ).css( { display: 'flex' } );
@@ -142,43 +114,6 @@ jQuery( document ).ready( function() {
 	// Prevent form being submitted multiple times.
 	jQuery( '#fusion-create-layout-form, #fusion-create-template-form' ).on( 'submit', function() {
 		jQuery( this ).find( 'input[type="submit"]' ).prop( 'disabled', true );
-	} );
-
-	// Remove Avada Studio content.
-	jQuery( '#awb-remove-studio-content' ).on( 'click', function( event ) {
-		var $this = jQuery( this ),
-			confirmResponse;
-
-		event.preventDefault();
-
-		// Early exit if process is already started.
-		if ( $this.hasClass( 'disabled' ) ) {
-			return;
-		}
-
-		confirmResponse = confirm( fusionBuilderAdmin.remove_all_studio_content ); // eslint-disable-line no-alert
-		if ( ! confirmResponse ) {
-			return;
-		}
-
-		// Show spinner.
-		$this.next().show();
-		$this.addClass( 'disabled' );
-
-		jQuery.ajax( {
-			url: ajaxurl,
-			method: 'POST',
-			data: {
-				action: 'awb_studio_remove_content',
-				nonce: jQuery( '#awb_remove_studio_content' ).val()
-			}
-			} ).done( function( response ) { // eslint-disable-line no-unused-vars
-			} ).fail( function() {
-				jQuery( '.awb-remove-studio-content-status' ).show();
-			} ).always( function() {
-				$this.next().hide();
-				$this.removeClass( 'disabled' );
-			} );
 	} );
 
 } );

@@ -43,11 +43,14 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			public function __construct() {
 				parent::__construct();
 				add_filter( 'fusion_attr_counters-box-shortcode', [ $this, 'parent_attr' ] );
+				add_filter( 'fusion_attr_counter-box-container', [ $this, 'container_attr' ] );
 				add_shortcode( 'fusion_counters_box', [ $this, 'render_parent' ] );
 
 				add_filter( 'fusion_attr_counter-box-shortcode', [ $this, 'child_attr' ] );
 				add_filter( 'fusion_attr_counter-box-shortcode-icon', [ $this, 'icon_attr' ] );
+				add_filter( 'fusion_attr_counter-box-shortcode-unit', [ $this, 'unit_attr' ] );
 				add_filter( 'fusion_attr_counter-box-shortcode-counter', [ $this, 'counter_attr' ] );
+				add_filter( 'fusion_attr_counter-box-shortcode-counter-container', [ $this, 'counter_container_attr' ] );
 				add_filter( 'fusion_attr_counter-box-shortcode-content', [ $this, 'content_attr' ] );
 				add_shortcode( 'fusion_counter_box', [ $this, 'render_child' ] );
 
@@ -59,31 +62,28 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			 * @static
 			 * @access public
 			 * @since 2.0.0
-			 * @param 'parent'|'child' $context Whether we want parent or child.
+			 * @param string $context Whether we want parent or child.
+			 *                        Returns array( parent, child ) if empty.
 			 * @return array
 			 */
 			public static function get_element_defaults( $context = '' ) {
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$parent = [
-					'margin_top'       => '',
-					'margin_right'     => '',
-					'margin_bottom'    => '',
-					'margin_left'      => '',
 					'hide_on_mobile'   => fusion_builder_default_visibility( 'string' ),
 					'class'            => '',
 					'id'               => '',
 					'animation_offset' => $fusion_settings->get( 'animation_offset' ),
-					'body_color'       => '',
-					'body_size'        => '',
-					'border_color'     => '',
-					'color'            => '',
+					'body_color'       => strtolower( $fusion_settings->get( 'counter_box_body_color' ) ),
+					'body_size'        => fusion_library()->sanitize->size( $fusion_settings->get( 'counter_box_body_size' ) ),
+					'border_color'     => strtolower( $fusion_settings->get( 'counter_box_border_color' ) ),
+					'color'            => strtolower( $fusion_settings->get( 'counter_box_color' ) ),
 					'columns'          => '',
 					'icon'             => '',
-					'icon_size'        => '',
+					'icon_size'        => fusion_library()->sanitize->size( $fusion_settings->get( 'counter_box_icon_size' ) ),
 					'icon_top'         => strtolower( $fusion_settings->get( 'counter_box_icon_top' ) ),
-					'title_size'       => '',
+					'title_size'       => fusion_library()->sanitize->size( $fusion_settings->get( 'counter_box_title_size' ) ),
 				];
 				$child  = [
 					'class'     => '',
@@ -147,12 +147,13 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			 * @static
 			 * @access public
 			 * @since 2.0.0
-			 * @param 'parent'|'child' $context Whether we want parent or child.
+			 * @param string $context Whether we want parent or child.
+			 *                        Returns array( parent, child ) if empty.
 			 * @return array
 			 */
 			public static function get_element_extras( $context = '' ) {
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$parent = [
 					'counter_speed' => $fusion_settings->get( 'counter_box_speed' ),
@@ -205,19 +206,20 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_parent( $args, $content = '' ) {
+				global $fusion_settings;
 
-				$this->parent_args                  = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_counters_box' );
-				$this->parent_args['title_size']    = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['title_size'], '' );
-				$this->parent_args['icon_size']     = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['icon_size'], '' );
-				$this->parent_args['body_size']     = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['body_size'], '' );
-				$this->parent_args['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_bottom'], 'px' );
-				$this->parent_args['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_left'], 'px' );
-				$this->parent_args['margin_right']  = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_right'], 'px' );
-				$this->parent_args['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_top'], 'px' );
-				$this->parent_args['columns']       = min( 6, $this->parent_args['columns'] );
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_counters_box' );
 
-				$this->args     = $this->parent_args;
-				$this->defaults = self::get_element_defaults( 'parent' );
+				$defaults['title_size'] = FusionBuilder::validate_shortcode_attr_value( $defaults['title_size'], '' );
+				$defaults['icon_size']  = FusionBuilder::validate_shortcode_attr_value( $defaults['icon_size'], '' );
+				$defaults['body_size']  = FusionBuilder::validate_shortcode_attr_value( $defaults['body_size'], '' );
+
+				extract( $defaults );
+
+				$this->parent_args = $defaults;
+
+				$this->parent_args['columns'] = min( 6, $this->parent_args['columns'] );
+
 				$this->set_num_of_columns( $content );
 
 				$html = '<div ' . FusionBuilder::attributes( 'counters-box-shortcode' ) . '>' . do_shortcode( $content ) . '</div>';
@@ -238,25 +240,11 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			 * @return array
 			 */
 			public function parent_attr() {
-				$css_vars = [
-					'margin_top',
-					'margin_right',
-					'margin_bottom',
-					'margin_left',
-					'body_color',
-					'body_size'  => [ 'callback' => [ 'Fusion_Sanitize', 'numeric_string' ] ],
-					'border_color',
-					'color',
-					'title_size' => [ 'callback' => [ 'Fusion_Sanitize', 'numeric_string' ] ],
-					'icon_size'  => [ 'callback' => [ 'Fusion_Sanitize', 'numeric_string' ] ],
-					'border_color',
-				];
 
 				$attr = fusion_builder_visibility_atts(
 					$this->parent_args['hide_on_mobile'],
 					[
 						'class' => 'fusion-counters-box counters-box row fusion-clearfix fusion-columns-' . $this->parent_args['columns'],
-						'style' => $this->get_css_vars_for_options( $css_vars ),
 					]
 				);
 
@@ -273,6 +261,20 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			}
 
 			/**
+			 * Builds the container attributes array.
+			 *
+			 * @access public
+			 * @since 1.0
+			 * @return array
+			 */
+			public function container_attr() {
+				return [
+					'class' => 'counter-box-container',
+					'style' => 'border: 1px solid ' . $this->parent_args['border_color'] . ';',
+				];
+			}
+
+			/**
 			 * Render the child shortcode
 			 *
 			 * @access public
@@ -283,40 +285,53 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			 */
 			public function render_child( $args, $content = '' ) {
 
-				$this->defaults         = self::get_element_defaults( 'child' );
-				$this->defaults['icon'] = $this->parent_args['icon'];
-
-				$this->child_args = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_counter_box' );
+				$defaults         = self::get_element_defaults( 'child' );
+				$defaults['icon'] = $this->parent_args['icon'];
+				$defaults         = FusionBuilder::set_shortcode_defaults( $defaults, $args, 'fusion_counter_box' );
 				$content          = apply_filters( 'fusion_shortcode_content', $content, 'fusion_counter_box', $args );
 
-				$this->child_args['value'] = str_replace( ',', '.', $this->child_args['value'] );
+				extract( $defaults );
 
-				$float = explode( '.', $this->child_args['value'] );
+				$this->child_args = $defaults;
+
+				$value                     = str_replace( ',', '.', $value );
+				$this->child_args['value'] = $value;
+
+				$float = explode( '.', $value );
 				if ( isset( $float[1] ) ) {
 					$this->child_args['decimals'] = strlen( $float[1] );
 				}
 
-				$unit_output = $this->child_args['unit'] ? '<span class="unit">' . $this->child_args['unit'] . '</span>' : '';
+				$unit_output = '';
+				if ( $unit ) {
+					$unit_output = '<span ' . FusionBuilder::attributes( 'counter-box-shortcode-unit' ) . '>' . $unit . '</span>';
+				}
 
-				$counter = '<span ' . FusionBuilder::attributes( 'counter-box-shortcode-counter' ) . '>' . ( 'up' === $this->child_args['direction'] ? 0 : $this->child_args['value'] ) . '</span>';
+				$init_value = $this->child_args['value'];
+				if ( 'up' === $direction ) {
+					$init_value = 0;
+				}
+
+				$counter = '<span ' . FusionBuilder::attributes( 'counter-box-shortcode-counter' ) . '>' . $init_value . '</span>';
 
 				$icon_output = '';
-				if ( $this->child_args['icon'] ) {
+				if ( $icon ) {
 					$icon_output = '<i ' . FusionBuilder::attributes( 'counter-box-shortcode-icon' ) . '></i>';
 				}
 
-				if ( 'prefix' === $this->child_args['unit_pos'] ) {
+				if ( 'prefix' === $unit_pos ) {
 					$counter = $icon_output . $unit_output . $counter;
 				} else {
 					$counter = $icon_output . $counter . $unit_output;
 				}
 
-				$counter_wrapper = '<div class="content-box-percentage content-box-counter">' . $counter . '</div>';
-				$content_output  = '<div class="counter-box-content">' . do_shortcode( $content ) . '</div>';
+				$counter_wrapper = '<div ' . FusionBuilder::attributes( 'counter-box-shortcode-counter-container' ) . '>' . $counter . '</div>';
+				$content_output  = '<div ' . FusionBuilder::attributes( 'counter-box-shortcode-content' ) . '>' . do_shortcode( $content ) . '</div>';
 
-				$html = '<div ' . FusionBuilder::attributes( 'counter-box-shortcode' ) . '><div class="counter-box-container">' . $counter_wrapper . $content_output . '</div></div>';
+				$html = '<div ' . FusionBuilder::attributes( 'counter-box-shortcode' ) . '><div ' . FusionBuilder::attributes( 'counter-box-container' ) . '>' . $counter_wrapper . $content_output . '</div></div>';
 
-				return apply_filters( 'fusion_element_counter_boxes_child_content', $html, $this->child_args );
+				return apply_filters( 'fusion_element_counter_boxes_child_content', $html, $args );
+
 			}
 
 			/**
@@ -331,12 +346,12 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 				$attr    = [];
 				$columns = 1;
 				if ( $this->parent_args['columns'] && ! empty( $this->parent_args['columns'] ) ) {
-					$columns = 12 / (int) $this->parent_args['columns'];
+					$columns = 12 / $this->parent_args['columns'];
 				}
 
 				$attr['class'] = 'fusion-counter-box fusion-column col-counter-box counter-box-wrapper col-lg-' . $columns . ' col-md-' . $columns . ' col-sm-' . $columns;
 
-				if ( 5 === (int) $this->parent_args['columns'] ) {
+				if ( '5' === $this->parent_args['columns'] || 5 === $this->parent_args['columns'] ) {
 					$attr['class'] = 'fusion-counter-box fusion-column col-counter-box counter-box-wrapper col-lg-2 col-md-2 col-sm-2';
 				}
 
@@ -362,7 +377,6 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 
 			}
 
-
 			/**
 			 * Builds the icon attributes array.
 			 *
@@ -374,12 +388,25 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 
 				$attr = [
 					'class'       => 'counter-box-icon fontawesome-icon ' . fusion_font_awesome_name_handler( $this->child_args['icon'] ),
+					'style'       => 'font-size:' . $this->parent_args['icon_size'] . 'px;',
 					'aria-hidden' => 'true',
 				];
 
 				return $attr;
 			}
 
+			/**
+			 * Builds the unit attributes array.
+			 *
+			 * @access public
+			 * @since 1.0
+			 * @return array
+			 */
+			public function unit_attr() {
+				return [
+					'class' => 'unit',
+				];
+			}
 
 			/**
 			 * Builds the counter attributes array.
@@ -395,6 +422,34 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 					'data-delimiter' => $this->child_args['delimiter'],
 					'data-direction' => $this->child_args['direction'],
 					'data-decimals'  => $this->child_args['decimals'],
+				];
+			}
+
+			/**
+			 * Builds the container attributes array.
+			 *
+			 * @access public
+			 * @since 1.0
+			 * @return array
+			 */
+			public function counter_container_attr() {
+				return [
+					'class' => 'content-box-percentage content-box-counter',
+					'style' => 'color:' . $this->parent_args['color'] . ';font-size:' . $this->parent_args['title_size'] . 'px;line-height:normal;',
+				];
+			}
+
+			/**
+			 * Builds the content attributes array.
+			 *
+			 * @access public
+			 * @since 1.0
+			 * @return array
+			 */
+			public function content_attr() {
+				return [
+					'class' => 'counter-box-content',
+					'style' => 'color:' . $this->parent_args['body_color'] . ';font-size:' . $this->parent_args['body_size'] . 'px;',
 				];
 			}
 
@@ -428,6 +483,11 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			public function add_styling() {
 				global $wp_version, $content_media_query, $six_fourty_media_query, $three_twenty_six_fourty_media_query, $ipad_portrait_media_query, $fusion_settings, $dynamic_css_helpers;
 
+				$main_elements = apply_filters( 'fusion_builder_element_classes', [ '.fusion-counters-box' ], '.fusion-counters-box' );
+
+				$elements = $dynamic_css_helpers->map_selector( $main_elements, ' .content-box-percentage' );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = fusion_library()->sanitize->color( $fusion_settings->get( 'counter_filled_color' ) );
+
 				$css[ $content_media_query ]['.fusion-counters-box .fusion-counter-box']['margin-bottom']                  = '20px';
 				$css[ $content_media_query ]['.fusion-counters-box .fusion-counter-box']['padding']                        = '0 15px';
 				$css[ $content_media_query ]['.fusion-counters-box .fusion-counter-box:last-child']['margin-bottom']       = '0';
@@ -447,14 +507,15 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 			 * @return void
 			 */
 			public function on_first_render() {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				Fusion_Dynamic_JS::enqueue_script(
 					'fusion-counters-box',
 					FusionBuilder::$js_folder_url . '/general/fusion-counters-box.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-counters-box.js',
-					[ 'jquery', 'fusion-animations', 'jquery-count-to' ],
-					FUSION_BUILDER_VERSION,
+					[ 'jquery', 'fusion-animations', 'jquery-count-to', 'jquery-appear' ],
+					'1',
 					true
 				);
 				Fusion_Dynamic_JS::localize_script(
@@ -525,15 +586,9 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 								'label'       => esc_html__( 'Counter Boxes Value Font Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the counter values and icons.', 'fusion-builder' ),
 								'id'          => 'counter_box_color',
-								'default'     => 'var(--awb-color5)',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--counter_box_color',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'counter_box_title_size'   => [
 								'label'       => esc_html__( 'Counter Boxes Value Font Size', 'fusion-builder' ),
@@ -542,12 +597,6 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 								'default'     => '50',
 								'type'        => 'slider',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--counter_box_title_size',
-										'callback' => [ 'number' ],
-									],
-								],
 								'choices'     => [
 									'min'  => '1',
 									'max'  => '200',
@@ -561,12 +610,6 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 								'default'     => '50',
 								'type'        => 'slider',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--counter_box_icon_size',
-										'callback' => [ 'number' ],
-									],
-								],
 								'choices'     => [
 									'min'  => '1',
 									'max'  => '500',
@@ -577,15 +620,9 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 								'label'       => esc_html__( 'Counter Boxes Body Font Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the counter boxes body text.', 'fusion-builder' ),
 								'id'          => 'counter_box_body_color',
-								'default'     => 'var(--awb-color8)',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--counter_box_body_color',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'counter_box_body_size'    => [
 								'label'       => esc_html__( 'Counter Boxes Body Font Size', 'fusion-builder' ),
@@ -594,12 +631,6 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 								'default'     => '14',
 								'type'        => 'slider',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--counter_box_body_size',
-										'callback' => [ 'number' ],
-									],
-								],
 								'choices'     => [
 									'min'  => '1',
 									'max'  => '200',
@@ -610,15 +641,9 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
 								'label'       => esc_html__( 'Counter Boxes Border Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the counter boxes border.', 'fusion-builder' ),
 								'id'          => 'counter_box_border_color',
-								'default'     => 'var(--awb-color3)',
+								'default'     => '#e2e2e2',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--counter_box_border_color',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'counter_box_icon_top'     => [
 								'label'       => esc_html__( 'Counter Boxes Icon On Top', 'fusion-builder' ),
@@ -649,7 +674,8 @@ if ( fusion_is_element_enabled( 'fusion_counters_box' ) ) {
  * @since 1.0
  */
 function fusion_element_counters_box() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -663,7 +689,7 @@ function fusion_element_counters_box() {
 				'preview'       => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-counter-box-preview.php',
 				'preview_id'    => 'fusion-builder-block-module-counter-box-preview-template',
 				'child_ui'      => true,
-				'help_url'      => 'https://avada.com/documentation/counter-boxes-element/',
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/counter-boxes-element/',
 				'params'        => [
 					[
 						'type'        => 'tinymce',
@@ -770,16 +796,6 @@ function fusion_element_counters_box() {
 							'bottom-in-view'  => esc_attr__( 'Bottom of element enters viewport', 'fusion-builder' ),
 						],
 						'default'     => '',
-					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_right'  => '',
-							'margin_bottom' => '',
-							'margin_left'   => '',
-						],
 					],
 					[
 						'type'        => 'checkbox_button_set',

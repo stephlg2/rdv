@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 		class FusionSC_FusionEvents extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The events counter.
 			 *
 			 * @access private
@@ -53,7 +62,7 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 			 */
 			public static function get_element_defaults() {
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$theme_option_content_padding = $fusion_settings->get( 'events_content_padding' );
 
@@ -120,7 +129,7 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
 					'pagination_global'                 => apply_filters( 'fusion_builder_events_pagination', 'no' ),
@@ -171,8 +180,8 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 			 */
 			public static function query( $defaults ) {
 
-				$fusion_settings = awb_get_fusion_settings();
-				$live_request    = false;
+				global $fusion_settings;
+				$live_request = false;
 
 				// From Ajax Request.
 				if ( isset( $_POST['model'] ) && isset( $_POST['model']['params'] ) && ! apply_filters( 'fusion_builder_live_request', false ) ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -228,7 +237,6 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 				if ( $defaults['cat_slug'] ) {
 					$terms             = explode( ',', $defaults['cat_slug'] );
 					$args['tax_query'] = [
-						'relation' => 'OR',
 						[
 							'taxonomy' => 'tribe_events_cat',
 							'field'    => 'slug',
@@ -247,7 +255,6 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 				wp_reset_postdata();
 				// Anything beyond here is for live preview.
 				$events = fusion_cached_query( $args );
-				$ids    = [];
 
 				if ( ! $events->have_posts() ) {
 					$return_data['placeholder'] = fusion_builder_placeholder( 'tribe_events', 'events' );
@@ -262,11 +269,6 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 
 					$thumbnail = '';
 					$post_id   = get_the_ID();
-
-					if ( in_array( $post_id, $ids, true ) ) {
-						continue;
-					}
-					$ids[] = $post_id;
 
 					if ( has_post_thumbnail( $post_id ) ) {
 						if ( 'auto' === $defaults['picture_size'] ) {
@@ -303,7 +305,7 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 					// No image set thumbnail.
 					if ( ! $thumbnail ) {
 						ob_start();
-						do_action( 'fusion_placeholder_image', 'fixed' );
+						do_action( 'fusion_render_placeholder_image', 'fixed' );
 						$placeholder = ob_get_clean();
 						$thumbnail   = str_replace( 'fusion-placeholder-image', ' fusion-placeholder-image tribe-events-event-image', $placeholder );
 					}
@@ -335,7 +337,8 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				$html     = '';
 				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_events' );
@@ -349,176 +352,168 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 
 				$this->args = $defaults;
 
-				if ( ! class_exists( 'Tribe__Events__Main' ) ) {
-					return '';
-				}
+				if ( class_exists( 'Tribe__Events__Main' ) ) {
 
-				$events = $this->query( $defaults );
+					$events = $this->query( $defaults );
 
-				extract( $defaults );
+					extract( $defaults );
 
-				if ( ! $events->have_posts() ) {
-					$this->fusion_events_counter++;
-					return fusion_builder_placeholder( 'tribe_events', 'events' );
-				}
+					if ( ! $events->have_posts() ) {
+						$this->fusion_events_counter++;
+						return fusion_builder_placeholder( 'tribe_events', 'events' );
+					}
 
-				if ( $events->have_posts() ) {
-					$ids     = [];
-					$html   .= '<div ' . FusionBuilder::attributes( 'events-shortcode' ) . '>';
-					$html   .= '<div class="fusion-events-wrapper" data-pages="' . $events->max_num_pages . '">';
-					$i       = 1;
-					$last    = false;
-					$columns = (int) $columns;
+					if ( $events->have_posts() ) {
+						$html   .= '<div ' . FusionBuilder::attributes( 'events-shortcode' ) . '>';
+						$html   .= '<div class="fusion-events-wrapper" data-pages="' . $events->max_num_pages . '">';
+						$i       = 1;
+						$last    = false;
+						$columns = (int) $columns;
 
-					while ( $events->have_posts() ) {
-						$events->the_post();
+						while ( $events->have_posts() ) {
+							$events->the_post();
 
-						$post_id = get_the_ID();
-
-						if ( in_array( $post_id, $ids, true ) ) {
-							continue;
-						}
-						$ids[] = $post_id;
-
-						if ( $i === $columns ) {
-							$last = true;
-						}
-
-						if ( $i > $columns ) {
-							$i    = 1;
-							$last = false;
-						}
-
-						if ( 1 === $columns ) {
-							$last = true;
-						}
-
-						$thumbnail = '';
-
-						$html .= '<div ' . FusionBuilder::attributes( 'events-shortcode-columns', $last ) . '>';
-						$html .= '<div class="fusion-column-wrapper">';
-
-						if ( has_post_thumbnail( $post_id ) ) {
-							if ( 'auto' === $picture_size ) {
-								fusion_library()->images->set_grid_image_meta(
-									[
-										'layout'       => 'grid',
-										'columns'      => $columns,
-										'gutter_width' => $column_spacing,
-									]
-								);
-
-								$thumbnail = get_the_post_thumbnail( $post_id, 'full' );
-
-								fusion_library()->images->set_grid_image_meta( [] );
-							} else {
-								$thumbnail = '<span class="tribe-events-event-image" style="background-image: url(' . get_the_post_thumbnail_url( $post_id ) . '); -webkit-background-size: cover; background-size: cover; background-position: center center;"></span>';
+							if ( $i === $columns ) {
+								$last = true;
 							}
-						} elseif ( class_exists( 'Tribe__Events__Pro__Main' ) ) {
-							$thumb_url = esc_url( trailingslashit( Tribe__Events__Pro__Main::instance()->pluginUrl ) . 'src/resources/images/tribe-related-events-placeholder.png' );
 
-							if ( 'auto' === $picture_size ) {
-								$title     = the_title_attribute(
-									[
-										'echo' => false,
-										'post' => $post_id,
-									]
-								);
-								$thumbnail = '<img class="fusion-events-placeholder" src="' . $thumb_url . '" alt="' . $title . '" />';
-							} else {
-								$thumbnail = '<span class="tribe-events-event-image" style="background-image: url(' . $thumb_url . '); -webkit-background-size: cover; background-size: cover; background-position: center center;"></span>';
+							if ( $i > $columns ) {
+								$i    = 1;
+								$last = false;
 							}
-						}
 
-						$html .= '<div class="fusion-events-thumbnail hover-type-' . $fusion_settings->get( 'ec_hover_type' ) . '">';
-						$html .= '<a href="' . get_the_permalink() . '" class="url" rel="bookmark" aria-label="' . the_title_attribute( [ 'echo' => false ] ) . '">';
+							if ( 1 === $columns ) {
+								$last = true;
+							}
 
-						if ( $thumbnail ) {
-							$html .= $thumbnail;
-						} else {
-							ob_start();
-							/**
-							 * The fusion_placeholder_image hook.
-							 *
-							 * @hooked fusion_render_placeholder_image - 10 (outputs the HTML for the placeholder image)
-							 */
-							do_action( 'fusion_placeholder_image', 'fixed' );
+							$thumbnail = '';
+							$post_id   = get_the_ID();
 
-							$placeholder = ob_get_clean();
-							$html       .= str_replace( 'fusion-placeholder-image', ' fusion-placeholder-image tribe-events-event-image', $placeholder );
-						}
+							$html .= '<div ' . FusionBuilder::attributes( 'events-shortcode-columns', $last ) . '>';
+							$html .= '<div class="fusion-column-wrapper">';
 
-						$html .= '</a>';
-						$html .= '</div>';
-						$html .= '<div class="fusion-events-content-wrapper" style="padding:' . $content_padding . ';">';
-						$html .= '<div class="fusion-events-meta">';
-						$html .= '<h2><a href="' . get_the_permalink() . '" class="url" rel="bookmark">' . get_the_title() . '</a></h2>';
-						$html .= '<h4>' . tribe_events_event_schedule_details() . '</h4>';
-						$html .= '</div>';
+							if ( has_post_thumbnail( $post_id ) ) {
+								if ( 'auto' === $picture_size ) {
+									fusion_library()->images->set_grid_image_meta(
+										[
+											'layout'       => 'grid',
+											'columns'      => $columns,
+											'gutter_width' => $column_spacing,
+										]
+									);
 
-						if ( 'no_text' !== $defaults['content_length'] ) {
-							$html .= '<div class="fusion-events-content">';
-							$html .= apply_filters( 'fusion_events_shortcode_content', $defaults['content_length'], $defaults['excerpt_length'], $defaults['strip_html'] );
+									$thumbnail = get_the_post_thumbnail( $post_id, 'full' );
+
+									fusion_library()->images->set_grid_image_meta( [] );
+								} else {
+									$thumbnail = '<span class="tribe-events-event-image" style="background-image: url(' . get_the_post_thumbnail_url( $post_id ) . '); -webkit-background-size: cover; background-size: cover; background-position: center center;"></span>';
+								}
+							} elseif ( class_exists( 'Tribe__Events__Pro__Main' ) ) {
+								$thumb_url = esc_url( trailingslashit( Tribe__Events__Pro__Main::instance()->pluginUrl ) . 'src/resources/images/tribe-related-events-placeholder.png' );
+
+								if ( 'auto' === $picture_size ) {
+									$title     = the_title_attribute(
+										[
+											'echo' => false,
+											'post' => $post_id,
+										]
+									);
+									$thumbnail = '<img class="fusion-events-placeholder" src="' . $thumb_url . '" alt="' . $title . '" />';
+								} else {
+									$thumbnail = '<span class="tribe-events-event-image" style="background-image: url(' . $thumb_url . '); -webkit-background-size: cover; background-size: cover; background-position: center center;"></span>';
+								}
+							}
+
+							$html .= '<div class="fusion-events-thumbnail hover-type-' . $fusion_settings->get( 'ec_hover_type' ) . '">';
+							$html .= '<a href="' . get_the_permalink() . '" class="url" rel="bookmark" aria-label="' . the_title_attribute( [ 'echo' => false ] ) . '">';
+
+							if ( $thumbnail ) {
+								$html .= $thumbnail;
+							} else {
+								ob_start();
+								/**
+								 * The avada_placeholder_image hook.
+								 *
+								 * @hooked fusion_render_placeholder_image - 10 (outputs the HTML for the placeholder image)
+								 */
+								do_action( 'fusion_render_placeholder_image', 'fixed' );
+
+								$placeholder = ob_get_clean();
+								$html       .= str_replace( 'fusion-placeholder-image', ' fusion-placeholder-image tribe-events-event-image', $placeholder );
+							}
+
+							$html .= '</a>';
 							$html .= '</div>';
+							$html .= '<div class="fusion-events-content-wrapper" style="padding:' . $content_padding . ';">';
+							$html .= '<div class="fusion-events-meta">';
+							$html .= '<h2><a href="' . get_the_permalink() . '" class="url" rel="bookmark">' . get_the_title() . '</a></h2>';
+							$html .= '<h4>' . tribe_events_event_schedule_details() . '</h4>';
+							$html .= '</div>';
+
+							if ( 'no_text' !== $defaults['content_length'] ) {
+								$html .= '<div class="fusion-events-content">';
+								$html .= apply_filters( 'fusion_events_shortcode_content', $defaults['content_length'], $defaults['excerpt_length'], $defaults['strip_html'] );
+								$html .= '</div>';
+							}
+
+							$html .= '</div>';
+							$html .= '</div>';
+							$html .= '</div>';
+
+							if ( $last && ( 'no' === $defaults['pagination'] || 'pagination' === $defaults['pagination'] ) ) {
+								$html .= '<div class="fusion-clearfix"></div>';
+							}
+							$i++;
 						}
 
-						$html .= '</div>';
-						$html .= '</div>';
-						$html .= '</div>';
+						wp_reset_query();
 
-						if ( $last && ( 'no' === $defaults['pagination'] || 'pagination' === $defaults['pagination'] ) ) {
+						if ( 'no' === $defaults['pagination'] || 'pagination' === $defaults['pagination'] ) {
 							$html .= '<div class="fusion-clearfix"></div>';
 						}
-						$i++;
-					}
 
-					wp_reset_query();
+						$html .= '</div>';
 
-					if ( 'no' === $defaults['pagination'] || 'pagination' === $defaults['pagination'] ) {
-						$html .= '<div class="fusion-clearfix"></div>';
-					}
+						// Pagination.
+						$pagination_type = ( '' !== $defaults['pagination'] ) ? $defaults['pagination'] : 'no';
+						$pagination_html = '';
 
-					$html .= '</div>';
+						if ( 'no' !== $pagination_type && 1 < esc_attr( $events->max_num_pages ) ) {
 
-					// Pagination.
-					$pagination_type = ( '' !== $defaults['pagination'] ) ? $defaults['pagination'] : 'no';
-					$pagination_html = '';
-
-					if ( 'no' !== $pagination_type && 1 < esc_attr( $events->max_num_pages ) ) {
-
-						// Pagination is set to "load more" button.
-						if ( 'load_more_button' === $pagination_type && -1 !== intval( $number_posts ) ) {
-							$button_margin = '';
-							if ( '-1' !== $this->args['column_spacing'] ) {
-								$button_margin    = 'margin-left: ' . ( $this->args['column_spacing'] / 2 ) . 'px;';
-								$button_margin   .= 'margin-right: ' . ( $this->args['column_spacing'] / 2 ) . 'px;';
-								$style            = '<style type="text/css">';
-								$style           .= '.fusion-events-shortcode.fusion-events-shortcode-' . $this->fusion_events_counter . ' .fusion-load-more-button {' . $button_margin . '}';
-								$style           .= '.fusion-events-shortcode.fusion-events-shortcode-' . $this->fusion_events_counter . ' .fusion-loading-container {' . $button_margin . '}';
-								$style           .= '</style>';
-								$pagination_html .= $style;
+							// Pagination is set to "load more" button.
+							if ( 'load_more_button' === $pagination_type && -1 !== intval( $number_posts ) ) {
+								$button_margin = '';
+								if ( '-1' !== $this->args['column_spacing'] ) {
+									$button_margin    = 'margin-left: ' . ( $this->args['column_spacing'] / 2 ) . 'px;';
+									$button_margin   .= 'margin-right: ' . ( $this->args['column_spacing'] / 2 ) . 'px;';
+									$style            = '<style type="text/css">';
+									$style           .= '.fusion-events-shortcode.fusion-events-shortcode-' . $this->fusion_events_counter . ' .fusion-load-more-button {' . $button_margin . '}';
+									$style           .= '.fusion-events-shortcode.fusion-events-shortcode-' . $this->fusion_events_counter . ' .fusion-loading-container {' . $button_margin . '}';
+									$style           .= '</style>';
+									$pagination_html .= $style;
+								}
+								$pagination_html .= '<button class="fusion-load-more-button fusion-events-button fusion-clearfix">' . apply_filters( 'avada_load_more_events_name', esc_attr__( 'Load More Events', 'fusion-builder' ) ) . '</button>';
 							}
-							$pagination_html .= '<button class="fusion-load-more-button fusion-events-button fusion-clearfix">' . apply_filters( 'avada_load_more_events_name', esc_attr__( 'Load More Events', 'fusion-builder' ) ) . '</button>';
+
+							$infinite_pagination = false;
+							if ( 'load_more_button' === $pagination_type || 'infinite' === $pagination_type ) {
+								$infinite_pagination = true;
+							}
+
+							$pagination_html .= fusion_pagination( $events->max_num_pages, $fusion_settings->get( 'pagination_range' ), $events, $infinite_pagination, true );
 						}
 
-						$infinite_pagination = false;
-						if ( 'load_more_button' === $pagination_type || 'infinite' === $pagination_type ) {
-							$infinite_pagination = true;
-						}
+						$html .= $pagination_html;
 
-						$pagination_html .= fusion_pagination( $events->max_num_pages, $fusion_settings->get( 'pagination_range' ), $events, $infinite_pagination, true );
+						$html .= '</div>';
 					}
 
-					$html .= $pagination_html;
+					$this->fusion_events_counter++;
 
-					$html .= '</div>';
+					$this->on_render();
+
+					return apply_filters( 'fusion_element_events_content', $html, $args );
 				}
-
-				$this->fusion_events_counter++;
-
-				$this->on_render();
-
-				return apply_filters( 'fusion_element_events_content', $html, $args );
 			}
 
 			/**
@@ -631,8 +626,6 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 
 					return fusion_get_post_content( '', $excerpt, $excerpt_length, $strip_html );
 				}
-
-				return '';
 			}
 
 			/**
@@ -758,7 +751,7 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 			 * @return void
 			 */
 			public function on_first_render() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				Fusion_Dynamic_JS::localize_script(
 					'fusion-events',
@@ -775,7 +768,7 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
 					FusionBuilder::$js_folder_url . '/general/fusion-events.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-events.js',
 					[ 'jquery', 'fusion-equal-heights', 'images-loaded', 'packery', 'jquery-infinite-scroll' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 			}
@@ -803,35 +796,7 @@ if ( fusion_is_element_enabled( 'fusion_events' ) && class_exists( 'Tribe__Event
  * @since 1.0
  */
 function fusion_element_events() {
-	$fusion_settings = awb_get_fusion_settings();
-	$builder_status  = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
-
-	$event_cat = $builder_status ? fusion_builder_shortcodes_categories( 'tribe_events_cat', false, false, 26 ) : [];
-
-	$cat_include = [
-		'type'        => 'multiple_select',
-		'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
-		'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
-		'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
-		'param_name'  => 'cat_slug',
-		'value'       => $event_cat,
-		'default'     => '',
-		'callback'    => [
-			'function' => 'fusion_ajax',
-			'action'   => 'get_fusion_events',
-			'ajax'     => true,
-		],
-	];
-
-	if ( count( $event_cat ) > 25 ) {
-		$cat_include['type']        = 'ajax_select';
-		$cat_include['ajax']        = 'fusion_search_query';
-		$cat_include['value']       = [];
-		$cat_include['ajax_params'] = [
-			'taxonomy'  => 'tribe_events_cat',
-			'use_slugs' => true,
-		];
-	}
+	global $fusion_settings;
 
 	if ( class_exists( 'Tribe__Events__Main' ) ) {
 		fusion_builder_map(
@@ -841,10 +806,22 @@ function fusion_element_events() {
 					'name'      => esc_attr__( 'Events', 'fusion-builder' ),
 					'shortcode' => 'fusion_events',
 					'icon'      => 'fusiona-tag',
-					'help_url'  => 'https://avada.com/documentation/the-events-calendar-element/',
+					'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/the-events-calendar-element/',
 					'params'    => [
-						$cat_include,
-
+						[
+							'type'        => 'multiple_select',
+							'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
+							'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
+							'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
+							'param_name'  => 'cat_slug',
+							'value'       => fusion_builder_shortcodes_categories( 'tribe_events_cat' ),
+							'default'     => '',
+							'callback'    => [
+								'function' => 'fusion_ajax',
+								'action'   => 'get_fusion_events',
+								'ajax'     => true,
+							],
+						],
 						[
 							'type'        => 'radio_button_set',
 							'heading'     => esc_attr__( 'Display Past Events', 'fusion-builder' ),
@@ -1051,4 +1028,4 @@ function fusion_element_events() {
 		);
 	}
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_events' );
+add_action( 'wp_loaded', 'fusion_element_events' );

@@ -17,13 +17,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				this.extras        = atts.extras;
 				atts.values.action = 'lostpassword';
-				this.values        = atts.values;
 
 				// Create attribute objects.
 				atts.loginShortCodeAttr     = this.buildLoginShortCodeAttr( atts.values );
 				atts.loginShortcodeFormAttr = this.buildLoginShortcodeFormAttr( atts.values );
 				atts.loginShortcodeButton   = this.buildLoginShortcodeButtonAttr( atts.values );
 				atts.loggedIn               = true;
+				atts.styles                 = this.buildForgotPassStyles( atts.values );
 
 				// Any extras that need passed on.
 				atts.cid    = this.model.get( 'cid' );
@@ -41,18 +41,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildLoginShortCodeAttr: function( values ) {
 
 				var loginShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-login-box fusion-login-box-cid' + this.model.get( 'cid' ) + ' fusion-login-box-' + values.action + ' fusion-login-align-' + values.text_align,
-					style: ''
+					class: 'fusion-login-box fusion-login-box-cid' + this.model.get( 'cid' ) + ' fusion-login-box-' + values.action + ' fusion-login-align-' + values.text_align
 				} );
-
 
 				if ( '' !== values[ 'class' ] ) {
 					loginShortcode[ 'class' ] += ' ' + values[ 'class' ];
 				}
-
-				loginShortcode.style += this.getStyleVariables();
-
-				values.label_class = 'yes' === values.show_labels  ? 'fusion-login-label' : 'fusion-hidden-content';
 
 				if ( '' !== values.id ) {
 					loginShortcode.id = values.id;
@@ -75,6 +69,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					class: 'fusion-login-form'
 				};
 
+				if ( '' !== values.form_background_color ) {
+					loginShortcodeForm.style = 'background-color:' + values.form_background_color + ';';
+				}
+
 				loginShortcodeForm.name   = values.action + 'form';
 				loginShortcodeForm.id     = values.action + 'form';
 				loginShortcodeForm.method = 'post';
@@ -94,7 +92,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// LoginShortcodeButton Attributes.
 				var loginShortcodeButton = {
-					class: 'fusion-login-button fusion-button button-default fusion-button-default-size'
+					class: 'fusion-login-button fusion-button button-default button-' + this.extras.button_size
 				};
 
 				if ( 'yes' !== values.button_fullwidth ) {
@@ -108,26 +106,35 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds forgot password Styles.
 			 *
-			 * @since 3.9
-			 * @return {String}
+			 * @since 2.0
+			 * @param {Object} values - The attributes.
+			 * @return {Sting}
 			 */
-			getStyleVariables: function() {
+			buildForgotPassStyles: function( values ) {
+				var styles = '',
+					cid = this.model.get( 'cid' );
 
-				var cssVarsOptions = [
-					'heading_color',
-					'caption_color',
-					'link_color',
-					'form_background_color'
-				];
+				if ( '' !== values.heading_color ) {
+					styles += '.fusion-login-box-cid' + cid + ' .fusion-login-heading{color:' + values.heading_color + ';}';
+				}
 
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
+				if ( '' !== values.caption_color ) {
+					styles += '.fusion-login-box-cid' + cid + ' .fusion-login-caption{color:' + values.caption_color + ';}';
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions );
+				if ( '' !== values.link_color ) {
+					styles += '.fusion-login-box-cid' + cid + ' a{color:' + values.link_color + ';}';
+				}
+
+				if ( '' !== styles ) {
+					styles = '<style type="text/css">' + styles + '</style>';
+				}
+
+				values.label_class = 'yes' === values.show_labels  ? 'fusion-login-label' : 'fusion-hidden-content';
+
+				return styles;
 			}
 		} );
 	} );

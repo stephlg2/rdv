@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 			private $element_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Shortcode name.
 			 *
 			 * @access public
@@ -33,13 +42,6 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 			 * @var string
 			 */
 			public $shortcode_name;
-
-			/**
-			 * Holds query data.
-			 *
-			 * @var WP_Query
-			 */
-			private $query = null;
 
 			/**
 			 * Constructor.
@@ -71,7 +73,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				$default_orderby = apply_filters( 'woocommerce_default_catalog_orderby', get_option( 'woocommerce_default_catalog_orderby', 'menu_order' ) );
 				$default_order   = 'menu_order' === $default_orderby ? 'ASC' : 'DESC';
 
@@ -107,9 +109,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 					'animation_type'            => '',
 					'animation_direction'       => 'down',
 					'animation_speed'           => '0.1',
-					'animation_delay'           => '',
 					'animation_offset'          => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'           => '',
 				];
 			}
 
@@ -122,7 +122,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'box_design'        => $fusion_settings->get( 'woocommerce_product_box_design', false, 'classic' ),
 					'load_more_text'    => apply_filters( 'avada_load_more_products_name', esc_attr__( 'Load More Products', 'fusion-builder' ) ),
@@ -211,6 +211,13 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 					'post_type'      => 'product',
 					'posts_per_page' => $number_posts,
 					'paged'          => $defaults['paged'],
+					'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery
+						[
+							'key'     => '_thumbnail_id',
+							'compare' => '!=',
+							'value'   => null,
+						],
+					],
 				];
 
 				$ordering_args   = WC()->query->get_catalog_ordering_args( $defaults['orderby'], $defaults['order'] );
@@ -297,23 +304,12 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 					'operator' => 'NOT IN',
 				];
 
-				// If out of stock are set not to show, hide them.
-				if ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items', 'no' ) ) {
-					$args['meta_query'][] = [
-						'key'     => '_stock_status',
-						'value'   => 'outofstock',
-						'compare' => 'NOT IN',
-					];
-				}
-
 				// Ajax returns protected posts, but we just want published.
 				if ( $live_request ) {
 					$args['post_status'] = 'publish';
 				}
 
 				$products = fusion_cached_query( apply_filters( $this->shortcode_name . '_query_args', $args ) );
-
-				fusion_library()->woocommerce->remove_post_clauses( $args['orderby'], $args['order'] );
 
 				if ( ! $live_request ) {
 					return $products;
@@ -360,6 +356,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 			 * @return string          HTML output
 			 */
 			public function render( $args, $content = '' ) {
+				global $fusion_settings;
 
 				$this->defaults = self::get_element_defaults();
 
@@ -374,6 +371,10 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 					$this->query = $products;
 
 					$this->args = $defaults;
+
+					if ( ! $products->have_posts() ) {
+						return fusion_builder_placeholder( 'product', 'products' );
+					}
 
 					$product_list = '';
 
@@ -411,9 +412,6 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 						$product_list = ob_get_clean();
 
 						$GLOBALS['post'] = $original_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-					} else {
-						$this->element_counter++;
-						return fusion_builder_placeholder( 'product', 'products' );
 					}
 
 					wp_reset_query(); // phpcs:ignore WordPress.WP.DiscouragedFunctions
@@ -427,6 +425,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 						$html .= '<button class="fusion-load-more-button fusion-product-button fusion-clearfix">' . apply_filters( 'avada_load_more_products_name', esc_attr__( 'Load More Products', 'fusion-builder' ) ) . '</button>';
 					}
 					$html .= '</div>';
+					$html .= $this->get_styles(); // Get custom styles.
 				}
 
 				$this->element_counter++;
@@ -565,7 +564,6 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 					$this->args['hide_on_mobile'],
 					[
 						'class' => 'fusion-woo-product-grid fusion-product-archive fusion-woo-product-grid-' . $this->element_counter,
-						'style' => '',
 					]
 				);
 
@@ -576,40 +574,6 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 				if ( $this->is_spacing_off() ) {
 					$attr['class'] .= ' fusion-woo-product-grid-spacing-off';
 				}
-
-				if ( ! $this->is_default( 'grid_separator_color' ) && 'shadow' === $this->args['grid_separator_style_type'] ) {
-					$attr['class'] .= ' has-content-sep-shadow';
-				}
-
-				if ( ! $this->is_default( 'show_title' ) ) {
-					$attr['class'] .= ' hide-product-title';
-				}
-
-				if ( ! $this->is_default( 'show_price' ) ) {
-					$attr['class'] .= ' hide-price';
-				}
-
-				if ( ! $this->is_default( 'show_rating' ) ) {
-					$attr['class'] .= ' hide-rating';
-				}
-
-				if ( ! $this->is_default( 'show_buttons' ) ) {
-					$attr['class'] .= ' hide-buttons';
-				}
-
-				if ( ! $this->is_default( 'show_title' ) && ! $this->is_default( 'show_price' ) && ! $this->is_default( 'show_rating' ) && ! $this->is_default( 'show_buttons' ) ) {
-					$attr['class'] .= ' hide-content';
-				}
-
-				if ( $this->is_load_more() ) {
-					$attr['class'] .= ' has-load-more';
-				}
-
-				if ( ! $this->is_default( 'column_spacing' ) && '1' !== $this->args['columns'] ) {
-					$attr['class'] .= ' has-column-spacing';
-				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -685,7 +649,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 					FusionBuilder::$js_folder_url . '/general/fusion-product-grid.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-product-grid.js',
 					[ 'jquery', 'isotope', 'jquery-infinite-scroll' ],
-					FUSION_BUILDER_VERSION,
+					'3.2',
 					true
 				);
 
@@ -698,23 +662,6 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 						'pagination_type'       => $this->args['scrolling'],
 					]
 				);
-			}
-
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.0
-			 * @return void
-			 */
-			public function add_css_files() {
-
-				// Needs styling for product rollover.
-				if ( class_exists( 'Avada' ) && class_exists( 'WooCommerce' ) ) {
-					Fusion_Dynamic_CSS::enqueue_style( Avada::$template_dir_path . '/assets/css/dynamic/woocommerce/woo-products.min.css', Avada::$template_dir_url . '/assets/css/dynamic/woocommerce/woo-products.min.css' );
-				}
-
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/woo-product-grid.min.css' );
 			}
 
 			/**
@@ -786,54 +733,133 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.2
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				global $fusion_settings;
 
-				if ( ! $this->is_default( 'grid_separator_color' ) && 'shadow' === $this->args['grid_separator_style_type'] ) {
-					$colors         = Fusion_Color::new_color( $this->args['grid_separator_color'] );
-					$gradient       = sprintf(
-						'linear-gradient(to left, rgba(%1$d, %2$d, %3$d, 0) 0%%, rgba(%1$d, %2$d, %3$d, 0) 15%%, rgba(%1$d, %2$d, %3$d, 0.65) 50%%, rgba(%1$d, %2$d, %3$d, 0) 85%%, rgba(%1$d, %2$d, %3$d, 0) 100%%)',
-						$colors->red,
-						$colors->green,
-						$colors->blue
-					);
-					$gradient_after = sprintf(
-						'radial-gradient(ellipse at 50%% -50%%, rgba(%1$d, %2$d, %3$d, 0.5) 0, rgba(255, 255, 255, 0) 65%%)',
-						$colors->red,
-						$colors->green,
-						$colors->blue
-					);
+				$this->base_selector = '.fusion-woo-product-grid.fusion-woo-product-grid-' . $this->element_counter;
+				$this->dynamic_css   = [];
 
-					$custom_vars['gradient']       = $gradient;
-					$custom_vars['gradient_after'] = $gradient_after;
+				// Grid Box styles.
+				$selectors = [
+					$this->base_selector . ' .products li.product .fusion-product-wrapper',
+				];
+				if ( ! $this->is_default( 'grid_box_color' ) ) {
+					$this->add_css_property( $selectors, 'background-color', $this->args['grid_box_color'] );
 				}
+				if ( ! $this->is_default( 'grid_border_color' ) ) {
+					$this->add_css_property( $selectors, 'border-color', $this->args['grid_border_color'] );
+				}
+
+				// Separators styles.
+				$selectors = [
+					$this->base_selector . ' .fusion-content-sep',
+				];
+				if ( ! $this->is_default( 'grid_separator_color' ) ) {
+					if ( 'shadow' !== $this->args['grid_separator_style_type'] ) {
+						$this->add_css_property( $selectors, 'border-color', $this->args['grid_separator_color'] );
+					} else {
+						$colors         = Fusion_Color::new_color( $this->args['grid_separator_color'] );
+						$gradient       = sprintf(
+							'linear-gradient(to left, rgba(%1$d, %2$d, %3$d, 0) 0%%, rgba(%1$d, %2$d, %3$d, 0) 15%%, rgba(%1$d, %2$d, %3$d, 0.65) 50%%, rgba(%1$d, %2$d, %3$d, 0) 85%%, rgba(%1$d, %2$d, %3$d, 0) 100%%)',
+							$colors->red,
+							$colors->green,
+							$colors->blue
+						);
+						$gradient_after = sprintf(
+							'radial-gradient(ellipse at 50%% -50%%, rgba(%1$d, %2$d, %3$d, 0.5) 0, rgba(255, 255, 255, 0) 65%%)',
+							$colors->red,
+							$colors->green,
+							$colors->blue
+						);
+						$this->add_css_property( $selectors, 'background', $gradient );
+						$this->add_css_property( [ $this->base_selector . ' .fusion-content-sep:after' ], 'background', $gradient_after );
+					}
+				}
+
+				// Hide styles.
+				$selectors = [
+					$this->base_selector . ' .product-title',
+				];
+				if ( ! $this->is_default( 'show_title' ) ) {
+					$this->add_css_property( $selectors, 'display', 'none' );
+				}
+				$selectors = [
+					$this->base_selector . ' .fusion-price-rating .price',
+				];
+				if ( ! $this->is_default( 'show_price' ) ) {
+					$this->add_css_property( $selectors, 'display', 'none' );
+				}
+				$selectors = [
+					$this->base_selector . ' .fusion-price-rating .star-rating',
+					$this->base_selector . ' .fusion-rollover .star-rating',
+				];
+				if ( ! $this->is_default( 'show_rating' ) ) {
+					$this->add_css_property( $selectors, 'display', 'none' );
+				}
+				$selectors = [
+					$this->base_selector . ' .product-buttons',
+					$this->base_selector . ' .fusion-product-buttons',
+				];
+				if ( ! $this->is_default( 'show_buttons' ) ) {
+					$this->add_css_property( $selectors, 'display', 'none' );
+				}
+				$selectors = [
+					$this->base_selector . ' .fusion-product-content',
+				];
+				if ( ! $this->is_default( 'show_title' ) && ! $this->is_default( 'show_price' ) && ! $this->is_default( 'show_rating' ) && ! $this->is_default( 'show_buttons' ) ) {
+					$this->add_css_property( $selectors, 'display', 'none' );
+				}
+				$selectors = [
+					$this->base_selector . ' .infinite-scroll-hide',
+				];
+				if ( $this->is_load_more() ) {
+					$this->add_css_property( $selectors, 'display', 'none' );
+				}
+				$this->add_css_property( [ $this->base_selector . '.fusion-woo-product-grid-spacing-off .product .product-buttons' ], 'padding-top', '0' );
+				$this->add_css_property( [ $this->base_selector . '.fusion-woo-product-grid-spacing-off .product-details-container' ], 'min-height', '0' );
 
 				if ( ! $this->is_default( 'column_spacing' ) && '1' !== $this->args['columns'] ) {
 					$column_spacing = fusion_library()->sanitize->get_value_with_unit( $this->args['column_spacing'] );
 
-					$custom_vars['column_spacing_margin']  = sprintf( 'calc((%s)/ -2)', $column_spacing );
-					$custom_vars['column_spacing_padding'] = sprintf( 'calc((%s)/ 2)', $column_spacing );
+					$selectors = [
+						$this->base_selector . ' ul.products',
+					];
+					$this->add_css_property( $selectors, 'margin-top', sprintf( 'calc((%s)/ -2)', $column_spacing ) );
+					$this->add_css_property( $selectors, 'margin-right', sprintf( 'calc((%s)/ -2)', $column_spacing ) );
+					$this->add_css_property( $selectors, 'margin-left', sprintf( 'calc((%s)/ -2)', $column_spacing ) );
+
+					$selectors = [
+						$this->base_selector . ' ul.products .product',
+					];
+					$this->add_css_property( $selectors, 'padding', sprintf( 'calc((%s)/ 2)', $column_spacing ) );
 				}
 
-				$css_vars_options = [
-					'margin_top'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'grid_box_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'grid_border_color'    => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'grid_separator_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
+				$selectors = [
+					$this->base_selector,
 				];
+				// Margin styles.
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $selectors, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] ) );
+				}
+				if ( ! $this->is_default( 'margin_right' ) ) {
+					$this->add_css_property( $selectors, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_right'] ) );
+				}
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $selectors, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'margin_left' ) ) {
+					$this->add_css_property( $selectors, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_left'] ) );
+				}
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				$css = $this->parse_css();
 
-				return $styles;
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -845,7 +871,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 			 * @return  void
 			 */
 			public function alter_shop_loop( $query ) {
-				if ( ! is_admin() && $query->is_main_query() && ! $query->is_search && $query->is_post_type_archive( 'product' ) && 'no' === fusion_get_option( 'show_wc_shop_loop' ) ) {
+				if ( ! is_admin() && $query->is_main_query() && $query->is_post_type_archive( 'product' ) && 'no' === fusion_get_option( 'show_wc_shop_loop' ) ) {
 					$search_override        = get_post( wc_get_page_id( 'shop' ) );
 					$has_archives_component = $search_override && has_shortcode( $search_override->post_content, 'fusion_woo_product_grid' );
 
@@ -878,136 +904,12 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) && class_exists( 'Wo
 function fusion_element_woo_product_grid() {
 	if ( class_exists( 'WooCommerce' ) ) {
 
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		$builder_status    = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
 		$default_orderby   = apply_filters( 'woocommerce_default_catalog_orderby', get_option( 'woocommerce_default_catalog_orderby', 'menu_order' ) );
 		$default_order     = 'menu_order' === $default_orderby ? 'ASC' : 'DESC';
 		$lookup_table_link = admin_url( 'admin.php?page=wc-status&tab=tools' );
-
-		$product_cat  = $builder_status ? fusion_builder_shortcodes_categories( 'product_cat', false, false, 26 ) : [];
-		$product_tags = $builder_status ? fusion_builder_shortcodes_tags( 'product_tag', false, false, 26 ) : [];
-
-		$include_cat  = [
-			'type'        => 'multiple_select',
-			'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
-			'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
-			'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
-			'param_name'  => 'cat_slug',
-			'value'       => $product_cat,
-			'default'     => '',
-			'dependency'  => [
-				[
-					'element'  => 'pull_by',
-					'value'    => 'tag',
-					'operator' => '!=',
-				],
-			],
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_woo_product_grid',
-				'ajax'     => true,
-			],
-		];
-		$exclude_cat  = [
-			'type'        => 'multiple_select',
-			'heading'     => esc_attr__( 'Exclude Categories', 'fusion-builder' ),
-			'placeholder' => esc_attr__( 'Exclude Categories', 'fusion-builder' ),
-			'description' => esc_attr__( 'Select categories to exclude.', 'fusion-builder' ),
-			'param_name'  => 'exclude_cats',
-			'value'       => $product_cat,
-			'default'     => '',
-			'dependency'  => [
-				[
-					'element'  => 'pull_by',
-					'value'    => 'tag',
-					'operator' => '!=',
-				],
-			],
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_woo_product_grid',
-				'ajax'     => true,
-			],
-		];
-		$include_tags = [
-			'type'        => 'multiple_select',
-			'heading'     => esc_attr__( 'Tags', 'fusion-builder' ),
-			'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
-			'description' => esc_attr__( 'Select a tag or leave blank for all.', 'fusion-builder' ),
-			'param_name'  => 'tag_slug',
-			'value'       => $product_tags,
-			'default'     => '',
-			'dependency'  => [
-				[
-					'element'  => 'pull_by',
-					'value'    => 'category',
-					'operator' => '!=',
-				],
-			],
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_woo_product_grid',
-				'ajax'     => true,
-			],
-		];
-		$exclude_tags = [
-			'type'        => 'multiple_select',
-			'heading'     => esc_attr__( 'Exclude Tags', 'fusion-builder' ),
-			'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
-			'description' => esc_attr__( 'Select a tag to exclude.', 'fusion-builder' ),
-			'param_name'  => 'exclude_tags',
-			'value'       => $product_tags,
-			'default'     => '',
-			'dependency'  => [
-				[
-					'element'  => 'pull_by',
-					'value'    => 'category',
-					'operator' => '!=',
-				],
-			],
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_woo_product_grid',
-				'ajax'     => true,
-			],
-		];
-
-		if ( count( $product_cat ) > 25 ) {
-			$include_cat['type']        = 'ajax_select';
-			$include_cat['ajax']        = 'fusion_search_query';
-			$include_cat['value']       = [];
-			$include_cat['ajax_params'] = [
-				'taxonomy'  => 'product_cat',
-				'use_slugs' => true,
-			];
-
-			$exclude_cat['type']        = 'ajax_select';
-			$exclude_cat['ajax']        = 'fusion_search_query';
-			$exclude_cat['value']       = [];
-			$exclude_cat['ajax_params'] = [
-				'taxonomy'  => 'product_cat',
-				'use_slugs' => true,
-			];
-		}
-
-		if ( count( $product_tags ) > 25 ) {
-			$include_tags['type']        = 'ajax_select';
-			$include_tags['ajax']        = 'fusion_search_query';
-			$include_tags['value']       = [];
-			$include_tags['ajax_params'] = [
-				'taxonomy'  => 'product_tag',
-				'use_slugs' => true,
-			];
-
-			$exclude_tags['type']        = 'ajax_select';
-			$exclude_tags['ajax']        = 'fusion_search_query';
-			$exclude_tags['value']       = [];
-			$exclude_tags['ajax_params'] = [
-				'taxonomy'  => 'product_tag',
-				'use_slugs' => true,
-			];
-		}
 
 		fusion_builder_map(
 			fusion_builder_frontend_data(
@@ -1016,7 +918,7 @@ function fusion_element_woo_product_grid() {
 					'name'      => esc_attr__( 'Woo Product Grid', 'fusion-builder' ),
 					'shortcode' => 'fusion_woo_product_grid',
 					'icon'      => 'fusiona-product-grid-and-archives',
-					'help_url'  => 'https://avada.com/documentation/woocommerce-product-carousel-element/',
+					'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/woocommerce-product-carousel-element/',
 					'params'    => [
 						[
 							'type'        => 'radio_button_set',
@@ -1034,12 +936,90 @@ function fusion_element_woo_product_grid() {
 								'ajax'     => true,
 							],
 						],
-
-						$include_cat,
-						$exclude_cat,
-						$include_tags,
-						$exclude_tags,
-
+						[
+							'type'        => 'multiple_select',
+							'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
+							'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
+							'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
+							'param_name'  => 'cat_slug',
+							'value'       => $builder_status ? fusion_builder_shortcodes_categories( 'product_cat' ) : [],
+							'default'     => '',
+							'dependency'  => [
+								[
+									'element'  => 'pull_by',
+									'value'    => 'tag',
+									'operator' => '!=',
+								],
+							],
+							'callback'    => [
+								'function' => 'fusion_ajax',
+								'action'   => 'get_fusion_woo_product_grid',
+								'ajax'     => true,
+							],
+						],
+						[
+							'type'        => 'multiple_select',
+							'heading'     => esc_attr__( 'Exclude Categories', 'fusion-builder' ),
+							'placeholder' => esc_attr__( 'Exclude Categories', 'fusion-builder' ),
+							'description' => esc_attr__( 'Select categories to exclude.', 'fusion-builder' ),
+							'param_name'  => 'exclude_cats',
+							'value'       => $builder_status ? fusion_builder_shortcodes_categories( 'product_cat' ) : [],
+							'default'     => '',
+							'dependency'  => [
+								[
+									'element'  => 'pull_by',
+									'value'    => 'tag',
+									'operator' => '!=',
+								],
+							],
+							'callback'    => [
+								'function' => 'fusion_ajax',
+								'action'   => 'get_fusion_woo_product_grid',
+								'ajax'     => true,
+							],
+						],
+						[
+							'type'        => 'multiple_select',
+							'heading'     => esc_attr__( 'Tags', 'fusion-builder' ),
+							'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
+							'description' => esc_attr__( 'Select a tag or leave blank for all.', 'fusion-builder' ),
+							'param_name'  => 'tag_slug',
+							'value'       => $builder_status ? fusion_builder_shortcodes_tags( 'product_tag' ) : [],
+							'default'     => '',
+							'dependency'  => [
+								[
+									'element'  => 'pull_by',
+									'value'    => 'category',
+									'operator' => '!=',
+								],
+							],
+							'callback'    => [
+								'function' => 'fusion_ajax',
+								'action'   => 'get_fusion_woo_product_grid',
+								'ajax'     => true,
+							],
+						],
+						[
+							'type'        => 'multiple_select',
+							'heading'     => esc_attr__( 'Exclude Tags', 'fusion-builder' ),
+							'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
+							'description' => esc_attr__( 'Select a tag to exclude.', 'fusion-builder' ),
+							'param_name'  => 'exclude_tags',
+							'value'       => $builder_status ? fusion_builder_shortcodes_tags( 'product_tag' ) : [],
+							'default'     => '',
+							'dependency'  => [
+								[
+									'element'  => 'pull_by',
+									'value'    => 'category',
+									'operator' => '!=',
+								],
+							],
+							'callback'    => [
+								'function' => 'fusion_ajax',
+								'action'   => 'get_fusion_woo_product_grid',
+								'ajax'     => true,
+							],
+						],
 						[
 							'type'        => 'range',
 							'heading'     => esc_attr__( 'Number of Products', 'fusion-builder' ),
@@ -1048,8 +1028,8 @@ function fusion_element_woo_product_grid() {
 							'min'         => '0',
 							'max'         => '50',
 							'step'        => '1',
-							'value'       => '',
-							'default'     => $fusion_settings->get( 'woo_items' ),
+							'value'       => $fusion_settings->get( 'woo_items' ),
+							'default'     => '',
 							'callback'    => [
 								'function' => 'fusion_ajax',
 								'action'   => 'get_fusion_woo_product_grid',
@@ -1076,8 +1056,8 @@ function fusion_element_woo_product_grid() {
 							'heading'     => esc_attr__( 'Number of Columns', 'fusion-builder' ),
 							'description' => esc_attr__( 'Set the number of columns per row.', 'fusion-builder' ),
 							'param_name'  => 'columns',
-							'value'       => '',
-							'default'     => $fusion_settings->get( 'woocommerce_shop_page_columns' ),
+							'value'       => $fusion_settings->get( 'woocommerce_shop_page_columns' ),
+							'default'     => '',
 							'min'         => '1',
 							'max'         => '6',
 							'step'        => '1',
@@ -1087,8 +1067,8 @@ function fusion_element_woo_product_grid() {
 							'heading'     => esc_attr__( 'Column Spacing', 'fusion-builder' ),
 							'description' => esc_attr__( "Insert the amount of spacing between items without 'px'. ex: 40.", 'fusion-builder' ),
 							'param_name'  => 'column_spacing',
-							'value'       => '',
-							'default'     => $fusion_settings->get( 'woocommerce_archive_grid_column_spacing' ),
+							'value'       => $fusion_settings->get( 'woocommerce_archive_grid_column_spacing' ),
+							'default'     => '',
 							'min'         => '1',
 							'max'         => '300',
 							'step'        => '1',
@@ -1265,7 +1245,7 @@ function fusion_element_woo_product_grid() {
 						[
 							'type'        => 'select',
 							'heading'     => esc_attr__( 'Grid Separator Style', 'fusion-builder' ),
-							'description' => __( 'Controls the line style of grid separators. <strong>NOTE:</strong> Separators will display, when buttons below the separators is displayed and Box Design mode set to Classic.', 'fusion-builder' ),
+							'description' => __( 'Controls the line style of grid separators. <strong>Note:</strong> Separators will display, when buttons below the separators is displayed and Box Design mode set to Classic.', 'fusion-builder' ),
 							'param_name'  => 'grid_separator_style_type',
 							'value'       => [
 								''              => esc_attr__( 'Default', 'fusion-builder' ),
@@ -1296,7 +1276,7 @@ function fusion_element_woo_product_grid() {
 						[
 							'type'        => 'colorpickeralpha',
 							'heading'     => esc_attr__( 'Grid Separator Color', 'fusion-builder' ),
-							'description' => __( 'Controls the line style color of grid separators. <strong>NOTE:</strong> Only work when Box Design mode set to Classic.', 'fusion-builder' ),
+							'description' => __( 'Controls the line style color of grid separators. <strong>Note:</strong> Only work when Box Design mode set to Classic.', 'fusion-builder' ),
 							'param_name'  => 'grid_separator_color',
 							'value'       => '',
 							'default'     => $fusion_settings->get( 'grid_separator_color' ),
@@ -1359,4 +1339,4 @@ function fusion_element_woo_product_grid() {
 		);
 	}
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_woo_product_grid' );
+add_action( 'wp_loaded', 'fusion_element_woo_product_grid' );

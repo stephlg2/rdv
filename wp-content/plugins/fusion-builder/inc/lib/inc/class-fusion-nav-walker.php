@@ -4,7 +4,7 @@
  *
  * @author    ThemeFusion
  * @copyright (c) Copyright by ThemeFusion
- * @link      https://avada.com
+ * @link      https://theme-fusion.com
  * @package   Fusion-Library
  * @since     3.0
  */
@@ -172,7 +172,7 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 	 * Middle logo menu number of top level items displayed
 	 *
 	 * @access  private
-	 * @var int
+	 * @var init
 	 */
 	private $no_of_top_level_items_displayed = 0;
 
@@ -204,56 +204,6 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 	private $previous_column_was_100_percent = false;
 
 	/**
-	 * Highlight label border color.
-	 *
-	 * @var string
-	 */
-	public $fusion_highlight_label_border_color = '';
-
-	/**
-	 * Highlight label color.
-	 *
-	 * @var string
-	 */
-	public $fusion_highlight_label_color = '';
-
-	/**
-	 * Highlight label background.
-	 *
-	 * @var string
-	 */
-	public $fusion_highlight_label_background = '';
-
-	/**
-	 * Highlight label.
-	 *
-	 * @var string
-	 */
-	public $fusion_highlight_label = '';
-
-	/**
-	 * Menu megamenu widgetarea.
-	 *
-	 * @var string
-	 */
-	public $menu_megamenu_widgetarea = '';
-
-	/**
-	 * Menu megamenu modal.
-	 *
-	 * @var string
-	 */
-	public $menu_megamenu_modal = '';
-
-	/**
-	 * Menu title only.
-	 *
-	 * @var string
-	 */
-	public $menu_title_only = '';
-
-
-	/**
 	 * Constructor.
 	 *
 	 * @access public
@@ -275,6 +225,7 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 				'menu_highlight_style'            => fusion_get_option( 'menu_highlight_style' ),
 				'main_nav_search_icon'            => fusion_get_option( 'main_nav_search_icon' ),
 				'woocommerce_cart_link_main_nav'  => fusion_get_option( 'woocommerce_cart_link_main_nav' ),
+				'woocommerce_acc_link_main_nav'   => fusion_get_option( 'woocommerce_acc_link_main_nav' ),
 				'slidingbar_toggle_style'         => fusion_get_option( 'slidingbar_toggle_style' ),
 				'slidingbar_widgets'              => fusion_get_option( 'slidingbar_widgets' ),
 				'disable_megamenu'                => fusion_get_option( 'disable_megamenu' ),
@@ -287,7 +238,6 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 				'submenu_mode'                    => 'dropdown',
 				'transition_type'                 => '',
 				'expand_method'                   => 'hover',
-				'lazy_load'                       => 'avada' === fusion_get_option( 'lazy_load' ),
 			],
 			$args
 		);
@@ -307,7 +257,7 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 
 		if ( 0 === $depth && 'enabled' === $this->menu_megamenu_status ) {
 			$output .= '{first_level}';
-			$output .= '<div class="fusion-megamenu-holder' . ( $this->args['lazy_load'] ? ' lazyload' : '' ) . '" {megamenu_final_width}><ul class="fusion-megamenu{megamenu_border}{megamenu_interior_width}>';
+			$output .= '<div class="fusion-megamenu-holder" {megamenu_final_width}><ul class="fusion-megamenu{megamenu_border}{megamenu_interior_width}>';
 		} elseif ( 2 <= $depth && 'enabled' === $this->menu_megamenu_status ) {
 			$output .= '<ul class="sub-menu deep-level">';
 		} else {
@@ -387,17 +337,12 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 			}
 
 			$background_image = '';
-			$data_bg          = '';
 			if ( ! empty( $this->menu_megamenu_background_image ) ) {
-				if ( $this->args['lazy_load'] ) {
-					$data_bg = ' data-bg="' . $this->menu_megamenu_background_image . '"';
-				} else {
-					$background_image .= ';background-image: url(' . $this->menu_megamenu_background_image . ');';
-				}
+				$background_image = ';background-image: url(' . $this->menu_megamenu_background_image . ');';
 			}
 
 			$output = str_replace( '{first_level}', '<div class="fusion-megamenu-wrapper {fusion_columns} columns-' . $this->total_num_of_columns . $col_span . '"><div class="row">', $output );
-			$output = str_replace( '{megamenu_final_width}', 'style="width:' . $wrapper_width . $background_image . ';"' . $data_bg . ' data-width="' . $wrapper_width . '"', $output );
+			$output = str_replace( '{megamenu_final_width}', 'style="width:' . $wrapper_width . $background_image . ';" data-width="' . $wrapper_width . '"', $output );
 			$output = str_replace( '{megamenu_interior_width}', $megamenu_interior_width, $output );
 			$output = str_replace( '{fusion_all_widgets}', $this->total_num_of_widgets === $this->total_num_of_columns ? 'fusion-has-all-widgets' : '', $output );
 
@@ -438,11 +383,11 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 	 * @see Walker::start_el()
 	 * @since 3.0.0
 	 *
-	 * @param string   $output Passed by reference. Used to append additional content.
-	 * @param object   $item Menu item data object.
-	 * @param int      $depth Depth of menu item. Used for padding.
-	 * @param stdClass $args The arguments.
-	 * @param int      $id Menu item ID.
+	 * @param string $output Passed by reference. Used to append additional content.
+	 * @param object $item Menu item data object.
+	 * @param int    $depth Depth of menu item. Used for padding.
+	 * @param array  $args The arguments.
+	 * @param int    $id Menu item ID.
 	 */
 	public function start_el( &$output, $item, $depth = 0, $args = [], $id = 0 ) {
 
@@ -553,11 +498,7 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 
 		// Add the bg image markup for flyout menu items.
 		if ( ( 0 === $depth && 'v6' === $header_layout || ( $fb_menu_element && 'flyout' === $this->args['submenu_mode'] ) ) && isset( $fusion_meta['background_image'] ) && '' !== $fusion_meta['background_image'] ) {
-			if ( $this->args['lazy_load'] ) {
-				$this->flyout_menu_bg_markup .= '<div id="item-bg-' . $item->ID . '" class="fusion-flyout-menu-item-bg lazyload" data-bg="' . $fusion_meta['background_image'] . '"></div>';
-			} else {
-				$this->flyout_menu_bg_markup .= '<div id="item-bg-' . $item->ID . '" class="fusion-flyout-menu-item-bg" style="background-image:url(' . $fusion_meta['background_image'] . ');"></div>';
-			}
+			$this->flyout_menu_bg_markup .= '<div id="item-bg-' . $item->ID . '" class="fusion-flyout-menu-item-bg" style="background-image:url(' . $fusion_meta['background_image'] . ');"></div>';
 		}
 
 		if ( ! empty( $item->fusion_highlight_label ) ) {
@@ -681,26 +622,22 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 
 			if ( ! ( ( empty( $item->url ) || '#' === $item->url || 'http://' === $item->url ) && 'disabled' === $this->menu_megamenu_title ) ) {
 				$heading      = do_shortcode( $title );
-				$link         = '<span class="awb-justify-title">';
+				$link         = '<span>';
 				$link_closing = '</span>';
 				$target       = '';
 				$link_class   = '';
 
 				if ( ! empty( $item->url ) && '#' !== $item->url && 'http://' !== $item->url ) {
-					$link_class = 'awb-justify-title';
 
 					if ( ! empty( $item->target ) ) {
 						$target = ' target="' . $item->target . '"';
 					}
 					if ( 'disabled' === $this->menu_megamenu_title ) {
-						$link_class .= ' fusion-megamenu-title-disabled';
-
-						$link         = '<a class="' . $link_class . '" href="' . $item->url . '"' . $target . '><span>';
-						$link_closing = '</span></a>';
-					} else {
-						$link         = '<a class="' . $link_class . '" href="' . $item->url . '"' . $target . '>';
-						$link_closing = '</a>';
+						$link_class = ' class="fusion-megamenu-title-disabled"';
 					}
+
+					$link         = '<a href="' . $item->url . '"' . $target . $link_class . '>';
+					$link_closing = '</a>';
 
 					if ( $this->menu_megamenu_widgetarea && is_active_sidebar( $this->menu_megamenu_widgetarea ) ) {
 						$this->total_num_of_widgets--;
@@ -923,13 +860,238 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 					$item_output .= 'hover' === $expand_method ? '<span class="fusion-open-nav-submenu"></span>' : '';
 					$item_output .= '</a>' . $args->after;
 					/* Translators: The menu item title. */
-					$item_output .= '<button type="button" aria-label="' . esc_attr( sprintf( __( 'Open submenu of %s', 'fusion-builder' ), $item->title ) ) . '" aria-expanded="false" class="fusion-open-nav-submenu fusion-open-nav-submenu-on-click" onclick="fusionNavClickExpandSubmenuBtn(this);"></button>';
+					$item_output .= '<button type="button" aria-label="' . sprintf( __( 'Open submenu of %s', 'fusion-builder' ), esc_html( $item->title ) ) . '" aria-expanded="false" class="fusion-open-nav-submenu fusion-open-nav-submenu-on-click" onclick="fusionNavClickExpandSubmenuBtn(this);"></button>';
 				} else {
 					$item_output .= ' <span class="fusion-caret"><i class="fusion-dropdown-indicator" aria-hidden="true"></i></span>';
 					$item_output .= '</a>' . $args->after;
 				}
 			} else {
 				$item_output .= '</a>' . $args->after;
+			}
+
+			if ( isset( $fusion_meta['special_link'] ) && 'fusion-woo-cart' === $fusion_meta['special_link'] && class_exists( 'WooCommerce' ) ) {
+
+				// Construct menu item title.
+				$woo_item_title     = '<span class="menu-text">' . esc_html( $item->title ) . '</span>';
+				$woo_item_icon      = '';
+				$show_counter       = ( isset( $fusion_meta['show_woo_cart_counter'] ) && 'yes' === $fusion_meta['show_woo_cart_counter'] ) ? true : false;
+				$show_empty_counter = ( ! isset( $fusion_meta['show_empty_woo_cart_counter'] ) || 'yes' === $fusion_meta['show_empty_woo_cart_counter'] ) ? true : false;
+				$counter_type       = ( ! isset( $fusion_meta['cart_counter_display'] ) ) ? 'inline' : $fusion_meta['cart_counter_display'];
+				$counter_style      = '';
+
+				if ( '' !== $fusion_meta['icon'] ) {
+					$woo_item_icon = '<span class="fusion-megamenu-icon"><i class="glyphicon ' . fusion_font_awesome_name_handler( $this->menu_megamenu_icon ) . '" aria-hidden="true"></i></span>';
+
+					if ( $menu_icon_right || 'bottom' === $menu_icon_position ) {
+						$woo_item_title = $woo_item_title . $woo_item_icon;
+					} else {
+						$woo_item_title = $woo_item_icon . $woo_item_title;
+					}
+				}
+
+				$woo_item_after_title_inside = '';
+				$woo_item_after_title        = '';
+				if ( 'parent' === $menu_display_dropdown_indicator || 'parent_child' === $menu_display_dropdown_indicator ) {
+					if ( 'hover' === $expand_method ) {
+						$woo_item_after_title_inside = '<span class="fusion-open-nav-submenu"></span>';
+					} else {
+						$woo_item_after_title .= '<button type="button" aria-label="' . esc_attr__( 'Show Cart Contents', 'fusion-builder' ) . '" aria-expanded="false" class="fusion-open-nav-submenu fusion-open-nav-submenu-on-click" onclick="fusionNavClickExpandSubmenuBtn(this);"></button>';
+					}
+				}
+
+				if ( $show_counter ) {
+
+					if ( ! empty( $item->fusion_highlight_label_background ) ) {
+						$counter_style .= 'background-color:' . $item->fusion_highlight_label_background . ';';
+					}
+
+					if ( ! empty( $item->fusion_highlight_label_border_color ) ) {
+						$counter_style .= 'border-color:' . $item->fusion_highlight_label_border_color . ';';
+					}
+
+					if ( ! empty( $item->fusion_highlight_label_color ) ) {
+						$counter_style .= 'color:' . $item->fusion_highlight_label_color . ';';
+					}
+				}
+
+				$item_output = fusion_menu_element_add_woo_cart_to_widget_html(
+					[
+						'link_classes'       => $atts['class'],
+						'text_title'         => $woo_item_title,
+						'after_title_inside' => $woo_item_after_title_inside,
+						'after_title'        => $woo_item_after_title,
+						'show_counter'       => $show_counter,
+						'counter_style'      => $counter_style,
+					]
+				);
+
+				$item->classes = isset( $item->classes ) ? (array) $item->classes : [];
+
+				if ( isset( $fusion_meta['show_woo_cart_contents'] ) && 'yes' === $fusion_meta['show_woo_cart_contents'] ) {
+
+					$item_output .= avada_menu_element_woo_cart();
+
+					if ( is_object( WC()->cart ) && 0 < WC()->cart->get_cart_contents_count() ) {
+						$item->classes[] = 'menu-item-has-children';
+					} else {
+						$item->classes[] = 'empty-cart';
+					}
+				}
+
+				// Set menu item classes.
+				$item->classes[] = 'fusion-widget-cart';
+				$item->classes[] = 'fusion-menu-cart';
+				$item->classes[] = 'avada-main-menu-cart';
+
+				if ( false === $show_empty_counter ) {
+					$item->classes[] = 'fusion-menu-cart-hide-empty-counter';
+				}
+
+				if ( 'badge' === $counter_type ) {
+					$item->classes[] = 'fusion-counter-badge';
+				}
+
+				if ( ! $show_counter && is_object( WC()->cart ) && 0 < WC()->cart->get_cart_contents_count() ) {
+					$item->classes[] = ' fusion-active-cart-icon';
+				}
+			}
+
+			if ( isset( $fusion_meta['special_link'] ) && 'fusion-woo-my-account' === $fusion_meta['special_link'] && class_exists( 'WooCommerce' ) ) {
+
+				// Construct menu item title.
+				$woo_item_title = '<span class="menu-text">' . esc_html( $item->title ) . '</span>';
+				$woo_item_icon  = '';
+
+				if ( '' !== $fusion_meta['icon'] ) {
+					$woo_item_icon = '<span class="fusion-megamenu-icon"><i class="glyphicon ' . fusion_font_awesome_name_handler( $this->menu_megamenu_icon ) . '" aria-hidden="true"></i></span>';
+
+					if ( $menu_icon_right || 'bottom' === $menu_icon_position ) {
+						$woo_item_title = $woo_item_title . $woo_item_icon;
+					} else {
+						$woo_item_title = $woo_item_icon . $woo_item_title;
+					}
+				}
+
+				$woo_args = [
+					'menu_item_content'    => $woo_item_title,
+					'link_classes'         => $atts['class'],
+					'after_content_inside' => '',
+					'after_content'        => '',
+				];
+
+				if ( 'parent' === $menu_display_dropdown_indicator || 'parent_child' === $menu_display_dropdown_indicator ) {
+					if ( 'hover' === $expand_method ) {
+						$woo_args['after_content_inside'] = '<span class="fusion-open-nav-submenu"></span>';
+					} else {
+						$woo_args['after_content'] = '<button type="button" aria-label="' . esc_attr__( 'Open Profile Submenu', 'fusion-builder' ) . '" aria-expanded="false" class="fusion-open-nav-submenu fusion-open-nav-submenu-on-click" onclick="fusionNavClickExpandSubmenuBtn(this);"></button>';
+					}
+				}
+
+				$item_output = avada_menu_element_add_login_box_to_nav( $woo_args );
+
+				// Set menu item classes.
+				$item->classes = isset( $item->classes ) ? (array) $item->classes : [];
+
+				if ( is_account_page() ) {
+					$item->classes[] = 'current-menu-item';
+					$item->classes[] = 'current_page_item';
+				}
+				$item->classes[] = 'fusion-dropdown-menu';
+				$item->classes[] = 'menu-item-has-children';
+				$item->classes[] = 'avada-menu-login-box';
+			}
+
+			if ( isset( $fusion_meta['special_link'] ) && 'fusion-search' === $fusion_meta['special_link'] ) {
+				$fusion_meta['searchform_mode'] = isset( $fusion_meta['searchform_mode'] ) ? $fusion_meta['searchform_mode'] : 'inline';
+				$item_title_esc                 = esc_attr( $item->title );
+				$icon_only_class                = '';
+
+				if ( 'icononly' === $this->menu_title_only ) {
+					$icon_only_class = ' fusion-icon-only-link';
+				}
+
+				switch ( $fusion_meta['searchform_mode'] ) {
+					case 'dropdown':
+						$item->classes   = isset( $item->classes ) ? (array) $item->classes : [];
+						$item->classes[] = 'menu-item-has-children';
+						$item->classes[] = 'custom-menu-search';
+						$item->classes[] = 'custom-menu-search-dropdown';
+
+						$item_output = '<a class="fusion-main-menu-icon' . $icon_only_class . '" href="#" aria-label="' . $item_title_esc . '" data-title="' . $item_title_esc . '" title="' . $item_title_esc . '">';
+						if ( 'icononly' !== $this->menu_title_only ) {
+							$item_output .= '<span class="menu-title">' . $item->title . '</span>';
+						}
+
+						if ( ! empty( $this->menu_megamenu_icon ) ) {
+							$item_output .= '<span class="fusion-megamenu-icon"><i class="glyphicon ' . fusion_font_awesome_name_handler( $this->menu_megamenu_icon ) . '" aria-hidden="true"></i></span>';
+						}
+
+						$item_output .= '</a>';
+						$item_output .= '<button type="button" aria-label="' . esc_attr__( 'Expand Search', 'fusion-builder' ) . '" aria-expanded="false" class="fusion-open-nav-submenu fusion-open-nav-submenu-on-click" onclick="fusionNavClickExpandSubmenuBtn(this);"></button>';
+						$item_output .= '<ul class="sub-menu fusion-menu-searchform-dropdown"><li>' . get_search_form( false ) . '<li></ul>';
+
+						break;
+
+					case 'overlay':
+						$item->classes   = isset( $item->classes ) ? (array) $item->classes : [];
+						$item->classes[] = 'custom-menu-search';
+						$item->classes[] = 'custom-menu-search-overlay';
+
+						$item_output = '<a class="fusion-main-menu-icon fusion-menu-icon-search trigger-overlay' . $icon_only_class . '" href="#" aria-label="' . $item_title_esc . '" data-title="' . $item_title_esc . '" title="' . $item_title_esc . '" role="button" aria-expanded="false"></a>';
+
+						$searchform_markup  = get_search_form( false );
+						$searchform_markup .= '<div class="fusion-search-spacer"></div>';
+						$searchform_markup .= '<a href="#" role="button" aria-label="' . esc_attr__( 'Close Search', 'fusion-builder' ) . '" class="fusion-close-search"></a>';
+
+						if ( class_exists( 'FusionSC_Menu' ) ) {
+							FusionSC_Menu::$overlay_search_markup .= '<div class="fusion-overlay-search">' . $searchform_markup . '</div>';
+						}
+						// This is here for mobile menus. DO NOT REMOVE.
+						$item_output .= '<div class="fusion-menu-form-inline">' . $searchform_markup . '</div>';
+						break;
+
+					default:
+						$item->classes[] = 'custom-menu-search-inline';
+						$item_output     = '<div class="fusion-menu-form-inline">' . get_search_form( false ) . '</div>';
+				}
+			}
+
+			if ( isset( $fusion_meta['special_link'] ) && 'fusion-sliding-bar-toggle' === $fusion_meta['special_link'] ) {
+				$item->classes[]   = 'fusion-custom-menu-item';
+				$item->classes[]   = 'fusion-main-menu-sliding-bar';
+				$sliding_bar_label = esc_attr__( 'Toggle Sliding Bar', 'fusion-builder' );
+
+				// Construct menu item title.
+				$slidingbar_title = '<span class="menu-text">' . esc_html( $item->title ) . '</span>';
+				$slidingbar_icon  = '';
+
+				if ( '' !== $fusion_meta['icon'] ) {
+					$slidingbar_icon = '<span class="fusion-megamenu-icon"><i class="glyphicon ' . fusion_font_awesome_name_handler( $this->menu_megamenu_icon ) . '" aria-hidden="true"></i></span>';
+
+					if ( $menu_icon_right || 'bottom' === $menu_icon_position ) {
+						$slidingbar_title = $slidingbar_title . $slidingbar_icon;
+					} else {
+						$slidingbar_title = $slidingbar_icon . $slidingbar_title;
+					}
+				}
+
+				$atts['title']      = $sliding_bar_label;
+				$atts['href']       = '#';
+				$atts['class']     .= ' fusion-main-menu-icon fusion-icon-sliding-bar';
+				$atts['aria-label'] = $sliding_bar_label;
+				$atts['data-title'] = $sliding_bar_label;
+				unset( $atts['target'] );
+				unset( $atts['rel'] );
+
+				$attributes = '';
+				foreach ( $atts as $attr => $value ) {
+					if ( ! empty( $value ) ) {
+						$value       = esc_attr( $value );
+						$attributes .= ' ' . $attr . '="' . $value . '"';
+					}
+				}
+
+				$item_output = '<a ' . $attributes . '>' . $slidingbar_title . '</a>';
 			}
 		}
 
@@ -945,10 +1107,9 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 			$style             = '';
 			$custom_class_data = '';
 			$classes           = empty( $item->classes ) ? [] : (array) $item->classes;
-			$data_bg           = '';
 			$classes[]         = 'menu-item-' . $item->ID;
 
-			$class_names = join( ' ', apply_filters( 'nav_menu_css_class', array_filter( $classes ), $item, $args, $depth ) );
+			$class_names = join( ' ', apply_filters( 'nav_menu_css_class', array_filter( $classes ), $item, $args ) );
 
 			if ( 0 === $depth && $args->has_children ) {
 				$class_names .= ( 'enabled' === $this->menu_megamenu_status ) ? ' fusion-megamenu-menu' : ' fusion-dropdown-menu';
@@ -964,10 +1125,6 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 				$class_names .= ' fusion-flyout-menu-item-last';
 			}
 
-			if ( $fb_menu_element && 0 === $depth && 'flyout' === $this->args['submenu_mode'] && ( empty( $item->url ) || '#' === $item->url || 'http://' === $item->url ) ) {
-				$class_names .= ' awb-flyout-top-level-no-link';
-			}
-
 			if ( 1 === $depth ) {
 
 				if ( 'enabled' === $this->menu_megamenu_status ) {
@@ -976,16 +1133,9 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 					if ( 'disabled' === $this->menu_megamenu_title ) {
 						$class_names .= ' fusion-megamenu-submenu-notitle';
 					}
-					if ( isset( $item->url ) && '#' !== $item->url && '' !== $item->url ) {
-						$class_names .= ' menu-item-has-link';
-					}
+
 					if ( ! empty( $megamenu_column_background_image ) ) {
-						if ( $this->args['lazy_load'] ) {
-							$class_names .= ' lazyload';
-							$data_bg      = ' data-bg="' . $megamenu_column_background_image . '"';
-						} else {
-							$style .= 'background-image: url(' . $megamenu_column_background_image . ');';
-						}
+						$style .= 'background-image: url(' . $megamenu_column_background_image . ');';
 					}
 
 					if ( 'fullwidth' !== $this->menu_megamenu_width ) {
@@ -1009,7 +1159,7 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 
 			$data_id = ( 0 === $depth || ( $fb_menu_element && 'flyout' === $this->args['submenu_mode'] && isset( $fusion_meta['background_image'] ) && '' !== $fusion_meta['background_image'] ) ) ? ' data-item-id="' . $item->ID . '"' : '';
 
-			$output .= '<li ' . $id . ' ' . $class_names . ' ' . $column_width . $custom_class_data . $style . $data_id . $data_bg . '>';
+			$output .= '<li ' . $id . ' ' . $class_names . ' ' . $column_width . $custom_class_data . $style . $data_id . '>';
 
 			if ( $fb_menu_element ) {
 				$output .= '<span class="background-default transition-' . $transition_type . '"></span><span class="background-active transition-' . $transition_type . '"></span>';
@@ -1092,7 +1242,7 @@ class Fusion_Nav_Walker extends Walker_Nav_Menu {
 	 * Menu Fallback
 	 * =============
 	 * If this function is assigned to the wp_nav_menu's fallback_cb variable
-	 * and a menu has not been assigned to the theme location in the WordPress
+	 * and a manu has not been assigned to the theme location in the WordPress
 	 * menu manager the function with display nothing to a non-logged in user,
 	 * and will add a link to the WordPress menu manager if logged in as an admin.
 	 *

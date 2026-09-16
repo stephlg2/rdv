@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_woo_cart_coupons-shortcode">
+	{{{styles}}}
 	<div {{{ _.fusionGetAttributes( wooCartCouponsAttr ) }}} cellspacing="0">
 	{{{ cart_coupons_content }}}
 	</div>

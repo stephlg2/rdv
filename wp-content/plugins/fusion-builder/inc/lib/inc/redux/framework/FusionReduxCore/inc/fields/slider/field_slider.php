@@ -27,27 +27,6 @@ if ( ! class_exists( 'FusionReduxFramework_slider' ) ) {
 	class FusionReduxFramework_slider {
 
 		/**
-		 * Field options.
-		 * 
-		 * @var array
-		 */
-		public $field = [];
-
-		/**
-		 * The parent.
-		 * 
-		 * @var mixed
-		 */
-		public $parent;
-
-		/**
-		 * The value.
-		 * 
-		 * @var array|string
-		 */
-		public $value = '';
-
-		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
 		 *
@@ -236,7 +215,7 @@ if ( ! class_exists( 'FusionReduxFramework_slider' ) ) {
 		 * @since FusionReduxFramework 3.1.8
 		 */
 		function enqueue() {
-			global $fusion_library_latest_version;
+
 			$min = FusionRedux_Functions::isMin();
 
 			wp_enqueue_style( 'select3-css' );
@@ -245,7 +224,7 @@ if ( ! class_exists( 'FusionReduxFramework_slider' ) ) {
 				'fusionredux-nouislider-css',
 				FusionReduxFramework::$_url . 'inc/fields/slider/vendor/nouislider/fusionredux.jquery.nouislider.css',
 				array(),
-				$fusion_library_latest_version,
+				'5.0.0',
 				'all'
 			);
 
@@ -253,7 +232,7 @@ if ( ! class_exists( 'FusionReduxFramework_slider' ) ) {
 				'fusionredux-nouislider-js',
 				FusionReduxFramework::$_url . 'inc/fields/slider/vendor/nouislider/fusionredux.jquery.nouislider' . $min . '.js',
 				array( 'jquery' ),
-				$fusion_library_latest_version,
+				'5.0.0',
 				true
 			);
 

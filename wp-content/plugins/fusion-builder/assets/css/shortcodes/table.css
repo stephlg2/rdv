@@ -43,6 +43,7 @@ table {
     margin-bottom: 15px;
     overflow-y: hidden;
     overflow-x: scroll;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
     border: 1px solid #E5E4E3;
     -webkit-overflow-scrolling: touch;
   }
@@ -77,14 +78,6 @@ table {
 }
 .table > tfoot > tr > td {
   font-weight: bold;
-}
-.table-1,
-.table-2 {
-  --awb-margin-top: 0;
-  --awb-margin-right: 0;
-  --awb-margin-bottom: 0;
-  --awb-margin-left: 0;
-  margin: var(--awb-margin-top) var(--awb-margin-right) var(--awb-margin-bottom) var(--awb-margin-left);
 }
 .table-1 table,
 .tkt-slctr-tbl-wrap-dv table {

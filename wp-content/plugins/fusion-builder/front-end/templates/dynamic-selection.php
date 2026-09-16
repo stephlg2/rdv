@@ -7,7 +7,6 @@
  */
 
 ?>
-
 <script type="text/template" id="fusion-builder-dynamic-selection">
 <div class="fusion-skip-init fusion-open fusion-select-field<?php echo ( is_rtl() ) ? ' fusion-select-field-rtl' : ''; ?>">
 	<div class="fusion-select-preview-wrap">
@@ -21,21 +20,13 @@
 			<input type="text" class="fusion-hide-from-atts fusion-dont-update" placeholder="<?php esc_attr_e( 'Search Dynamic Content', 'fusion-builder' ); ?>" />
 		</div>
 		<div class="fusion-select-options">
-			<#
-			if ( customOptions ) {
-				customOptions = customOptions.split( ',' );
-			}
-			_.each( params, function( values, groupId ) { #>
+			<# _.each( params, function( values, groupId ) { #>
 				<div class="fusion-select-optiongroup" data-group="{{ groupId }}">{{ values.label }}</div>
 				<# _.each( values.params, function( value, id ) { #>
 					<#
 						var label    = 'string' === typeof value.label ? value.label : id,
 							supports = 'object' === typeof value.options ? _.values( value.options ) : false,
 							support  = ! supports ? true : -1 !== _.indexOf( supports, option );
-
-						if ( customOptions ) {
-							support = customOptions.includes( id );
-						}
 					#>
 					<# if ( support ) { #>
 						<label class="fusion-select-label" data-value="{{ id }}">{{{ label }}}</label>

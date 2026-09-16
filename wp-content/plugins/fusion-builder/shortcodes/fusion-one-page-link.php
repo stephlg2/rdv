@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_one_page_text_link' ) ) {
 		class FusionSC_OnePageTextLink extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -114,7 +123,7 @@ function fusion_element_one_page_text_link() {
 				'name'      => esc_attr__( 'One Page Text Link', 'fusion-builder' ),
 				'shortcode' => 'fusion_one_page_text_link',
 				'icon'      => 'fusiona-external-link',
-				'help_url'  => 'https://avada.com/documentation/one-page-text-link-element/',
+				'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/one-page-text-link-element/',
 				'params'    => [
 					[
 						'type'        => 'textfield',

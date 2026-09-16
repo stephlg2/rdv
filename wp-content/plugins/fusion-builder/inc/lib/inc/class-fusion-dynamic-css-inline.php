@@ -33,7 +33,7 @@ class Fusion_Dynamic_CSS_Inline {
 
 		$this->dynamic_css = $dynamic_css;
 		$loading_action    = 'wp_head';
-		$priority          = 999;
+		$priority          = 999;       
 
 		if ( fusion_should_defer_styles_loading() ) {
 			$loading_action = 'wp_print_footer_scripts';
@@ -41,7 +41,7 @@ class Fusion_Dynamic_CSS_Inline {
 		}
 
 		if ( fusion_get_option( 'media_queries_async' ) ) {
-			add_action( 'wp_enqueue_scripts', [ $this, 'add_inline_css' ], 111 );
+			add_action( 'wp_enqueue_scripts', [ $this, 'add_inline_css' ] );
 			add_action( $loading_action, [ $this, 'add_custom_css_to_wp_head' ], $priority );
 		} else {
 			add_action( $loading_action, [ $this, 'add_inline_css_wp_head' ], $priority );

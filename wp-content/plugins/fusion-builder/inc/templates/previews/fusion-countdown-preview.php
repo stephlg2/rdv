@@ -5,7 +5,7 @@
  * @package fusion-builder
  */
 
-$fusion_settings = awb_get_fusion_settings();
+$fusion_settings = fusion_get_fusion_settings();
 
 $show_weeks = strtolower( $fusion_settings->get( 'countdown_show_weeks' ) );
 ?>
@@ -23,7 +23,7 @@ $show_weeks = strtolower( $fusion_settings->get( 'countdown_show_weeks' ) );
 			mins = 0,
 			hours = 0,
 			days = 0,
-			weeks = 0;
+			weeks = 0;			
 
 		if ( '' !== countdownEnd && 'undefined' !== typeof countdownEnd ) {
 			var timer = countdownEnd.replace( ' ', '-' ).replace( new RegExp( ':', 'g' ), '-' ).split( '-' ),

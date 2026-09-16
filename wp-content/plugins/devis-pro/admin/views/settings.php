@@ -129,7 +129,7 @@ if (isset($_GET['migrate']) && $_GET['migrate'] == 1) {
                         </h4>
                         <ul style="margin:0;padding-left:25px;color:#155724;">
                             <li><strong>Honeypot</strong> - <?php _e('Champs invisibles anti-spam', 'devis-pro'); ?></li>
-                            <li><strong>Rate Limiting</strong> - <?php _e('Maximum 5 soumissions/heure par IP', 'devis-pro'); ?></li>
+                            <li><strong>Rate Limiting</strong> - <?php _e('Maximum 10 soumissions réussies/heure par IP (admins non limités)', 'devis-pro'); ?></li>
                             <li><strong>Protection Brute Force</strong> - <?php _e('Blocage après 5 tentatives échouées', 'devis-pro'); ?></li>
                             <li><strong>Tokens sécurisés</strong> - <?php _e('Liens d\'accès avec expiration 24h', 'devis-pro'); ?></li>
                             <li><strong>Validation stricte</strong> - <?php _e('Email, téléphone, nom vérifiés', 'devis-pro'); ?></li>

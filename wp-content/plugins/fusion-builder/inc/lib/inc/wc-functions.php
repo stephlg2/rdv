@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      5.0.0
@@ -24,8 +24,6 @@ if ( ! function_exists( 'fusion_wc_get_page_id' ) ) {
 		} elseif ( function_exists( 'woocommerce_get_page_id' ) ) {
 			return woocommerce_get_page_id( $page );
 		}
-
-		return -1;
 	}
 }
 

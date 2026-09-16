@@ -74,13 +74,6 @@ class Fusion_FusionRedux {
 	protected static $is_language_all = false;
 
 	/**
-	 * Fusion sections.
-	 *
-	 * @var array
-	 */
-	public $fusion_sections = [];
-
-	/**
 	 * The class constructor
 	 *
 	 * @access public
@@ -219,10 +212,6 @@ class Fusion_FusionRedux {
 		add_filter( 'fusionredux-import-file-description', [ $this, 'fusionredux_import_file_description_l10n' ] );
 
 		add_filter( 'fusionredux/options/' . $this->args['option_name'] . '/ajax_save/response', [ $this, 'merge_options' ] );
-
-		// Get all post types with Avada default ones.
-		add_filter( 'fusionredux/options/' . $this->args['option_name'] . '/data/post_types', [ $this, 'get_post_types' ] );
-
 	}
 
 	/**
@@ -238,41 +227,6 @@ class Fusion_FusionRedux {
 		$fusion_cache->reset_all_caches();
 	}
 
-	/**
-	 * Get all post type including Avada.
-	 * 
-	 *  @param array $data The post types array.
-	 * @access public
-	 * @since 1.0
-	 * @return array
-	 */
-	public function get_post_types( $data ) {
-		$custom_post_types = [];
-		$args              = [
-			'public'              => true,
-			'show_ui'             => true,
-			'exclude_from_search' => false,
-		];
-		$post_types        = get_post_types( $args, 'objects', 'and' );
-		foreach ( $post_types as $post_type ) {
-			$custom_post_types[ $post_type->name ] = $post_type->label;
-		}
-
-		// Remove media.
-		unset( $custom_post_types['attachment'] );
-
-		$avada_post_types =
-			[
-				'post'            => esc_html__( 'Posts', 'fusion-builder' ),
-				'page'            => esc_html__( 'Pages', 'fusion-builder' ),
-				'avada_portfolio' => esc_html__( 'Portfolio Items', 'fusion-builder' ),
-				'avada_faq'       => esc_html__( 'FAQ Items', 'fusion-builder' ),
-				'product'         => esc_html__( 'WooCommerce Products', 'fusion-builder' ),
-				'tribe_events'    => esc_html__( 'Events Calendar Posts', 'fusion-builder' ),
-			];
-		
-		return apply_filters( 'avada_search_results_post_types', array_merge( $avada_post_types, $custom_post_types ) );
-	}
 	/**
 	 * Removes fusionredux admin notices & nag messages
 	 * as well as the fusionredux demo mode.
@@ -545,11 +499,11 @@ class Fusion_FusionRedux {
 					/* translators: The description subtitle and an example value. */
 					$args['subtitle'] = sprintf( esc_html__( '%1$s Enter value including CSS unit (px, em, rem), ex: %2$s.', 'fusion-builder' ), $args['subtitle'], $field['default'] );
 				} elseif ( 'text_column_spacing' === $field['id'] ) {
-					/* translators: The description subtitle, percetange sign and an example value. */
-					$args['subtitle'] = sprintf( esc_html__( '%1$s Enter value including any valid CSS unit besides %2$s which does not work for inline columns, ex: %3$s.', 'fusion-builder' ), $args['subtitle'], '%', $field['default'] );
+					/* translators: The description subtitle and an example value. */
+					$args['subtitle'] = sprintf( esc_html__( '%1$s Enter value including any valid CSS unit besides %% which does not work for inline columns, ex: %2$s.', 'fusion-builder' ), $args['subtitle'], $field['default'] );
 				} elseif ( 'page_title_height' === $field['id'] || 'page_title_mobile_height' === $field['id'] ) {
-					/* translators: The description subtitle, percentage sign and an example value. */
-					$args['subtitle'] = sprintf( esc_html__( '%1$s Enter value including any valid CSS unit besides %2$s which does not work for page title bar, ex: %3$s.', 'fusion-builder' ), $args['subtitle'], '%', $field['default'] );
+					/* translators: The description subtitle and an example value. */
+					$args['subtitle'] = sprintf( esc_html__( '%1$s Enter value including any valid CSS unit besides %% which does not work for page title bar, ex: %2$s.', 'fusion-builder' ), $args['subtitle'], $field['default'] );
 				} else {
 					/* translators: The description subtitle and an example value. */
 					$args['subtitle'] = sprintf( esc_html__( '%1$s Enter value including any valid CSS unit, ex: %2$s.', 'fusion-builder' ), $args['subtitle'], $field['default'] );
@@ -573,9 +527,6 @@ class Fusion_FusionRedux {
 				$args['validate_callback'] = 'fusion_fusionredux_validate_dimensions';
 
 				$default = is_array( $field['default'] ) ? implode( ', ', $field['default'] ) : $field['default'];
-				if ( is_array( $field['default'] ) && empty( array_filter( $field['default'] ) ) ) {
-					$default = '10px, 1em';
-				}
 				/* translators: The description subtitle and an example value. */
 				$args['subtitle'] = sprintf( esc_html__( '%1$s Enter values including any valid CSS unit, ex: %2$s.', 'fusion-builder' ), $args['subtitle'], $default );
 				break;
@@ -652,9 +603,6 @@ class Fusion_FusionRedux {
 				break;
 			case 'color-palette':
 				$args['type'] = 'color_palette';
-				break;
-			case 'typography-sets':
-				$args['type'] = 'typography_sets';
 				break;
 			case 'preset':
 			case 'preset':
@@ -875,7 +823,7 @@ class Fusion_FusionRedux {
 	public function apply_soft_dependency( $args, $panel = false ) {
 		if ( isset( $args['soft_dependency'] ) && $args['soft_dependency'] && 'custom' !== $args['type'] && 'raw' !== $args['type'] ) {
 
-			$correlation_link = '  <span class="fusion-hover-description"><a href="https://avada.com/documentation/the-avada-options-network/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'This is a dependent option that always stays visible because other options can utilize it.', 'fusion-builder' ) . '</a></span>';
+			$correlation_link = '  <span class="fusion-hover-description"><a href="https://theme-fusion.com/documentation/avada/options/how-options-work/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'This is a dependent option that always stays visible because other options can utilize it.', 'fusion-builder' ) . '</a></span>';
 
 			if ( ! $panel ) {
 				$args['subtitle'] .= $correlation_link;
@@ -927,32 +875,15 @@ class Fusion_FusionRedux {
 		wp_localize_script( 'fusion-redux-custom-js', 'fusionFusionreduxVars', $vars );
 		wp_enqueue_script( 'fusion-redux-custom-js' );
 
+
 		wp_enqueue_script( 'fusion-redux-reset-caches', trailingslashit( FUSION_LIBRARY_URL ) . 'inc/redux/assets/fusion-reset-caches.js', [], time(), false );
 		wp_localize_script(
 			'fusion-redux-reset-caches',
 			'fusionReduxResetCaches',
 			[
-				'ajaxurl'   => admin_url( 'admin-ajax.php' ),
-				'general'   => [
-					'confirm' => esc_html__( 'Are you sure you want to reset all Avada caches?', 'fusion-builder' ),
-					'success' => esc_html__( 'All Avada caches have been reset.', 'fusion-builder' ),
-				],
-				'mailchimp' => [
-					'confirm' => esc_html__( 'Are you sure you want to reset all Mailchimp caches?', 'fusion-builder' ),
-					'success' => esc_html__( 'All Mailchimp caches have been reset.', 'fusion-builder' ),
-				],
-				'hubspot'   => [
-					'confirm' => esc_html__( 'Are you sure you want to reset all HubSpot caches?', 'fusion-builder' ),
-					'success' => esc_html__( 'All HubSpot caches have been reset.', 'fusion-builder' ),
-				],
-				'instagram' => [
-					'confirm' => esc_html__( 'Are you sure you want to reset all Instagram caches?', 'fusion-builder' ),
-					'success' => esc_html__( 'All Instagram caches have been reset.', 'fusion-builder' ),
-				],
-				'adobe'     => [
-					'confirm' => esc_html__( 'Are you sure you want to reset all Adobe caches?', 'fusion-builder' ),
-					'success' => esc_html__( 'All Adobe caches have been reset. Refresh the page to see the changes.', 'fusion-builder' ),
-				],
+				'ajaxurl' => admin_url( 'admin-ajax.php' ),
+				'confirm' => esc_html__( 'Are you sure you want to reset all Avada caches?', 'fusion-builder' ),
+				'success' => esc_html__( 'All Avada caches have been reset.', 'fusion-builder' ),
 			]
 		);
 	}
@@ -1389,7 +1320,7 @@ class Fusion_FusionRedux {
 	 * @return string
 	 */
 	public function reset_message_l10n() {
-		return esc_html__( 'Are you sure? This will reset all saved options to the default Avada Classic Global Options. This does not reset them to any other prebuilt site that you may have imported. A copy of your current options will be saved to your uploads folder in avada-global-options, as a backup.', 'fusion-builder' );
+		return esc_html__( 'Are you sure? This will reset all saved options to the default Avada Classic Global Options. This does not reset them to any other demo that you may have imported.', 'fusion-builder' );
 	}
 
 	/**
@@ -1400,7 +1331,7 @@ class Fusion_FusionRedux {
 	 * @return string
 	 */
 	public function reset_section_message_l10n() {
-		return esc_html__( 'Are you sure? This will reset all saved options to the default Avada Classic Global Options for this section. This does not reset them to any other prebuilt site that you may have imported. A copy of your current options will be saved to your uploads folder in avada-global-options, as a backup.', 'fusion-builder' );
+		return esc_html__( 'Are you sure? This will reset all saved options to the default Avada Classic Global Options for this section. This does not reset them to any other demo that you may have imported.', 'fusion-builder' );
 	}
 
 	/**
@@ -1485,8 +1416,8 @@ class Fusion_FusionRedux {
 			return;
 		}
 		?>
-		<div id="remote-media-found-in-fusion-options" class="notice notice-error avada-db-card avada-db-notice settings-error" style="max-width: 1200px; box-sizing: border-box;">
-			<strong><span class="avada-db-settings-error-heading"><?php esc_html_e( 'Media fields using remote URLs were detected in your Global Options', 'fusion-builder' ); ?></span></strong>
+		<div id="remote-media-found-in-fusion-options" class="notice notice-error avada-db-card avada-db-notice">
+			<h2><?php esc_html_e( 'Media fields using remote URLs were detected in your Global Options', 'fusion-builder' ); ?></h2>
 			<ul>
 				<?php foreach ( $this->media_fields as $field ) : ?>
 					<li><span><?php echo esc_html( $field['label'] ); ?></span></li>
@@ -1533,9 +1464,6 @@ class Fusion_FusionRedux {
 	 * @return void
 	 */
 	public function reset_caches_handler() {
-		// Check nonce.
-		check_ajax_referer( 'fusionredux_ajax_noncefusion_options', 'nonce' );
-
 		if ( is_multisite() && is_main_site() ) {
 			$sites = get_sites();
 			foreach ( $sites as $site ) {

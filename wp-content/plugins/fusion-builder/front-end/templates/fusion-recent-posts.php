@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_recent_posts-shortcode">
+
 	<# // If Query Data is set, use it and continue.  If not, echo HTML. #>
 	<# if ( 'undefined' !== typeof query_data && 'undefined' !== typeof query_data.posts ) { #>
 		<#
@@ -29,19 +30,19 @@
 								<div class="fusion-format-box">
 
 									<# if ( 'gallery' === post.format ) { #>
-										<i class="awb-icon-images" aria-hidden="true"></i>
+										<i class="fusion-icon-images" aria-hidden="true"></i>
 									<# } else if ( 'link' === post.format || 'image' === post.format ) { #>
-										<i class="awb-icon-{{ post.format }}" aria-hidden="true"></i>
+										<i class="fusion-icon-{{ post.format }}" aria-hidden="true"></i>
 									<# } else if ( 'quote' === post.format ) { #>
-										<i class="awb-icon-quotes-left" aria-hidden="true"></i>
+										<i class="fusion-icon-quotes-left" aria-hidden="true"></i>
 									<# } else if ( 'video' === post.format ) { #>
-										<i class="awb-icon-film" aria-hidden="true"></i>
+										<i class="fusion-icon-film" aria-hidden="true"></i>
 									<# } else if ( 'audio' === post.format ) { #>
-										<i class="awb-icon-headphones" aria-hidden="true"></i>
+										<i class="fusion-icon-headphones" aria-hidden="true"></i>
 									<# } else if ( 'chat' === post.format ) { #>
-										<i class="awb-icon-bubbles" aria-hidden="true"></i>
+										<i class="fusion-icon-bubbles" aria-hidden="true"></i>
 									<# } else { #>
-										<i class="awb-icon-pen" aria-hidden="true"></i>
+										<i class="fusion-icon-pen" aria-hidden="true"></i>
 									<# } #>
 
 								</div>
@@ -87,9 +88,9 @@
 							<# if ( 'yes' === values.title ) { #>
 
 								{{{ post.rich_snippet.yes }}}
-								<{{ titleTag }} <# if ( extras.disable_date_rich_snippet_pages ) { #>class="entry-title"<# } #>>
+								<h4 <# if ( extras.disable_date_rich_snippet_pages ) { #>class="entry-title"<# } #>>
 									<a href="{{{ post.permalink }}}">{{{ post.title }}}</a>
-								</{{ titleTag }}>
+								</h4>
 
 							<# } else { #>
 

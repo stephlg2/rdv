@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 		class FusionSC_Tooltip extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @since 1.0
+			 * @access protected
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -38,6 +47,8 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
+
+				global $fusion_settings;
 
 				return [
 					'class'     => '',
@@ -149,7 +160,7 @@ function fusion_element_tooltip() {
 				'shortcode'      => 'fusion_tooltip',
 				'icon'           => 'fusiona-exclamation-sign',
 				'generator_only' => true,
-				'help_url'       => 'https://avada.com/documentation/tooltip-element/',
+				'help_url'       => 'https://theme-fusion.com/documentation/fusion-builder/elements/tooltip-element/',
 				'params'         => [
 					[
 						'type'        => 'textfield',

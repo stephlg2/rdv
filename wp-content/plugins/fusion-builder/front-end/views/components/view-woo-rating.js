@@ -21,11 +21,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Validate values.
 				this.validateValues( atts.values );
 
-				this.values = atts.values;
-
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -56,6 +55,22 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
+
 				if ( 'yes' !== values.show_count ) {
 					attr[ 'class' ] += ' hide-count';
 				}
@@ -73,8 +88,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				attr = _.fusionAnimations( values, attr );
-
-				attr.style += this.getStyleVariables();
 
 				return attr;
 			},
@@ -140,32 +153,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				styles += '</style>';
 
 				return styles;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param  {Object} values - The values object.
-			 * @return {String}
-			 */
-			getStyleVariables: function() {
-
-				var cssVarsOptions = [
-					'icon_color',
-					'count_color',
-					'count_hover_color'
-				];
-
-				cssVarsOptions.margin_bottom   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.icon_size       = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.count_font_size = { 'callback': _.fusionGetValueWithUnit };
-
-
-				return this.getCssVarsForOptions( cssVarsOptions );
 			}
 		} );
 	} );

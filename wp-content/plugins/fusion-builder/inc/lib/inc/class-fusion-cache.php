@@ -27,6 +27,7 @@ class Fusion_Cache {
 			'reset_all_caches',
 			[
 				'compiled_assets'  => true,
+				'fb_pages'         => true,
 				'gfonts'           => true,
 				'fa_font'          => true,
 				'demo_data'        => true,
@@ -82,6 +83,10 @@ class Fusion_Cache {
 			$delete_demo_files = $wp_filesystem->delete( $upload_dir['basedir'] . '/avada-demo-data', true, 'd' );
 		}
 
+		if ( true === $delete_cache['fb_pages'] ) {
+			$delete_fb_pages = $wp_filesystem->delete( $upload_dir['basedir'] . '/fusion-builder-avada-pages', true, 'd' );
+		}
+
 		if ( true === $delete_cache['po_export'] ) {
 			$delete_fb_pages = $wp_filesystem->delete( $upload_dir['basedir'] . '/fusion-page-options-export', true, 'd' );
 		}
@@ -108,10 +113,6 @@ class Fusion_Cache {
 				'_transient_fusion_custom_icons_preload_tags%',
 				'_transient_fusion_gfonts_preload_tags%',
 				'_transient_fusion_local_subsets_preload_tags%',
-				'_transient_fusion_mailchimp_lists%',
-				'_transient_fusion_mailchimp_fields%',
-				'_transient_fusion_hubspot_properties',
-				'_transient_fusion_hubspot_preferences',
 				'_site_transient_avada_welcome_video_url_%',
 			];
 			global $wpdb;
@@ -140,8 +141,6 @@ class Fusion_Cache {
 				'fusion_fb_tos',
 				'fusion_tos_flat',
 				'avada_dashboard_data',
-				'awb_library_demo',
-				'avada_studio',
 			];
 			foreach ( $transients as $transient ) {
 				delete_transient( $transient );
@@ -182,9 +181,11 @@ class Fusion_Cache {
 			global $file_prefix;
 			wp_cache_clean_cache( $file_prefix );
 		}
-		// If SG Optimizer is installed, rese its caches.
-		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
-			sg_cachepress_purge_cache();
+		// If SG CachePress is installed, rese its caches.
+		if ( class_exists( 'SG_CachePress_Supercacher' ) ) {
+			if ( method_exists( 'SG_CachePress_Supercacher', 'purge_cache' ) ) {
+				SG_CachePress_Supercacher::purge_cache();
+			}
 		}
 		// Clear caches on WPEngine-hosted sites.
 		if ( class_exists( 'WpeCommon' ) ) {

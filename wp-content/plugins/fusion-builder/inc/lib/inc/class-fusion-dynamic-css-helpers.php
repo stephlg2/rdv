@@ -276,12 +276,6 @@ class Fusion_Dynamic_CSS_Helpers {
 		$google_font    = isset( $typo_array['font-family'] ) ? $typo_array['font-family'] : false;
 		$fallback_fonts = isset( $typo_array['font-backup'] ) ? $typo_array['font-backup'] : false;
 
-		// If a global variable is set to the font, then return the variable,
-		// since the global typography variable will also contain the fallback fonts.
-		if ( false !== strpos( $google_font, 'var(' ) ) {
-			return $google_font;
-		}
-
 		// Exit early by returning the fallback font
 		// in case no google-font is defined.
 		if ( false === $google_font ) {
@@ -404,11 +398,6 @@ class Fusion_Dynamic_CSS_Helpers {
 	 * @return string
 	 */
 	public static function get_elements_string( $elements ) {
-		$builder_status = false;
-
-		if ( function_exists( 'fusion_is_preview_frame' ) ) {
-			$builder_status = fusion_is_preview_frame();
-		}
 
 		// If it's a string, split to an array using comma as a delimiter.
 		if ( is_string( $elements ) ) {
@@ -418,16 +407,6 @@ class Fusion_Dynamic_CSS_Helpers {
 		// Remove spaces etc from the beginning and end of elements.
 		foreach ( $elements as $key => $element ) {
 			$elements[ $key ] = trim( $element );
-		}
-
-		// Check for hover selectors and add class equivalent.
-		if ( $builder_status ) {
-			foreach ( $elements as $key => $element ) {
-				if ( false !== strpos( $element, ':hover' ) ) {
-					$fake_hover = str_replace( ':hover', '.hover', $element );
-					$elements[] = $fake_hover;
-				}
-			}
 		}
 
 		// Remove duplicates.

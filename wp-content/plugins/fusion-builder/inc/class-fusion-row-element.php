@@ -14,32 +14,13 @@ if ( ! class_exists( 'Fusion_Row_Element' ) ) {
 	 */
 	class Fusion_Row_Element extends Fusion_Element {
 		/**
-		 * Shortcode attribute ID.
+		 * An array of the shortcode arguments.
 		 *
-		 * @var string
+		 * @access protected
+		 * @since 3.0
+		 * @var array
 		 */
-		public $shortcode_attr_id = '';
-
-		/**
-		 * Shortcode CSS class name.
-		 *
-		 * @var string
-		 */
-		public $shortcode_classname = '';
-
-		/**
-		 * Shortcode name.
-		 *
-		 * @var string
-		 */
-		public $shortcode_name = '';
-
-		/**
-		 * The filter-name we want to apply using apply_filters.
-		 *
-		 * @var string
-		 */
-		public $content_filter = '';
+		protected $args;
 
 		/**
 		 * Constructor.
@@ -87,7 +68,7 @@ if ( ! class_exists( 'Fusion_Row_Element' ) ) {
 		 * @return array
 		 */
 		public static function get_element_extras() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 			return [
 				'site_width' => $fusion_settings->get( 'site_width' ),
 			];
@@ -136,7 +117,7 @@ if ( ! class_exists( 'Fusion_Row_Element' ) ) {
 		 */
 		public function attr() {
 
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 
 			$attr = [
 				'class' => 'fusion-builder-row ' . $this->shortcode_classname,
@@ -155,10 +136,7 @@ if ( ! class_exists( 'Fusion_Row_Element' ) ) {
 
 				// Not an inner row, check if we are nested though.
 				if ( ! $this->args['nested_container'] ) {
-					$nesting_depth = fusion_builder_container()->get_nesting_depth();
-					$override_name = function_exists( 'Fusion_Template_Builder' ) ? Fusion_Template_Builder()->get_current_override_name() : false;
-
-					$this->args['nested_container'] = ( 1 === $nesting_depth && ( 'content' === $override_name || FusionBuilder()->mega_menu_data['is_rendering'] ) ) ? false : fusion_builder_container()->is_nested();
+					$this->args['nested_container'] = fusion_builder_container()->is_nested();
 				}
 			}
 
@@ -172,12 +150,6 @@ if ( ! class_exists( 'Fusion_Row_Element' ) ) {
 					if ( 'flex-start' !== $container_args['flex_justify_content'] ) {
 						$attr['class'] .= ' fusion-flex-justify-content-' . $container_args['flex_justify_content'];
 					}
-
-					// flex wrap class.
-					if ( '' !== $container_args['flex_wrap'] ) {
-						$attr['class'] .= ' fusion-flex-content-wrap';
-					}
-
 					// If this is not nested row, then increase width with negative margins to match column margin.
 					$width = 'yes' === $container_args['hundred_percent'] || $this->args['nested_container'] ? '100%' : $fusion_settings->get( 'site_width' );
 

@@ -68,10 +68,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return false;
 			}
 
-			if ( 0 === value.indexOf( '--' ) || ( /var\(\s*--/i ).test( value ) ) {
-				return true;
-			}
-
 			if ( 'hex' === mode ) {
 				return this.colorHEX( value );
 			} else if ( 'rgba' === mode ) {

@@ -31,30 +31,6 @@ var fieldId      = 'undefined' === typeof param.param_name ? param.id : param.pa
 	<# _.each( choices, function( name, value ) { #>
 		<#
 		index++;
-
-		let dependencyAtts = '';
-
-		if ( typeof name === 'object' && name !== null ) {
-			const dependency = name.dependency;
-			name = name.name;
-
-			if ( dependency ) {
-				dependencyAtts = [];
-				if ( dependency.element ) {
-					dependencyAtts.push(`data-dependency=${dependency.element}`);
-				}
-				if ( dependency.value ) {
-					dependencyAtts.push(`data-dependency-value=${dependency.value}`);
-				}
-				if ( dependency.operator ) {
-					dependencyAtts.push(`data-dependency-operator=${dependency.operator}`);
-				}
-
-				dependencyAtts = dependencyAtts.join( ' ' );
-
-			}
-		}
-
 		var selected  = ( value == choice ) ? ' ui-state-active' : '',
 			icon      = ( 'undefined' !== typeof icons[ value ] && '' !== icons ) ? icons[ value ] : '',
 			title     = gridLayout ? '' : name,
@@ -70,6 +46,6 @@ var fieldId      = 'undefined' === typeof param.param_name ? param.id : param.pa
 		}
 
 		#>
-		<a href="#" class="ui-button buttonset-item{{ selected }} {{ iconClass }}" data-value="{{ value }}" aria-label="{{ name }}" {{ dependencyAtts }}>{{{ title }}}</a>
+		<a href="#" class="ui-button buttonset-item{{ selected }} {{ iconClass }}" data-value="{{ value }}" aria-label="{{ name }}">{{{ title }}}</a>
 	<# } ); #>
 </div>

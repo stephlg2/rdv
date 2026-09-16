@@ -1,19 +1,5 @@
 /* stylelint-disable length-zero-no-unit */
 /* stylelint-enable length-zero-no-unit */
-.fusion-google-map {
-  --awb-height: auto;
-  --awb-width: auto;
-  --awb-margin-top: 0;
-  --awb-margin-bottom: 0;
-  height: var(--awb-height);
-  width: var(--awb-width);
-  margin-top: var(--awb-margin-top);
-  margin-bottom: var(--awb-margin-bottom);
-}
-.fusion-google-map.fusion-maps-js-type {
-  --awb-height: 300px;
-  --awb-width: 100%;
-}
 .fusion-google-map img {
   max-width: none;
 }

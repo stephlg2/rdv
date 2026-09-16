@@ -34,12 +34,6 @@ if ( ! class_exists( 'FusionReduxFramework_multi_text' ) ) {
 	 */
 	class FusionReduxFramework_multi_text {
 
-		public $parent;
-		public $field;
-		public $value;
-		public $add_text;
-		public $show_empty;
-
 		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -63,6 +57,7 @@ if ( ! class_exists( 'FusionReduxFramework_multi_text' ) ) {
 		 * @return      void
 		 */
 		public function render() {
+
 			$this->add_text   = ( isset( $this->field['add_text'] ) ) ? $this->field['add_text'] : __( 'Add More', 'fusion-builder' );
 			$this->show_empty = ( isset( $this->field['show_empty'] ) ) ? $this->field['show_empty'] : true;
 

@@ -9,6 +9,9 @@
 ?>
 <script type="text/template" id="fusion-builder-row-inner-template">
 	<div class="fusion-droppable fusion-droppable-horizontal target-before fusion-element-target"></div>
+	<div class="fusion-builder-module-preview">
+		<h4 class="fusion_module_title fusion-nested-column-preview-title">{{ title }}</h4>
+	</div>
 	<div class="fusion-builder-module-controls-container fusion-builder-module-controls-type-row fusion-builder-module-controls-type-row-nested">
 		<div class="fusion-builder-controls fusion-builder-module-controls">
 			<div class="fusion-builder-module-controls-inner">
@@ -16,9 +19,7 @@
 				<a href="#" class="fusion-builder-row-clone fusion-builder-module-control"><span class="fusiona-file-add"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Clone Element', 'fusion-builder' ); ?></span></span></a>
 				<a href="#" class="fusion-builder-row-settings fusion-builder-module-control"><span class="fusiona-pen"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Open Nested Columns', 'fusion-builder' ); ?></span></span></a>
 				<a href="#" class="fusion-builder-add-element fusion-builder-module-control"><span class="fusiona-plus"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Add Element Below', 'fusion-builder' ); ?></span></span></a>
-				<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) : ?>
-					<a href="#" class="fusion-builder-row-save fusion-builder-module-control" data-focus="#fusion-builder-save-element-input" data-target="#fusion-builder-layouts-elements"><span class="fusiona-drive"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Save Element', 'fusion-builder' ); ?></span></span></a>
-				<?php endif; ?>
+				<a href="#" class="fusion-builder-row-save fusion-builder-module-control" data-focus="#fusion-builder-save-element-input" data-target="#fusion-builder-layouts-elements"><span class="fusiona-drive"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Save Element', 'fusion-builder' ); ?></span></span></a>
 				<a href="#" class="fusion-builder-row-remove fusion-builder-module-control"><span class="fusiona-trash-o"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Delete Element', 'fusion-builder' ); ?></span></span></a>
 			</div>
 			<# if ( 'undefined' !== typeof params && 'undefined' !== typeof params.fusion_global) { #>
@@ -55,6 +56,21 @@
 			</div>
 		</div>
 		<div class="fusion-builder-nested-columns-settings-overlay"></div>
+	</div>
+
+	<div class="fusion-builder-module-controls-container">
+		<div class="fusion-builder-controls fusion-builder-module-controls fusion-builder-controls-wireframe">
+			<a href="#" class="fusion-builder-settings fusion-builder-module-control"><span class="fusiona-pen"></span></a>
+			<a href="#" class="fusion-builder-row-clone fusion-builder-module-control"><span class="fusiona-file-add"></span></a>
+			<a href="#" class="fusion-builder-row-save fusion-builder-module-control" data-focus="#fusion-builder-save-element-input" data-target="#fusion-builder-layouts-elements"><span class="fusiona-drive"></span></a>
+			<a href="#" class="fusion-builder-row-remove fusion-builder-module-control"><span class="fusiona-trash-o"></span></a>
+			<a href="#" class="fusion-builder-row-drag fusion-builder-module-control fusion-builder-element-drag"><span class="fusiona-icon-move"></span></a>
+		</div>
+	</div>
+	<div class="fusion-builder-wireframe-utility-toolbar">
+		<# if ( 'undefined' !== typeof params && 'undefined' !== typeof params.fusion_global) { #>
+			<a href="#" class="fusion-builder-element-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid={{id}}><span class="fusiona-globe"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text">{{{ fusionBuilderText.global_element }}}</span></span></a>
+		<# } #>
 	</div>
 	<div class="fusion-clearfix"></div>
 	<div class="fusion-droppable fusion-droppable-horizontal target-after fusion-element-target"></div>

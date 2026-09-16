@@ -17,6 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<?php Avada()->head->the_viewport(); ?>
+	<?php Fusion::get_instance()->dynamic_js->init(); ?>
+
 	<?php wp_head(); ?>
 
 	<?php

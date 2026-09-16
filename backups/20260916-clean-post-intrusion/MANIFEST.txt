@@ -1,0 +1,8 @@
+backup_date=20260916-154511
+path=/home/debian/backups/rdvasie-clean-20260916-154511
+home_http=200
+wp_version=6.9.4
+files_sha256=e4732c6f02985bb41c55a9ba7e2a3642c278f0d1a0458b5c813ef97ac11f824b
+db_sha256=c2a6ba55d5c5704f12ee1aa00c17cf9b0ca42c425432b14ea730228af83c8d04
+cleaned=HTTP_5ACD3FB eval backdoors; STEALTH_GZ_GUARD loaders; uploads/cb7308cb30; sync.php; sidebar-part upload shell; TinyFileManager; file upload shells in child theme
+seo_homepage=Voyage Asie sur mesure : circuits privés & petits groupes | RDV Asie

@@ -198,29 +198,4 @@ class Fusion_Builder_Box_Shadow_Helper {
 		return $style;
 	}
 
-	/**
-	 * Get box-shadow CSS var.
-	 *
-	 * @since 3.9
-	 * @param string $var_name The variable name.
-	 * @param array  $params The box-shadow parameters.
-	 * @return string
-	 */
-	public static function get_box_shadow_css_var( $var_name, $params ) {
-		$style = '';
-		if ( 'yes' === $params['box_shadow'] ) {
-			$style  = fusion_library()->sanitize->get_value_with_unit( $params['box_shadow_horizontal'] );
-			$style .= ' ' . fusion_library()->sanitize->get_value_with_unit( $params['box_shadow_vertical'] );
-			$style .= ' ' . fusion_library()->sanitize->get_value_with_unit( $params['box_shadow_blur'] );
-			$style .= ' ' . fusion_library()->sanitize->get_value_with_unit( $params['box_shadow_spread'] );
-			$style .= ' ' . $params['box_shadow_color'];
-			if ( isset( $params['box_shadow_style'] ) && $params['box_shadow_style'] ) {
-				$style .= ' ' . $params['box_shadow_style'];
-			}
-			$style = $var_name . ':' . $style . ';';
-		}
-
-		return $style;
-	}
-
 }

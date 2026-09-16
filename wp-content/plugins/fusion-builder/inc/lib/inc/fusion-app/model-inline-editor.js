@@ -1,4 +1,4 @@
-/* global rangy, MediumEditor, FusionApp, fusionAllElements, fusionHistoryManager, fusionBuilderText, awbTypographySelect */
+/* global rangy, MediumEditor, FusionApp, fusionAllElements, fusionHistoryManager, fusionBuilderText */
 /* eslint no-unused-vars: 0 */
 /* eslint no-shadow: 0 */
 /* eslint no-undef: 0 */
@@ -437,8 +437,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						tab.classList.add( 'active' );
 					}
 
-					if ( _.isUndefined( window.awbTypographySelect ) || _.isUndefined( window.awbTypographySelect.webfonts ) ) {
-						jQuery.when( window.awbTypographySelect.getWebFonts() ).done( function() {
+					if ( _.isUndefined( FusionApp.assets ) || _.isUndefined( FusionApp.assets.webfonts ) ) {
+						jQuery.when( FusionApp.assets.getWebFonts() ).done( function() {
 							self.insertFamilyChoices();
 							self.setFontFamilyValues();
 						} );
@@ -582,7 +582,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 						if ( el.hasAttribute( 'data-fusion-google-variant' ) ) {
 							values.variant = el.getAttribute( 'data-fusion-google-variant' );
-							if ( ! _.isUndefined( window.awbTypographySelect ) && ! _.isUndefined( window.awbTypographySelect.webfonts ) ) {
+							if ( ! _.isUndefined( FusionApp.assets ) && ! _.isUndefined( FusionApp.assets.webfonts ) ) {
 								variants = self.getVariants( values.family );
 								_.each( variants, function( variant ) {
 									if ( values.variant === variant.id ) {
@@ -1040,7 +1040,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						searchIcon  = doc.createElement( 'span' ),
 						searchFonts = [];
 
-					if ( familyHold.hasChildNodes() || 'undefined' === typeof window.awbTypographySelect.webfonts ) {
+					if ( familyHold.hasChildNodes() || 'undefined' === typeof FusionApp.assets.webfonts ) {
 						return;
 					}
 
@@ -1079,16 +1079,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					familyHold.parentNode.appendChild( searchHold );
 
 					// Add the custom fonts.
-					if ( 'object' === typeof window.awbTypographySelect.webfonts.custom && ! _.isEmpty( window.awbTypographySelect.webfonts.custom ) ) {
+					if ( 'object' === typeof FusionApp.assets.webfonts.custom && ! _.isEmpty( FusionApp.assets.webfonts.custom ) ) {
 
 						// Extra check for different empty.
-						if ( 1 !== window.awbTypographySelect.webfonts.custom.length || ! ( 'object' === typeof window.awbTypographySelect.webfonts.custom[ 0 ] && '' === window.awbTypographySelect.webfonts.custom[ 0 ].family ) ) {
+						if ( 1 !== FusionApp.assets.webfonts.custom.length || ! ( 'object' === typeof FusionApp.assets.webfonts.custom[ 0 ] && '' === FusionApp.assets.webfonts.custom[ 0 ].family ) ) {
 							option           = doc.createElement( 'div' );
 							option.innerHTML = fusionBuilderText.custom_fonts;
 							option.classList.add( 'fusion-cfh' );
 							familyHold.appendChild( option );
 
-							_.each( window.awbTypographySelect.webfonts.custom, function( font, index ) {
+							_.each( FusionApp.assets.webfonts.custom, function( font, index ) {
 								if ( font.family && '' !== font.family ) {
 									searchFonts.push( {
 										id: font.family.replace( /&quot;/g, '&#39' ),
@@ -1110,7 +1110,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 
 					// Add the google fonts.
-					_.each( window.awbTypographySelect.webfonts.google, function( font, index ) {
+					_.each( FusionApp.assets.webfonts.google, function( font, index ) {
 						searchFonts.push( {
 							id: font.family,
 							text: font.label
@@ -1294,7 +1294,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						return;
 					}
 
-					if ( -1 !== window.awbTypographySelect.webfontsStandardArray.indexOf( font ) || this.isCustomFont( font ) ) {
+					if ( -1 !== FusionApp.assets.webfontsStandardArray.indexOf( font ) || this.isCustomFont( font ) ) {
 						this.changePreview( font, false, variant );
 
 					} else if ( this.webFontLoad( font, variant, false ) ) {
@@ -1304,6 +1304,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							self.changePreview( font, true, variant );
 						} );
 					}
+				},
+
+				isCustomFont: function( font ) {
+					var isCustom = false;
+
+					if ( 'object' !== typeof FusionApp.assets.webfonts.custom ) {
+						return false;
+					}
+					_.each( FusionApp.assets.webfonts.custom, function( checkFont, index ) {
+						if ( font === checkFont.family ) {
+							isCustom = true;
+						}
+					} );
+
+					return isCustom;
 				},
 
 				getFontFamily: function() {
@@ -1420,8 +1435,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						element;
 
 					if ( googleFont && variant ) {
-						fontWeight = awbTypographySelect.getFontWeightFromVariant( variant );
-						fontStyle  = awbTypographySelect.getFontStyleFromVariant( variant );
+						fontWeight = this.getFontWeightFromVariant( variant );
+						fontStyle  = this.getFontStyleFromVariant( variant );
 					}
 
 					this.base.restoreSelection();
@@ -1470,140 +1485,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					// Make sure not to hide form when clicking inside the form
 					event.stopPropagation();
-				},
-
-				// TODO: refactor this so its easier to lookup.
-				getVariants: function( fontFamily ) {
-					var variants = false;
-
-					// Family is a variable, variant only has that selection.
-					if ( -1 !== fontFamily.indexOf( 'var(' ) ) {
-						return [
-							{
-								id: fontFamily.replace( '-font-family)', ')' ),
-								label: awbTypoData.strings.global
-							}
-						];
-					}
-
-					if ( this.isCustomFont( fontFamily ) ) {
-						return [
-							{
-								id: '400',
-								label: 'Normal 400'
-							}
-						];
-					}
-
-					_.each( window.awbTypographySelect.webfonts.standard, function( font ) {
-						if ( fontFamily && font.family === fontFamily ) {
-							variants = font.variants;
-							return font.variants;
-						}
-					} );
-
-					_.each( window.awbTypographySelect.webfonts.google, function( font ) {
-						if ( font.family === fontFamily ) {
-							variants = font.variants;
-							return font.variants;
-						}
-					} );
-					return variants;
-				},
-
-				isCustomFont: function( family ) {
-					var isCustom = false;
-
-					// Figure out if this is a google-font.
-					_.each( window.awbTypographySelect.webfonts.custom, function( font ) {
-						if ( font.family === family ) {
-							isCustom = true;
-						}
-					} );
-
-					return isCustom;
-				},
-				webFontLoad: function( family, variant ) {
-					var isGoogleFont = this.isGoogleFont( family ),
-						scriptID,
-						script;
-
-					// Early exit if there is no font-family defined.
-					if ( _.isUndefined( family ) || '' === family || ! family ) {
-						return;
-					}
-
-					// Get a valid variant.
-					variant = this.getValidVariant( family, variant );
-
-					// Early exit if not a google-font.
-					if ( false === isGoogleFont ) {
-						return;
-					}
-
-					variant = ( _.isUndefined( variant ) || ! variant ) ? ':regular' : ':' + variant;
-					family  = family.replace( /"/g, '&quot' );
-
-					script  = family;
-					script += ( variant ) ? variant : '';
-
-					scriptID = script.replace( /:/g, '' ).replace( /"/g, '' ).replace( /'/g, '' ).replace( / /g, '' ).replace( /,/, '' );
-
-					if ( ! jQuery( 'head' ).find( '#' + scriptID ).length ) {
-						jQuery( 'head' ).first().append( '<script id="' + scriptID + '">WebFont.load({google:{families:["' + script + '"]},context:FusionApp.previewWindow,active: function(){ jQuery( window ).trigger( "fusion-font-loaded"); },});</script>' );
-						return false;
-					}
-					return true;
-				},
-
-				isGoogleFont: function( family ) {
-					var isGoogleFont = false;
-
-					// Figure out if this is a google-font.
-					_.each( window.awbTypographySelect.webfonts.google, function( font ) {
-						if ( font.family === family ) {
-							isGoogleFont = true;
-						}
-					} );
-
-					return isGoogleFont;
-				},
-
-				getValidVariant: function( family, variant ) {
-					var variants   = this.getVariants( family ),
-						isValid    = false,
-						hasRegular = false,
-						first      = ( ! _.isUndefined( variants[ 0 ] ) && ! _.isUndefined( variants[ 0 ].id ) ) ? variants[ 0 ].id : '400';
-
-					if ( 'string' !== typeof variant || '' === variant ) {
-						variant = '400';
-					}
-
-					// Variable family, set variant value as same variable.
-					if ( -1 !== family.indexOf( 'var(' ) ) {
-						return family.replace( '-font-family)', ')' );
-					}
-					if ( this.isCustomFont( family ) ) {
-						return '400';
-					}
-
-					_.each( variants, function( v ) {
-						if ( variant === v.id ) {
-							isValid = true;
-						}
-						if ( 'regular' === v.id || '400' === v.id || 400 === v.id ) {
-							hasRegular = true;
-						}
-					} );
-
-					if ( isValid ) {
-						return variant;
-					} else if ( hasRegular ) {
-						return '400';
-					}
-					return first;
 				}
 			} );
+			_.extend( fusionTypographyForm.prototype, FusionPageBuilder.options.fusionTypographyField );
 			MediumEditor.extensions.fusionTypography = fusionTypographyForm;
 		},
 
@@ -1682,7 +1566,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					for ( nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++ ) {
 						el    = nodes[ nodeIndex ];
-						color = 'string' == typeof el.style.color && '' !== el.style.color ? el.style.color : jQuery( el ).css( 'color' );
+						color = jQuery( el ).css( 'color' );
 						if ( jQuery( el ).data( 'fusion-font' ) ) {
 							return color;
 						}
@@ -1731,10 +1615,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				},
 
 				showForm: function( fontColor ) {
-					var self   = this,
-						input  = this.getInput(),
-						$input = jQuery( input ),
-						form   = this.getForm();
+					var self  = this,
+						input = this.getInput(),
+						form  = this.getForm();
 
 					this.base.saveSelection();
 					this.hideToolbarDefaultActions();
@@ -1743,26 +1626,31 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					this.setToolbarPosition();
 
-					$input.val( fontColor || '' ).trigger( 'change' );
+					input.value = fontColor || '';
 
-					if ( 'undefined' === typeof $input.awbColorPicker( 'instance' ) ) {
-						$input.awbColorPicker( {
-							width: 250,
-							hide: true,
-							allowToggle: false,
-							change: function( event, ui, value ) {
-								self.handleColorChange( value );
-							},
-							clear: function( event, ui ) {
-								self.clearFontColor();
+					jQuery( input ).wpColorPicker( {
+						width: 250,
+						palettes: false,
+						hide: true,
+						change: function( event, ui ) {
+							if ( 'none' !== jQuery( input ).closest( '.fusion-inline-color-picker' ).find( '.iris-picker' ).css( 'display' ) ) {
+								self.handleColorChange( ui.color.toString() );
 							}
-						} );
-					}
+						},
+						clear: function( event, ui ) {
+							self.clearFontColor();
+						}
+					} );
 
-					if ( -1 === $input.val().indexOf( '--' ) ) {
-						$input.awbColorPicker( 'open' );
-					} else {
-						$input.awbColorPicker( 'openGlobals' );
+					jQuery( input ).iris( 'color', input.value );
+					jQuery( input ).iris( 'show' );
+
+					if ( ! jQuery( input ).parent().parent().find( '.wp-picker-clear-button' ).length ) {
+						jQuery( input ).parent().parent().append( '<button class="button button-small wp-picker-clear wp-picker-clear-button"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>' );
+
+						jQuery( input ).parent().parent().find( '.wp-picker-clear-button' ).on( 'click', function() {
+							jQuery( input ).parent().parent().find( 'input.wp-picker-clear' ).trigger( 'click' );
+						} );
 					}
 				},
 
@@ -1798,7 +1686,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					form.id        = 'medium-editor-toolbar-form-fontcolor-' + this.getEditorId();
 
 					input.className = 'medium-editor-toolbar-input fusion-builder-color-picker-hex';
-					input.type      = 'text';
 					input.setAttribute( 'data-alpha', true );
 					form.appendChild( input );
 

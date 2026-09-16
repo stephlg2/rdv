@@ -14,6 +14,11 @@
 .fusion-portfolio-grid.fusion-portfolio-text {
   margin-bottom: 0;
 }
+.fusion-portfolio-carousel-fixed.fusion-carousel .fusion-image-wrapper,
+.fusion-portfolio-carousel-fixed.fusion-carousel .fusion-image-wrapper img {
+  max-height: 115px;
+  width: auto;
+}
 .fusion-portfolio-paging-infinite .pagination,
 .fusion-portfolio-paging-load-more-button .pagination {
   display: none;

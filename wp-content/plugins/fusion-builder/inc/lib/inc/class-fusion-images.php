@@ -64,16 +64,9 @@ class Fusion_Images {
 	 *
 	 * @static
 	 * @access public
-	 * @var bool
+	 * @var int
 	 */
-	public static $is_avada_lazy_load_images;
-
-	/**
-	 * Whether avada iframes lazy load is active or not.
-	 *
-	 * @var bool
-	 */
-	public static $is_avada_lazy_load_iframes;
+	public static $lazy_load;
 
 	/**
 	 * Constructor.
@@ -81,36 +74,22 @@ class Fusion_Images {
 	 * @access  public
 	 */
 	public function __construct() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
-		self::$grid_image_meta            = [];
-		self::$grid_accepted_widths       = [ '200', '400', '600', '800', '1200' ];
-		self::$supported_grid_layouts     = [ 'masonry', 'grid', 'timeline', 'large', 'portfolio_full', 'related-posts' ];
-		self::$masonry_grid_ratio         = $fusion_settings->get( 'masonry_grid_ratio' );
-		self::$masonry_width_double       = $fusion_settings->get( 'masonry_width_double' );
-		self::$is_avada_lazy_load_images  = 'avada' === $fusion_settings->get( 'lazy_load' ) ? true : false;
-		self::$is_avada_lazy_load_iframes = 'avada' === $fusion_settings->get( 'lazy_load_iframes' ) ? true : false;
-
-		// Enbale SVG file upload.
-		if ( 'enabled' === $fusion_settings->get( 'svg_upload' ) ) {
-			add_filter( 'upload_mimes', [ $this, 'allow_svg' ] );
-			add_filter( 'wp_check_filetype_and_ext', [ $this, 'correct_svg_filetype' ], 10, 5 );
+		if ( ! $fusion_settings ) {
+			$fusion_settings = Fusion_Settings::get_instance();
 		}
 
-		// Disable WP lazy loading for both, "Avada" method and "None".
-		if ( 'wordpress' !== $fusion_settings->get( 'lazy_load' ) ) {
-			add_filter( 'wp_lazy_loading_enabled', [ $this, 'remove_wp_image_lazy_loading' ], 10, 2 );
+		self::$grid_image_meta        = [];
+		self::$grid_accepted_widths   = [ '200', '400', '600', '800', '1200' ];
+		self::$supported_grid_layouts = [ 'masonry', 'grid', 'timeline', 'large', 'portfolio_full', 'related-posts' ];
+		self::$masonry_grid_ratio     = $fusion_settings->get( 'masonry_grid_ratio' );
+		self::$masonry_width_double   = $fusion_settings->get( 'masonry_width_double' );
+		self::$lazy_load              = 'avada' === $fusion_settings->get( 'lazy_load' ) ? true : false;
 
-			// Skip lazy loading for fancy product designer plugin.
-			if ( class_exists( 'WooCommerce' ) && fusion_is_plugin_activated( 'fancy-product-designer/fancy-product-designer.php' ) ) {
-				add_filter( 'woocommerce_cart_item_thumbnail', [ $this, 'skip_lazy_loading' ], 110, 2 );
-			}
-
-			add_filter( 'wp_get_attachment_image_attributes', [ $this, 'remove_lazy_loading_attr_from_image' ] );
-		}
-
-		if ( 'wordpress' !== $fusion_settings->get( 'lazy_load_iframes' ) ) {
-			add_filter( 'wp_lazy_loading_enabled', [ $this, 'remove_wp_iframe_lazy_loading' ], 10, 2 );
+		// Disable WP lazy loading for both, Avada method and none.
+		if ( 'WordPress' !== self::$lazy_load ) {
+			add_filter( 'wp_lazy_loading_enabled', '__return_false' );
 		}
 
 		add_filter( 'max_srcset_image_width', [ $this, 'set_max_srcset_image_width' ] );
@@ -126,15 +105,13 @@ class Fusion_Images {
 		add_filter( 'attachment_fields_to_save', [ $this, 'save_image_meta_fields' ], 10, 2 );
 		add_action( 'admin_head', [ $this, 'style_image_meta_fields' ] );
 		add_filter( 'wp_update_attachment_metadata', [ $this, 'remove_dynamically_generated_images' ], 10, 2 );
-		add_action( 'wp', [ $this, 'enqueue_lazy_loading_scripts' ] );
+		add_action( 'wp', [ $this, 'enqueue_image_scripts' ] );
 		add_filter( 'post_thumbnail_html', [ $this, 'apply_lazy_loading' ], 99, 5 );
 		add_filter( 'wp_get_attachment_image_attributes', [ $this, 'lazy_load_attributes' ], 10, 2 );
-		add_filter( 'the_content', [ $this, 'apply_bulk_lazy_loading' ], 999 );
-		add_filter( 'the_content', [ $this, 'apply_bulk_avada_lazy_loading_iframe' ], 999 );
+		add_action( 'the_content', [ $this, 'apply_bulk_lazy_loading' ], 999 );
 		add_filter( 'revslider_layer_content', [ $this, 'prevent_rev_lazy_loading' ], 10, 5 );
 		add_filter( 'layerslider_slider_markup', [ $this, 'prevent_ls_lazy_loading' ], 10, 3 );
 		add_filter( 'wp_get_attachment_metadata', [ $this, 'map_old_image_size_names' ], 10, 2 );
-		add_filter( 'wp_get_attachment_image_src', [ $this, 'wp_get_attachment_image_fix_svg' ], 10, 4 );
 		add_filter( 'rank_math/sitemap/urlimages', [ $this, 'extract_img_src_for_rank_math' ], 10, 2 );
 	}
 
@@ -356,31 +333,13 @@ class Fusion_Images {
 					$base_image_size = $this->get_grid_image_base_size( $attachment_id, self::$grid_image_meta['layout'], self::$grid_image_meta['columns'], 'get_closest_ceil' );
 
 					if ( is_integer( $base_image_size ) ) {
-						global $fusion_col_type;
-
-						if ( ! empty( $fusion_col_type['type'] ) && class_exists( 'Avada' ) && Avada()->layout->is_current_wrapper_hundred_percent() ) {
-							if ( false !== strpos( $fusion_col_type['type'], '.' ) ) {
-
-								// Custom % value.
-								$max_image_size = $fusion_col_type['type'];
-							} elseif ( false !== strpos( $fusion_col_type['type'], '_' ) ) {
-
-								// Standard columns.
-								$coeff          = explode( '_', $fusion_col_type['type'] );
-								$max_image_size = round( $coeff[0] / $coeff[1] * 100 );
-							}
-
-							$additional_sizes  = '(max-width: 1919px) ' . $base_image_size . 'px,';
-							$additional_sizes .= '(min-width: 1920px) ' . $max_image_size . 'vw';
-						} else {
-							$additional_sizes = $base_image_size . 'px';
-						}
+						$content_width = $base_image_size;
 					} else {
-						$additional_sizes = $size[0] . 'px';
+						$content_width = $size[0];
 					}
 				}
 
-				$sizes = $content_break_point . $additional_sizes;
+				$sizes = $content_break_point . $content_width . 'px';
 			}
 		}
 
@@ -424,6 +383,7 @@ class Fusion_Images {
 	 * @return string Image size name.
 	 */
 	public function get_grid_image_base_size( $post_thumbnail_id = null, $layout = null, $columns = null, $match_basis = 'get_closest' ) {
+		global $is_IE;
 		$sizes = [];
 
 		// Get image metadata.
@@ -477,8 +437,8 @@ class Fusion_Images {
 			}
 		}
 
-		// Fallback to 'full' image size if no match was found.
-		if ( ! $size_name || empty( $size_name ) ) {
+		// Fallback to 'full' image size if no match was found or Internet Explorer is used.
+		if ( ! $size_name || empty( $size_name ) || $is_IE ) {
 			$size_name = 'full';
 		}
 
@@ -498,7 +458,7 @@ class Fusion_Images {
 	 * @global array  $fusion_col_type The current column padding and type.
 	 * @return int
 	 */
-	public function fb_adjust_grid_image_base_size( $width, $layout = 'large', $columns = 1, $gutter_width = 30 ) {
+	public function fb_adjust_grid_image_base_size( $width, $layout, $columns = 1, $gutter_width = 30 ) {
 		global $fusion_col_type;
 
 		if ( ! empty( $fusion_col_type['type'] ) ) {
@@ -546,7 +506,11 @@ class Fusion_Images {
 	 * @return int The reduced width.
 	 */
 	public function calc_width_respecting_spacing( $width, $spacing_array ) {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
+
+		if ( ! $fusion_settings ) {
+			$fusion_settings = Fusion_Settings::get_instance();
+		}
 
 		$base_font_size = $fusion_settings->get( 'body_typography', 'font-size' );
 
@@ -950,7 +914,7 @@ class Fusion_Images {
 			$attachment = wp_get_attachment_image_src( $attachment_id, 'full' );
 		}
 
-		if ( isset( $attachment[1] ) && isset( $attachment[2] ) && 0 < $attachment[1] && 0 < $attachment[2] ) {
+		if ( isset( $attachment[1] ) && isset( $attachment[2] ) ) {
 
 			// Fallback to legacy calcs of Avada 5.4.2 or earlier.
 			if ( '1.0' === $ratio ) {
@@ -1134,40 +1098,6 @@ class Fusion_Images {
 	}
 
 	/**
-	 * Function used in filter 'wp_lazy_loading_enabled' to remove the lazy loading
-	 * for the images.
-	 *
-	 * @since 3.6
-	 * @param bool   $default The default value before filter is applied.
-	 * @param string $tag_name The HTML tag name to disable lazy-loading for.
-	 * @return bool
-	 */
-	public function remove_wp_image_lazy_loading( $default, $tag_name ) {
-		if ( 'img' === $tag_name ) {
-			return false;
-		}
-
-		return $default;
-	}
-
-	/**
-	 * Function used in filter 'wp_lazy_loading_enabled' to remove the lazy loading
-	 * for the iframes.
-	 *
-	 * @since 3.6
-	 * @param bool   $default The default value before filter is applied.
-	 * @param string $tag_name The HTML tag name to disable lazy-loading for.
-	 * @return bool
-	 */
-	public function remove_wp_iframe_lazy_loading( $default, $tag_name ) {
-		if ( 'iframe' === $tag_name ) {
-			return false;
-		}
-
-		return $default;
-	}
-
-	/**
 	 * Filter attributes for the current gallery image tag to add a 'data-full'
 	 * data attribute.
 	 *
@@ -1222,20 +1152,6 @@ class Fusion_Images {
 	}
 
 	/**
-	 * Removes "loading" from image attributes.
-	 *
-	 * @param array $atts THe image attributes.
-	 * @return array
-	 */
-	public function remove_lazy_loading_attr_from_image( $atts ) {
-		if ( isset( $atts['loading'] ) ) {
-			unset( $atts['loading'] );
-		}
-
-		return $atts;
-	}
-
-	/**
 	 * Filter markup for lazy loading.
 	 *
 	 * @since 1.8.0
@@ -1249,7 +1165,7 @@ class Fusion_Images {
 	 * @return string The html markup of the image.
 	 */
 	public function apply_lazy_loading( $html, $post_id = null, $post_thumbnail_id = null, $size = null, $attr = null ) {
-		if ( $this->is_lazy_load_enabled() && false === strpos( $html, 'lazyload' ) && false === strpos( $html, 'rev-slidebg' ) && false === strpos( $html, 'fusion-gallery-image-size-fixed' ) && false === strpos( $html, 'awb-instagram-masonry-image' ) ) {
+		if ( $this->is_lazy_load_enabled() && false === strpos( $html, 'lazyload' ) && false === strpos( $html, 'rev-slidebg' ) && false === strpos( $html, 'fusion-gallery-image-size-fixed' ) ) {
 
 			$src    = '';
 			$width  = 0;
@@ -1431,163 +1347,16 @@ class Fusion_Images {
 	}
 
 	/**
-	 * Filter to skip lazy loading.
-	 *
-	 * @since 3.7
-	 *
-	 * @param string $thumbnail         The post thumbnail HTML.
-	 * @param array  $cart_item         The cart item.
-	 * @return string   The html markup of the image.
-	 */
-	public function skip_lazy_loading( $thumbnail, $cart_item = null ) {
-		if ( $this->is_lazy_load_enabled() && false !== strpos( $thumbnail, 'lazyload' ) ) {
-			$src = '';
-
-			// Get src from markup.
-			preg_match( '@src="([^"]+)"@', $thumbnail, $src );
-			if ( array_key_exists( 1, $src ) ) {
-				$src = $src[1];
-			}
-
-			// If src is a data image, just skip.
-			if ( false !== strpos( $src, 'data:image' ) ) {
-				return str_replace( 'lazyload', '', $thumbnail );
-			}
-		}
-		return $thumbnail;
-	}
-
-	/**
-	 * Enqueues lazy loading scripts.
+	 * Enqueues image scripts.
 	 *
 	 * @access public
 	 * @since 1.8.0
 	 * @return void
 	 */
-	public function enqueue_lazy_loading_scripts() {
-		if ( $this->is_lazy_load_enabled() || $this->is_avada_iframe_lazy_load_enabled() ) {
+	public function enqueue_image_scripts() {
+		if ( $this->is_lazy_load_enabled() ) {
 			Fusion_Dynamic_JS::enqueue_script( 'lazysizes' );
 		}
-	}
-
-	/**
-	 * For an html text that contains an iframe, apply the lazy-loading attributes needed.
-	 *
-	 * Will probably not work if html contains multiple iframes.
-	 * Lazy-loading will be added only if src, width and height attributes exist on html tag.
-	 *
-	 * @since 3.6
-	 * @param string $iframe_html The iframe html.
-	 * @return string
-	 */
-	public function apply_global_selected_lazy_loading_to_iframe( $iframe_html ) {
-		$fusion_settings = awb_get_fusion_settings();
-		$lazy_load_type  = $fusion_settings->get( 'lazy_load_iframes' );
-
-		if ( 'none' === $lazy_load_type ) {
-			return $iframe_html;
-		} elseif ( 'wordpress' === $lazy_load_type ) {
-			// When using WP method, an additional check is needed to not apply "loading" attribute 2 times.
-			if ( false === strpos( $iframe_html, ' loading=' ) ) {
-				return wp_iframe_tag_add_loading_attr( $iframe_html, 'avada_iframe' );
-			}
-		} elseif ( 'avada' === $lazy_load_type ) {
-			return $this->apply_bulk_avada_lazy_loading_iframe( $iframe_html );
-		}
-
-		return $iframe_html;
-	}
-
-	/**
-	 * Adds the avada lazy-loading to all iframes if necessary.
-	 *
-	 * Lazy-loading will be added only if src, width and height attributes exist on html tag.
-	 *
-	 * @since 3.6
-	 * @param string $content Full html string.
-	 * @return string The new markup.
-	 */
-	public function apply_bulk_avada_lazy_loading_iframe( $content ) {
-		if ( $this->is_avada_iframe_lazy_load_enabled() ) {
-			preg_match_all( '/<iframe\s+[^>]*src="([^"]*)"[^>]*>/isU', $content, $iframes );
-			if ( array_key_exists( 1, $iframes ) ) {
-				foreach ( $iframes[0] as $iframe ) {
-					$orig   = $iframe;
-					$iframe = $this->apply_avada_lazy_loading_iframe( $iframe );
-
-					// Replace image.
-					$content = str_replace( $orig, $iframe, $content );
-				}
-			}
-		}
-		return $content;
-	}
-
-	/**
-	 * Apply markup for avada lazy loading to all iframes that are missing.
-	 *
-	 * Lazy-loading will be added only if src, width and height attributes exist on html tag.
-	 *
-	 * @since 3.6
-	 * @param string       $html              The iframe HTML.
-	 * @param string|array $size              Array of width and height values (in that order).
-	 * @return string The html markup of the image.
-	 */
-	public function apply_avada_lazy_loading_iframe( $html, $size = null ) {
-		if ( $this->is_avada_iframe_lazy_load_enabled() && false === strpos( $html, 'lazyload' ) && false === strpos( $html, 'rev-slidebg' ) ) {
-			$src    = '';
-			$width  = 0;
-			$height = 0;
-
-			// Iframes with fallback content (see `wp_filter_oembed_result()`) should not be lazy-loaded because they are
-			// visually hidden initially.
-			if ( false !== strpos( $html, ' data-secret="' ) ) {
-				return $html;
-			}
-
-			// Get src from markup.
-			preg_match( '@src="([^"]+)"@', $html, $src_regex );
-			if ( array_key_exists( 1, $src_regex ) ) {
-					$src = $src_regex[1];
-			} else {
-					$src = '';
-			}
-
-			// If src is a data image, just skip.
-			if ( false !== strpos( $src, 'data:image' ) ) {
-				return $html;
-			}
-
-			// Get dimensions from markup.
-			if ( is_array( $size ) && isset( $size[0], $size[1] ) ) {
-				$width  = $size[0];
-				$height = $size[1];
-			} else {
-				preg_match( '/width="(.*?)"/', $html, $width_regex );
-				if ( array_key_exists( 1, $width_regex ) ) {
-					preg_match( '/height="(.*?)"/', $html, $height_regex );
-					if ( array_key_exists( 1, $height_regex ) ) {
-						$width  = $width_regex[1];
-						$height = $height_regex[1];
-					}
-				}
-			}
-
-			if ( ! $src || ! $width || ! $height ) {
-				return $html;
-			}
-
-			// Simplified non srcset replacement.
-			$html = str_replace( ' src=', ' src="' . self::get_lazy_placeholder( $width, $height ) . '" data-orig-src=', $html );
-
-			if ( strpos( $html, ' class=' ) ) {
-				$html = str_replace( ' class="', ' class="lazyload ', $html );
-			} else {
-				$html = str_replace( '<iframe ', '<iframe class="lazyload" ', $html );
-			}
-		}
-
-		return $html;
 	}
 
 	/**
@@ -1598,17 +1367,7 @@ class Fusion_Images {
 	 * @return bool
 	 */
 	public function is_lazy_load_enabled() {
-		return ( self::$is_avada_lazy_load_images && ! Fusion_AMP::is_amp_endpoint() && ! is_admin() && ! is_feed() );
-	}
-
-	/**
-	 * Determine if avada lazy loading for iframes is enabled.
-	 *
-	 * @since 3.6
-	 * @return bool
-	 */
-	public function is_avada_iframe_lazy_load_enabled() {
-		return ( self::$is_avada_lazy_load_iframes && ! Fusion_AMP::is_amp_endpoint() && ! is_admin() && ! is_feed() );
+		return ( self::$lazy_load && ! Fusion_AMP::is_amp_endpoint() && ! is_admin() && ! is_feed() );
 	}
 
 	/**
@@ -1631,54 +1390,6 @@ class Fusion_Images {
 		}
 
 		return $data;
-	}
-
-	/**
-	 * Adds width and height to svg images, if possible.
-	 *
-	 * @since 3.3.1
-	 * @access public
-	 * @param array|false  $image {
-	 *     Array of image data, or boolean false if no image is available.
-	 *     @type string $0 Image source URL.
-	 *     @type int    $1 Image width in pixels.
-	 *     @type int    $2 Image height in pixels.
-	 *     @type bool   $3 Whether the image is a resized image.
-	 * }
-	 * @param int          $attachment_id Image attachment ID.
-	 * @param string|int[] $size          Requested image size. Can be any registered image size name, or
-	 *                                    an array of width and height values in pixels (in that order).
-	 * @param bool         $icon          Whether the image should be treated as an icon.
-	 *
-	 * @return array|false                The updated image data.
-	 */
-	public function wp_get_attachment_image_fix_svg( $image, $attachment_id, $size, $icon ) {
-		if ( is_array( $image ) && preg_match( '/\.svg$/i', $image[0] ) && 1 >= $image[1] ) {
-			if ( is_array( $size ) ) {
-				$image[1] = $size[0];
-				$image[2] = $size[1];
-			} elseif ( false !== ( $xml = fusion_file_get_contents( $image[0] ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.Found, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
-				$xml = simplexml_load_string( $xml );
-
-				if ( ! is_bool( $xml ) ) {
-					$attr    = $xml->attributes();
-					$viewbox = explode( ' ', $attr->viewBox ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-
-					if ( isset( $attr->width ) && preg_match( '/\d+/', $attr->width, $value ) ) {
-						$image[1] = (int) $value[0];
-					} elseif ( 4 === count( $viewbox ) ) {
-						$image[1] = (int) $viewbox[2];
-					}
-
-					if ( isset( $attr->height ) && preg_match( '/\d+/', $attr->height, $value ) ) {
-						$image[2] = (int) $value[0];
-					} elseif ( 4 === count( $viewbox ) ) {
-						$image[2] = (int) $viewbox[3];
-					}
-				}
-			}
-		}
-		return $image;
 	}
 
 	/**
@@ -1771,55 +1482,6 @@ class Fusion_Images {
 		}
 
 		return $images;
-	}
-
-	/**
-	 * Allow SVG upload.
-	 *
-	 * @access public
-	 * @since 3.7
-	 * @param  array $mimes Mimes allowed.
-	 * @return array  Mimes to allow.
-	 */
-	public function allow_svg( $mimes ) {
-		$mimes['svg'] = 'image/svg+xml';
-		return $mimes;
-	}
-
-
-	/**
-	 * Correct SVG file uploads to make them pass the WP check.
-	 *
-	 * WP upload validation relies on the fileinfo PHP extension, which causes inconsistencies.
-	 * E.g. json file type is application/json but is reported as text/plain.
-	 * ref: https://core.trac.wordpress.org/ticket/45633
-	 *
-	 * @access public
-	 * @since 3.7
-	 * @param array       $data                      Values for the extension, mime type, and corrected filename.
-	 * @param string      $file                      Full path to the file.
-	 * @param string      $filename                  The name of the file (may differ from $file due to
-	 *                                               $file being in a tmp directory).
-	 * @param string[]    $mimes                     Array of mime types keyed by their file extension regex.
-	 * @param string|bool $real_mime                 The actual mime type or false if the type cannot be determined.
-	 *
-	 * @return array
-	 */
-	public function correct_svg_filetype( $data, $file, $filename, $mimes, $real_mime = false ) {
-
-		// If both ext and type are.
-		if ( ! empty( $data['ext'] ) && ! empty( $data['type'] ) ) {
-			return $data;
-		}
-
-		$wp_file_type = wp_check_filetype( $filename, $mimes );
-
-		if ( 'svg' === $wp_file_type['ext'] ) {
-			$data['ext']  = 'svg';
-			$data['type'] = 'image/svg+xml';
-		}
-
-		return $data;
 	}
 }
 

@@ -16,7 +16,6 @@
 	<# } #>
 
 	<# if ( wp_enqueue_code_editor ) { #>
-		<label for="fusion_syntax_highlighter_{{ cid }}" class="screen-reader-text">Syntax Highlighter</label>
 		<textarea {{{ _.fusionGetAttributes( textareaAttr ) }}}>{{{ output }}}</textarea>
 	<# } else { #>
 		<pre id="fusion_syntax_highlighter_{{ cid }}"> {{{ output }}}</pre>

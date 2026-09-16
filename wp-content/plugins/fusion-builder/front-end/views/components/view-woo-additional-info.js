@@ -24,6 +24,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -49,8 +50,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.id ) {
 					attr.id = values.id;
 				}
-
-				attr.style += this.getStyleVariables( values );
 
 				attr = _.fusionAnimations( values, attr );
 
@@ -78,27 +77,74 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var self = this,
+					css = '',
+					cellSelectors,
+					headingStyles = {},
+					textStyles = {};
 
-				// Heading typography.
-				jQuery.each( _.fusionGetFontStyle( 'heading_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'heading-' + rule ] = value;
+				this.baseSelector = '.fusion-woo-additional-info-tb.fusion-woo-additional-info-tb-' + this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				// Heading styles.
+				if ( ! this.isDefault( 'heading_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .shop_attributes tr th', 'color', values.heading_color );
+				}
+
+				if ( ! this.isDefault( 'heading_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .shop_attributes tr th', 'font-size',  _.fusionGetValueWithUnit( values.heading_font_size ) );
+				}
+
+				// Heading typography styles.
+				headingStyles = _.fusionGetFontStyle( 'heading_font', values, 'object' );
+				jQuery.each( headingStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector + ' .shop_attributes tr th', rule, value );
 				} );
 
-				// Text typography.
-				jQuery.each( _.fusionGetFontStyle( 'text_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'text-' + rule ] = value;
+				// Text styles.
+				if ( ! this.isDefault( 'text_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .shop_attributes tr td', 'color', values.text_color );
+				}
+
+				if ( ! this.isDefault( 'text_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .shop_attributes tr td', 'font-size',  _.fusionGetValueWithUnit( values.text_font_size ) );
+				}
+
+				// Text typography styles.
+				textStyles = _.fusionGetFontStyle( 'text_font', values, 'object' );
+				jQuery.each( textStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector + ' .shop_attributes tr td', rule, value );
 				} );
 
-				// Get spacing.
+				// Table Border styles.
+				if ( ! this.isDefault( 'border_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .shop_attributes tr', 'border-color',  values.border_color );
+				}
+
+				// Cell background.
+				if ( ! this.isDefault( 'table_cell_backgroundcolor' ) ) {
+					this.addCssProperty( this.baseSelector + ' .shop_attributes td', 'background-color',  values.table_cell_backgroundcolor );
+				}
+
+				// Heading background.
+				if ( ! this.isDefault( 'heading_cell_backgroundcolor' ) ) {
+					this.addCssProperty( this.baseSelector + ' .shop_attributes th', 'background-color',  values.heading_cell_backgroundcolor );
+				}
+
+				// Table cell selectors.
+				cellSelectors = [
+					this.baseSelector + ' .shop_attributes tr th',
+					this.baseSelector + ' .shop_attributes tr td'
+				];
+
+				// Get padding.
 				jQuery.each( [ 'top', 'right', 'bottom', 'left' ], function( index, side ) {
 					var cellPaddingName = 'cell_padding_' + side,
 						marginName      = 'margin_' + side;
@@ -106,35 +152,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					// Add content padding to style.
 					if ( '' !==  values[ cellPaddingName ] ) {
-						customVars[ cellPaddingName ] =  _.fusionGetValueWithUnit( values[ cellPaddingName ] );
+						self.addCssProperty( cellSelectors, 'padding-' + side,  _.fusionGetValueWithUnit( values[ cellPaddingName ] ) );
 					}
 
 					// Element margin.
 					if ( '' !==  values[ marginName ] ) {
-						customVars[ marginName ] = _.fusionGetValueWithUnit( values[ marginName ] );
+						self.addCssProperty( self.baseSelector, 'margin-' + side,  _.fusionGetValueWithUnit( values[ marginName ] ) );
 					}
 				} );
 
-				cssVarsOptions = [
-					'heading_color',
-					'text_color',
-					'border_color',
-					'table_cell_backgroundcolor',
-					'heading_cell_backgroundcolor',
-					'heading_line_height',
-					'heading_text_transform',
-					'text_line_height',
-					'text_text_transform'
-				];
+				css = this.parseCSS();
 
-				cssVarsOptions.heading_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.heading_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.heading_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_font_size         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_letter_spacing    = { 'callback': _.fusionGetValueWithUnit };
-
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

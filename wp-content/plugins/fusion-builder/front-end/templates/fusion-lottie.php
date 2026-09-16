@@ -9,8 +9,9 @@
 ?>
 <script type="text/html" id="tmpl-fusion_lottie-shortcode">
 <div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
-	<{{ tag }} {{{ _.fusionGetAttributes( attr ) }}}>
-		<lottie-player {{{ _.fusionGetAttributes( playerAttr ) }}}></lottie-player>
-	</{{ tag }}>
+	<{{ tag }} {{{ _.fusionGetAttributes( attr ) }}}></{{ tag }}>
+	<# if ( '' !== styleBlock ) { #>
+		{{{ styleBlock }}}
+	<# } #>
 </div>
 </script>

@@ -32,10 +32,8 @@
 		<span class="fusion-child-name-label">{{ ( ( atts.element_name ) ? atts.element_name : fusionAllElements[atts.element_type].name ) }}</span>
 	</span>
 	<div class="fusion-builder-controls">
-		<a href="#" class="fusion-builder-multi-setting-remove {{ atts.params.dynamic_parent ? 'hidden' : '' }}" title="{{ fusionBuilderText.delete_item }}"><span class="fusiona-trash-o"></span></a>
-		<# if ( ! atts.params.dynamic_parent ) { #>
-			<a href="#" class="fusion-builder-multi-setting-clone" title="{{ fusionBuilderText.clone_item }}"><span class="fusiona-file-add"></span></a>
-		<# } #>
+		<a href="#" class="fusion-builder-multi-setting-remove" title="{{ fusionBuilderText.delete_item }}"><span class="fusiona-trash-o"></span></a>
+		<a href="#" class="fusion-builder-multi-setting-clone" title="{{ fusionBuilderText.clone_item }}"><span class="fusiona-file-add"></span></a>
 		<a href="#" class="fusion-builder-multi-setting-options" title="{{ fusionBuilderText.edit_item }}"><span class="fusiona-pen"></span></a>
 	</div>
 </script>

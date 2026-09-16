@@ -1,4 +1,4 @@
-/* global FusionApp, FusionPageBuilderViewManager, fusionAllElements, fusionBuilderText, avadaPanelIFrame, fusionBuilderText, FusionPageBuilderApp, fusionAppConfig, FusionEvents, fusionGlobalManager */
+/* global FusionApp, FusionPageBuilderViewManager, fusionBuilderText, FusionPageBuilderApp, fusionAppConfig, FusionEvents, fusionGlobalManager */
 /* eslint no-undef: 0 */
 /* eslint no-alert: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
@@ -8,7 +8,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 	jQuery( document ).ready( function() {
 
 		// Builder Library
-		FusionPageBuilder.LibraryView = FusionPageBuilder.BaseLibraryView.extend( {
+		FusionPageBuilder.LibraryView = window.wp.Backbone.View.extend( {
 
 			el: '#fusion-builder-front-end-library',
 
@@ -17,16 +17,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				'change .fusion-builder-demo-select': 'demoSelect',
 				'input .fusion-builder-demo-page-link': 'demoSelectByURL',
 				'click .fusion-builder-demo-button-load': 'loadDemoPage',
+				'click .fusion-builder-demo-layout-button-load': 'loadDemoLayout',
 				'click .ui-dialog-titlebar-close': 'removeView',
 				'click .fusion-builder-layout-button-load': 'loadLayout',
 				'click .fusion-builder-layout-button-save': 'saveLayout',
 				'click .fusion-builder-layout-button-delete': 'deleteLayout',
-				'click .fusion-builder-element-button-save': 'saveElement',
-				'click .awb-sites-import-js': 'importDemoPage',
-				'click .awb-import-options-toggle': 'toggleImportOptions',
-				'click .awb-import-studio-item': 'loadStudioLayout',
-				'change .awb-import-options .awb-import-style input[name="overwrite-type"]': 'triggerPreviewChanges',
-				'change .awb-import-options .awb-import-inversion input[name="invert"]': 'triggerPreviewChanges'
+				'click .fusion-builder-element-button-save': 'saveElement'
 			},
 
 			/**
@@ -44,7 +40,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Loader animation
 				this.listenTo( FusionEvents, 'fusion-show-loader', this.showLoader );
 				this.listenTo( FusionEvents, 'fusion-hide-loader', this.hideLoader );
-				this.listenTo( FusionEvents, 'awb-studio-import-modal-closed', this.removeView );
 			},
 
 			showLoader: function() {
@@ -148,8 +143,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			switchTab: function( event ) {
-				var $tabLink = jQuery( event.currentTarget ),
-					tab      = $tabLink.attr( 'href' );
+				var $tabLink = jQuery( event.target ),
+					tab = $tabLink.attr( 'href' );
 
 				if ( event ) {
 					event.preventDefault();
@@ -162,16 +157,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.$el.find( '.fusion-builder-layouts-tab' ).css( 'display', 'none' );
 				this.$el.find( tab ).css( 'display', 'block' );
-
-				// Trigger ajax for studio.
-				if ( '#fusion-builder-fusion_template-studio' === tab ) {
-					this.loadStudio( 'fusion_template' );
-				}
-
-				// Trigger ajax for demos.
-				if ( '#fusion-builder-layouts-demos' === tab ) {
-					this.loadWebsite();
-				}
 			},
 
 			/**
@@ -374,218 +359,134 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			/**
 			 * Loads the demo pages via an ajax call.
 			 *
-			 * @since 3.5
+			 * @since 2.0.0
 			 * @param {Object} event - The event.
 			 * @return {void}
 			 */
-			importDemoPage: function( event ) {
-				var demoName,
-					pageId,
-					completeCB,
+			loadDemoLayout: function( event ) {
+				var postId,
+					content,
 					self          = this,
 					frameDocument = document.getElementById( 'fb-preview' ).contentWindow.document,
-					oldWrite      = frameDocument.write; // jshint ignore:line
+					confirmTitle  = fusionBuilderText.import_demo_layout,
+					confirmText   = fusionBuilderText.importing_demo_layout,
+					oldWrite      = frameDocument.write, // jshint ignore:line
+					cardLayout    = false;
 
 				// Turn document write off before page request.
 				frameDocument.write = function() {}; // eslint-disable-line no-empty-function
 				document.write      = function() {}; // eslint-disable-line no-empty-function
 
-				completeCB = function() {
-					// Add success/transition of some kind here.
-					FusionEvents.trigger( 'fusion-hide-loader' );
-
-					frameDocument.write = oldWrite;
-					document.write      = oldWrite;
-
-					FusionPageBuilderApp.loaded = true;
-					FusionEvents.trigger( 'fusion-builder-loaded' );
-
-					self.removeView();
-
-					self.demoPageImportComplete();
-				};
-
 				if ( event ) {
 					event.preventDefault();
 				}
 
-				if ( true === FusionPageBuilderApp.layoutIsLoading ) {
-					return;
+				if ( jQuery( event.target ).closest( '.fusion-builder-layouts-tab' ).is( '#fusion-builder-layouts-forms' ) ) {
+					confirmText  = fusionBuilderText.importing_demo_form;
+					confirmTitle = fusionBuilderText.importing_demo_form_title;
+				} else if ( jQuery( event.target ).closest( '.fusion-builder-layouts-tab' ).is( '#fusion-builder-layouts-cards' ) ) {
+					confirmText  = fusionBuilderText.importing_post_card;
+					confirmTitle = fusionBuilderText.importing_post_card_title;
+					cardLayout   = true;
 				}
-				FusionPageBuilderApp.layoutIsLoading = true;
-				FusionPageBuilderApp.loaded          = false;
 
-				demoName = jQuery( event.currentTarget ).data( 'demo-name' );
-				pageId   = jQuery( event.currentTarget ).data( 'page-id' );
-
-				jQuery.ajax( {
-					type: 'POST',
-					url: fusionAppConfig.ajaxurl,
-					data: {
-						action: 'awb_load_websites_page',
-						fusion_load_nonce: fusionAppConfig.fusion_load_nonce,
-						demo_name: demoName,
-						post_id: FusionApp.getPost( 'post_id' ),
-						page_id: pageId
-					},
-					beforeSend: function() {
-						self.beforeDemoPageImport();
-					}
-				} )
-				.done( function( data ) {
-					var i, dataObj,
-						promises   = [],
-						newDataObj = {},
-						dfd        = jQuery.Deferred(),  // Master deferred.
-						dfdNext    = dfd; // Next deferred in the chain.
-
-					dataObj = JSON.parse( data );
-
-					if ( ! dataObj.success ) {
-						FusionPageBuilderApp.layoutIsLoading = false;
-						alert( fusionBuilderText.api_error_text );
-						completeCB();
-						return;
-					}
-
-					dfd.resolve();
-
-					// Reset array.
-					self.mediaImportKeys = [];
-
-					if ( 'object' === typeof dataObj.avada_media ) {
-						newDataObj.images = dataObj.avada_media.images;
-						newDataObj.videos = dataObj.avada_media.videos;
-						dataObj.avada_media = newDataObj;
-					}
-
-					// We have the content, let's check for assets.
-					// Filter out empty properties (now those are empty arrays).
-					if ( 'object' === typeof dataObj.avada_media ) {
-						Object.keys( dataObj.avada_media ).forEach( function( key ) {
-							// We expect and object.
-							if ( 'object' === typeof dataObj.avada_media[ key ] && ! Array.isArray( dataObj.avada_media[ key ] ) ) {
-								self.mediaImportKeys.push( key );
-							}
-						} );
-					}
-
-					// Import media if needed.
-					if ( 0 < self.mediaImportKeys.length ) {
-
-						// Set first AJAX response as initial data.
-						FusionPageBuilderApp.website.setImportData( dataObj );
-
-						for ( i = 0; i < self.mediaImportKeys.length; i++ ) {
-
-							// IIFE to freeze the value of i.
-							( function( k ) { // eslint-disable-line no-loop-func
-
-								dfdNext = dfdNext.then( function() {
-									return self.importDemoPageMedia( FusionPageBuilderApp.website.getImportData(), self.mediaImportKeys[ k ] );
+				FusionApp.confirmationPopup( {
+					title: confirmTitle,
+					content: confirmText,
+					actions: [
+						{
+							label: fusionBuilderText.cancel,
+							classes: 'no',
+							callback: function() {
+								FusionApp.confirmationPopup( {
+									action: 'hide'
 								} );
-
-								promises.push( dfdNext );
-							}( i ) );
-
-						}
-
-						jQuery.when.apply( null, promises ).then(
-							function() {
-								self.setPageContent( dataObj, FusionPageBuilderApp.website.getImportData().post_content );
-
-								completeCB();
-
-								// Reset import data.
-								FusionPageBuilderApp.website.resetImportData();
-							},
-							function() {
-
-								alert( fusionBuilderText.demo_importing_content_failed );
-
-								completeCB();
-
-								// Reset import data.
-								FusionPageBuilderApp.website.resetImportData();
 							}
-						);
-					} else {
-						self.setPageContent( dataObj, dataObj.post_content );
-						completeCB();
-					}
+						},
+						{
+							label: fusionBuilderText.ok,
+							classes: 'yes',
+							callback: function() {
+								if ( true === FusionPageBuilderApp.layoutIsLoading ) {
+									return;
+								}
+								FusionPageBuilderApp.layoutIsLoading = true;
+								FusionPageBuilderApp.loaded          = false;
 
+								layoutName = jQuery( event.currentTarget ).data( 'layout-name' );
+								postId     = jQuery( event.currentTarget ).data( 'post-id' );
+
+								jQuery.ajax( {
+									type: 'POST',
+									url: fusionAppConfig.ajaxurl,
+									data: {
+										action: 'fusion_builder_load_demo_layout',
+										fusion_load_nonce: fusionAppConfig.fusion_load_nonce,
+										layout_name: layoutName,
+										post_id: postId
+									},
+
+									beforeSend: function() {
+										FusionEvents.trigger( 'fusion-show-loader' );
+
+										// Hide confirmation popup.
+										FusionApp.confirmationPopup( {
+											action: 'hide'
+										} );
+
+										// Hide library dialog.
+										self.$el.css( 'display', 'none' );
+										self.$el.next( '.ui-widget-overlay' ).css( 'display', 'none' );
+									}
+								} )
+								.done( function( data ) {
+									// New layout loaded
+									FusionPageBuilderApp.layoutLoaded();
+
+									content = data.data.post_content;
+
+									FusionApp.data.postContent = content;
+									FusionApp.contentChange( 'page', 'builder-content' );
+
+									// If we have fusion PO data, add that too.
+									if ( 'object' == typeof data.data._fusion ) {
+										_.each( data.data._fusion, function( value, param ) {
+											FusionApp.data.postMeta._fusion[ param ] = value;
+										} );
+
+										FusionApp.contentChange( 'page', 'page-option' );
+									}
+
+									// Create new builder layout.
+									FusionPageBuilderApp.clearBuilderLayout( false );
+
+									FusionPageBuilderApp.createBuilderLayout( content );
+
+									FusionPageBuilderApp.layoutIsLoading = false;
+
+									if ( cardLayout ) {
+										FusionPageBuilderApp.cardPreviewWidth();
+									}
+								} )
+								.always( function() {
+
+									// Add success/transition of some kind here.
+									FusionEvents.trigger( 'fusion-hide-loader' );
+
+									frameDocument.write = oldWrite;
+									document.write      = oldWrite;
+
+									FusionPageBuilderApp.loaded = true;
+									FusionEvents.trigger( 'fusion-builder-loaded' );
+
+									jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).trigger( 'fusion-sticky-header-reinit' );
+
+									self.removeView();
+								} );
+							}
+						}
+					]
 				} );
-			},
-
-			/**
-			 *
-			 * @param {Object} dataObj
-			 * @param {String} newContent
-			 */
-			setPageContent: function( dataObj, newContent ) {
-				var needsRefresh = false,
-					newCustomCss = false;
-
-				// New layout loaded
-				FusionPageBuilderApp.layoutLoaded();
-
-				newCustomCss = 'undefined' !== typeof dataObj.custom_css ? dataObj.custom_css : false;
-
-
-				if ( newCustomCss ) {
-					FusionApp.data.postMeta._fusion_builder_custom_css = newCustomCss;
-				}
-				jQuery.each( dataObj.post_meta, function( name, value ) {
-					needsRefresh = true;
-					FusionApp.data.postMeta[ name ] = value[ 0 ];
-				} );
-
-				if ( 'undefined' !== typeof dataObj.page_template && FusionApp.data.postMeta._wp_page_template !== dataObj.page_template ) {
-					FusionApp.data.postMeta._wp_page_template = dataObj.page_template;
-					needsRefresh = true;
-				}
-
-				if ( needsRefresh ) {
-					FusionApp.contentChange( 'page', 'page-option' );
-				}
-
-				FusionApp.setPost( 'post_content', newContent );
-				FusionApp.contentChange( 'page', 'builder-content' );
-
-				// Refresh frame if needed.
-				if ( needsRefresh ) {
-					FusionApp.fullRefresh( false, {}, { post_content: newContent } );
-				} else {
-					if ( newCustomCss && 'undefined' !== typeof avadaPanelIFrame ) {
-
-						// Add the CSS to the page.
-						avadaPanelIFrame.liveUpdatePageCustomCSS( newCustomCss );
-					}
-
-					// Create new builder layout.
-					FusionPageBuilderApp.clearBuilderLayout( false );
-					FusionPageBuilderApp.createBuilderLayout( newContent );
-				}
-
-				FusionPageBuilderApp.layoutIsLoading = false;
-			},
-
-			/**
-			 * Does what needs to be done when demo page is imported.
-			 *
-			 * @since 3.5
-			 */
-			demoPageImportComplete: function() {
-				this.$el.css( 'display', 'none' );
-				this.$el.next( '.ui-widget-overlay' ).css( 'display', 'none' );
-
-				FusionPageBuilderApp.loaded = true;
-				FusionEvents.trigger( 'fusion-builder-loaded' );
-
-				jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).trigger( 'fusion-sticky-header-reinit' );
-
-				// Remove modal view.
-				this.demoImportModalView.remove();
 			},
 
 			/**
@@ -625,8 +526,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					data: {
 						action: 'fusion_builder_load_layout',
 						fusion_load_nonce: fusionAppConfig.fusion_load_nonce,
-						fusion_layout_id: $layout.data( 'layout_id' ),
-						post_id: FusionApp.getPost( 'post_id' )
+						fusion_layout_id: $layout.data( 'layout_id' )
 					},
 
 					beforeSend: function() {
@@ -712,248 +612,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					self.removeView();
 				} );
-			},
-
-			/**
-			 * Loads the layout via AJAX.
-			 *
-			 * @since 2.0.0
-			 * @param {Object} [event]         The event.
-			 * @return {void}
-			 */
-			loadStudioLayout: function( event ) {
-				var self          = this,
-					category      = 'undefined' !== typeof FusionApp.data.postDetails.post_type && 'fusion_form' === FusionApp.data.postDetails.post_type ? 'forms' : 'fusion_template',
-					importOptions = this.getImportOptions( event );
-
-				if ( event ) {
-					event.preventDefault();
-				}
-
-				// Off canvas.
-				category = 'undefined' !== typeof FusionApp.data.postDetails.post_type && 'awb_off_canvas' === FusionApp.data.postDetails.post_type ? FusionApp.data.postDetails.post_type : category;
-
-				if ( 'string' === typeof FusionApp.data.template_category ) {
-					category = FusionApp.data.template_category;
-				}
-
-				if ( true === FusionPageBuilderApp.layoutIsLoading ) {
-					return;
-				}
-				FusionPageBuilderApp.layoutIsLoading = true;
-
-				// Get correct content.
-				FusionPageBuilderApp.builderToShortcodes();
-				content = FusionApp.getPost( 'post_content' ); // eslint-disable-line camelcase
-
-				FusionPageBuilderApp.loaded = false;
-
-				jQuery.ajax( {
-					type: 'POST',
-					url: fusionAppConfig.ajaxurl,
-					dataType: 'JSON',
-					data: {
-						action: 'fusion_builder_load_layout',
-						fusion_load_nonce: fusionAppConfig.fusion_load_nonce,
-						fusion_layout_id: importOptions.layoutID,
-						fusion_studio: true,
-						overWriteType: importOptions.overWriteType,
-						shouldInvert: importOptions.shouldInvert,
-						imagesImport: importOptions.imagesImport,
-						post_id: FusionApp.getPost( 'post_id' ),
-						category: category
-					},
-
-					beforeSend: function() {
-						self.beforeStudioItemImport();
-					},
-
-					success: function( data ) {
-						var i,
-							promises = [],
-							dfd      = jQuery.Deferred(),  // Master deferred.
-							dfdNext  = dfd; // Next deferred in the chain.
-
-						dfd.resolve();
-
-						// Reset array.
-						self.mediaImportKeys = [];
-
-						// We have the content, let's check for assets.
-						// Filter out empty properties (now those are empty arrays).
-						if ( 'object' === typeof data.avada_media ) {
-							Object.keys( data.avada_media ).forEach( function( key ) {
-								// We expect and object.
-								if ( 'object' === typeof data.avada_media[ key ] && ! Array.isArray( data.avada_media[ key ] ) ) {
-									self.mediaImportKeys.push( key );
-								}
-							} );
-						}
-
-						// Import studio media if needed.
-						if ( 0 < self.mediaImportKeys.length ) {
-
-							// Set first AJAX response as initial data.
-							FusionPageBuilderApp.studio.setImportData( data );
-
-							for ( i = 0; i < self.mediaImportKeys.length; i++ ) {
-
-								// IIFE to freeze the value of i.
-								( function( k ) { // eslint-disable-line no-loop-func
-
-									dfdNext = dfdNext.then( function() {
-										return self.importStudioMedia( FusionPageBuilderApp.studio.getImportData(), self.mediaImportKeys[ k ], importOptions );
-									} );
-
-									promises.push( dfdNext );
-								}( i ) );
-
-							}
-
-							jQuery.when.apply( null, promises ).then(
-								function() {
-
-									/*
-									var lastAjaxResponse;
-
-									if ( 1 === promises.length ) {
-										lastAjaxResponse = arguments[ 0 ];
-									} else {
-										lastAjaxResponse = arguments[ promises.length - 1 ][ 0 ];
-									}
-									*/
-
-									self.setStudioContent( data, FusionPageBuilderApp.studio.getImportData().post_content );
-
-									FusionEvents.trigger( 'fusion-studio-content-imported', FusionPageBuilderApp.studio.getImportData() );
-
-									self.studioLayoutImportComplete( event );
-
-									// Reset import data.
-									FusionPageBuilderApp.studio.resetImportData();
-								},
-								function() {
-
-									self.studioImportModalView.updateStatus( fusionBuilderText.studio_importing_content_failed );
-
-									self.studioLayoutImportComplete( event );
-
-									// Reset import data.
-									FusionPageBuilderApp.studio.resetImportData();
-								}
-							);
-						} else {
-
-							self.setStudioContent( data, data.post_content );
-
-							FusionEvents.trigger( 'fusion-studio-content-imported', data );
-
-							self.studioLayoutImportComplete( event );
-						}
-
-					}
-				} );
-			},
-
-			/**
-			 * Does what needs to be done when layout is imported.
-			 *
-			 * @since 3.5
-			 * @param {Object} event - The event.
-			 */
-			studioLayoutImportComplete: function( event ) {
-				var $layout           = jQuery( event.currentTarget ).closest( '.fusion-page-layout' ),
-					$layoutsContainer = $layout.closest( '.studio-imports' );
-
-				$layoutsContainer.show();
-				this.$el.css( 'display', 'none' );
-				this.$el.next( '.ui-widget-overlay' ).css( 'display', 'none' );
-
-
-				FusionPageBuilderApp.loaded = true;
-				FusionEvents.trigger( 'fusion-builder-loaded' );
-
-				jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).trigger( 'fusion-sticky-header-reinit' );
-
-				// Remove modal view.
-				this.studioImportModalView.remove();
-
-				// Close library modal.
-				this.removeView();
-			},
-
-			/**
-			 *
-			 * @param {Object} dataObj
-			 * @param {String} newContent
-			 */
-			setStudioContent: function( dataObj, newContent ) {
-				var newCustomCss,
-					needsRefresh     = false,
-					existingCss      = 'undefined' !== typeof FusionApp.data.postMeta._fusion_builder_custom_css ? FusionApp.data.postMeta._fusion_builder_custom_css : '',
-					contentPlacement = jQuery( '.awb-import-options-group' ).find( 'input[name="load-type"]:checked' ).val(),
-					content          = '';
-
-					// Get correct content.
-					FusionPageBuilderApp.builderToShortcodes();
-					content = FusionApp.getPost( 'post_content' ); // eslint-disable-line camelcase
-
-					// New layout loaded
-					FusionPageBuilderApp.layoutLoaded();
-
-					newCustomCss = 'undefined' !== typeof dataObj.custom_css ? dataObj.custom_css : false;
-
-					if ( 'load-type-above' === contentPlacement ) {
-						content = newContent + content;
-						if ( newCustomCss ) {
-							FusionApp.data.postMeta._fusion_builder_custom_css = newCustomCss + '\n' + existingCss;
-						}
-
-					} else if ( 'load-type-below' === contentPlacement ) {
-						content = content + newContent;
-						if ( newCustomCss ) {
-							FusionApp.data.postMeta._fusion_builder_custom_css = existingCss + '\n' + newCustomCss;
-						}
-
-					} else {
-						content = newContent;
-						if ( newCustomCss ) {
-							FusionApp.data.postMeta._fusion_builder_custom_css = newCustomCss;
-						}
-
-						// Set _fusion meta.
-						if ( 'undefined' !== typeof dataObj.post_meta && 'undefined' !== typeof dataObj.post_meta._fusion ) {
-							jQuery.each( dataObj.post_meta._fusion, function( name, value ) {
-								needsRefresh = true;
-								FusionApp.data.postMeta._fusion[ name ] = value;
-							} );
-						}
-
-						if ( needsRefresh ) {
-							FusionApp.contentChange( 'page', 'page-option' );
-						}
-					}
-
-					FusionApp.setPost( 'post_content', content );
-					FusionApp.contentChange( 'page', 'builder-content' );
-
-					if ( needsRefresh ) {
-
-						// Set new content and refresh frame.
-						FusionApp.fullRefresh( false, {}, { post_content: content } );
-					} else {
-						if ( newCustomCss && 'undefined' !== typeof avadaPanelIFrame ) {
-
-							// Add the CSS to the page.
-							avadaPanelIFrame.liveUpdatePageCustomCSS( newCustomCss );
-						}
-
-						// Create new builder layout.
-						FusionPageBuilderApp.clearBuilderLayout( false );
-						FusionPageBuilderApp.createBuilderLayout( content );
-					}
-
-					FusionPageBuilderApp.layoutIsLoading = false;
 			},
 
 			/**
@@ -1187,19 +845,24 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 								if ( 'sections' === elementCategory ) {
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-module-controls-type-container .fusion-builder-module-controls' ).after( '<a href="#" class="fusion-builder-container-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-container-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_container + '</span></span></a>' );
+									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-wireframe-utility-toolbar' ).first().append( '<a href="#" class="fusion-builder-container-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-container-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_container + '</span></span></a>' );
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"]' ).addClass( 'fusion-global-container' );
 								} else if ( 'columns' === elementCategory ) {
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-module-controls-inner.fusion-builder-column-controls-inner' ).after( '<a href="#" class="fusion-builder-column-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_column + '</span></span></a>' );
+									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-wireframe-utility-toolbar' ).first().append( '<a href="#" class="fusion-builder-column-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_column + '</span></span></a>' );
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"]' ).addClass( 'fusion-global-column' );
 								} else if ( 'elements' === elementCategory && 'undefined' !== typeof elementView.model.get( 'multi' ) && 'multi_element_parent' === elementView.model.get( 'multi' ) ) {
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"]' ).addClass( 'fusion-global-parent-element' );
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-module-controls-inner' ).after( '<a href="#" class="fusion-builder-element-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_element + '</span></span></a>' );
+									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-wireframe-utility-toolbar' ).first().append( '<a href="#" class="fusion-builder-element-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_element + '</span></span></a>' );
 								} else if ( 'elements' === elementCategory && 'fusion_builder_row_inner' === elementView.model.get( 'element_type' )  ) {
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"]' ).addClass( 'fusion-global-nested-row' );
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-module-controls-inner' ).after( '<a href="#" class="fusion-builder-element-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_element + '</span></span></a>' );
+									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-wireframe-utility-toolbar' ).last().append( '<a href="#" class="fusion-builder-element-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-element-tooltip">' + fusionBuilderText.global_element + '</span></span></a>' );
 								} else if ( 'elements' === elementCategory  ) {
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"]' ).addClass( 'fusion-global-element' );
 									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-module-controls-inner' ).after( '<a href="#" class="fusion-builder-element-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_element + '</span></span></a>' );
+									FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"] .fusion-builder-wireframe-utility-toolbar' ).first().append( '<a href="#" class="fusion-builder-element-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid=' + cid + '><span class="fusiona-globe"></span><span class="fusion-element-tooltip"><span class="fusion-tooltip-text">' + fusionBuilderText.global_element + '</span></span></a>' );
 								}
 
 								FusionPageBuilderApp.$el.find( 'div[data-cid="' + cid + '"]' ).attr( 'fusion-global-layout', globalID );

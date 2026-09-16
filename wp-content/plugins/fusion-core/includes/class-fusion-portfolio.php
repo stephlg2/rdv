@@ -67,6 +67,7 @@ if ( ! class_exists( 'Fusion_Portfolio' ) ) {
 		 * @since 3.2
 		 */
 		public function archive_script() {
+			$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 
 			// Checks if the archive is portfolio.
 			if ( is_post_type_archive( 'avada_portfolio' ) || is_tax( 'portfolio_category' ) || is_tax( 'portfolio_skills' ) || is_tax( 'portfolio_tags' ) ) {
@@ -81,7 +82,7 @@ if ( ! class_exists( 'Fusion_Portfolio' ) ) {
 		 * @since 3.2
 		 */
 		public function enqueue_script() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 
 			Fusion_Dynamic_JS::localize_script(
 				'avada-portfolio',
@@ -97,7 +98,7 @@ if ( ! class_exists( 'Fusion_Portfolio' ) ) {
 				'avada-portfolio',
 				FusionCore_Plugin::$js_folder_url . '/avada-portfolio.js',
 				FusionCore_Plugin::$js_folder_path . '/avada-portfolio.js',
-				[ 'jquery', 'modernizr', 'fusion-video-general', 'fusion-lightbox', 'images-loaded', 'packery', 'isotope', 'jquery-infinite-scroll', 'awb-carousel' ],
+				[ 'jquery', 'modernizr', 'fusion-video-general', 'fusion-lightbox', 'images-loaded', 'packery', 'isotope', 'jquery-infinite-scroll', 'fusion-carousel' ],
 				FUSION_CORE_VERSION,
 				true
 			);

@@ -20,9 +20,6 @@ $icon_map = apply_filters(
 		'variations' => 'fusiona-variation',
 		'details'    => 'fusiona-details',
 		'cart'       => 'fusiona-woo-add-to-cart',
-		'caption'    => 'fusiona-comments',
-		'links'      => 'fusiona-link',
-		'payment'    => 'fusiona-details',
 	]
 );
 ?>
@@ -150,7 +147,6 @@ $icon_map = apply_filters(
 								<# if ( 'children' !== group ) { #>
 									<?php fusion_element_front_options_loop( 'options' ); ?>
 								<# } else { #>
-									<?php fusion_element_front_options_loop( 'options' ); ?>
 									<div class="fusion-child-sortables"></div>
 								<# } #>
 							</div>

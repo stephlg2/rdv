@@ -29,13 +29,6 @@ class Fusion_Patcher_Client {
 	public static $remote_patches_uri = FUSION_UPDATES_URL . '/avada_patch/';
 
 	/**
-	 * The arguments.
-	 *
-	 * @var array
-	 */
-	public $args = [];
-
-	/**
 	 * Gets an array of all our patches.
 	 * If we have these cached then use caches,
 	 * otherwise query the server.
@@ -57,7 +50,7 @@ class Fusion_Patcher_Client {
 			$client->cache_response();
 		}
 		// Returns a formatted array of patches.
-		return $client->prepare_patches();
+		return $client->prepare_patches( self::$patches );
 	}
 
 	/**

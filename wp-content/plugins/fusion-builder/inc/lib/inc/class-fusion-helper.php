@@ -66,6 +66,11 @@ final class Fusion_Helper {
 			// Set FTP port.
 			if ( strpos( $credentials['hostname'], ':' ) && null !== $credentials['hostname'] ) {
 				list( $credentials['hostname'], $credentials['port'] ) = explode( ':', $credentials['hostname'], 2 );
+				if ( ! is_numeric( $credentials['port'] ) ) {
+					unset( $credentials['port'] );
+				}
+			} else {
+				unset( $credentials['port'] );
 			}
 
 			// Set connection type.
@@ -83,7 +88,7 @@ final class Fusion_Helper {
 
 		if ( empty( $wp_filesystem ) ) {
 			require_once wp_normalize_path( ABSPATH . '/wp-admin/includes/file.php' );
-			WP_Filesystem( apply_filters( 'awb_filesystem_credentials', $credentials, $method ) );
+			WP_Filesystem( $credentials );
 		}
 
 		return $wp_filesystem;
@@ -102,6 +107,7 @@ final class Fusion_Helper {
 		// Not black.
 		if ( 0 < $color_obj->lightness ) {
 			if ( 25 > $color_obj->lightness ) {
+
 				// Colors with very little lightness.
 				return $color_obj->getNew( 'lightness', $color_obj->lightness * 4 )->toCSS( 'rgba' );
 			} elseif ( 50 > $color_obj->lightness ) {
@@ -109,10 +115,10 @@ final class Fusion_Helper {
 			} elseif ( 50 <= $color_obj->lightness ) {
 				return $color_obj->getNew( 'lightness', $color_obj->lightness / 2 )->toCSS( 'rgba' );
 			}
+		} else {
+			// // Black.
+			return $color_obj->getNew( 'lightness', 70 )->toCSS( 'rgba' );
 		}
-
-		// Black.
-		return $color_obj->getNew( 'lightness', 70 )->toCSS( 'rgba' );
 	}
 
 	/**
@@ -216,23 +222,6 @@ final class Fusion_Helper {
 	}
 
 	/**
-	 * Check if we're on a bbPress user's home.
-	 *
-	 * @static
-	 * @access public
-	 * @since 3.9
-	 * @return bool
-	 */
-	public static function bbp_is_user_home() {
-
-		if ( function_exists( 'bbp_is_user_home' ) ) {
-			return (bool) bbp_is_user_home();
-		}
-		return false;
-
-	}
-
-	/**
 	 * Check if we're on a buddyPress page.
 	 *
 	 * @static
@@ -247,7 +236,7 @@ final class Fusion_Helper {
 		}
 		return false;
 
-	}
+	}   
 
 	/**
 	 * Check if we're on an Event post.
@@ -353,7 +342,7 @@ final class Fusion_Helper {
 				$title = esc_html__( 'Error 404 Page', 'fusion-builder' );
 			}
 
-			if ( class_exists( 'Tribe__Events__Main' ) && ( tribe_is_events_front_page() || ( self::tribe_is_event( $post_id ) && ! is_single() && ! is_home() && ! is_tag() ) || self::is_events_archive( $post_id ) && ! is_tag() || ( self::is_events_archive( $post_id ) && is_404() ) ) ) {
+			if ( class_exists( 'Tribe__Events__Main' ) && ( ( self::tribe_is_event( $post_id ) && ! is_single() && ! is_home() && ! is_tag() ) || self::is_events_archive( $post_id ) && ! is_tag() || ( self::is_events_archive( $post_id ) && is_404() ) ) ) {
 				$title = tribe_get_events_title();
 			} elseif ( is_archive() && ! self::is_bbpress() && ! is_search() ) {
 				if ( is_day() ) {

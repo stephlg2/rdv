@@ -4,9 +4,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 ( function() {
 
 	jQuery( document ).ready( function() {
-		// Fusion Form Component View.
+		// Fusion Form Password View.
 		FusionPageBuilder.FormComponentView = FusionPageBuilder.ElementView.extend( {
-			iconWrapper: '',
 
 			onInit: function() {
 				this.formData = FusionApp.data.postMeta;
@@ -25,8 +24,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			elementData: function( values ) {
-				var data  = {},
-					patternFields = [ 'fusion_form_email', 'fusion_form_password', 'fusion_form_phone_number' ];
+				var data  = {};
 
 				data.checked               = '';
 				data.required              = '';
@@ -40,14 +38,15 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				data.label_class           = '';
 				data.holds_private_data    = 'no';
 				data.upload_size           = '';
-				data.pattern			         = '';
+				data.pattern			   = '';
 
 				if ( 'undefined' === typeof values ) {
 					return data;
 				}
 
-				data.pattern = 'fusion_form_text' === this.model.get( 'element_type' ) && 'undefined' !== typeof values.pattern && '' !== values.pattern ? this.addPattern( values ) : '';
-				data.pattern = patternFields.includes( this.model.get( 'element_type' ) ) && 'undefined' !== typeof values.pattern && '' !== values.pattern ? ' pattern="' + this.decodePattern( values.pattern ) + '" ' : '';
+				if ( 'fusion_form_phone_number' === this.model.get( 'element_type' ) ) {
+					data.pattern = ' pattern="[0-9()#&+*-=.]+" title="' + fusionBuilderText.phone_pattern_text + '"';
+				}
 
 				if ( 'fusion_form_checkbox' === this.model.get( 'element_type' ) && 'undefined' !== typeof values.checked && values.checked ) {
 					data.checked = ' checked="checked"';
@@ -57,10 +56,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					data.upload_size = ' data-size="' + values.upload_size + '"';
 				}
 
-				if ( 'undefined' !== typeof values.required && ( 'yes' === values.required || 'selection' === values.required ) ) {
-					if ( 'selection' !== values.required ) {
-						data.required             = ' required="true" aria-required="true"';
-					}
+				if ( 'undefined' !== typeof values.required && 'yes' === values.required ) {
+					data.required             = ' required="true" aria-required="true"';
 					data.required_label       = ' <abbr class="fusion-form-element-required" title="' + fusionBuilderText.required + '">*</abbr>';
 					data.required_placeholder = '*';
 				}
@@ -98,21 +95,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return data;
-			},
-
-			decodePattern: function( content ) {
-				let decodedPattern = '';
-
-				try {
-					if ( FusionPageBuilderApp.base64Encode( FusionPageBuilderApp.base64Decode( content ) ) === content ) {
-						decodedPattern = FusionPageBuilderApp.base64Decode( content );
-						decodedPattern = _.unescape( decodedPattern );
-					}
-				} catch ( error ) {
-					console.log( error ); // jshint ignore:line
-				}
-
-				return decodedPattern;
 			},
 
 			checkbox: function( values, type ) {
@@ -178,34 +160,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				elementHtml = '<input type="' + type + '" name="' + values.name + '" value="' + values.value + '" ' + elementData[ 'class' ] + elementData.id + elementData.required + elementData.disabled + elementData.placeholder + elementData.holds_private_data + elementData.pattern + '/>';
 
 				elementHtml = this.generateIconHtml( values, elementHtml );
-				elementHtml = this.generatePasswordIconHtml( values, type, elementHtml );
-				elementHtml = this.generateIconWrapperHtml( elementHtml );
 
 				html = this.generateLabelHtml( html, elementHtml, elementData.label );
 
 				return html;
-			},
-
-			generateIconWrapperHtml: function( elementHtml ) {
-				elementHtml = this.iconWrapper + elementHtml;
-				elementHtml += '' === this.iconWrapper ? '' : '</div>';
-				this.iconWrapper = '';
-
-				return elementHtml;
-			},
-
-			addPattern: function( values ) {
-				var patterns = {
-					'letters': '[a-zA-Z]+',
-					'alpha_numeric': '[a-zA-Z0-9]+',
-					'number': '[0-9]+',
-					'credit_card_number': '[0-9]{13,16}',
-					'phone': '[0-9()#&+*-=.]+',
-					// eslint-disable-next-line no-useless-escape
-					'url': '(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
-				};
-
-				return 'undefined' !== typeof patterns[ values.pattern ] ? ' pattern="' + patterns[ values.pattern ] + '"' : ' pattern="' + this.decodePattern( values.custom_pattern ) + '"';
 			},
 
 			getFieldTooltip: function( values ) {
@@ -213,7 +171,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( '' !== values.tooltip ) {
 					html = '<div class="fusion-form-tooltip">';
-					html += '<i class="awb-icon-question-circle"></i>';
+					html += '<i class="fusion-icon-question-circle"></i>';
 					html += '<span class="fusion-form-tooltip-content">' + values.tooltip + '</span>';
 					html += '</div>';
 				}
@@ -227,7 +185,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					params = this.model.get( 'params' );
 
 
-				if ( 'undefined' !== typeof this.formData._fusion && 'undefined' !== typeof this.formData._fusion.label_position ) {
+				if ( 'undefined' !== typeof this.formData._fusion.label_position ) {
 					labelPosition = this.formData._fusion.label_position;
 				}
 
@@ -249,16 +207,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Close class quotes.
 				html += '"';
 
-				html += ' style="' + this.getStyleVariables( params ) + '"';
-
 				html += ' data-form-id="' + FusionApp.data.postDetails.post_id + '">';
 
 				return html;
-			},
-
-			// eslint-disable-next-line no-unused-vars
-			getStyleVariables: function( params ) {
-				return '';
 			},
 
 			generateFormFieldHtml: function( fieldHtml ) {
@@ -271,25 +222,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			generateIconHtml: function( atts, html ) {
 				var icon;
+
 				if ( 'undefined' !== typeof atts.input_field_icon && '' !== atts.input_field_icon ) {
 					icon = '<div class="fusion-form-input-with-icon">';
-					icon += '<i class="awb-form-icon ' + _.fusionFontAwesome( atts.input_field_icon ) + '"></i>';
+					icon += '<i class="' + _.fusionFontAwesome( atts.input_field_icon ) + '"></i>';
 					html = icon + html;
 					html += '</div>';
-				}
-
-				return html;
-			},
-
-			generatePasswordIconHtml: function( atts, type, html ) {
-				if ( 'password' === type && 'undefined' !== typeof atts.reveal_password && 'yes' === atts.reveal_password ) {
-					if ( '' === this.iconWrapper ) {
-						this.iconWrapper = '<div class="fusion-form-input-with-icon awb-form-pw-reveal">';
-					} else {
-						this.iconWrapper = this.iconWrapper.replace( 'fusion-form-input-with-icon', 'fusion-form-input-with-icon awb-form-pw-reveal awb-form-both-icons' );
-					}
-
-					html += '<i class="awb-form-pw-reveal-icon awb-icon-eye-slash" id="' + atts.name  + '_' + this.model.get( 'cid' ) + '"></i>';
 				}
 
 				return html;
@@ -301,7 +239,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					label = '<div class="fusion-form-label-wrapper">' + label + '</div>';
 				}
 
-				if ( 'undefined' === typeof this.formData._fusion || 'undefined' === typeof this.formData._fusion.label_position || 'above' === this.formData._fusion.label_position ) {
+				if ( 'undefined' === typeof this.formData._fusion.label_position || 'above' === this.formData._fusion.label_position ) {
 					html += label + elementHtml;
 				} else {
 					html += elementHtml + label;

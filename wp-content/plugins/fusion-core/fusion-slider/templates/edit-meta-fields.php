@@ -14,7 +14,7 @@
 	<td>
 		<div class="fusion-double-fields">
 			<div class="fusion-field avada-db-input-indicator">
-				<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>
+				<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>	
 				<input type="text" name="term_meta[slider_width]" id="term_meta[slider_width]" value="<?php echo esc_attr( $term_meta['slider_width'] ) ? esc_attr( $term_meta['slider_width'] ) : ''; ?>">
 			</div>
 			<div class="fusion-field avada-db-input-indicator">
@@ -83,7 +83,7 @@
 			<input type="hidden" name="term_meta[nav_arrows]" id="term_meta[nav_arrows]" value="0">
 			<input type="checkbox" name="term_meta[nav_arrows]" id="term_meta[nav_arrows]" value="1" <?php echo esc_attr( $term_meta['nav_arrows'] ) ? 'checked="checked"' : ''; ?>>
 			<p class="description"><?php esc_html_e( 'Check this box to display the navigation arrows.', 'fusion-core' ); ?></p>
-		</div>
+		</div>	
 	</td>
 </tr>
 <tr class="form-field">
@@ -98,7 +98,7 @@
 	<td>
 		<div class="fusion-double-fields">
 			<div class="fusion-field avada-db-input-indicator">
-				<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>
+				<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>	
 				<input type="text" name="term_meta[nav_box_width]" id="term_meta[nav_box_width]" value="<?php echo esc_attr( $term_meta['nav_box_width'] ) ? esc_attr( $term_meta['nav_box_width'] ) : ''; ?>">
 			</div>
 			<div class="fusion-field avada-db-input-indicator">
@@ -169,6 +169,8 @@
 		</select>
 		<p class="description">
 			<?php esc_html_e( 'The type of animation when slides rotate.', 'fusion-core' ); ?>
+			<br/>
+			<?php esc_html_e( 'Please Note: Fade effect does not work in IE.', 'fusion-core' ); ?>
 		</p>
 	</td>
 </tr>

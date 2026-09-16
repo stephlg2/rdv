@@ -107,13 +107,13 @@
 						</a>
 						<ul class="submenu-trigger-target" aria-expanded="false">
 							<li>
-								<a href="https://avada.com/documentation/avada-quick-start-guide/" target="_blank">
+								<a href="https://theme-fusion.com/support/starter-guide/" target="_blank">
 									<span class="icon-big"><i class="fusiona-play-circle" aria-hidden="true"></i></span>
 									<span class="label"><?php esc_html_e( 'Get Started', 'fusion-builder' ); ?></span>
 								</a>
 							</li>
 							<li>
-								<a href="https://avada.com/help-center/" target="_blank">
+								<a href="https://theme-fusion.com/support/" target="_blank">
 									<span class="icon-big"><i class="fusiona-file-alt-solid" aria-hidden="true"></i></span>
 									<span class="label"><?php esc_html_e( 'Help Center', 'fusion-builder' ); ?></span>
 								</a>

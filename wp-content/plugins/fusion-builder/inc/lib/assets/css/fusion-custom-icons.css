@@ -50,7 +50,6 @@
   align-items: center;
   border-bottom: 1px solid #e1e1e1;
 }
-#fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icons-top-bar #fusion-custom-icons-json,
 #fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icons-top-bar #fusion-custom-icons-upload {
   display: inline-block;
   padding: 10px 15px;
@@ -58,12 +57,8 @@
   text-decoration: none;
   background-color: #198fd9;
 }
-#fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icons-top-bar #fusion-custom-icons-json i,
 #fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icons-top-bar #fusion-custom-icons-upload i {
   margin-right: 5px;
-}
-#fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icons-top-bar #fusion-custom-icons-json {
-  border-left: 1px solid #fff;
 }
 #fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icons-top-bar .fusion-custom-icons-info {
   margin-right: 10px;
@@ -80,9 +75,11 @@
 }
 #fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icons-preview {
   margin: 20px 10px;
+  display: -ms-grid;
   display: grid;
   grid-gap: 0;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  -ms-grid-columns: (minmax(90px, 1fr))[auto-fit];
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
 }
 #fusion-custom-icons-metabox .fusion-custom-icons-wrapper.fusion-custom-icons-uploaded .fusion-custom-icon-preview {
   display: inline-block;

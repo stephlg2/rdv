@@ -8,7 +8,7 @@
 ?>
 
 <?php Fusion_Builder_Admin::header( 'forms' ); ?>
-<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_form', 'create_posts' ) ) : ?>
+
 <div class="fusion-builder-important-notice fusion-template-builder avada-db-card avada-db-card-first">
 		<div class="intro-text">
 			<h1><?php esc_html_e( 'Form Builder', 'fusion-builder' ); ?></h1>
@@ -21,7 +21,7 @@
 					printf(
 						/* translators: %s: "Forms Documentation Link". */
 						esc_html__( 'Please see the %s.', 'fusion-builder' ),
-						'<a href="https://avada.com/documentation/category/forms/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Forms Documentation', 'fusion-builder' ) . '</a>'
+						'<a href="https://theme-fusion.com/documentation/avada/forms/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Forms Documentation', 'fusion-builder' ) . '</a>'
 					);
 					?>
 				</p>
@@ -41,7 +41,7 @@
 			</div>
 		</form>
 	</div>
-<?php endif; ?>
+
 	<div class="fusion-library-data-items avada-db-table">
 		<?php
 			$fusion_icons_table = new Fusion_Form_Builder_Table();

@@ -20,9 +20,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values );
-				this.values = atts.values;
 
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
+
 				attributes.output      = this.buildOutput( atts );
 
 				// Any extras that need passed on.
@@ -74,26 +75,32 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			buildAttr: function( values ) {
-				var cssVars = [
-						'margin_top',
-						'margin_right',
-						'margin_bottom',
-						'margin_left',
-						'alignment',
-						'font_size',
-						'text_hover_color',
-						'text_color'
-					],
-					attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
+				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-breadcrumbs fusion-live-breadcrumbs fusion-breadcrumbs-' + this.model.get( 'cid' ),
-						style: this.getCssVarsForOptions( cssVars )
+						style: ''
 					} );
 
 				attr[ 'class' ] += _.fusionGetStickyClass( values.sticky_display );
 
-				attr.style += '--awb-breadcrumb-sep:\'' + values.separator + '\';';
+				if ( '' !== values.alignment ) {
+					attr.style += 'text-align:' + values.alignment + ';';
+				}
 
-				attr[ 'aria-label' ] = 'Breadcrumb';
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
@@ -106,6 +113,39 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attr = _.fusionAnimations( values, attr );
 
 				return attr;
+			},
+
+			/**
+			 * Builds styles.
+			 *
+			 * @since  2.2
+			 * @param  {Object} values - The values object.
+			 * @return {String}
+			 */
+			buildStyleBlock: function( values ) {
+				var style = '<style type="text/css">';
+
+				if ( '' !== values.font_size ) {
+					style += '.fusion-breadcrumbs.fusion-breadcrumbs-' + this.model.get( 'cid' ) + '{font-size:' + values.font_size + ';}';
+				}
+
+				if ( '' !== values.text_hover_color ) {
+					style += '.fusion-breadcrumbs.fusion-breadcrumbs-' + this.model.get( 'cid' ) + ' span a:hover{color:' + values.text_hover_color + '!important;}';
+				}
+
+				if ( '' !== values.text_color ) {
+					style += '.fusion-breadcrumbs.fusion-breadcrumbs-' + this.model.get( 'cid' ) + ',';
+					style += '.fusion-breadcrumbs.fusion-breadcrumbs-' + this.model.get( 'cid' ) + ' a{color:' + values.text_color + ';}';
+				}
+
+				if ( FusionApp.data.is_home || FusionApp.data.is_front_page ) {
+					style += '.fusion-breadcrumbs.fusion-breadcrumbs-' + this.model.get( 'cid' ) + ' .fusion-breadcrumb-prefix{display:none}';
+					style += '.fusion-breadcrumbs.fusion-breadcrumbs-' + this.model.get( 'cid' ) + ' .fusion-breadcrumb-sep{display:none}';
+				}
+
+				style += '</style>';
+
+				return style;
 			}
 
 		} );

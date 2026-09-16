@@ -14,9 +14,9 @@ if ( ! class_exists( 'Avada' ) ) {
 }
 ?>
 <?php get_header(); ?>
-	<section id="content" class="<?php echo esc_attr( apply_filters( 'awb_content_tag_class', '' ) ); ?>" style="<?php echo esc_attr( apply_filters( 'awb_content_tag_style', '' ) ); ?>">
+	<div id="content" <?php Avada()->layout->add_class( 'content_class' ); ?> <?php Avada()->layout->add_style( 'content_style' ); ?>>
 		<?php require 'portfolio-archive-layout.php'; ?>
-	</section>
+	</div>
 	<?php do_action( 'avada_after_content' ); ?>
 <?php
 get_footer();

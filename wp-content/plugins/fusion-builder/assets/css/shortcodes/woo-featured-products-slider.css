@@ -1,5 +1,33 @@
 /* stylelint-disable length-zero-no-unit */
 /* stylelint-enable length-zero-no-unit */
+.fusion-woo-featured-products-slider {
+  position: relative;
+  margin-bottom: 25px;
+}
+.fusion-woo-featured-products-slider .fusion-carousel-wrapper {
+  overflow: hidden;
+}
+.fusion-woo-featured-products-slider .fusion-rollover-content .price {
+  margin-top: 3px;
+}
+.fusion-woo-featured-products-slider .fusion-rollover-content .price .amount {
+  font-size: 25px;
+}
+.fusion-woo-featured-products-slider .fusion-carousel-nav .fusion-nav-next,
+.fusion-woo-featured-products-slider .fusion-carousel-nav .fusion-nav-prev {
+  margin-top: -31px;
+  height: 63px;
+  width: 63px;
+}
+.fusion-woo-featured-products-slider .fusion-carousel-nav .fusion-nav-next:before,
+.fusion-woo-featured-products-slider .fusion-carousel-nav .fusion-nav-prev:before {
+  content: "\e61e";
+  line-height: 63px;
+  font-size: 25px;
+}
+.fusion-woo-featured-products-slider .fusion-carousel-nav .fusion-nav-next:before {
+  content: "\e620";
+}
 /* Used for both woo carousels */
 .fusion-woo-slider .fusion-rollover-content .fusion-rollover-title {
   margin: 0;
@@ -54,7 +82,6 @@
 .fusion-woo-product-design-clean .fusion-woo-slider .fusion-image-wrapper .fusion-rollover .fusion-rollover-content .fusion-product-buttons a {
   display: inline;
   float: none;
-  margin-top: 0;
   padding: 0;
   letter-spacing: 1px;
 }
@@ -80,20 +107,4 @@
 }
 .fusion-woo-product-design-clean .fusion-woo-slider .fusion-carousel-title-on-rollover .fusion-rollover-linebreak {
   display: none;
-}
-.fusion-woo-featured-products-slider {
-  --awb-margin-bottom: 0;
-  --awb-margin-left: 0;
-  --awb-margin-right: 0;
-  --awb-margin-top: 0;
-  margin: var(--awb-margin-top) var(--awb-margin-right) var(--awb-margin-bottom) var(--awb-margin-left);
-  position: relative;
-  margin-bottom: 25px;
-}
-.fusion-woo-featured-products-slider .fusion-rollover-content .price {
-  margin-top: 3px;
-}
-.fusion-woo-featured-products-slider .fusion-rollover-content .price del,
-.fusion-woo-featured-products-slider .fusion-rollover-content .price .amount {
-  font-size: 25px;
 }

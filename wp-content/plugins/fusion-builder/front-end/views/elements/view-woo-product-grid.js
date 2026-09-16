@@ -31,13 +31,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.extras = atts.extras;
 
 				// Any extras that need passed on.
-				attributes.cid             = this.model.get( 'cid' );
-				attributes.attr            = this.buildAttr( atts.values );
-				attributes.productsLoop    = this.buildOutput( atts );
-				attributes.productsAttrs   = this.buildProductsAttrs( atts.values );
-				attributes.pagination      = this.buildPagination( atts );
+				attributes.cid    = this.model.get( 'cid' );
+				attributes.attr   = this.buildAttr( atts.values );
+				attributes.styles = this.buildStyleBlock( atts.values );
+				attributes.productsLoop = this.buildOutput( atts );
+				attributes.productsAttrs = this.buildProductsAttrs( atts.values );
+				attributes.pagination = this.buildPagination( atts );
 				attributes.paginationAttrs = this.buildPaginationAttrs();
-				attributes.query_data      = atts.query_data;
+				attributes.query_data   = atts.query_data;
 				// add placeholder.
 				attributes.query_data.placeholder = this.getComponentPlaceholder();
 				attributes.values = atts.values;
@@ -80,8 +81,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildAttr: function( values ) {
 				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-woo-product-grid fusion-product-archive fusion-woo-product-grid-' + this.model.get( 'cid' ),
-						style: ''
+						class: 'fusion-woo-product-grid fusion-product-archive fusion-woo-product-grid-' + this.model.get( 'cid' )
 					} );
 
 				if ( '' !== values[ 'class' ] ) {
@@ -91,40 +91,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( this.isSpacingOff() ) {
 					attr[ 'class' ] += ' fusion-woo-product-grid-spacing-off';
 				}
-
-				if ( ! this.isDefault( 'grid_separator_color' ) && 'shadow' === values.grid_separator_style_type ) {
-					attr[ 'class' ] += ' has-content-sep-shadow';
-				}
-
-				if ( ! this.isDefault( 'show_title' ) ) {
-					attr[ 'class' ] += ' hide-product-title';
-				}
-
-				if ( ! this.isDefault( 'show_price' ) ) {
-					attr[ 'class' ] += ' hide-price';
-				}
-
-				if ( ! this.isDefault( 'show_rating' ) ) {
-					attr[ 'class' ] += ' hide-rating';
-				}
-
-				if ( ! this.isDefault( 'show_buttons' ) ) {
-					attr[ 'class' ] += ' hide-buttons';
-				}
-
-				if ( ! this.isDefault( 'show_title' ) && ! this.isDefault( 'show_price' ) && ! this.isDefault( 'show_rating' ) && ! this.isDefault( 'show_buttons' ) ) {
-					attr[ 'class' ] += ' hide-content';
-				}
-
-				if ( this.isLoadMore() ) {
-					attr[ 'class' ] += ' has-load-more';
-				}
-
-				if ( ! this.isDefault( 'column_spacing' ) && '1' !== values.columns ) {
-					attr[ 'class' ] += ' has-column-spacing';
-				}
-
-				attr.style += this.getStyleVariables( values );
 
 				if ( '' !== values.id ) {
 					attr.id = values.id;
@@ -145,8 +111,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var output = '';
 
 				output += '<div class="fusion-carousel-nav">';
-				output += '<button class="fusion-nav-prev" aria-label="Previous"></button>';
-				output += '<button class="fusion-nav-next" aria-label="Next"></button>';
+				output += '<span class="fusion-nav-prev"></span>';
+				output += '<span class="fusion-nav-next"></span>';
 				output += '</div>';
 
 				return output;
@@ -275,51 +241,109 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions,
-					colors,
-					gradient,
-					gradient_after,
-					column_spacing;
+			buildStyleBlock: function( values ) {
+				var css, selectors, column_spacing, colors, gradient, gradient_after;
 
-				if ( ! this.isDefault( 'grid_separator_color' ) && 'shadow' === values.grid_separator_style_type ) {
-					colors = jQuery.AWB_Color( values.grid_separator_color );
-					gradient = 'linear-gradient(to left, rgba({1}, {2}, {3}, 0) 0%, rgba({1}, {2}, {3}, 0) 15%, rgba({1}, {2}, {3}, 0.65) 50%, rgba({1}, {2}, {3}, 0) 85%, rgba({1}, {2}, {3}, 0) 100%)';
-					gradient = gradient.replace( /\{1\}/g, colors.red() ).replace( /\{2\}/g, colors.green() ).replace( /\{3\}/g, colors.blue() );
-					gradient_after = 'radial-gradient(ellipse at 50% -50%, rgba({1}, {2}, {3}, 0.5) 0, rgba(255, 255, 255, 0) 65%)';
-					gradient_after = gradient_after.replace( /\{1\}/g, colors.red() ).replace( /\{2\}/g, colors.green() ).replace( /\{3\}/g, colors.blue() );
+				this.baseSelector = '.fusion-woo-product-grid.fusion-woo-product-grid-' +  this.model.get( 'cid' );
+				this.dynamic_css  = {};
 
-					customVars.gradient       = gradient;
-					customVars.gradient_after = gradient_after;
+				// Grid Box styles.
+				selectors = [ this.baseSelector + ' .products li.product .fusion-product-wrapper' ];
+				if ( ! this.isDefault( 'grid_box_color' ) ) {
+					this.addCssProperty( selectors, 'background-color', values.grid_box_color );
 				}
+				if ( ! this.isDefault( 'grid_border_color' ) ) {
+					this.addCssProperty( selectors, 'border-color', values.grid_border_color );
+				}
+
+				// Separators styles.
+				selectors = [ this.baseSelector + ' .fusion-content-sep' ];
+				if ( ! this.isDefault( 'grid_separator_color' ) ) {
+					if ( 'shadow' !== values.grid_separator_style_type ) {
+						this.addCssProperty( selectors, 'border-color', values.grid_separator_color );
+					} else {
+						colors = jQuery.Color( values.grid_separator_color );
+						gradient = 'linear-gradient(to left, rgba({1}, {2}, {3}, 0) 0%, rgba({1}, {2}, {3}, 0) 15%, rgba({1}, {2}, {3}, 0.65) 50%, rgba({1}, {2}, {3}, 0) 85%, rgba({1}, {2}, {3}, 0) 100%)';
+						gradient = gradient.replace( /\{1\}/g, colors.red() ).replace( /\{2\}/g, colors.green() ).replace( /\{3\}/g, colors.blue() );
+						gradient_after = 'radial-gradient(ellipse at 50% -50%, rgba({1}, {2}, {3}, 0.5) 0, rgba(255, 255, 255, 0) 65%)';
+						gradient_after = gradient_after.replace( /\{1\}/g, colors.red() ).replace( /\{2\}/g, colors.green() ).replace( /\{3\}/g, colors.blue() );
+
+						this.addCssProperty( selectors, 'background', gradient );
+						this.addCssProperty( [ this.baseSelector + ' .fusion-content-sep:after' ], 'background', gradient_after );
+					}
+				}
+
+				// Hide styles.
+				selectors = [ this.baseSelector + ' .product-title' ];
+				if ( ! this.isDefault( 'show_title' ) ) {
+					this.addCssProperty( selectors, 'display', 'none' );
+				}
+				selectors = [ this.baseSelector + ' .fusion-price-rating .price' ];
+				if ( ! this.isDefault( 'show_price' ) ) {
+					this.addCssProperty( selectors, 'display', 'none' );
+				}
+				selectors = [
+					this.baseSelector + ' .fusion-price-rating .star-rating',
+					this.baseSelector + ' .fusion-rollover .star-rating'
+				];
+				if ( ! this.isDefault( 'show_rating' ) ) {
+					this.addCssProperty( selectors, 'display', 'none' );
+				}
+				selectors = [
+					this.baseSelector + ' .product-buttons',
+					this.baseSelector + ' .fusion-product-buttons'
+				];
+				if ( ! this.isDefault( 'show_buttons' ) ) {
+					this.addCssProperty( selectors, 'display', 'none' );
+				}
+				selectors = [ this.baseSelector + ' .fusion-product-content' ];
+				if ( ! this.isDefault( 'show_title' ) && ! this.isDefault( 'show_price' ) && ! this.isDefault( 'show_rating' ) && ! this.isDefault( 'show_buttons' ) ) {
+					this.addCssProperty( selectors, 'display', 'none' );
+				}
+				selectors = [ this.baseSelector + ' .infinite-scroll-hide' ];
+				if ( this.isLoadMore() ) {
+					this.addCssProperty( selectors, 'display', 'none' );
+				}
+				this.addCssProperty( [ this.baseSelector + '.fusion-woo-product-grid-spacing-off .product .product-buttons' ], 'padding-top', '0' );
+				this.addCssProperty( [ this.baseSelector + '.fusion-woo-product-grid-spacing-off .product-details-container' ], 'min-height', '0' );
 
 				if ( ! this.isDefault( 'column_spacing' ) && 1 < parseInt( values.columns ) ) {
+					selectors = [ this.baseSelector + ' ul.products' ];
 					column_spacing = _.fusionGetValueWithUnit( values.column_spacing );
 
-					customVars.column_spacing_margin = 'calc((' + column_spacing + ')/ -2)';
-					customVars.column_spacing_padding = 'calc((' + column_spacing + ')/ 2)';
+					this.addCssProperty( selectors, 'margin-top', 'calc((' + column_spacing + ')/ -2)' );
+					this.addCssProperty( selectors, 'margin-right', 'calc((' + column_spacing + ')/ -2)' );
+					this.addCssProperty( selectors, 'margin-left', 'calc((' + column_spacing + ')/ -2)' );
+
+					selectors = [ this.baseSelector + ' ul.products .product' ];
+					this.addCssProperty( selectors, 'padding', 'calc((' + column_spacing + ')/ 2)' );
 				}
 
+				selectors = [ this.baseSelector ];
+				// Margin styles.
+				if ( ! this.isDefault( 'margin_top' ) ) {
+				  this.addCssProperty( selectors, 'margin-top', values.margin_top );
+				}
+				if ( ! this.isDefault( 'margin_right' ) ) {
+				  this.addCssProperty( selectors, 'margin-right', values.margin_right );
+				}
+				if ( ! this.isDefault( 'margin_bottom' ) ) {
+				  this.addCssProperty( selectors, 'margin-bottom', values.margin_bottom );
+				}
+				if ( ! this.isDefault( 'margin_left' ) ) {
+				  this.addCssProperty( selectors, 'margin-left', values.margin_left );
+				}
 
-				cssVarsOptions = [
-					'grid_box_color',
-					'grid_border_color',
-					'grid_separator_color'
-				];
+				css = this.parseCSS();
 
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
+				return ( css ) ? '<style>' + css + '</style>' : '';
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
 			}
 
 		} );

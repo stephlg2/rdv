@@ -18,13 +18,13 @@
   float: right;
   display: block;
 }
-.cart-loading .awb-icon-spinner {
+.cart-loading .fusion-icon-spinner {
   -webkit-animation: mask 3s infinite alternate;
           animation: mask 3s infinite alternate;
   display: inline-block;
   line-height: 70px;
 }
-.cart-loading .awb-icon-check-square-o {
+.cart-loading .fusion-icon-check-square-o {
   display: inline-block;
   line-height: 70px;
 }
@@ -57,7 +57,7 @@
   position: relative;
   font-size: 22px;
 }
-.fusion-grid-view .awb-icon-grid {
+.fusion-grid-view .fusion-icon-grid {
   display: block;
   margin-top: 50%;
   position: absolute;

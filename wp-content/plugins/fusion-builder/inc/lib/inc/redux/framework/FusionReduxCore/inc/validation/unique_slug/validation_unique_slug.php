@@ -3,12 +3,6 @@
 	if ( ! class_exists( 'FusionRedux_Validation_unique_slug' ) ) {
 		class FusionRedux_Validation_unique_slug {
 
-			public $parent;
-			public $field;
-			public $value;
-			public $current;
-			public $error;
-
 			/**
 			 * Field Constructor.
 			 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -49,6 +43,7 @@
 				 *
 				 * @param bool   $bad_slug  Whether the post slug would be bad as a flat slug.
 				 * @param string $slug      The post slug.
+				 * @param string $post_type Post type.
 				 */
 				if ( $post_name_check || in_array( $slug, $feeds ) || apply_filters( 'wp_unique_post_slug_is_bad_attachment_slug', false, $slug ) ) {
 					$suffix = 2;

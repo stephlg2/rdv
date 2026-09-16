@@ -34,14 +34,13 @@
 			public static $init = array();
 			public static $extensions = array();
 			public static $uses_extensions = array();
-			public $apiHasRun;
 
 			public function __call( $closure, $args ) {
 				return call_user_func_array( $this->{$closure}->bindTo( $this ), $args );
 			}
 
 			public function __toString() {
-				return call_user_func( $this->{"__toString"}->bindTo( $this ) ); // @phpstan-ignore-line
+				return call_user_func( $this->{"__toString"}->bindTo( $this ) );
 			}
 
 			public static function load() {
@@ -601,7 +600,13 @@
 
 				if ( empty( $opt_name ) ) {
 					FusionRedux::getAllExtensions();
-					return null;
+					if ( empty( $key ) ) {
+						return self::$extension_paths;
+					} else {
+						if ( isset( self::$extension_paths[ $key ] ) ) {
+							return self::$extension_paths[ $key ];
+						}
+					}
 				} else {
 					if ( empty( self::$uses_extensions[ $opt_name ] ) ) {
 						FusionRedux::getInstanceExtensions( $opt_name );

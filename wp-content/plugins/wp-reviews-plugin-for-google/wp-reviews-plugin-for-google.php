@@ -3,15 +3,15 @@
 Plugin Name: Widgets for Google Reviews
 Plugin Title: Widgets for Google Reviews Plugin
 Plugin URI: https://wordpress.org/plugins/wp-reviews-plugin-for-google/
-Description: Embed Google reviews fast and easily into your WordPress site. Increase SEO, trust and sales using Google reviews.
-Tags: google, google places reviews, reviews, widget, google business
+Description: Google Reviews Widget for WordPress. Display Google reviews in 1 minute with 45 professional layouts. Build trust, boost SEO, and increase sales.
+Tags: google reviews, google business, review widget, review slider, social proof
 Author: Trustindex.io <support@trustindex.io>
 Author URI: https://www.trustindex.io/
 Contributors: trustindex
 License: GPLv2 or later
-Version: 13.2.5
+Version: 14.1.1
 Requires at least: 6.2
-Requires PHP: 7.0
+Requires PHP: 7.4
 Text Domain: wp-reviews-plugin-for-google
 Domain Path: /languages
 Donate link: https://www.trustindex.io/prices/
@@ -22,7 +22,7 @@ Copyright 2019 Trustindex Kft (email: support@trustindex.io)
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 require_once plugin_dir_path(__FILE__) . 'include' . DIRECTORY_SEPARATOR . 'cache-plugin-filters.php';
 require_once plugin_dir_path(__FILE__) . 'trustindex-plugin.class.php';
-$trustindex_pm_google = new TrustindexPlugin_google("google", __FILE__, "13.2.5", "Widgets for Google Reviews", "Google");
+$trustindex_pm_google = new TrustindexPlugin_google("google", __FILE__, "14.1.1", "Widgets for Google Reviews", "Google");
 $pluginManager = 'TrustindexPlugin_google';
 $pluginManagerInstance = $trustindex_pm_google;
 add_action('admin_init', function() { ob_start(); });
@@ -36,13 +36,26 @@ echo '<meta name="ti-site-data" content="'.esc_attr(base64_encode(json_encode([
 '1:'.$pluginManagerInstance->getRegistrationCount(1) .
 '!7:'.$pluginManagerInstance->getRegistrationCount(7) .
 '!30:'.$pluginManagerInstance->getRegistrationCount(30),
-'o' => wp_nonce_url(admin_url('admin-ajax.php').'?'.http_build_query([
-'action' => 'ti_online_users_'.$pluginManagerInstance->getShortName(),
+'o' => wp_nonce_url(get_site_url() .'?'.http_build_query([
+'ti-online-users-'.$pluginManagerInstance->getShortName() => 1,
 'p' => esc_html($url),
 ]), 'ti-online-users-'.$pluginManagerInstance->getShortName()),
 ]))).'" />';
+if (current_user_can('manage_options') && !$pluginManagerInstance->isNoticeDismissed('script-embed')) {
+echo '<meta name="ti-notice-script-tag" content="'.esc_attr($pluginManagerInstance->get_shortcode_name()).'" />';
+echo '<meta name="ti-notice-dismiss-url" content="'.esc_url($pluginManagerInstance->getNoticeDismissUrl('script-embed')).'" />';
+}
 });
-$onlineUsersFn = function() use($pluginManagerInstance) {
+add_action('init', function() use($pluginManagerInstance) {
+$dismissNoticeParam = 'ti-dismiss-notice-'.$pluginManagerInstance->getShortName();
+if (isset($_GET[ $dismissNoticeParam ])) {
+check_admin_referer($dismissNoticeParam);
+if (!current_user_can('manage_options')) {
+wp_send_json_error(null, 403);
+}
+wp_send_json_success($pluginManagerInstance->dismissNotice(sanitize_key(wp_unslash($_GET[ $dismissNoticeParam ]))));
+}
+if (isset($_GET['ti-online-users-'.$pluginManagerInstance->getShortName()])) {
 check_admin_referer('ti-online-users-'.$pluginManagerInstance->getShortName());
 $page = isset($_REQUEST['p']) ? sanitize_text_field(wp_unslash($_REQUEST['p'])) : '';
 $md5Value = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
@@ -54,10 +67,9 @@ $userId = uniqid('', true);
 set_transient($key, $userId, 3600);
 }
 echo esc_html($pluginManagerInstance->getOnlineUsers($userId, $page));
-wp_die();
-};
-add_action('wp_ajax_nopriv_ti_online_users_'.$pluginManagerInstance->getShortName(), $onlineUsersFn);
-add_action('wp_ajax_ti_online_users_'.$pluginManagerInstance->getShortName(), $onlineUsersFn);
+exit;
+}
+});
 add_action('wp_insert_site', function($site) use($pluginManagerInstance) {
 switch_to_blog($site->blog_id);
 $tiReviewsTableName = $pluginManagerInstance->get_tablename('reviews');
@@ -78,12 +90,18 @@ add_action('widgets_init', [ $pluginManagerInstance, 'init_widget' ]);
 add_action('widgets_init', [ $pluginManagerInstance, 'register_widget' ]);
 }
 add_action('init', function() {
-wp_register_script('trustindex-loader-js', 'https://cdn.trustindex.io/loader.js', [], true, [
-'strategy' => 'async',
-'in_footer' => true,
+wp_register_script('trustindex-loader-js', 'https://cdn.trustindex.io/loader.js', [], null, [ // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- The loader URL must not contain cache-busting query parameters.
+'strategy' => is_admin() ? 'defer' : 'async',
+'in_footer' => !is_admin(),
 ]);
 });
 add_action('init', [ $pluginManagerInstance, 'init_shortcode' ]);
+add_filter('script_loader_tag', function($tag, $handle) {
+if ('trustindex-loader-js' === $handle) {
+$tag = str_replace('<script ', '<script data-ccm-injected="1" ', $tag);
+}
+return $tag;
+}, 10, 2);
 add_action('elementor/controls/controls_registered', function($controlsManager) {
 require_once(__DIR__ . '/include/elementor-widgets.php');
 $controlsManager->register_control('choose', new \Elementor\Control_Choose2());
@@ -165,10 +183,12 @@ echo '
 ';
 }
 else {
+if ($options['button-text']) {
 echo '
-<a href="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=open'), 'ti-notification')) .'">
-<button class="button button-primary">'. esc_html($options['button-text']) .'</button>
+<a href="' . esc_url(wp_nonce_url(admin_url('admin.php?page=' . $pluginManagerInstance->get_plugin_slug() . '/settings.php&notification=' . $type . '&action=open'), 'ti-notification')) . '">
+<button class="button button-primary">' . esc_html($options['button-text']) . '</button>
 </a>';
+}
 if ($options['remind-later-button']) {
 echo '
 <a href="'. esc_url(wp_nonce_url(admin_url('admin.php?page='. $pluginManagerInstance->get_plugin_slug() .'/settings.php&notification='. $type .'&action=later'), 'ti-notification')) .'" class="ti-remind-later" style="margin-left: 5px">

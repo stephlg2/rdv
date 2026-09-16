@@ -71,10 +71,8 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 				parent::__construct();
 				add_filter( 'fusion_attr_image-carousel-shortcode', [ $this, 'attr' ] );
 				add_filter( 'fusion_attr_image-carousel-shortcode-carousel', [ $this, 'carousel_attr' ] );
-				add_filter( 'fusion_attr_image-carousel-shortcode-carousel-wrapper', [ $this, 'carousel_wrapper_attr' ] );
 				add_filter( 'fusion_attr_image-carousel-shortcode-slide-link', [ $this, 'slide_link_attr' ] );
 				add_filter( 'fusion_attr_fusion-image-wrapper', [ $this, 'image_wrapper' ] );
-				add_filter( 'fusion_attr_image-carousel-shortcode-caption', [ $this, 'caption_attr' ] );
 
 				add_shortcode( 'fusion_images', [ $this, 'render_parent' ] );
 				add_shortcode( 'fusion_image', [ $this, 'render_child' ] );
@@ -109,6 +107,7 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			 * @since 2.0.0
 			 */
 			public function query_single_child() {
+				global $fusion_settings;
 
 				// From Ajax Request.
 				if ( isset( $_POST['model'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -124,7 +123,6 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 					$image_sizes = [ 'full', 'portfolio-two', 'blog-medium' ];
 					foreach ( $image_sizes as $image_size ) {
 						$return_data[ $return_data['image_data']['url'] ][ $image_size ] = wp_get_attachment_image( $return_data['image_data']['id'], $image_size );
-						$return_data[ $return_data['image_data']['url'] ]['image_data']  = $return_data['image_data'];
 					}
 					echo wp_json_encode( $return_data );
 				}
@@ -138,6 +136,7 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			 * @since 2.0.0
 			 */
 			public function query_children() {
+				global $fusion_settings;
 
 				check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
 
@@ -150,9 +149,8 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 
 					foreach ( $children as $cid => $image_data ) {
 						if ( isset( $children[ $cid ]['image_id'] ) && $children[ $cid ]['image_id'] ) {
-							$image_id   = explode( '|', $children[ $cid ]['image_id'] );
-							$image_id   = $image_id[0];
-							$image_data = fusion_library()->get_images_obj()->get_attachment_data_by_helper( $children[ $cid ]['image_id'], $children[ $cid ]['image'] );
+							$image_id = explode( '|', $children[ $cid ]['image_id'] );
+							$image_id = $image_id[0];
 						} else {
 							$image_data = fusion_library()->images->get_attachment_data_by_helper( '', $children[ $cid ]['image'] );
 							$image_id   = $image_data['id'];
@@ -160,7 +158,6 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 
 						foreach ( $image_sizes as $image_size ) {
 							$return_data[ $children[ $cid ]['image'] ][ $image_size ] = wp_get_attachment_image( $image_id, $image_size );
-							$return_data[ $children[ $cid ]['image'] ]['image_data']  = $image_data;
 						}
 					}
 
@@ -175,72 +172,34 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			 * @static
 			 * @access public
 			 * @since 2.0.0
-			 * @param 'parent'|'child' $context Whether we want parent or child.
+			 * @param string $context Whether we want parent or child.
 			 * @return array
 			 */
 			public static function get_element_defaults( $context ) {
-				$fusion_settings = awb_get_fusion_settings();
 
 				$parent = [
-					'margin_top'                           => '',
-					'margin_right'                         => '',
-					'margin_bottom'                        => '',
-					'margin_left'                          => '',
-					'hide_on_mobile'                       => fusion_builder_default_visibility( 'string' ),
-					'class'                                => '',
-					'id'                                   => '',
-					'autoplay'                             => 'no',
-					'border'                               => 'yes',
-					'flex_align_items'                     => 'center',
-					'columns'                              => '5',
-					'column_spacing'                       => '13',
-					'image_id'                             => '',
-					'order_by'                             => 'desc',
-					'lightbox'                             => 'no',
-					'mouse_scroll'                         => 'no',
-					'picture_size'                         => 'fixed',
-					'scroll_items'                         => '',
-					'show_nav'                             => 'yes',
-					'hover_type'                           => 'none',
-
-					// Caption params.
-					'caption_style'                        => 'off',
-					'caption_title_color'                  => '',
-					'caption_title_size'                   => '',
-					'caption_title_line_height'            => '',
-					'caption_title_letter_spacing'         => '',
-					'caption_title_transform'              => '',
-					'caption_title_tag'                    => '2',
-					'fusion_font_family_caption_title_font' => '',
-					'fusion_font_variant_caption_title_font' => '',
-					'caption_text_color'                   => '',
-					'caption_text_size'                    => '',
-					'caption_text_line_height'             => '',
-					'caption_text_letter_spacing'          => '',
-					'caption_text_transform'               => '',
-					'fusion_font_family_caption_text_font' => '',
-					'fusion_font_variant_caption_text_font' => '',
-					'caption_border_color'                 => '',
-					'caption_overlay_color'                => $fusion_settings->get( 'primary_color' ),
-					'caption_background_color'             => '',
-					'caption_margin_top'                   => '',
-					'caption_margin_right'                 => '',
-					'caption_margin_bottom'                => '',
-					'caption_margin_left'                  => '',
-					'caption_align'                        => 'none',
-					'caption_align_medium'                 => 'none',
-					'caption_align_small'                  => 'none',
-					'dynamic_params'                       => '',
+					'hide_on_mobile' => fusion_builder_default_visibility( 'string' ),
+					'class'          => '',
+					'id'             => '',
+					'autoplay'       => 'no',
+					'border'         => 'yes',
+					'columns'        => '5',
+					'column_spacing' => '13',
+					'image_id'       => '',
+					'lightbox'       => 'no',
+					'mouse_scroll'   => 'no',
+					'picture_size'   => 'fixed',
+					'scroll_items'   => '',
+					'show_nav'       => 'yes',
+					'hover_type'     => 'none',
 				];
 
 				$child = [
-					'alt'           => '',
-					'image'         => '',
-					'image_id'      => '',
-					'image_title'   => '',
-					'image_caption' => '',
-					'link'          => '',
-					'linktarget'    => '_self',
+					'alt'        => '',
+					'image'      => '',
+					'image_id'   => '',
+					'link'       => '',
+					'linktarget' => '_self',
 				];
 
 				if ( 'parent' === $context ) {
@@ -260,48 +219,41 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_parent( $args, $content = '' ) {
-				$this->defaults = self::get_element_defaults( 'parent' );
-				$defaults       = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_images' );
-				$content        = apply_filters( 'fusion_shortcode_content', $content, 'fusion_images', $args );
+
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_images' );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_images', $args );
 
 				$defaults['column_spacing'] = FusionBuilder::validate_shortcode_attr_value( $defaults['column_spacing'], '' );
 
-				$this->parent_args = $this->args = $defaults;
+				extract( $defaults );
+
+				$this->parent_args = $defaults;
+
+				preg_match_all( '/\[fusion_image (.*?)\]/s', $content, $matches );
 
 				preg_match_all( '/\[fusion_image (.*?)\]/s', $content, $matches );
 
 				if ( isset( $matches[0] ) ) {
 					$this->number_of_images = count( $matches[0] );
-					$content                = $this->sort_carousel_items( $matches[0] );
 				}
 
 				$html  = '<div ' . FusionBuilder::attributes( 'image-carousel-shortcode' ) . '>';
 				$html .= '<div ' . FusionBuilder::attributes( 'image-carousel-shortcode-carousel' ) . '>';
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion-carousel-positioner' ) . '>';
 
 				// The main carousel.
-				$html .= '<div ' . FusionBuilder::attributes( 'image-carousel-shortcode-carousel-wrapper' ) . '>';
-
-				$acf_repeater_html = '';
-
-				if ( $this->parent_args['dynamic_params'] ) {
-					$dynamic_data = json_decode( fusion_decode_if_needed( $this->parent_args['dynamic_params'] ), true );
-
-					if ( isset( $dynamic_data['parent_dynamic_content'] ) ) {
-						$acf_repeater_html = self::get_acf_repeater( $dynamic_data['parent_dynamic_content'], $this->parent_args, $content );
-					}
-				}
-
-				if ( $acf_repeater_html ) {
-					$html .= $acf_repeater_html;
-				} else {
-					$html .= do_shortcode( $content );
-				}
-				$html .= '</div>';
+				$html .= '<ul ' . FusionBuilder::attributes( 'fusion-carousel-holder' ) . '>';
+				$html .= do_shortcode( $content );
+				$html .= '</ul>';
 
 				// Check if navigation should be shown.
-				if ( 'yes' === $this->parent_args['show_nav'] ) {
-					$html .= awb_get_carousel_nav();
+				if ( 'yes' === $show_nav ) {
+					$html .= '<div ' . FusionBuilder::attributes( 'fusion-carousel-nav' ) . '>';
+					$html .= '<span ' . FusionBuilder::attributes( 'fusion-nav-prev' ) . '></span>';
+					$html .= '<span ' . FusionBuilder::attributes( 'fusion-nav-next' ) . '></span>';
+					$html .= '</div>';
 				}
+				$html .= '</div>';
 				$html .= '</div>';
 				$html .= '</div>';
 
@@ -325,8 +277,7 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 				$attr = fusion_builder_visibility_atts(
 					$this->parent_args['hide_on_mobile'],
 					[
-						'class' => 'fusion-image-carousel fusion-image-carousel-' . $this->parent_args['picture_size'] . ' fusion-image-carousel-' . $this->image_carousel_counter,
-						'style' => '',
+						'class' => 'fusion-image-carousel fusion-image-carousel-' . $this->parent_args['picture_size'],
 					]
 				);
 
@@ -337,12 +288,6 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 				if ( 'yes' === $this->parent_args['border'] ) {
 					$attr['class'] .= ' fusion-carousel-border';
 				}
-
-				if ( in_array( $this->parent_args['caption_style'], [ 'above', 'below' ], true ) ) {
-					$attr['class'] .= ' awb-image-carousel-top-below-caption';
-				}
-
-				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->parent_args );
 
 				if ( $this->parent_args['class'] ) {
 					$attr['class'] .= ' ' . $this->parent_args['class'];
@@ -365,7 +310,7 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			 */
 			public function carousel_attr() {
 
-				$attr['class']            = 'awb-carousel awb-swiper awb-swiper-carousel';
+				$attr['class']            = 'fusion-carousel';
 				$attr['data-autoplay']    = $this->parent_args['autoplay'];
 				$attr['data-columns']     = $this->parent_args['columns'];
 				$attr['data-itemmargin']  = $this->parent_args['column_spacing'];
@@ -373,26 +318,8 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 				$attr['data-touchscroll'] = $this->parent_args['mouse_scroll'];
 				$attr['data-imagesize']   = $this->parent_args['picture_size'];
 				$attr['data-scrollitems'] = $this->parent_args['scroll_items'];
-				$attr['style']            = $this->get_inline_style();
-
-				// Caption style.
-				if ( in_array( $this->parent_args['caption_style'], [ 'above', 'below' ], true ) ) {
-					$attr['class'] .= ' awb-imageframe-style awb-imageframe-style-' . $this->parent_args['caption_style'] . ' awb-imageframe-style-' . $this->image_carousel_counter;
-				}
 				return $attr;
 
-			}
-
-			/**
-			 * Builds the carousel wrapper attributes array.
-			 *
-			 * @access public
-			 * @since 3.9.1
-			 * @return array
-			 */
-			public function carousel_wrapper_attr() {
-				$attr['class'] = 'swiper-wrapper awb-image-carousel-wrapper fusion-flex-align-items-' . $this->args['flex_align_items'];
-				return $attr;
 			}
 
 			/**
@@ -409,6 +336,8 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'child' ), $args, 'fusion_image' );
 				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_image', $args );
 
+				extract( $defaults );
+
 				$this->child_args = $defaults;
 
 				$width = $height = '';
@@ -421,7 +350,7 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 					}
 				}
 
-				$this->image_data = fusion_library()->images->get_attachment_data_by_helper( $this->child_args['image_id'], $this->child_args['image'] );
+				$this->image_data = fusion_library()->images->get_attachment_data_by_helper( $this->child_args['image_id'], $image );
 
 				$output = '';
 				if ( $this->image_data && $this->image_data['id'] ) {
@@ -439,8 +368,8 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 						);
 					}
 
-					if ( $this->child_args['alt'] ) {
-						$output = wp_get_attachment_image( $this->image_data['id'], $image_size, false, [ 'alt' => $this->child_args['alt'] ] );
+					if ( $alt ) {
+						$output = wp_get_attachment_image( $this->image_data['id'], $image_size, false, [ 'alt' => $alt ] );
 					} else {
 						$output = wp_get_attachment_image( $this->image_data['id'], $image_size );
 					}
@@ -452,33 +381,18 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 					fusion_library()->images->set_grid_image_meta( [] );
 
 				} else {
-					$output = '<img src="' . $this->child_args['image'] . '" alt="' . $this->child_args['alt'] . '"/>';
+					$output = '<img src="' . $image . '" alt="' . $alt . '"/>';
 				}
 
-				if ( ! empty( $this->image_data ) ) {
-					$output = fusion_library()->images->apply_lazy_loading( $output, null, $this->image_data['id'], 'full' );
-				}
+				$output = fusion_library()->images->apply_lazy_loading( $output, null, $this->image_data['id'], 'full' );
 
-				// render caption markup.
-				if ( ! in_array( $this->parent_args['caption_style'], [ 'off', 'above', 'below' ], true ) ) {
-					$output .= $this->render_caption();
-				}
-
-				if ( 'no' === $this->parent_args['mouse_scroll'] && ( $this->child_args['link'] || 'yes' === $this->parent_args['lightbox'] ) ) {
+				if ( 'no' === $this->parent_args['mouse_scroll'] && ( $link || 'yes' === $this->parent_args['lightbox'] ) ) {
 					$output = '<a ' . FusionBuilder::attributes( 'image-carousel-shortcode-slide-link' ) . '>' . $output . '</a>';
 				}
 
-				$li = '<div ' . FusionBuilder::attributes( 'swiper-slide' ) . '><div ' . FusionBuilder::attributes( 'fusion-carousel-item-wrapper' ) . '>';
-				if ( 'above' === $this->parent_args['caption_style'] ) {
-					$li .= $this->render_caption();
-				}
-				$li .= '<div ' . FusionBuilder::attributes( 'fusion-image-wrapper' ) . '>' . $output . '</div>';
-				if ( 'below' === $this->parent_args['caption_style'] ) {
-					$li .= $this->render_caption();
-				}
-				$li .= '</div></div>';
+				$output = '<li ' . FusionBuilder::attributes( 'fusion-carousel-item' ) . '><div ' . FusionBuilder::attributes( 'fusion-carousel-item-wrapper' ) . '><div ' . FusionBuilder::attributes( 'fusion-image-wrapper' ) . '>' . $output . '</div></div></li>';
 
-				return apply_filters( 'fusion_element_image_carousel_child_content', $li, $args );
+				return apply_filters( 'fusion_element_image_carousel_child_content', $output, $args );
 			}
 
 			/**
@@ -495,11 +409,7 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 				if ( 'yes' === $this->parent_args['lightbox'] ) {
 
 					if ( ! $this->child_args['link'] ) {
-						if ( $this->child_args['image'] ) {
-							$this->child_args['link'] = $this->child_args['image'];
-						} elseif ( isset( $this->image_data['url'] ) ) {
-							$this->child_args['link'] = $this->image_data['url'];
-						}
+						$this->child_args['link'] = $this->child_args['image'];
 					}
 
 					$attr['data-rel'] = 'iLightbox[image_carousel_' . $this->image_carousel_counter . ']';
@@ -522,43 +432,6 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			}
 
 			/**
-			 * Builds the caption attributes array.
-			 *
-			 * @access public
-			 * @since 3.5
-			 * @return array
-			 */
-			public function caption_attr() {
-
-				$attr = [
-					'class' => 'awb-imageframe-caption-container',
-					'style' => '',
-				];
-
-				if ( ! fusion_element_rendering_is_flex() ) {
-					return $attr;
-				}
-
-				if ( in_array( $this->args['caption_style'], [ 'above', 'below' ], true ) ) {
-					// Responsive alignment.
-					foreach ( [ 'large', 'medium', 'small' ] as $size ) {
-						$key = 'caption_align' . ( 'large' === $size ? '' : '_' . $size );
-
-						$align = ! empty( $this->args[ $key ] ) && 'none' !== $this->args[ $key ] ? $this->args[ $key ] : false;
-						if ( $align ) {
-							if ( 'large' === $size ) {
-								$attr['style'] .= 'text-align:' . $this->args[ $key ] . ';';
-							} else {
-								$attr['class'] .= ( 'medium' === $size ? ' md-text-align-' : ' sm-text-align-' ) . $this->args[ $key ];
-							}
-						}
-					}
-				}
-
-				return $attr;
-			}
-
-			/**
 			 * Builds the image-wrapper attributes array.
 			 *
 			 * @access public
@@ -566,144 +439,40 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			 * @return array
 			 */
 			public function image_wrapper() {
-				$attr = [
+				if ( $this->parent_args['hover_type'] ) {
+					return [
+						'class' => 'fusion-image-wrapper hover-type-' . $this->parent_args['hover_type'],
+					];
+				}
+				return [
 					'class' => 'fusion-image-wrapper',
 				];
-				if ( $this->parent_args['hover_type'] && in_array( $this->parent_args['caption_style'], [ 'off', 'above', 'below' ], true ) ) {
-					$attr['class'] .= ' hover-type-' . $this->parent_args['hover_type'];
-				}
-
-				// Caption style.
-				if ( ! in_array( $this->parent_args['caption_style'], [ 'off', 'above', 'below' ], true ) ) {
-					$attr['class'] .= ' awb-imageframe-style awb-imageframe-style-' . $this->parent_args['caption_style'];
-				}
-				return $attr;
 			}
 
 			/**
-			 * Render the caption.
+			 * Builds the "previous" nav attributes array.
 			 *
 			 * @access public
-			 * @since 3.5
-			 * @return string HTML output.
+			 * @since 1.0
+			 * @return array
 			 */
-			public function render_caption() {
-				if ( 'off' === $this->parent_args['caption_style'] ) {
-					return '';
-				}
-				$output  = '<div ' . FusionBuilder::attributes( 'image-carousel-shortcode-caption' ) . '><div class="awb-imageframe-caption">';
-				$title   = '';
-				$caption = '';
-
-				if ( $this->image_data ) {
-					if ( '' !== $this->image_data['title'] ) {
-						$title = $this->image_data['title'];
-					}
-					if ( '' !== $this->image_data['caption'] ) {
-						$caption = $this->image_data['caption'];
-					}
-				}
-
-				if ( '' !== $this->child_args['image_title'] ) {
-					$title = $this->child_args['image_title'];
-				}
-				if ( '' !== $this->child_args['image_caption'] ) {
-					$caption = $this->child_args['image_caption'];
-				}
-
-				if ( '' !== $title ) {
-					$title_tag = 'div' === $this->parent_args['caption_title_tag'] ? 'div' : 'h' . $this->parent_args['caption_title_tag'];
-					$output   .= sprintf( '<%1$s class="awb-imageframe-caption-title">%2$s</%1$s>', $title_tag, $title );
-				}
-				if ( '' !== $caption ) {
-					$output .= sprintf( '<p class="awb-imageframe-caption-text">%1$s</p>', $caption );
-				}
-				$output .= '</div></div>';
-				return $output;
-			}
-
-			/**
-			 * Get the inline style.
-			 *
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_inline_style() {
-				$css_vars_options = [
-					'columns',
-					'column_spacing'               => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_title_color'          => [
-						'callback' => [ 'Fusion_Sanitize', 'color' ],
-					],
-					'caption_title_size'           => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_title_transform',
-					'caption_title_line_height',
-					'caption_title_letter_spacing' => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_text_color'           => [
-						'callback' => [ 'Fusion_Sanitize', 'color' ],
-					],
-					'caption_text_size'            => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_text_transform',
-					'caption_text_line_height',
-					'caption_text_letter_spacing'  => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_border_color'         => [
-						'callback' => [ 'Fusion_Sanitize', 'color' ],
-					],
-					'caption_overlay_color'        => [
-						'callback' => [ 'Fusion_Sanitize', 'color' ],
-					],
-					'caption_background_color'     => [
-						'callback' => [ 'Fusion_Sanitize', 'color' ],
-					],
-					'caption_margin_top'           => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_margin_right'         => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_margin_bottom'        => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'caption_margin_left'          => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
+			public function fusion_nav_prev() {
+				return [
+					'class' => 'fusion-nav-prev fusion-icon-left',
 				];
-
-				return $this->get_css_vars_for_options( $css_vars_options ) . $this->get_font_styling_vars( 'caption_title_font' ) . $this->get_font_styling_vars( 'caption_text_font' );
 			}
 
 			/**
-			 * Sorts carousel items
+			 * Builds the "next" nav attributes array.
 			 *
 			 * @access public
-			 * @param mixed $data Carousel items data.
-			 * @since 3.9
-			 * @return mixed
+			 * @since 1.0
+			 * @return array
 			 */
-			public function sort_carousel_items( $data ) {
-
-				if ( is_array( $data ) ) {
-					switch ( $this->args['order_by'] ) {
-						case 'asc':
-							krsort( $data, SORT_NUMERIC );
-							break;
-						case 'rand':
-							shuffle( $data );
-							break;
-					}
-				}
-
-				return implode( '', $data );
+			public function fusion_nav_next() {
+				return [
+					'class' => 'fusion-nav-next fusion-icon-right',
+				];
 			}
 
 			/**
@@ -715,24 +484,7 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
 			 */
 			public function on_first_render() {
 				Fusion_Dynamic_JS::enqueue_script( 'fusion-lightbox' );
-				Fusion_Dynamic_JS::enqueue_script( 'awb-carousel' );
-			}
-
-			/**
-			 * Used to set any other variables for use on front-end editor template.
-			 *
-			 * @static
-			 * @access public
-			 * @since 3.5
-			 * @return array
-			 */
-			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
-				return [
-					'visibility_large'  => $fusion_settings->get( 'visibility_large' ),
-					'visibility_medium' => $fusion_settings->get( 'visibility_medium' ),
-					'visibility_small'  => $fusion_settings->get( 'visibility_small' ),
-				];
+				Fusion_Dynamic_JS::enqueue_script( 'fusion-carousel' );
 			}
 
 			/**
@@ -756,8 +508,6 @@ if ( fusion_is_element_enabled( 'fusion_images' ) ) {
  * Map shortcode to Avada Builder.
  */
 function fusion_element_images() {
-	$fusion_settings = awb_get_fusion_settings();
-
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionSC_ImageCarousel',
@@ -771,35 +521,8 @@ function fusion_element_images() {
 				'preview_id'    => 'fusion-builder-block-module-image-carousel-preview-template',
 				'child_ui'      => true,
 				'sortable'      => false,
-				'help_url'      => 'https://avada.com/documentation/image-carousel-element/',
-				'subparam_map'  => [
-					/* Caption title */
-					'fusion_font_family_caption_title_font' => 'caption_title_fonts',
-					'fusion_font_variant_caption_title_font' => 'caption_title_fonts',
-					'caption_title_size'                   => 'caption_title_fonts',
-					'caption_title_transform'              => 'caption_title_fonts',
-					'caption_title_line_height'            => '',
-					'caption_title_letter_spacing'         => '',
-					'caption_title_color'                  => '',
-
-					/* Caption text */
-					'fusion_font_family_caption_text_font' => 'caption_text_fonts',
-					'fusion_font_variant_caption_text_font' => 'caption_text_fonts',
-					'caption_text_size'                    => 'caption_text_fonts',
-					'caption_text_transform'               => 'caption_text_fonts',
-					'caption_text_line_height'             => '',
-					'caption_text_letter_spacing'          => '',
-					'caption_text_color'                   => '',
-				],
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/image-carousel-element/',
 				'params'        => [
-					[
-						'type'            => 'textfield',
-						'heading'         => esc_attr__( 'Dynamic Content', 'fusion-builder' ),
-						'param_name'      => 'parent_dynamic_content',
-						'dynamic_data'    => true,
-						'dynamic_options' => [ 'acf_repeater_parent' ],
-						'group'           => esc_attr__( 'children', 'fusion-builder' ),
-					],
 					[
 						'type'        => 'tinymce',
 						'heading'     => esc_attr__( 'Content', 'fusion-builder' ),
@@ -821,18 +544,6 @@ function fusion_element_images() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'param_name'  => 'order_by',
-						'heading'     => esc_attr__( 'Order By', 'fusion-builder' ),
-						'description' => __( 'Defines how items should be ordered. <strong>NOTE:</strong> This option will not work in the Live editor.', 'fusion-builder' ),
-						'default'     => 'desc',
-						'value'       => [
-							'desc' => esc_html__( 'DESC', 'fusion-builder' ),
-							'asc'  => esc_html__( 'ASC', 'fusion-builder' ),
-							'rand' => esc_html__( 'RAND', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Picture Size', 'fusion-builder' ),
 						'description' => __( 'fixed = width and height will be fixed <br />auto = width and height will adjust to the image.', 'fusion-builder' ),
 						'param_name'  => 'picture_size',
@@ -850,7 +561,7 @@ function fusion_element_images() {
 					[
 						'type'        => 'select',
 						'heading'     => esc_attr__( 'Hover Type', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select the hover effect type. Hover Type will be disabled when caption styles other than Above or Below are chosen.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the hover effect type.', 'fusion-builder' ),
 						'param_name'  => 'hover_type',
 						'value'       => [
 							'none'    => esc_attr__( 'None', 'fusion-builder' ),
@@ -864,33 +575,6 @@ function fusion_element_images() {
 							'type'     => 'class',
 							'toggle'   => 'hover',
 						],
-						'dependency'  => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'navin',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dario',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'resa',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'schantel',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dany',
-								'operator' => '!=',
-							],
-						],
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -902,27 +586,6 @@ function fusion_element_images() {
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
 						],
 						'default'     => 'no',
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Column Alignment', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select the column alignment within rows.', 'fusion-builder' ),
-						'param_name'  => 'flex_align_items',
-						'back_icons'  => true,
-						'grid_layout' => true,
-						'value'       => [
-							'flex-start' => esc_attr__( 'Flex Start', 'fusion-builder' ),
-							'center'     => esc_attr__( 'Center', 'fusion-builder' ),
-							'flex-end'   => esc_attr__( 'Flex End', 'fusion-builder' ),
-							'stretch'    => esc_attr__( 'Stretch', 'fusion-builder' ),
-						],
-						'icons'       => [
-							'flex-start' => '<span class="fusiona-align-top-columns"></span>',
-							'center'     => '<span class="fusiona-align-center-columns"></span>',
-							'flex-end'   => '<span class="fusiona-align-bottom-columns"></span>',
-							'stretch'    => '<span class="fusiona-full-height"></span>',
-						],
-						'default'     => 'center',
 					],
 					[
 						'type'        => 'range',
@@ -996,329 +659,6 @@ function fusion_element_images() {
 						'default'     => 'no',
 					],
 					[
-						'type'             => 'select',
-						'heading'          => esc_attr__( 'Caption', 'fusion-builder' ),
-						'description'      => esc_attr__( 'Choose the caption style.', 'fusion-builder' ),
-						'param_name'       => 'caption_style',
-						'value'            => [
-							'off'      => esc_attr__( 'Off', 'fusion-builder' ),
-							'above'    => esc_attr__( 'Above', 'fusion-builder' ),
-							'below'    => esc_attr__( 'Below', 'fusion-builder' ),
-							'navin'    => esc_attr__( 'Navin', 'fusion-builder' ),
-							'dario'    => esc_attr__( 'Dario', 'fusion-builder' ),
-							'resa'     => esc_attr__( 'Resa', 'fusion-builder' ),
-							'schantel' => esc_attr__( 'Schantel', 'fusion-builder' ),
-							'dany'     => esc_attr__( 'Dany', 'fusion-builder' ),
-						],
-						'default'          => 'off',
-						'group'            => esc_attr__( 'Caption', 'fusion-builder' ),
-						'child_dependency' => true,
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Image Title Heading Tag', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the image title, either div or the heading tag, h1-h6.', 'fusion-builder' ),
-						'param_name'  => 'caption_title_tag',
-						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-						],
-						'default'     => '2',
-						'group'       => esc_attr__( 'Caption', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Image Title Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the image title. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'caption_title_fonts',
-						'choices'          => [
-							'font-family'    => 'caption_title_font',
-							'font-size'      => 'caption_title_size',
-							'text-transform' => 'caption_title_transform',
-							'line-height'    => 'caption_title_line_height',
-							'letter-spacing' => 'caption_title_letter_spacing',
-							'color'          => 'caption_title_color',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
-						],
-						'remove_from_atts' => true,
-						'global'           => true,
-						'group'            => esc_attr__( 'Caption', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Image Caption Background Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the background color of the caption.', 'fusion-builder' ),
-						'param_name'  => 'caption_background_color',
-						'value'       => '',
-						'group'       => esc_attr__( 'Caption', 'fusion-builder' ),
-						'default'     => '',
-						'dependency'  => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'above',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'below',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'navin',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dario',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'resa',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Image Caption Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the image caption. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'caption_text_fonts',
-						'choices'          => [
-							'font-family'    => 'caption_text_font',
-							'font-size'      => 'caption_text_size',
-							'text-transform' => 'caption_text_transform',
-							'line-height'    => 'caption_text_line_height',
-							'letter-spacing' => 'caption_text_letter_spacing',
-							'color'          => 'caption_text_color',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
-						],
-						'remove_from_atts' => true,
-						'global'           => true,
-						'group'            => esc_attr__( 'Caption', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Caption Border Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the color of the caption border.', 'fusion-builder' ),
-						'param_name'  => 'caption_border_color',
-						'value'       => '',
-						'group'       => esc_attr__( 'Caption', 'fusion-builder' ),
-						'default'     => 'var(--awb-color1)',
-						'dependency'  => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'above',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'below',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'navin',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'schantel',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dany',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Image Overlay Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the color of the image overlay.', 'fusion-builder' ),
-						'param_name'  => 'caption_overlay_color',
-						'value'       => '',
-						'group'       => esc_attr__( 'Caption', 'fusion-builder' ),
-						'default'     => $fusion_settings->get( 'primary_color' ),
-						'dependency'  => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'above',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'below',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Caption Align', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose how to align the caption.', 'fusion-builder' ),
-						'param_name'  => 'caption_align',
-						'responsive'  => [
-							'state' => 'large',
-						],
-						'value'       => [
-							'none'   => esc_attr__( 'Text Flow', 'fusion-builder' ),
-							'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-							'center' => esc_attr__( 'Center', 'fusion-builder' ),
-						],
-						'default'     => 'none',
-						'group'       => esc_attr__( 'Caption', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'schantel',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dany',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'navin',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dario',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'resa',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Caption Area Margin', 'fusion-builder' ),
-						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
-						'param_name'       => 'caption_margin',
-						'value'            => [
-							'caption_margin_top'    => '',
-							'caption_margin_right'  => '',
-							'caption_margin_bottom' => '',
-							'caption_margin_left'   => '',
-						],
-						'callback'         => [
-							'function' => 'fusion_style_block',
-						],
-						'group'            => esc_attr__( 'Caption', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'schantel',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dany',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'navin',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'dario',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'caption_style',
-								'value'    => 'resa',
-								'operator' => '!=',
-							],
-						],
-					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_right'  => '',
-							'margin_bottom' => '',
-							'margin_left'   => '',
-						],
-					],
-					[
 						'type'        => 'checkbox_button_set',
 						'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
 						'param_name'  => 'hide_on_mobile',
@@ -1364,12 +704,11 @@ function fusion_element_fusion_image() {
 				'hide_from_builder' => true,
 				'params'            => [
 					[
-						'type'         => 'upload',
-						'heading'      => esc_attr__( 'Image', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Upload an image to display.', 'fusion-builder' ),
-						'param_name'   => 'image',
-						'value'        => '',
-						'dynamic_data' => true,
+						'type'        => 'upload',
+						'heading'     => esc_attr__( 'Image', 'fusion-builder' ),
+						'description' => esc_attr__( 'Upload an image to display.', 'fusion-builder' ),
+						'param_name'  => 'image',
+						'value'       => '',
 					],
 					[
 						'type'        => 'textfield',
@@ -1385,64 +724,32 @@ function fusion_element_fusion_image() {
 						],
 					],
 					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Image Title', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Enter title text to be displayed on image.', 'fusion-builder' ),
-						'param_name'   => 'image_title',
-						'value'        => '',
-						'dynamic_data' => true,
-						'dependency'   => [
-							[
-								'element'  => 'parent_caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Image Caption', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Enter caption text to be displayed on image.', 'fusion-builder' ),
-						'param_name'   => 'image_caption',
-						'value'        => '',
-						'dynamic_data' => true,
-						'dependency'   => [
-							[
-								'element'  => 'parent_caption_style',
-								'value'    => 'off',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'         => 'link_selector',
-						'heading'      => esc_attr__( 'Image Link', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Add the url the image should link to. If lightbox option is enabled, you can also use this to open a different image in the lightbox.', 'fusion-builder' ),
-						'param_name'   => 'link',
-						'value'        => '',
-						'dynamic_data' => true,
+						'type'        => 'link_selector',
+						'heading'     => esc_attr__( 'Image Link', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add the url the image should link to. If lightbox option is enabled, you can also use this to open a different image in the lightbox.', 'fusion-builder' ),
+						'param_name'  => 'link',
+						'value'       => '',
 					],
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window <br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'linktarget',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => '_self',
 					],
 					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Image Alt Text', 'fusion-builder' ),
-						'description'  => esc_attr__( 'The alt attribute provides alternative information if an image cannot be viewed.', 'fusion-builder' ),
-						'param_name'   => 'alt',
-						'value'        => '',
-						'dynamic_data' => true,
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Image Alt Text', 'fusion-builder' ),
+						'description' => esc_attr__( 'The alt attribute provides alternative information if an image cannot be viewed.', 'fusion-builder' ),
+						'param_name'  => 'alt',
+						'value'       => '',
 					],
 				],
-				'tag_name'          => 'div',
+				'tag_name'          => 'li',
 				'callback'          => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_image_carousel',

@@ -69,14 +69,32 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			initColors: function() {
 				$.each( this.$el.find( '.fusion-builder-color-picker-hex-new:not(.color-picker-inited)' ), function() {
 					var self = this,
-						picker = null;
+						picker = null,
+						colorPreviewElem = $( self ).closest( 'th, td' ).find( '.fusion-color-preview' );
 
-					picker = $( self ).awbColorPicker( {
-						hide: false,
-						globals: false
+					picker = $( self ).wpColorPicker( {
+						palettes: [ '#000000', '#ffffff', '#f44336', '#E91E63', '#03A9F4', '#00BCD4', '#8BC34A', '#FFEB3B', '#FFC107', '#FF9800', '#607D8B' ],
+						change: function( event, ui ) {
+
+							$( colorPreviewElem ).css( 'background-color', ui.color.toString() ).html( ui.color.toString() );
+
+							if ( ( 0.15 > ui.color._alpha || 15777215 < ui.color.toInt() ) && ! $( colorPreviewElem ).hasClass( 'fusion-dark-text' ) ) {
+								$( colorPreviewElem ).addClass( 'fusion-dark-text' );
+							} else if ( ( 0.15 <= ui.color._alpha && 15777215 >= ui.color.toInt() ) && $( colorPreviewElem ).hasClass( 'fusion-dark-text' ) ) {
+								$( colorPreviewElem ).removeClass( 'fusion-dark-text' );
+							}
+
+							if ( 0 === ui.color._alpha || '' === ui.color.toString() ) {
+								$( colorPreviewElem ).html( 'transparent' ).addClass( 'fusion-dark-text' );
+							}
+						},
+						clear: function( e ) {
+							$( colorPreviewElem ).css( 'background-color', 'transparent' ).html( 'transparent' ).addClass( 'fusion-dark-text' );
+						}
 					} );
 
 					$( self ).addClass( 'color-picker-inited' );
+
 				} );
 			},
 
@@ -126,13 +144,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr:first-child' ).append( '<th class="th-' + columnID + '" data-th-id="' + columnID + '"><div class="fusion-builder-table-hold"><div class="fusion-builder-table-column-options"><span class="fa fusiona-trash-o fusion-builder-table-delete-column" title="' + fusionBuilderText.delete_column + '" data-column-id="' + columnID + '" /></div></div><input type="text" placeholder="X Axis L' + ( columnID - ( this.columnOffset - 1 ) ) + '" value="" /></th>' );
 
 				// Add th: legend text color.
-				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr:nth-child(2)' ).append( '<th class="th-' + columnID + '" data-th-id="' + columnID + '"><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>' );
+				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr:nth-child(2)' ).append( '<th class="th-' + columnID + '" data-th-id="' + columnID + '"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>' );
 
 				// Add th: background color.
-				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr:nth-child(3)' ).append( '<th class="th-' + columnID + '" data-th-id="' + columnID + '"><div class="option-field"><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>' );
+				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr:nth-child(3)' ).append( '<th class="th-' + columnID + '" data-th-id="' + columnID + '"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>' );
 
 				// Add th: border color.
-				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr:nth-child(4)' ).append( '<th class="th-' + columnID + '" data-th-id="' + columnID + '"><div class="option-field"><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>' );
+				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr:nth-child(4)' ).append( '<th class="th-' + columnID + '" data-th-id="' + columnID + '"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>' );
 
 				// Add td
 				this.$el.find( '.fusion-table-builder .fusion-builder-table tbody tr' ).each( function() {
@@ -153,9 +171,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				columns = this.$el.find( '.fusion-table-builder .fusion-builder-table tbody tr:first-child td' ).length;
 
 				td += '<td class="td-1" data-td-id="1" ><input type="text" placeholder="' + fusionBuilderText.legend_label + '" value="" /><span class="fa fusiona-trash-o fusion-builder-table-delete-row" title="' + fusionBuilderText.delete_row + '" data-row-id="' + newRowID + '" /></td>';
-				td += '<td class="td-2" data-td-id="2" ><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>';
-				td += '<td class="td-3" data-td-id="2" ><div class="option-field"><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>';
-				td += '<td class="td-4" data-td-id="3" ><div class="option-field"><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>';
+				td += '<td class="td-2" data-td-id="2" ><div class="option-field"><span class="fusion-color-preview"></span><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>';
+				td += '<td class="td-3" data-td-id="2" ><div class="option-field"><span class="fusion-color-preview"></span><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>';
+				td += '<td class="td-4" data-td-id="3" ><div class="option-field"><span class="fusion-color-preview"></span><input type="text" value="" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>';
 
 				for ( i = this.columnOffset; i <= columns; i++ ) {
 					td += '<td class="td-' + i + '" data-td-id="' + i + '" ><input type="text" placeholder="' + fusionBuilderText.enter_value + '" value="" /></td>';

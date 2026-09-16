@@ -15,4 +15,5 @@
 	<# } #>
 
 	<progress {{{ _.fusionGetAttributes( wrapperAttr ) }}}></progress>
+	{{{ styles }}}
 </script>

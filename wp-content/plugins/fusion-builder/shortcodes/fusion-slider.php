@@ -69,11 +69,12 @@ if ( fusion_is_element_enabled( 'fusion_slider' ) ) {
 			 * @static
 			 * @access public
 			 * @since 2.0.0
-			 * @param 'parent'|'child' $context Whether we want parent or child.
+			 * @param string $context Whether we want parent or child.
+			 *                        Returns array( parent, child ) if empty.
 			 * @return array
 			 */
-			public static function get_element_defaults( $context = 'parent' ) {
-				$fusion_settings = awb_get_fusion_settings();
+			public static function get_element_defaults( $context = '' ) {
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$parent = [
 					'hide_on_mobile'          => fusion_builder_default_visibility( 'string' ),
@@ -163,9 +164,10 @@ if ( fusion_is_element_enabled( 'fusion_slider' ) ) {
 			 * @since 2.2
 			 */
 			protected function validate_parent_args() {
-				$this->parent_args['width']                   = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['width'], 'px' );
-				$this->parent_args['height']                  = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['height'], 'px' );
-				$this->parent_args['slideshow_autoplay']      = ( 'yes' === $this->parent_args['slideshow_autoplay'] || '1' === $this->parent_args['slideshow_autoplay'] ) ? true : false;
+				$this->parent_args['width']              = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['width'], 'px' );
+				$this->parent_args['height']             = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['height'], 'px' );
+				$this->parent_args['slideshow_autoplay'] = ( 'yes' === $this->parent_args['slideshow_autoplay'] || '1' === $this->parent_args['slideshow_autoplay'] ) ? true : false;
+
 				$this->parent_args['slideshow_smooth_height'] = ( 'yes' === $this->parent_args['slideshow_smooth_height'] || '1' === $this->parent_args['slideshow_smooth_height'] ) ? true : false;
 			}
 
@@ -277,26 +279,32 @@ if ( fusion_is_element_enabled( 'fusion_slider' ) ) {
 				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'child' ), $args, 'fusion_slide' );
 				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_slide', $args );
 
+				extract( $defaults );
+
 				$this->child_args = $defaults;
 
-				if ( 'image' === $this->child_args['type'] ) {
+				if ( 'image' === $type ) {
 
-					$this->child_args['src'] = str_replace( '&#215;', 'x', $content );
+					$this->child_args['src'] = $src = str_replace( '&#215;', 'x', $content );
 
-					$this->child_args['image_data'] = fusion_library()->images->get_attachment_data_by_helper( $this->child_args['image_id'], $this->child_args['src'] );
+					$this->child_args['image_data'] = fusion_library()->images->get_attachment_data_by_helper( $this->child_args['image_id'], $src );
 
 					if ( is_array( $this->child_args['image_data'] ) && $this->child_args['image_data']['url'] ) {
 						$this->child_args['src'] = $this->child_args['image_data']['url'];
 					}
 				}
 
+				if ( $link && ! empty( $link ) && 'image' === $type ) {
+					$this->child_args['link'] = $link;
+				}
+
 				$html = '<li ' . FusionBuilder::attributes( 'slider-shortcode-slide-li' ) . '>';
 
-				if ( $this->child_args['link'] && ! empty( $this->child_args['link'] ) ) {
+				if ( $link && ! empty( $link ) ) {
 					$html .= '<a ' . FusionBuilder::attributes( 'slider-shortcode-slide-link' ) . '>';
 				}
 
-				if ( ! empty( $this->child_args['type'] ) && 'video' === $this->child_args['type'] ) {
+				if ( ! empty( $type ) && 'video' === $type ) {
 					$html .= '<div ' . FusionBuilder::attributes( 'full-video' ) . '>' . do_shortcode( $content ) . '</div>';
 				} else {
 					$image = '<span ' . FusionBuilder::attributes( 'slider-shortcode-slide-img-wrapper' ) . '><img ' . FusionBuilder::attributes( 'slider-shortcode-slide-img' ) . ' /></span>';
@@ -310,17 +318,12 @@ if ( fusion_is_element_enabled( 'fusion_slider' ) ) {
 
 					$image = fusion_add_responsive_image_markup( $image );
 
-					$image_id   = explode( '|', $this->child_args['image_id'] );
-					$image_id   = $image_id[0];
-					$image_size = isset( $image_id[1] ) ? $image_id[1] : 'full';
-					$image      = fusion_library()->images->apply_lazy_loading( $image, null, $image_id, $image_size );
-
 					fusion_library()->images->set_grid_image_meta( [] );
 
 					$html .= $image;
 				}
 
-				if ( $this->child_args['link'] && ! empty( $this->child_args['link'] ) ) {
+				if ( $link && ! empty( $link ) ) {
 					$html .= '</a>';
 				}
 
@@ -397,6 +400,8 @@ if ( fusion_is_element_enabled( 'fusion_slider' ) ) {
 					$attr['class'] = 'wp-image-' . $image_id[0];
 				}
 
+				$attr = fusion_library()->images->lazy_load_attributes( $attr, $this->child_args['image_id'] );
+
 				return $attr;
 			}
 
@@ -451,7 +456,7 @@ if ( fusion_is_element_enabled( 'fusion_slider' ) ) {
  * @since 1.0
  */
 function fusion_element_media_slider() {
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -465,7 +470,7 @@ function fusion_element_media_slider() {
 				'preview'       => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-media-slider-preview.php',
 				'preview_id'    => 'fusion-builder-block-module-media-slider-preview-template',
 				'child_ui'      => true,
-				'help_url'      => 'https://avada.com/documentation/slider-element/',
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/slider-element/',
 				'sortable'      => false,
 				'params'        => [
 					[
@@ -690,7 +695,7 @@ function fusion_element_slide() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Lightbox', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'Lighbox', 'fusion-builder' ),
 						'description' => esc_attr__( 'Show image in lightbox. Lightbox must be enabled in Global Options or the image will open up in the same tab by itself.', 'fusion-builder' ),
 						'param_name'  => 'lightbox',
 						'value'       => [
@@ -714,11 +719,11 @@ function fusion_element_slide() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window <br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'linktarget',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => '_self',
 						'dependency'  => [

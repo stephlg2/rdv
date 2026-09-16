@@ -286,7 +286,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( ! jQuery( 'body' ).hasClass( 'fusion-tb-section-edit' ) && false === is_content_override_active ) {
 
 					// Check the post type.
-					if ( 'undefined' !== typeof currentPostWidth || 'fusion_element' === fusionBuilderConfig.post_type || 'fusion_template' === fusionBuilderConfig.post_type ) {
+					if ( 'undefined' !== typeof currentPostWidth ) {
 
 						// Blog post.
 						if ( 'no' === currentPostWidth || ( 'default' === currentPostWidth && '' === FusionPageBuilderApp.fullWidth ) ) {
@@ -492,7 +492,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				FusionPageBuilderEvents.trigger( 'fusion-element-cloned' );
 			},
 
-			removeContainer: function( event, skip ) {
+			removeContainer: function( event ) {
 
 				var rows;
 
@@ -520,7 +520,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.model.destroy();
 
 				this.remove();
-				if ( true === FusionPageBuilderApp.blankPage && 'undefined' === typeof skip ) {
+
+				if ( true === FusionPageBuilderApp.blankPage ) {
 					FusionPageBuilderApp.clearBuilderLayout( true );
 
 					return;
@@ -528,7 +529,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( event ) {
 
-					// Save history state.
+					// Save history state
 					fusionHistoryManager.turnOnTracking();
 					window.fusionHistoryState = fusionBuilderText.deleted_section;
 

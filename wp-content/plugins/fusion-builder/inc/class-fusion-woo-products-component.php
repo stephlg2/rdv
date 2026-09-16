@@ -25,6 +25,15 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		public static $instances = [];
 
 		/**
+		 * An array of the shortcode arguments.
+		 *
+		 * @access public
+		 * @since 3.2
+		 * @var array
+		 */
+		public $args;
+
+		/**
 		 * The internal container counter.
 		 *
 		 * @access private
@@ -43,17 +52,10 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		protected $live_ajax = false;
 
 		/**
-		 * Shortcode CSS class name.
-		 *
-		 * @var string
-		 */
-		public $shortcode_classname = '';
-
-		/**
 		 * Constructor.
 		 *
 		 * @access public
-		 * @param string $shortcode The shortcode we want to add.
+		 * @param string $shortcode         The shortcode we want to add.
 		 * @since 1.0
 		 */
 		public function __construct( $shortcode ) {
@@ -138,7 +140,7 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		 * @return array
 		 */
 		public static function get_element_defaults() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 			return [
 				'number_products'         => $fusion_settings->get( 'number_related_posts' ),
 				'products_columns'        => $fusion_settings->get( 'woocommerce_related_columns' ),
@@ -160,7 +162,6 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 				'animation_type'          => '',
 				'animation_direction'     => 'down',
 				'animation_speed'         => '0.1',
-				'animation_delay'         => '',
 				'animation_offset'        => $fusion_settings->get( 'animation_offset' ),
 			];
 		}
@@ -186,7 +187,8 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 
 			$products     = $this->get_query();
 			$main_heading = $this->get_main_heading();
-			$html         = '<section ' . FusionBuilder::attributes( $this->shortcode_handle ) . '>';
+			$html         = $this->get_styles();
+			$html        .= '<section ' . FusionBuilder::attributes( $this->shortcode_handle ) . '>';
 
 			if ( 'yes' === $this->args['heading_enable'] ) {
 				$html .= fusion_render_title( $this->args['heading_size'], apply_filters( $this->shortcode_handle . '_heading_text', $main_heading, 'product' ) );
@@ -232,11 +234,10 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 				add_filter( 'woocommerce_post_class', [ $this, 'wc_post_class' ], 20, 2 );
 				add_action( 'woocommerce_before_shop_loop_item', [ $this, 'before_shop_loop_item' ], 8 );
 				add_action( 'woocommerce_after_shop_loop_item', [ $this, 'after_shop_loop_item' ], 15 );
-				add_filter( 'woocommerce_product_loop_start', [ $this, 'loop_start_carousel' ], 20 );
-				add_filter( 'woocommerce_product_loop_end', [ $this, 'loop_end_carousel' ], 20 );
 
 				if ( ! $this->live_ajax ) {
 					$html .= '<div ' . FusionBuilder::attributes( $this->shortcode_handle . '-carousel' ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					$html .= '<div class="fusion-carousel-positioner">';
 				}
 			}
 
@@ -251,11 +252,7 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 
 				setup_postdata( $GLOBALS['post'] =& $post_object ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited, Squiz.PHP.DisallowMultipleAssignments.Found
 
-				if ( 'carousel' === $this->args['products_layout'] ) {
-					$this->get_template_carousel();
-				} else {
-					wc_get_template_part( 'content', 'product' );
-				}
+				wc_get_template_part( 'content', 'product' );
 
 			endforeach;
 			$html .= ob_get_clean();
@@ -270,10 +267,14 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 			 * Add navigation if needed.
 			 */
 			if ( 'carousel' === $this->args['products_layout'] && 'yes' === $this->args['products_navigation'] && ! $this->live_ajax ) {
-				$html .= awb_get_carousel_nav();
+				$html .= '<div class="fusion-carousel-nav">';
+				$html .= '<span class="fusion-nav-prev"></span>';
+				$html .= '<span class="fusion-nav-next"></span>';
+				$html .= '</div>';
 			}
 
 			if ( 'carousel' === $this->args['products_layout'] && ! $this->live_ajax ) {
+				$html .= '</div><!-- fusion-carousel-positioner -->';
 				$html .= '</div><!-- fusion-carousel -->';
 			}
 
@@ -283,8 +284,6 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 				remove_filter( 'woocommerce_post_class', [ $this, 'wc_post_class' ], 20, 2 );
 				remove_action( 'woocommerce_before_shop_loop_item', [ $this, 'before_shop_loop_item' ], 8 );
 				remove_action( 'woocommerce_after_shop_loop_item', [ $this, 'after_shop_loop_item' ], 15 );
-				remove_filter( 'woocommerce_product_loop_start', [ $this, 'loop_start_carousel' ], 20 );
-				remove_filter( 'woocommerce_product_loop_end', [ $this, 'loop_end_carousel' ], 20 );
 			}
 
 			return $html;
@@ -320,7 +319,7 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		 * @return void
 		 */
 		public function on_first_render() {
-			Fusion_Dynamic_JS::enqueue_script( 'awb-carousel' );
+			Fusion_Dynamic_JS::enqueue_script( 'fusion-carousel' );
 
 			if ( class_exists( 'Avada' ) ) {
 				global $avada_woocommerce;
@@ -398,7 +397,7 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		 */
 		public function carousel_attr() {
 
-			$attr['class'] = 'awb-carousel awb-swiper awb-swiper-carousel';
+			$attr['class'] = 'fusion-carousel';
 
 			/**
 			 * Set the autoplay variable.
@@ -431,10 +430,6 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		 */
 		public function loop_start_attr( $html ) {
 			$html = str_replace( 'columns-', 'products-', $html );
-
-			if ( 'carousel' === $this->args['products_layout'] ) {
-				$html = str_replace( 'products', 'products swiper-wrapper', $html );
-			}
 			return $html;
 		}
 
@@ -442,7 +437,7 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		 * Build wc post class attributes.
 		 *
 		 * @access public
-		 * @param array  $classes classes.
+		 * @param string $classes classes.
 		 * @param object $product product object.
 		 * @since 3.2
 		 * @return array
@@ -454,7 +449,7 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 				unset( $classes[ $key ] );
 			}
 
-			$classes[] = 'swiper-slide';
+			$classes[] = 'fusion-carousel-item';
 			return $classes;
 		}
 
@@ -481,83 +476,31 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		}
 
 		/**
-		 * Build loop start carousel.
+		 * Get the styles.
 		 *
-		 * @access public
-		 * @param string $html HTML.
-		 * @since 3.9
-		 * @return array
+		 * @access protected
+		 * @since 3.2
+		 * @return string
 		 */
-		public function loop_start_carousel( $html ) {
-			$html = str_replace( '<ul ', '<div ', $html );
-			return $html;
-		}
+		protected function get_styles() {
+			$this->base_selector = ".{$this->shortcode_classname}.{$this->shortcode_classname}-" . $this->counter;
+			$this->dynamic_css   = [];
 
-		/**
-		 * Build loop end carousel.
-		 *
-		 * @access public
-		 * @param string $html HTML.
-		 * @since 3.9
-		 * @return array
-		 */
-		public function loop_end_carousel( $html ) {
-			$html = str_replace( '</ul>', '</div>', $html );
-			return $html;
-		}
+			if ( ! $this->is_default( 'products_layout' ) ) {
+				$selectors = [
+					'body:not(.fusion-woocommerce-equal-heights):not(.fusion-woo-archive-page-columns-1) ' . $this->base_selector . ' .fusion-carousel .fusion-carousel-item .fusion-carousel-item-wrapper',
+					'.fusion-woocommerce-equal-heights:not(.fusion-woo-archive-page-columns-1) ' . $this->base_selector . ' .products .product',
+				];
+				$this->add_css_property( $selectors, 'display', 'block' );
+				$selectors = [
+					'.fusion-woocommerce-equal-heights:not(.fusion-woo-archive-page-columns-1) ' . $this->base_selector . ' .fusion-carousel .fusion-carousel-item .fusion-carousel-item-wrapper',
+				];
+				$this->add_css_property( $selectors, 'vertical-align', 'top' );
+			}
 
-		/**
-		 * Build content product markup for carousel.
-		 *
-		 * @access public
-		 * @since 3.9
-		 * @return void
-		 */
-		public function get_template_carousel() {
-			global $product; ?>
+			$css = $this->parse_css();
 
-			<div <?php wc_product_class( '', $product ); ?>>
-				<?php
-				/**
-				 * Hook: woocommerce_before_shop_loop_item.
-				 *
-				 * @hooked woocommerce_template_loop_product_link_open - 10
-				 */
-				do_action( 'woocommerce_before_shop_loop_item' );
-
-				/**
-				 * Hook: woocommerce_before_shop_loop_item_title.
-				 *
-				 * @hooked woocommerce_show_product_loop_sale_flash - 10
-				 * @hooked woocommerce_template_loop_product_thumbnail - 10
-				 */
-				do_action( 'woocommerce_before_shop_loop_item_title' );
-
-				/**
-				 * Hook: woocommerce_shop_loop_item_title.
-				 *
-				 * @hooked woocommerce_template_loop_product_title - 10
-				 */
-				do_action( 'woocommerce_shop_loop_item_title' );
-
-				/**
-				 * Hook: woocommerce_after_shop_loop_item_title.
-				 *
-				 * @hooked woocommerce_template_loop_rating - 5
-				 * @hooked woocommerce_template_loop_price - 10
-				 */
-				do_action( 'woocommerce_after_shop_loop_item_title' );
-
-				/**
-				 * Hook: woocommerce_after_shop_loop_item.
-				 *
-				 * @hooked woocommerce_template_loop_product_link_close - 5
-				 * @hooked woocommerce_template_loop_add_to_cart - 10
-				 */
-				do_action( 'woocommerce_after_shop_loop_item' );
-				?>
-			</div>
-			<?php
+			return $css ? '<style>' . $css . '</style>' : '';
 		}
 
 		/**
@@ -590,7 +533,7 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		 * @return array
 		 */
 		public static function get_element_extras() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 			return [
 				'title_margin'       => $fusion_settings->get( 'title_margin' ),
 				'title_border_color' => $fusion_settings->get( 'title_border_color' ),
@@ -653,7 +596,8 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 		 * @return array
 		 */
 		function fusion_get_woo_product_params( $args ) {
-			$fusion_settings = awb_get_fusion_settings();
+
+			global $fusion_settings;
 
 			// Default Args.
 			$args = wp_parse_args(
@@ -830,18 +774,16 @@ if ( ! class_exists( 'Fusion_Woo_Products_Component' ) ) {
 				],
 				[
 					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'HTML Heading Tag', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose HTML tag of the heading, either div, p or the heading tag, h1-h6.', 'fusion-builder' ),
+					'heading'     => esc_html__( 'HTML Heading Size', 'fusion-builder' ),
+					'description' => esc_html__( 'Choose the size of the HTML heading that should be used, h1-h6.', 'fusion-builder' ),
 					'param_name'  => 'heading_size',
 					'value'       => [
-						'1'   => 'H1',
-						'2'   => 'H2',
-						'3'   => 'H3',
-						'4'   => 'H4',
-						'5'   => 'H5',
-						'6'   => 'H6',
-						'div' => 'DIV',
-						'p'   => 'P',
+						'1' => 'H1',
+						'2' => 'H2',
+						'3' => 'H3',
+						'4' => 'H4',
+						'5' => 'H5',
+						'6' => 'H6',
 					],
 					'default'     => '3',
 					'group'       => esc_html__( 'Design', 'fusion-builder' ),

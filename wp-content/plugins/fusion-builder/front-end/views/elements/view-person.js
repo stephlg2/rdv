@@ -1,4 +1,3 @@
-/* global fusionAllElements */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -52,13 +51,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				this.values       = atts.values;
-
 				// Validate values.
 				this.validateValues( atts.values );
-
-				// Validate values and extras.
-				this.validateValuesExtras( atts.values, atts.extras );
 
 				// Create attribute objects
 				attributes.attr               = this.buildAttr( atts.values );
@@ -66,6 +60,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.hrefAttr           = this.buildHrefAttr( atts.values );
 				attributes.wrapperAttr        = this.buildWrapperAttr( atts.values );
 				attributes.imageContainerAttr = this.buildImageContainerAttr( atts.values );
+				attributes.styles             = this.buildStyles( atts.values );
 				attributes.socialAttr         = this.buildSocialAttr( atts.values );
 				attributes.descAttr           = this.buildDescAttr( atts.values );
 				attributes.socialNetworks     = this.getSocialNetworks( atts.values );
@@ -97,30 +92,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					values.pic_borderradius = '50%';
 				}
 
-				this.stylecolor = ( '#' === values.pic_style_color.charAt( 0 ) ) ? jQuery.AWB_Color( values.pic_style_color ).alpha( 0.3 ).toVarOrRgbaString() : jQuery.AWB_Color( values.pic_style_color ).toVarOrRgbaString();
-			},
-
-			/**
-			 * Modifies the values.
-			 *
-			 * @since 2.0
-			 * @param {Object} values - The values object.
-			 * @param {Object} extras - Extra args.
-			 * @return {void}
-			 */
-			validateValuesExtras: function( values, extras ) {
-				values.linktarget              = values.linktarget ? '_blank' : '_self';
-				values.social_media_icons      = extras.social_media_icons;
-				values.social_media_icons_icon = extras.social_media_icons.icon;
-				values.social_media_icons_url  = extras.social_media_icons.url;
-				values.icons_boxed_radius      = _.fusionValidateAttrValue( values.icons_boxed_radius, 'px' );
-				values.font_size               = _.fusionValidateAttrValue( values.font_size, 'px' );
-				values.boxed_padding           = _.fusionValidateAttrValue( extras.boxed_padding, 'px' );
-
-				if ( '' == values.color_type ) {
-					values.box_colors  = values.social_links_box_color;
-					values.icon_colors = values.social_links_icon_color;
-				}
+				this.stylecolor = ( '#' === values.pic_style_color.charAt( 0 ) ) ? jQuery.Color( values.pic_style_color ).alpha( 0.3 ).toRgbaString() : jQuery.Color( values.pic_style_color ).toRgbaString();
 			},
 
 			/**
@@ -135,8 +107,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Person Shortcode Attributes.
 				var cid = this.model.get( 'cid' ),
 					personShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-person fusion-person-' + cid + ' person fusion-person-' + values.content_alignment + ' fusion-person-icon-' + values.icon_position,
-						'style': ''
+						class: 'fusion-person fusion-person-' + cid + ' person fusion-person-' + values.content_alignment + ' fusion-person-icon-' + values.icon_position
 					} );
 
 				if ( '' !== values[ 'class' ] ) {
@@ -146,11 +117,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.id ) {
 					personShortcode.id = values.id;
 				}
-
-				//Animation
-				personShortcode = _.fusionAnimations( values, personShortcode );
-
-				personShortcode.style += this.getStyleVariables( values );
 
 				return personShortcode;
 			},
@@ -220,151 +186,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					styles  += '-webkit-border-radius:' + values.pic_borderradius + ';-moz-border-radius:' + values.pic_borderradius + ';border-radius:' + values.pic_borderradius + ';';
 				}
 
-				styles += this.buildMarginStyles( values );
-				styles += this.getSocialStyle( values );
-
 				if ( '' !== styles ) {
 					styles = '<style>' + styles + '</style>';
 				}
 				return styles;
-			},
-
-			/**
-			 * Builds styles.
-			 *
-			 * @since  3.6
-			 * @param {Object} values - The values object.
-			 * @return {String}
-			 */
-			getSocialStyle: function( values ) {
-				var css, selectors;
-				this.baseSelector = '.fusion-person-' + this.model.get( 'cid' );
-				this.dynamic_css = {};
-
-				//Icon styles.
-				if ( 'brand' !== values.social_color_type ) {
-					selectors = [ this.baseSelector + ' .boxed-icons .fusion-social-network-icon' ];
-					if ( '' !== values.social_box_border_top ) {
-						this.addCssProperty( selectors, 'border-top-width', _.fusionGetValueWithUnit( values.social_box_border_top ), true );
-					}
-
-					if ( '' !== values.social_box_border_right ) {
-						this.addCssProperty( selectors, 'border-right-width', _.fusionGetValueWithUnit( values.social_box_border_right ), true );
-					}
-
-					if ( '' !== values.social_box_border_bottom ) {
-						this.addCssProperty( selectors, 'border-bottom-width', _.fusionGetValueWithUnit( values.social_box_border_bottom ), true );
-					}
-
-					if ( '' !== values.social_box_border_left ) {
-						this.addCssProperty( selectors, 'border-left-width', _.fusionGetValueWithUnit( values.social_box_border_left ), true );
-					}
-					if ( '' !== values.social_box_border_color ) {
-						this.addCssProperty( selectors, 'border-color', values.social_box_border_color, true );
-					}
-
-					selectors = [ this.baseSelector + ' .boxed-icons .fusion-social-network-icon:hover' ];
-					if ( '' !== values.social_box_colors_hover ) {
-						this.addCssProperty( selectors, 'background-color', values.social_box_colors_hover, true );
-					}
-					if ( '' !== values.social_box_border_color_hover ) {
-						this.addCssProperty( selectors, 'border-color', values.social_box_border_color_hover, true );
-					}
-
-					selectors = [ this.baseSelector + ' .fusion-social-network-icon:hover' ];
-					if ( '' !== values.social_icon_colors_hover ) {
-						this.addCssProperty( selectors, 'color', values.social_icon_colors_hover, true );
-					}
-				}
-
-				css = this.parseCSS();
-
-				return ( css ) ? css : '';
-			},
-
-			/**
-			 * Builds margin styles.
-			 *
-			 * @since 3.6
-			 * @param {Object} values - The values object.
-			 * @return {string}
-			 */
-			buildMarginStyles: function( values ) {
-				var extras = jQuery.extend( true, {}, fusionAllElements.fusion_imageframe.extras ),
-					elementSelector = '.fusion-person-' + this.model.get( 'cid' ),
-					responsiveStyles = '';
-
-				_.each( [ 'large', 'medium', 'small' ], function( size ) {
-					var marginStyles = '',
-						marginKey;
-
-					_.each( [ 'top', 'right', 'bottom', 'left' ], function( direction ) {
-
-						// Margin.
-						marginKey = 'margin_' + direction + ( 'large' === size ? '' : '_' + size );
-						if ( '' !== values[ marginKey ] ) {
-							marginStyles += 'margin-' + direction + ' : ' + _.fusionGetValueWithUnit( values[ marginKey ] ) + ';';
-						}
-
-					} );
-
-					if ( '' === marginStyles ) {
-						return;
-					}
-
-					// Wrap CSS selectors
-					if ( '' !== marginStyles ) {
-						marginStyles = elementSelector + ' {' + marginStyles + '}';
-					}
-
-					// Large styles, no wrapping needed.
-					if ( 'large' === size ) {
-						responsiveStyles += marginStyles;
-					} else {
-						// Medium and Small size screen styles.
-						responsiveStyles += '@media only screen and (max-width:' + extras[ 'visibility_' + size ] + 'px) {' + marginStyles + '}';
-					}
-				} );
-
-				return responsiveStyles;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				const cssVarsOptions = [ 'pic_style_color' ];
-
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top_medium    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right_medium  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom_medium = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top_small    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right_small  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom_small = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left_small   = { 'callback': _.fusionGetValueWithUnit };
-
-				if ( 'brand' !== values.social_icon_color_type ) {
-					cssVarsOptions.social_box_border_top   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.social_box_border_right   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.social_box_border_bottom   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.social_box_border_left   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push( 'social_box_border_color' );
-					cssVarsOptions.push( 'social_box_border_color_hover' );
-					cssVarsOptions.push( 'social_box_colors_hover' );
-					cssVarsOptions.push( 'social_icon_boxed_colors' );
-					cssVarsOptions.push( 'social_icon_colors' );
-					cssVarsOptions.push( 'social_icon_colors_hover' );
-				}
-
-				return this.getCssVarsForOptions( cssVarsOptions );
 			},
 
 			/**
@@ -479,7 +304,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					class: 'person-desc'
 				};
 
-				if ( values.background_color && 'transparent' !== values.background_color && 0 !== jQuery.AWB_Color( values.background_color ).alpha() ) {
+				if ( values.background_color && 'transparent' !== values.background_color && 0 !== jQuery.Color( values.background_color ).alpha() ) {
 					personDesc.style  = 'background-color:' + values.background_color + ';padding:40px;margin-top:0;';
 				}
 
@@ -495,17 +320,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			personIconAttr: function( args, values ) {
 				var attr = {
-						class: 'fusion-social-network-icon fusion-tooltip fusion-' + args.social_network
+						class: 'fusion-social-network-icon fusion-tooltip fusion-' + args.social_network + ' fusion-icon-' + args.social_network
 					},
 					link    = '',
 					target  = '',
 					tooltip = '';
-
-				if ( ! _.isEmpty( args.icon_mark ) ) {
-					attr[ 'class' ] += ' ' + args.icon_mark;
-				} else {
-					attr[ 'class' ] += ' awb-icon-' + args.social_network;
-				}
 
 				attr[ 'aria-label' ] = 'fusion-' + args.social_network;
 
@@ -534,17 +353,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== args.icon_color ) {
 					attr.style = 'color:' + args.icon_color + ';';
 				}
-
-				if ( 'yes' === values.social_icon_boxed ) {
-					if ( '' !== args.box_color ) {
-						attr.style += 'background-color:' + args.box_color + ';';
-					}
-
-					if ( values.social_box_border_color ) {
-						attr.style += 'border-color:' + values.social_box_border_color + ';';
-					} else if ( args.box_color ) {
-						attr.style += 'border-color:' + args.box_color + ';';
-					}
+				if ( 'yes' === values.social_icon_boxed && '' !== args.box_color ) {
+					attr.style += 'background-color:' + args.box_color + ';border-color:' + args.box_color + ';';
 				}
 
 				if ( ( 'yes' === values.social_icon_boxed && '' !== values.social_icon_boxed_radius ) || '0' === values.social_icon_boxed_radius ) {
@@ -572,11 +382,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( 'none' !== values.social_icon_tooltip ) {
 					attr[ 'data-toggle' ] = 'tooltip';
 				}
-
-				if ( 'custom' === values.social_icon_color_type ) {
-					attr[ 'class' ]      += ' custom';
-				}
-
 
 				return attr;
 			},

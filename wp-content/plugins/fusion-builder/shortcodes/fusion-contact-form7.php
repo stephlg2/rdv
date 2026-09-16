@@ -39,7 +39,7 @@ if ( defined( 'WPCF7_PLUGIN' ) ) {
 	 * Map shortcode to Avada Builder.
 	 */
 	function fusion_element_cf7() {
-		$fusion_settings = awb_get_fusion_settings();
+		$fusion_settings = fusion_get_fusion_settings();
 		$is_builder      = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
 		$to_link         = '';
 
@@ -62,7 +62,7 @@ if ( defined( 'WPCF7_PLUGIN' ) ) {
 						'heading'     => esc_attr__( 'Select Form', 'fusion-builder' ),
 						'description' => sprintf(
 							/* translators: link to theme-options */
-							__( '<strong>NOTE:</strong> The form uses %s for styling.', 'fusion-builder' ),
+							esc_html__( 'NOTE: The form uses %s for styling.', 'fusion-builder' ),
 							$to_link
 						),
 						'param_name'  => 'id',

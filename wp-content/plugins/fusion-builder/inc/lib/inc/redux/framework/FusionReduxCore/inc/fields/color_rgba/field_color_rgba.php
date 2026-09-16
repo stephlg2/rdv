@@ -35,10 +35,6 @@ if( !class_exists( 'FusionReduxFramework_color_rgba' ) ) {
 		 */
 		class FusionReduxFramework_color_rgba {
 
-			public $parent;
-			public $field;
-			public $value;
-
 			/**
 			 * Class Constructor. Defines the args for the extions class
 			 *

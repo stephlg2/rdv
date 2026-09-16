@@ -36,14 +36,14 @@
 		/**
 		 * action 'fusionredux-page-after-sections-menu-{opt_name}'
 		 *
-		 * @param FusionReduxFramework $object 
+		 * @param object $this FusionReduxFramework
 		 */
 		do_action ( "fusionredux-page-after-sections-menu-{$this->parent->args[ 'opt_name' ]}", $this );
 
 		/**
 		 * action 'fusionredux/page/{opt_name}/menu/after'
 		 *
-		 * @param FusionReduxFramework $object
+		 * @param object $this FusionReduxFramework
 		 */
 		do_action ( "fusionredux/page/{$this->parent->args[ 'opt_name' ]}/menu/after", $this );
 ?>

@@ -60,11 +60,7 @@ if ( ! class_exists( 'Fusion_Faqs' ) ) {
 		 * @return void
 		 */
 		public function faq_json_ld() {
-			if ( ! function_exists( 'awb_get_fusion_settings' ) ) {
-				return;
-			}
-
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 			if ( ! class_exists( 'Fusion_JSON_LD' ) || ( ! $fusion_settings->get( 'disable_date_rich_snippet_pages' ) || ! $fusion_settings->get( 'disable_rich_snippet_faq' ) ) ) {
 				return;
 			}

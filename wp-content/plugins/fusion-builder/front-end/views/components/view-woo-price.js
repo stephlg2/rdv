@@ -1,3 +1,4 @@
+/* global fusionAllElements */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -26,6 +27,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -62,14 +64,28 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
-				attr.style += this.getStyleVariables( values );
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
+
+				if ( '' !== values.alignment ) {
+					attr.style += 'justify-content:' + values.alignment + ';';
+				}
 
 				if ( 'yes' !== values.show_sale ) {
 					attr[ 'class' ] += ' hide-sale';
-				}
-
-				if ( '0px' !== values.badge_border_size ) {
-					attr[ 'class' ] += ' has-border';
 				}
 
 				if ( '' !== values.sale_position ) {
@@ -81,7 +97,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( '' !== values.badge_position && 'no' !== values.show_badge ) {
-					attr[ 'class' ] += ' has-badge badge-position-' + values.badge_position;
+					attr[ 'class' ] += ' badge-position-' + values.badge_position;
 				}
 
 				if ( '' !== values[ 'class' ] ) {
@@ -95,6 +111,49 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attr = _.fusionAnimations( values, attr );
 
 				return attr;
+			},
+
+			/**
+			 * Adds CSS property to object.
+			 *
+			 * @since  3.2
+			 * @param  {String} selectors - The CSS selectors.
+			 * @param  {String} property - The CSS property.
+			 * @param  {String} value - The CSS property value.
+			 * @param  {Bool}   important - Should have important tag.
+			 * @return {void}
+			 */
+			addCssProperty: function ( selectors, property, value, important ) {
+
+				if ( 'object' === typeof selectors ) {
+					selectors = Object.values( selectors );
+				}
+
+				if ( 'object' === typeof selectors ) {
+					selectors = selectors.join( ',' );
+				}
+
+				if ( 'object' !== typeof this.dynamic_css[ selectors ] ) {
+					this.dynamic_css[ selectors ] = {};
+				}
+
+				if ( 'undefined' !== typeof important && important ) {
+					value += ' !important';
+				}
+				if ( 'undefined' === typeof this.dynamic_css[ selectors ][ property ] || ( 'undefined' !== typeof important && important ) || ! this.dynamic_css[ selectors ][ property ].includes( 'important' ) ) {
+					this.dynamic_css[ selectors ][ property ] = value;
+				}
+			},
+
+			/**
+			 * Checks if param has got default value or not.
+			 *
+			 * @since  3.2
+			 * @param  {String} param - The param.
+			 * @return {Bool}
+			 */
+			isDefault: function( param ) {
+				return this.values[ param ] === fusionAllElements.fusion_tb_woo_price.defaults[ param ];
 			},
 
 			/**
@@ -118,70 +177,128 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var css, selectors,
+				fontStyles = {},
+				self = this;
 
-				// Price typography.
-				jQuery.each( _.fusionGetFontStyle( 'price_typography', values, 'object' ), function( rule, value ) {
-						customVars[ 'price-' + rule ] = value;
-				} );
+				this.baseSelector = '.fusion-woo-price-tb.fusion-woo-price-tb-' +  this.model.get( 'cid' );
+				this.dynamic_css  = {};
 
-				// Sale typography.
-				jQuery.each( _.fusionGetFontStyle( 'sale_typography', values, 'object' ), function( rule, value ) {
-						customVars[ 'sale-' + rule ] = value;
-				} );
-
-				// Stock typography.
-				jQuery.each( _.fusionGetFontStyle( 'stock_typography', values, 'object' ), function( rule, value ) {
-						customVars[ 'stock-' + rule ] = value;
-				} );
-
-				// Badge typography.
-				jQuery.each( _.fusionGetFontStyle( 'badge_typography', values, 'object' ), function( rule, value ) {
-						customVars[ 'badge-' + rule ] = value;
-				} );
-
-				cssVarsOptions = [
-					'price_color',
-					'sale_color',
-					'stock_color',
-					'badge_text_color',
-					'badge_bg_color',
-					'badge_border_color',
-					'price_line_height',
-					'price_text_transform',
-					'sale_text_transform',
-					'stock_line_height',
-					'stock_text_transform',
-					'badge_line_height',
-					'badge_text_transform',
-					'alignment',
-					'border_radius'
+				selectors = [
+					this.baseSelector + ' .price',
+					this.baseSelector + ' .price ins .amount',
+					this.baseSelector + ' .price del .amount',
+					this.baseSelector + ' .price > .amount'
 				];
 
-				cssVarsOptions.margin_bottom        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.price_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.price_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.sale_font_size       = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.sale_letter_spacing  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.stock_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.stock_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.badge_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.badge_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.badge_border_size    = { 'callback': _.fusionGetValueWithUnit };
+				if ( ! this.isDefault( 'price_font_size' ) ) {
+					this.addCssProperty( selectors, 'font-size', values.price_font_size );
+				}
 
+				if ( ! this.isDefault( 'price_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.price_color );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				fontStyles = _.fusionGetFontStyle( 'price_typography', values, 'object' );
+				jQuery.each( fontStyles, function( rule, value ) {
+					self.addCssProperty( selectors, rule, value );
+				} );
+
+				if ( ! this.isDefault( 'sale_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .price del .amount', 'font-size', values.sale_font_size );
+				}
+
+				if ( ! this.isDefault( 'sale_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .price del .amount', 'color', values.sale_color );
+				}
+
+				fontStyles = _.fusionGetFontStyle( 'sale_typography', values, 'object' );
+				jQuery.each( fontStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector + ' .price del .amount', rule, value );
+				} );
+
+				if ( ! this.isDefault( 'stock_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' p.stock', 'font-size', values.stock_font_size );
+				}
+
+				if ( ! this.isDefault( 'stock_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' p.stock', 'color', values.stock_color );
+				}
+
+				fontStyles = _.fusionGetFontStyle( 'stock_typography', values, 'object' );
+				jQuery.each( fontStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector + ' p.stock', rule, value );
+				} );
+
+				if ( ! this.isDefault( 'badge_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .fusion-onsale', 'font-size', values.badge_font_size );
+				}
+
+				if ( ! this.isDefault( 'badge_text_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .fusion-onsale', 'color', values.badge_text_color );
+				}
+
+				fontStyles = _.fusionGetFontStyle( 'badge_typography', values, 'object' );
+				jQuery.each( fontStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector + ' .fusion-onsale', rule, value );
+				} );
+
+				if ( ! this.isDefault( 'badge_bg_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .fusion-onsale', 'background', values.badge_bg_color );
+				}
+
+				if ( ! this.isDefault( 'badge_border_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .fusion-onsale', 'border-width', values.badge_border_size );
+				}
+
+				if ( ! this.isDefault( 'badge_border_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .fusion-onsale', 'border-color', values.badge_border_color );
+				}
+
+				if ( ! this.isDefault( 'badge_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .fusion-onsale', 'font-size', values.badge_font_size );
+				}
+
+				if ( values.border_radius && '' !== values.border_radius ) {
+					this.addCssProperty( this.baseSelector + ' .fusion-onsale', 'border-radius', values.border_radius );
+				}
+
+				css = this.parseCSS();
+				return ( css ) ? '<style>' + css + '</style>' : '';
+
+			},
+
+			/**
+			 * Parses CSS.
+			 *
+			 * @since  3.2
+			 * @return {String}
+			 */
+			parseCSS: function () {
+				var css = '';
+
+				if ( 'object' !== typeof this.dynamic_css ) {
+					return '';
+				}
+
+				_.each( this.dynamic_css, function ( properties, selector ) {
+					if ( 'object' === typeof properties ) {
+						css += selector + '{';
+						_.each( properties, function ( value, property ) {
+							css += property + ':' + value + ';';
+						} );
+						css += '}';
+					}
+				} );
+
+				return css;
 			}
 		} );
 	} );

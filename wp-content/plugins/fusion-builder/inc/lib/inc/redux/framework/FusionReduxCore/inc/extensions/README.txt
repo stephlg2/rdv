@@ -1,1 +1,1 @@
-This directory is a placeholder for FusionRedux Framework extensions.
+This directory is a placeholder for FusionRedux Framework extensions.

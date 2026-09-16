@@ -512,14 +512,14 @@ $stepCurrent = $stepDone + 1;
 }
 include(plugin_dir_path(__FILE__) . '../include/step-list.php');
 ?>
-<div class="ti-container<?php if ($stepCurrent < 5): ?> ti-narrow-page<?php endif; ?>">
+<div class="ti-container<?php if ($stepCurrent < 5): ?> ti-narrow-page<?php endif; ?><?php if (5 === $stepCurrent): ?> ti-insert-code-page<?php endif; ?>">
 <?php if ($pluginManagerInstance->is_trustindex_connected()): ?>
 <div class="ti-notice ti-notice-warning">
 <p>
 <?php
 $advancedTab = '<a href="?page='.esc_attr($_page).'&tab=advanced#trustindex-admin">'.__('Advanced', 'wp-reviews-plugin-for-google').'</a>';
 /* translators: %s: Advanced tab link */
-echo esc_html(sprintf(__("You have connected your Trustindex account, so you can find premium functionality under the %s tab. You no longer need this tab unless you choose the limited but forever free mode.", 'wp-reviews-plugin-for-google'), $advancedTab));
+echo wp_kses_post(sprintf(__("You have connected your Trustindex account, so you can find premium functionality under the %s tab. You no longer need this tab unless you choose the limited but forever free mode.", 'wp-reviews-plugin-for-google'), $advancedTab));
 ?>
 </p>
 </div>
@@ -720,7 +720,8 @@ echo esc_html(sprintf(__('Our exclusive "Top Rated" badge is awarded to service 
 </p>
 </div>
 <?php endif; ?>
-<?php echo wp_kses($pluginManagerInstance->renderWidgetAdmin(true, false, ['style-id' => esc_attr($id), 'set-id' => esc_attr($set)]), $pluginManager::$allowedAttributesForWidget); ?>
+<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderWidgetAdmin() escapes its own markup ?>
+<?php echo $pluginManagerInstance->renderWidgetAdmin(true, false, ['style-id' => esc_attr($id), 'set-id' => esc_attr($set)]); ?>
 </div>
 </div>
 </div>
@@ -771,7 +772,8 @@ esc_html(__('This widget style helps build trust and effectively increases sales
 <div class="clear"></div>
 </div>
 <div class="preview">
-<?php echo wp_kses($pluginManagerInstance->renderWidgetAdmin(true, false, ['style-id' => esc_attr($styleId), 'set-id' => esc_attr($id)]), $pluginManager::$allowedAttributesForWidget); ?>
+<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderWidgetAdmin() escapes its own markup ?>
+<?php echo $pluginManagerInstance->renderWidgetAdmin(true, false, ['style-id' => esc_attr($styleId), 'set-id' => esc_attr($id)]); ?>
 </div>
 </div>
 </div>
@@ -799,7 +801,8 @@ esc_html(__('This widget style helps build trust and effectively increases sales
 <div class="clear"></div>
 </div>
 <div class="preview">
-<?php echo wp_kses($pluginManagerInstance->renderWidgetAdmin(true, false, ['style-id' => esc_attr($styleId), 'set-id' => esc_attr($id), 'verified-by-trustindex' => true]), $pluginManager::$allowedAttributesForWidget); ?>
+<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderWidgetAdmin() escapes its own markup ?>
+<?php echo $pluginManagerInstance->renderWidgetAdmin(true, false, ['style-id' => esc_attr($styleId), 'set-id' => esc_attr($id), 'verified-by-trustindex' => true]); ?>
 </div>
 </div>
 <div class="ti-notice ti-notice-info ti-verified-badge-notice">
@@ -862,7 +865,8 @@ echo esc_html(sprintf(__('Our exclusive "Top Rated" badge is awarded to service 
 </span>
 </div>
 <div class="preview ti-widget-editor-preview">
-<?php echo wp_kses($pluginManagerInstance->renderWidgetAdmin(true), $pluginManager::$allowedAttributesForWidget); ?>
+<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderWidgetAdmin() escapes its own markup ?>
+<?php echo $pluginManagerInstance->renderWidgetAdmin(true); ?>
 </div>
 </div>
 </div>
@@ -1073,7 +1077,7 @@ break;
 <form method="post" action="">
 <input type="hidden" name="command" value="save-fomo-title" />
 <?php wp_nonce_field('ti-save-fomo-title'); ?>
-<input type="text" class="ti-form-control ti-save-input-on-change" value="<?php echo esc_attr($pluginManagerInstance->getWidgetOption('fomo-title')); ?>" name="fomo-title" />
+<input type="text" class="ti-form-control ti-save-input-on-change" value="<?php echo esc_attr(wp_kses($pluginManagerInstance->getWidgetOption('fomo-title'), ['u' => []])); ?>" name="fomo-title" />
 <small class="ti-text-muted" style="padding-left: 5px"><?php echo esc_html(htmlentities(__('Enclose the text in <u></u> if you want to highlight it', 'wp-reviews-plugin-for-google'))); ?></small>
 </form>
 </div>
@@ -1082,7 +1086,7 @@ break;
 <form method="post" action="">
 <input type="hidden" name="command" value="save-fomo-text" />
 <?php wp_nonce_field('ti-save-fomo-text'); ?>
-<input type="text" class="ti-form-control ti-save-input-on-change" value="<?php echo esc_attr($pluginManagerInstance->getWidgetOption('fomo-text')); ?>" name="fomo-text" />
+<input type="text" class="ti-form-control ti-save-input-on-change" value="<?php echo esc_attr(wp_kses($pluginManagerInstance->getWidgetOption('fomo-text'), ['u' => []])); ?>" name="fomo-text" />
 <small class="ti-text-muted" style="padding-left: 5px"><?php echo esc_html(htmlentities(__('Enclose the text in <u></u> if you want to highlight it', 'wp-reviews-plugin-for-google'))); ?></small>
 </form>
 </div>
@@ -1283,12 +1287,7 @@ $name = sprintf(__('%d hours', 'wp-reviews-plugin-for-google'), 24);
 <input type="checkbox" name="show-logos" value="1"<?php if ($pluginManagerInstance->getWidgetOption('show-logos')): ?> checked<?php endif;?> />
 <label><?php echo esc_html(__('Show platform logos', 'wp-reviews-plugin-for-google')); ?></label>
 </span>
-<?php if (!$pluginManagerInstance->is_ten_scale_rating_platform() && $pluginManagerInstance->getShortName() !== 'google'): ?>
-<span class="ti-checkbox ti-checkbox-row">
-<input type="checkbox" name="show-stars" value="1"<?php if ($pluginManagerInstance->getWidgetOption('show-stars')): ?> checked<?php endif;?> />
-<label><?php echo esc_html(__('Show platform stars', 'wp-reviews-plugin-for-google')); ?></label>
-</span>
-<?php endif; ?>
+
 <?php endif; ?>
 <?php if ($pluginManagerInstance->isFomoWidget()): ?>
 <?php if ('hide' !== $pluginManagerInstance->getWidgetOption('fomo-icon')): ?>
@@ -1358,13 +1357,143 @@ echo esc_html(sprintf(__('There are no reviews on your %s platform.', 'wp-review
 <div class="ti-box-header"><?php echo esc_html(__('Insert this shortcode into your website', 'wp-reviews-plugin-for-google')); ?></div>
 <?php include(plugin_dir_path(__FILE__) . '../include/shortcode-paste-box.php'); ?>
 </div>
-<?php if (!get_option($pluginManagerInstance->get_option_name('rate-us-feedback'), 0)): ?>
-<?php include(plugin_dir_path(__FILE__) . '../include/rate-us-feedback-box.php'); ?>
-<?php endif; ?>
+<div class="ti-box ti-sales-widget-box-container">
+<div class="ti-box-header">
+<?php echo
+/* translators: 1: widget count, 2: percent */
+esc_html(sprintf(__('%1$d Professional Review Widgets That Help Boost Sales by %2$d%%', 'wp-reviews-plugin-for-google'), 5, 9));
+?>
+<small>
+<?php echo
+/* translators: %d: widget count */
+esc_html(sprintf(__('For best results, generate all %d widgets and place them in the recommended positions.', 'wp-reviews-plugin-for-google'), 5));
+?>
+</small>
+<?php echo wp_kses_post($pluginManagerInstance->getProFeatureButton('wp-google-'.(!class_exists('Woocommerce') ? 6 : 7))); ?>
+</div>
+<?php
+$tiSalesRows = [
+[
+'Button VIII.',
+__('Homepage – Hero section', 'wp-reviews-plugin-for-google'),
+__('Reduces bounce rate', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-button8.png'),
+300,
+],
+[
+'Slider I. <i>('.__('with header', 'wp-reviews-plugin-for-google').')</i>',
+__('Homepage – Middle of the page', 'wp-reviews-plugin-for-google'),
+__('Increases time on site, improves SEO, more sales', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-slider1-with-header.png'),
+1200,
+],
+[
+'Top Rated Badge VIII.',
+__('Homepage – Footer', 'wp-reviews-plugin-for-google'),
+__('More calls and emails', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-top-rated-badge8.png'),
+300,
+],
+[
+'Button III.',
+__('Contact page - Under the contact form', 'wp-reviews-plugin-for-google'),
+__('More enquires', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-button3.png'),
+300,
+],
+[
+__('Review Certificate', 'wp-reviews-plugin-for-google'),
+__('Every page – Left corner of the page', 'wp-reviews-plugin-for-google'),
+__('Builds trust', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-certificate.png'),
+350,
+],
+];
+if (class_exists('Woocommerce')) {
+$tiSalesRows = [
+[
+'Button VIII.',
+__('Homepage – Hero section', 'wp-reviews-plugin-for-google'),
+__('Reduces bounce rate', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-button8.png'),
+300,
+],
+[
+'Slider I. <i>('.__('with header', 'wp-reviews-plugin-for-google').')</i>',
+__('Homepage – Middle of the page', 'wp-reviews-plugin-for-google'),
+__('Increases time on site, improves SEO, more sales', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-slider1-with-header.png'),
+1200,
+],
+[
+__('Review Certificate', 'wp-reviews-plugin-for-google'),
+__('Every page – Left corner of the page', 'wp-reviews-plugin-for-google'),
+__('Builds trust', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-certificate.png'),
+350,
+],
+[
+'Button III.',
+__('Every product page – Near price or cart button', 'wp-reviews-plugin-for-google'),
+__('Increases purchases', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-button3.png'),
+300,
+],
+[
+'Slider I. <i>('.__('with footer', 'wp-reviews-plugin-for-google').')</i>',
+__('Every product page – Below the product details', 'wp-reviews-plugin-for-google'),
+__('Builds purchase confidence before checkout', 'wp-reviews-plugin-for-google'),
+$pluginManagerInstance->get_plugin_file_url('static/img/ti-widget-tooltip-slider1-with-footer.png'),
+1200,
+],
+];
+}
+?>
+<div class="ti-sales-widget-box">
+<div class="ti-sales-widget-table">
+<div class="ti-sales-widget-row">
+<div><?php echo esc_html(__('Recommended widget', 'wp-reviews-plugin-for-google')); ?></div>
+<div><?php echo esc_html(__('Where to place it', 'wp-reviews-plugin-for-google')); ?></div>
+<div><?php echo esc_html(__('Main benefit', 'wp-reviews-plugin-for-google')); ?></div>
+</div>
+<?php foreach ($tiSalesRows as $index => $item): ?>
+<div class="ti-sales-widget-row">
+<div>
+<div class="ti-sales-widget-row-title">
+<span><?php echo esc_html($index + 1).'.'; ?></span>
+<?php echo wp_kses_post($item[0]); ?>
+<span class="ti-sales-widget-preview-icon"></span>
+<div class="ti-sales-widget-preview" style="--ti-preview-width: <?php echo esc_attr($item[4]); ?>px;">
+<img src="<?php echo esc_url($item[3]); ?>" alt="" loading="lazy" />
+</div>
+</div>
+</div>
+<div><?php echo esc_html($item[1]); ?></div>
+<div><?php echo esc_html($item[2]); ?></div>
+</div>
+<?php endforeach; ?>
+</div>
+<div class="ti-sales-widget-cta">
+<div class="ti-sales-widget-cta-content">
+<strong><?php
+/* translators: %d: 9 */
+echo esc_html(sprintf(__('Recommended setup for +%d%% more sales', 'wp-reviews-plugin-for-google'), 9));
+?></strong>
+<span><?php
+/* translators: %s: 35,000+ */
+echo esc_html(sprintf(__('Based on data from %s businesses.', 'wp-reviews-plugin-for-google'), '35,000+'));
+?></span>
+</div>
+</div>
+</div>
+</div>
 <?php
 $tiCampaign1 = 'wp-google-1';
 $tiCampaign2 = 'wp-google-2';
 include(plugin_dir_path(__FILE__) . '../include/get-more-customers-box.php');
 ?>
+<?php if (!get_option($pluginManagerInstance->get_option_name('rate-us-feedback'), 0)): ?>
+<?php include(plugin_dir_path(__FILE__) . '../include/rate-us-feedback-box.php'); ?>
+<?php endif; ?>
 <?php endif; ?>
 </div>

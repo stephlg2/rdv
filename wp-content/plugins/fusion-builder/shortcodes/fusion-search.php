@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 		class FusionSC_Search extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -71,14 +80,7 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 			 */
 			public static function settings_to_params() {
 				return [
-					'search_form_design'                 => 'design',
-					'live_search_min_char_count'         => 'live_min_character',
-					'live_search_results_per_page'       => 'live_posts_per_page',
-					'live_search_display_featured_image' => 'live_search_display_featured_image',
-					'live_search_display_post_type'      => 'live_search_display_post_type',
-					'live_search_results_height'         => 'live_results_height',
-					'form_bg_color'                      => 'live_results_bg_color',
-					'link_color'                         => 'live_results_link_color',
+					'search_form_design' => 'design',
 				];
 			}
 
@@ -91,56 +93,37 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
-					'animation_type'                     => '',
-					'animation_direction'                => 'down',
-					'animation_speed'                    => '',
-					'animation_delay'                    => '',
-					'animation_offset'                   => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                    => '',
-					'class'                              => '',
-					'search_content'                     => '',
-					'placeholder'                        => 'Search...',
-					'design'                             => $fusion_settings->get( 'search_form_design' ),
-					'live_search'                        => $fusion_settings->get( 'live_search' ) ? 'yes' : 'no',
-					'live_min_character'                 => $fusion_settings->get( 'live_search_min_char_count' ),
-					'live_posts_per_page'                => $fusion_settings->get( 'live_search_results_per_page' ),
-					'live_search_display_featured_image' => $fusion_settings->get( 'live_search_display_featured_image' ) ? 'yes' : 'no',
-					'live_search_display_post_type'      => $fusion_settings->get( 'live_search_display_post_type' ) ? 'yes' : 'no',
-					'search_limit_to_post_titles'        => $fusion_settings->get( 'search_limit_to_post_titles' ) ? 'yes' : 'no',
-					'live_results_bg_color'              => $fusion_settings->get( 'form_bg_color' ),
-					'live_results_link_color'            => $fusion_settings->get( 'link_color' ),
-					'live_results_meta_color'            => $fusion_settings->get( 'link_color' ),
-					'live_results_height'                => $fusion_settings->get( 'live_search_results_height' ),
-					'live_results_scrollbar'             => 'hidden',
-					'live_results_scrollbar_bg'          => $fusion_settings->get( 'scrollbar_background' ),
-					'live_results_scrollbar_handle'      => $fusion_settings->get( 'scrollbar_handle' ),
-					'live_results_border_size'           => false,
-					'results_border_top'                 => '',
-					'results_border_right'               => '',
-					'results_border_bottom'              => '',
-					'results_border_left'                => '',
-					'live_results_border_color'          => '',
-					'input_height'                       => '',
-					'bg_color'                           => '',
-					'text_size'                          => '',
-					'text_color'                         => '',
-					'border_width'                       => false,
-					'border_size_top'                    => '',
-					'border_size_right'                  => '',
-					'border_size_bottom'                 => '',
-					'border_size_left'                   => '',
-					'border_color'                       => '',
-					'focus_border_color'                 => '',
-					'border_radius'                      => '',
-					'hide_on_mobile'                     => fusion_builder_default_visibility( 'string' ),
-					'sticky_display'                     => '',
-					'id'                                 => '',
-					'margin_bottom'                      => '',
-					'margin_left'                        => '',
-					'margin_right'                       => '',
-					'margin_top'                         => '',
+					'animation_type'              => '',
+					'animation_direction'         => 'down',
+					'animation_speed'             => '',
+					'animation_offset'            => $fusion_settings->get( 'animation_offset' ),
+					'class'                       => '',
+					'search_content'              => '',
+					'placeholder'                 => 'Search...',
+					'design'                      => $fusion_settings->get( 'search_form_design' ),
+					'live_search'                 => $fusion_settings->get( 'live_search' ) ? 'yes' : 'no',
+					'search_limit_to_post_titles' => $fusion_settings->get( 'search_limit_to_post_titles' ) ? 'yes' : 'no',
+					'input_height'                => $fusion_settings->get( 'form_input_height' ),
+					'bg_color'                    => $fusion_settings->get( 'form_bg_color' ),
+					'text_size'                   => $fusion_settings->get( 'form_text_size' ),
+					'text_color'                  => $fusion_settings->get( 'form_text_color' ),
+					'border_width'                => false,
+					'border_size_top'             => '',
+					'border_size_right'           => '',
+					'border_size_bottom'          => '',
+					'border_size_left'            => '',
+					'border_color'                => $fusion_settings->get( 'form_border_color' ),
+					'focus_border_color'          => $fusion_settings->get( 'form_focus_border_color' ),
+					'border_radius'               => $fusion_settings->get( 'form_border_radius' ),
+					'hide_on_mobile'              => fusion_builder_default_visibility( 'string' ),
+					'sticky_display'              => '',
+					'id'                          => '',
+					'margin_bottom'               => '',
+					'margin_left'                 => '',
+					'margin_right'                => '',
+					'margin_top'                  => '',
 				];
 			}
 
@@ -154,20 +137,33 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_search' );
+				$defaults   = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_search' );
+				$this->args = $defaults;
 
 				// Old value check.
 				if ( $this->args['border_width'] ) {
+					$this->args['border_width']       = fusion_library()->sanitize->get_value_with_unit( $this->args['border_width'] );
 					$this->args['border_size_top']    = '' !== $this->args['border_size_top'] ? $this->args['border_width'] : $this->args['border_size_top'];
 					$this->args['border_size_right']  = '' !== $this->args['border_size_right'] ? $this->args['border_width'] : $this->args['border_size_right'];
 					$this->args['border_size_bottom'] = '' !== $this->args['border_size_bottom'] ? $this->args['border_width'] : $this->args['border_size_bottom'];
 					$this->args['border_size_left']   = '' !== $this->args['border_size_left'] ? $this->args['border_width'] : $this->args['border_size_left'];
 				}
 
-				$html  = '<div ' . FusionBuilder::attributes( 'search-element' ) . '>';
+				$this->args['margin_top']    = fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] );
+				$this->args['margin_right']  = fusion_library()->sanitize->get_value_with_unit( $this->args['margin_right'] );
+				$this->args['margin_bottom'] = fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] );
+				$this->args['margin_left']   = fusion_library()->sanitize->get_value_with_unit( $this->args['margin_left'] );
+				$this->args['input_height']  = fusion_library()->sanitize->get_value_with_unit( $this->args['input_height'] );
+				$this->args['border_radius'] = fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius'] );
+
+				$html  = '';
+				$html .= '<div ' . FusionBuilder::attributes( 'search-element' ) . '>';
 				$html .= $this->get_search_form();
 				$html .= '</div>';
+
+				$styles = $this->get_styles();
+
+				$html = $styles . $html;
 
 				$this->counter++;
 
@@ -204,17 +200,6 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 				}
 
 				$extra_fields .= '<input type="hidden" name="search_limit_to_post_titles" value="' . ( 'yes' === $this->args['search_limit_to_post_titles'] ? '1' : '0' ) . '" />';
-				if ( 'yes' === $this->args['live_search'] ) {
-					$extra_fields .= '<input type="hidden" name="live_min_character" value="' . ( $this->args['live_min_character'] ? $this->args['live_min_character'] : '4' ) . '" />';
-					$extra_fields .= '<input type="hidden" name="live_posts_per_page" value="' . ( $this->args['live_posts_per_page'] ? $this->args['live_posts_per_page'] : '10' ) . '" />';
-					$extra_fields .= '<input type="hidden" name="live_search_display_featured_image" value="' . ( 'yes' === $this->args['live_search_display_featured_image'] ? '1' : '0' ) . '" />';
-					$extra_fields .= '<input type="hidden" name="live_search_display_post_type" value="' . ( 'yes' === $this->args['live_search_display_post_type'] ? '1' : '0' ) . '" />';
-				}
-
-				// Live results scrollbar.
-				if ( 'yes' === $this->args['live_search'] && 'hidden' !== $this->args['live_results_scrollbar'] ) {
-					$extra_fields .= '<input type="hidden" name="live_results_scrollbar" value="' . $this->args['live_results_scrollbar'] . '" />';
-				}
 
 				// Activate the search filter.
 				$extra_fields .= '<input type="hidden" name="fs" value="1" />';
@@ -231,9 +216,90 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 
 				ob_start();
 				Fusion_Searchform::get_form( $args );
-				$form = ob_get_clean();
+				return ob_get_clean();
+			}
 
-				return apply_filters( 'get_search_form', $form, $args );
+			/**
+			 * Generate style block
+			 *
+			 * @access public
+			 * @since  3.0
+			 * @return string
+			 */
+			public function get_styles() {
+				$styles = '<style type="text/css">';
+
+				if ( '' !== $this->args['input_height'] ) {
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-field input,';
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					$styles .= 'height: ' . $this->args['input_height'] . ';';
+					$styles .= '}';
+
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					$styles .= 'line-height: ' . $this->args['input_height'] . ';';
+					$styles .= '}';
+
+					$styles .= '.fusion-search-element-' . $this->counter . '.fusion-search-form-clean .searchform .fusion-search-form-content .fusion-search-field input {';
+					$styles .= 'padding-left: ' . $this->args['input_height'] . ';';
+					$styles .= '}';
+
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					$styles .= 'width: ' . $this->args['input_height'] . ';';
+					$styles .= '}';
+				}
+
+				if ( '' !== $this->args['text_color'] ) {
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-field input,';
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-field input::placeholder,';
+					$styles .= '.fusion-search-element-' . $this->counter . '.fusion-search-form-clean .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					$styles .= 'color: ' . $this->args['text_color'] . ';';
+					$styles .= '}';
+				}
+
+				if ( '' !== $this->args['focus_border_color'] ) {
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-field input:focus {';
+					$styles .= 'border-color: ' . $this->args['focus_border_color'] . ';';
+					$styles .= '}';
+				}
+
+				if ( '' !== $this->args['text_size'] ) {
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-field input,';
+					$styles .= '.fusion-search-element-' . $this->counter . '.fusion-search-form-clean .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					$styles .= 'font-size: ' . $this->args['text_size'] . ';';
+					$styles .= '}';
+				}
+
+				$styles .= '.fusion-search-element-' . $this->counter . ' .searchform .fusion-search-form-content .fusion-search-field input {';
+
+				if ( '' !== $this->args['bg_color'] ) {
+					$styles .= 'background-color: ' . $this->args['bg_color'] . ';';
+				}
+
+				foreach ( [ 'top', 'right', 'bottom', 'left' ] as $direction ) {
+					if ( '' !== $this->args[ 'border_size_' . $direction ] ) {
+						$styles .= 'border-' . $direction . '-width:' . Fusion_Sanitize::get_value_with_unit( $this->args[ 'border_size_' . $direction ] ) . ';';
+					}
+				}
+
+				if ( '' !== $this->args['border_color'] ) {
+					$styles .= 'border-color: ' . $this->args['border_color'] . ';';
+				}
+
+				$styles .= '}';
+
+				if ( '' !== $this->args['border_radius'] ) {
+					$styles .= '.fusion-search-element-' . $this->counter . ' .searchform.fusion-search-form-classic .fusion-search-form-content, .fusion-search-form-classic .searchform:not(.fusion-search-form-clean) .fusion-search-form-content {';
+					$styles .= 'border-radius: ' . $this->args['border_radius'] . ';';
+					$styles .= 'overflow: hidden;';
+					$styles .= '}';
+					$styles .= '.fusion-search-element-' . $this->counter . ' .fusion-search-form-content input.s {';
+					$styles .= 'border-radius: ' . $this->args['border_radius'] . ';';
+					$styles .= '}';
+				}
+
+				$styles .= '</style>';
+
+				return $styles;
 			}
 
 			/**
@@ -244,43 +310,18 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 			 * @return array
 			 */
 			public function attr() {
-
-				$css_vars = [
-					'margin_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'input_height'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_size_top'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_size_right'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_size_bottom'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_size_left'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_color',
-					'border_color',
-					'focus_border_color',
-					'text_size',
-					'bg_color',
-					'live_results_bg_color',
-					'live_results_link_color',
-					'live_results_meta_color',
-					'live_results_height'   => [ 'callback' => [ 'Fusion_Panel_Callbacks', 'maybe_append_px' ] ],
-					'live_results_scrollbar_bg',
-					'live_results_scrollbar_handle',
-					'results_border_top'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'results_border_right'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'results_border_bottom' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'results_border_left'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'live_results_border_color',
-				];
+				global $fusion_settings;
 
 				$attr = [
 					'class' => 'fusion-search-element fusion-search-element-' . $this->counter,
-					'style' => $this->get_css_vars_for_options( $css_vars ),
+					'style' => '',
 				];
 
 				// Visibility.
 				$attr = fusion_builder_visibility_atts( $this->args['hide_on_mobile'], $attr );
+
+				// Margins.
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				$attr['class'] .= Fusion_Builder_Sticky_Visibility_Helper::get_sticky_class( $this->args['sticky_display'] );
 
@@ -304,16 +345,6 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
 				return $attr;
 			}
 
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.0
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/search.min.css' );
-			}
 		}
 	}
 
@@ -327,22 +358,7 @@ if ( fusion_is_element_enabled( 'fusion_search' ) ) {
  * @since 2.2.0
  */
 function fusion_element_search() {
-	$fusion_settings = awb_get_fusion_settings();
-	$post_types      = awb_get_post_types( [ 'exclude_from_search' => false ] );
-
-	// Remove media.
-	unset( $post_types['attachment'] );
-
-	$search_content =
-		[
-			'post'            => esc_attr__( 'Posts', 'fusion-builder' ),
-			'page'            => esc_attr__( 'Pages', 'fusion-builder' ),
-			'avada_portfolio' => esc_attr__( 'Portfolio Items', 'fusion-builder' ),
-			'avada_faq'       => esc_attr__( 'FAQ Items', 'fusion-builder' ),
-			'product'         => esc_attr__( 'WooCommerce Products', 'fusion-builder' ),
-			'tribe_events'    => esc_attr__( 'Events Calendar Posts', 'fusion-builder' ),
-		];
-	$search_content = apply_filters( 'avada_search_results_post_types', array_merge( $search_content, $post_types ) );
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -353,16 +369,8 @@ function fusion_element_search() {
 				'icon'       => 'fusiona-search',
 				'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-search-preview.php',
 				'preview_id' => 'fusion-builder-block-module-search-preview-template',
-				'help_url'   => 'https://avada.com/documentation/search-element/',
+				'help_url'   => 'https://theme-fusion.com/documentation/avada/elements/search-element/',
 				'params'     => [
-					[
-						'type'        => 'multiple_select',
-						'heading'     => esc_attr__( 'Search Results Content', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the type of content that displays in search results. Leave empty for all.', 'fusion-builder' ),
-						'param_name'  => 'search_content',
-						'default'     => '',
-						'choices'     => $search_content,
-					],
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Enable Live Search', 'fusion-builder' ),
@@ -376,77 +384,18 @@ function fusion_element_search() {
 						],
 					],
 					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Live Search Minimal Character Count', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set the minimal character count to trigger the live search.', 'fusion-builder' ),
-						'param_name'  => 'live_min_character',
-						'default'     => $fusion_settings->get( 'live_search_min_char_count' ),
-						'min'         => '1',
-						'max'         => '20',
-						'step'        => '1',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Live Search Number of Posts', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the number of posts that should be displayed as search result suggestions.', 'fusion-builder' ),
-						'param_name'  => 'live_posts_per_page',
-						'default'     => $fusion_settings->get( 'live_search_results_per_page' ),
-						'min'         => '5',
-						'max'         => '500',
-						'step'        => '5',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Live Search Display Featured Image', 'fusion-builder' ),
-						'description' => esc_attr__( 'Turn on to display the featured image of each live search result.', 'fusion-builder' ),
-						'param_name'  => 'live_search_display_featured_image',
+						'type'        => 'multiple_select',
+						'heading'     => esc_attr__( 'Search Results Content', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the type of content that displays in search results. Leave empty for all.', 'fusion-builder' ),
+						'param_name'  => 'search_content',
 						'default'     => '',
-						'value'       => [
-							''    => esc_attr__( 'Default', 'fusion-builder' ),
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Live Search Display Post Type', 'fusion-builder' ),
-						'description' => esc_attr__( 'Turn on to display the post type of each live search result.', 'fusion-builder' ),
-						'param_name'  => 'live_search_display_post_type',
-						'default'     => '',
-						'value'       => [
-							''    => esc_attr__( 'Default', 'fusion-builder' ),
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
+						'choices'     => [
+							'post'            => esc_attr__( 'Posts', 'fusion-builder' ),
+							'page'            => esc_attr__( 'Pages', 'fusion-builder' ),
+							'avada_portfolio' => esc_attr__( 'Portfolio Items', 'fusion-builder' ),
+							'avada_faq'       => esc_attr__( 'FAQ Items', 'fusion-builder' ),
+							'product'         => esc_attr__( 'WooCommerce Products', 'fusion-builder' ),
+							'tribe_events'    => esc_attr__( 'Events Calendar Posts', 'fusion-builder' ),
 						],
 					],
 					[
@@ -559,171 +508,6 @@ function fusion_element_search() {
 						'default'     => $fusion_settings->get( 'form_border_radius' ),
 						'group'       => esc_html__( 'Design', 'fusion-builder' ),
 					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Live Results Background Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the background color of live search results.', 'fusion-builder' ),
-						'param_name'  => 'live_results_bg_color',
-						'value'       => '',
-						'default'     => '',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Link Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the link color of the live search results.', 'fusion-builder' ),
-						'param_name'  => 'live_results_link_color',
-						'value'       => '',
-						'default'     => '',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Meta Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the meta color of the live search results.', 'fusion-builder' ),
-						'param_name'  => 'live_results_meta_color',
-						'value'       => '',
-						'default'     => '',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Live Results Container Height', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the height of live results container.', 'fusion-builder' ),
-						'param_name'  => 'live_results_height',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'value'       => $fusion_settings->get( 'live_search_results_height' ),
-						'min'         => '100',
-						'max'         => '800',
-						'step'        => '5',
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Scrollbar', 'fusion-builder' ),
-						'description' => esc_attr__( 'Turn on enable scroll for live search results.', 'fusion-builder' ),
-						'param_name'  => 'live_results_scrollbar',
-						'default'     => 'hidden',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'value'       => [
-							'default' => esc_attr__( 'Default', 'fusion-builder' ),
-							'custom'  => esc_attr__( 'Custom', 'fusion-builder' ),
-							'hidden'  => esc_attr__( 'Hidden', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Scrollbar Background', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the background color of the scrollbar of the live search results.', 'fusion-builder' ),
-						'param_name'  => 'live_results_scrollbar_bg',
-						'value'       => '',
-						'default'     => '',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'live_results_scrollbar',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Scrollbar Handle Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the color of the scrollbar handle in live search results.', 'fusion-builder' ),
-						'param_name'  => 'live_results_scrollbar_handle',
-						'value'       => '',
-						'default'     => '',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'live_results_scrollbar',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Live Results Border Size', 'fusion-builder' ),
-						'description'      => esc_attr__( 'Controls the border size of the live results.', 'fusion-builder' ),
-						'param_name'       => 'live_results_border_size',
-						'group'            => esc_html__( 'Design', 'fusion-builder' ),
-						'value'            => [
-							'results_border_top'    => '',
-							'results_border_right'  => '',
-							'results_border_bottom' => '',
-							'results_border_left'   => '',
-						],
-						'dependency'       => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Live Results Border Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the border color of the live search results.', 'fusion-builder' ),
-						'param_name'  => 'live_results_border_color',
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'form_border_color' ),
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'live_search',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
 					'fusion_margin_placeholder'            => [
 						'param_name' => 'margin',
 						'value'      => [
@@ -764,4 +548,4 @@ function fusion_element_search() {
 		)
 	);
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_search' );
+add_action( 'fusion_builder_before_init', 'fusion_element_search' );

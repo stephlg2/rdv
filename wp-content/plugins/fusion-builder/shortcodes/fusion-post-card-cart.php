@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 		class FusionSC_PostCardCart extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Whether styles are already generated or not.
 			 *
 			 * @access protected
@@ -24,15 +33,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 			 * @var bool
 			 */
 			protected $styles_generated = false;
-
-			/**
-			 * Whether we are requesting from editor.
-			 *
-			 * @access public
-			 * @since 3.8
-			 * @var string
-			 */
-			protected $live_request = false;
 
 			/**
 			 * Constructor.
@@ -49,11 +49,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 
 				// Ajax mechanism for live editor.
 				add_action( 'wp_ajax_get_fusion_post_card_cart', [ $this, 'ajax_render' ] );
-
-				if ( class_exists( 'Avada' ) && class_exists( 'WooCommerce', false ) ) {
-					global $avada_woocommerce;
-					$avada_woocommerce->quick_view_init();
-				}
 			}
 
 			/**
@@ -71,15 +66,14 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 				$return_data = [];
 				// From Ajax Request.
 				if ( isset( $_POST['model'] ) && isset( $_POST['model']['params'] ) && ! apply_filters( 'fusion_builder_live_request', false ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$args               = $_POST['model']['params'];                                                                       // phpcs:ignore WordPress.Security
-					$post_id            = isset( $_POST['post_id'] ) ? $_POST['post_id'] : get_the_ID();                                   // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-					$this->defaults     = self::get_element_defaults();
-					$this->args         = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_woo_checkout_tabs' );
-					$this->live_request = true;
+					$args           = $_POST['model']['params']; // phpcs:ignore WordPress.Security
+					$post_id        = isset( $_POST['post_id'] ) ? $_POST['post_id'] : get_the_ID(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+					$this->defaults = self::get_element_defaults();
+					$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_woo_checkout_tabs' );
 
 					// Check if dynamic source is a term and if so emulate.
 					if ( isset( $_POST['fusion_meta'] ) ) {
-						$meta = fusion_string_to_array( $_POST['fusion_meta'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+						$meta = fusion_string_to_array( wp_unslash( $_POST['fusion_meta'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 						if ( isset( $meta['_fusion']['dynamic_content_preview_type'] ) && 'term' === $meta['_fusion']['dynamic_content_preview_type'] && isset( $meta['_fusion']['preview_term'] ) && '' !== $meta['_fusion']['preview_term'] ) {
 							$GLOBALS['wp_query']->is_tax         = true;
 							$GLOBALS['wp_query']->is_archive     = true;
@@ -99,7 +93,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 
 					if ( ! empty( $product ) ) {
 						$return_data['fusion_post_card_cart'] = $this->get_cart_content();
-						$return_data['product_type']          = $product->get_type();
 					}
 				}
 
@@ -116,7 +109,7 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 				return [
 					'hide_on_mobile'                       => fusion_builder_default_visibility( 'string' ),
 					'class'                                => '',
@@ -124,9 +117,7 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 					'animation_type'                       => '',
 					'animation_direction'                  => 'down',
 					'animation_speed'                      => '0.1',
-					'animation_delay'                      => '',
 					'animation_offset'                     => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                      => '',
 
 					'buttons_layout'                       => '',
 					'cart_layout'                          => '',
@@ -137,7 +128,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 
 					'show_product_link_button'             => '',
 					'show_add_to_cart_button'              => '',
-					'show_variations'                      => 'no',
 					'show_quantity_input'                  => 'no',
 					'buttons_stretch'                      => 'no',
 					'enable_quick_view'                    => $fusion_settings->get( 'woocommerce_enable_quick_view' ),
@@ -182,19 +172,16 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 
 					'button_size'                          => '',
 
-					'button_border_top'                    => '',
-					'button_border_right'                  => '',
-					'button_border_bottom'                 => '',
-					'button_border_left'                   => '',
+					'button_border_width'                  => '',
 					'button_icon'                          => '',
 					'icon_position'                        => 'left',
 					'button_color'                         => '',
 					'button_gradient_top'                  => $fusion_settings->get( 'button_gradient_top_color' ),
 					'button_gradient_bottom'               => $fusion_settings->get( 'button_gradient_bottom_color' ),
-					'button_border_color'                  => $fusion_settings->get( 'button_border_color' ),
-					'button_color_hover'                   => $fusion_settings->get( 'button_accent_hover_color' ),
-					'button_gradient_top_hover'            => $fusion_settings->get( 'button_gradient_top_color_hover' ),
-					'button_gradient_bottom_hover'         => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
+					'button_border_color'                  => $fusion_settings->get( 'button_gradient_top_color_hover' ),
+					'button_color_hover'                   => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
+					'button_gradient_top_hover'            => '',
+					'button_gradient_bottom_hover'         => '',
 					'button_border_color_hover'            => '',
 					'button_margin_top'                    => '',
 					'button_margin_right'                  => '',
@@ -202,12 +189,9 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 					'button_margin_left'                   => '',
 					'link_font_size'                       => '',
 					'link_color'                           => '',
-					'link_hover_color'                     => $fusion_settings->get( 'link_hover_color' ),
+					'link_hover_color'                     => '',
 					'button_details_size'                  => '',
-					'button_details_border_top'            => '',
-					'button_details_border_right'          => '',
-					'button_details_border_bottom'         => '',
-					'button_details_border_left'           => '',
+					'button_details_border_width'          => '',
 					'button_details_icon'                  => '',
 					'icon_details_position'                => 'left',
 					'button_details_color'                 => '',
@@ -226,90 +210,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 					'product_link_font_size'               => '',
 					'product_link_color'                   => '',
 					'product_link_hover_color'             => '',
-
-					'variation_layout'                     => 'floated',
-					'variation_label_area_width'           => '',
-					'variation_text_align'                 => '',
-					'variation_clear'                      => 'absolute',
-					'clear_content'                        => '',
-					'clear_icon'                           => '',
-					'clear_text'                           => '',
-
-					'show_label'                           => 'yes',
-					'fusion_font_family_label_typography'  => '',
-					'fusion_font_variant_label_typography' => '400',
-					'label_font_size'                      => '',
-					'label_text_transform'                 => '',
-					'label_line_height'                    => '',
-					'label_letter_spacing'                 => '',
-					'label_color'                          => $fusion_settings->get( 'body_typography', 'color' ),
-
-					'select_style'                         => '',
-					'select_height'                        => '',
-					'fusion_font_family_select_typography' => '',
-					'fusion_font_variant_select_typography' => '400',
-					'select_font_size'                     => '',
-					'select_text_transform'                => '',
-					'select_line_height'                   => '',
-					'select_letter_spacing'                => '',
-					'select_color'                         => '',
-					'select_background'                    => '',
-					'select_border_color'                  => '',
-					'select_border_sizes_top'              => '',
-					'select_border_sizes_right'            => '',
-					'select_border_sizes_bottom'           => '',
-					'select_border_sizes_left'             => '',
-					'border_radius_top_left'               => '',
-					'border_radius_top_right'              => '',
-					'border_radius_bottom_right'           => '',
-					'border_radius_bottom_left'            => '',
-
-					'swatch_style'                         => '',
-					'swatch_margin_top'                    => '',
-					'swatch_margin_right'                  => '',
-					'swatch_margin_bottom'                 => '',
-					'swatch_margin_left'                   => '',
-					'swatch_background_color'              => '',
-					'swatch_background_color_active'       => '',
-					'swatch_border_sizes_top'              => '',
-					'swatch_border_sizes_right'            => '',
-					'swatch_border_sizes_bottom'           => '',
-					'swatch_border_sizes_left'             => '',
-					'swatch_border_color'                  => '',
-					'swatch_border_color_active'           => '',
-					'color_swatch_height'                  => '',
-					'color_swatch_width'                   => '',
-					'color_swatch_padding_top'             => '',
-					'color_swatch_padding_right'           => '',
-					'color_swatch_padding_bottom'          => '',
-					'color_swatch_padding_left'            => '',
-					'color_swatch_border_radius_top_left'  => '',
-					'color_swatch_border_radius_top_right' => '',
-					'color_swatch_border_radius_bottom_right' => '',
-					'color_swatch_border_radius_bottom_left' => '',
-					'image_swatch_height'                  => '',
-					'image_swatch_width'                   => '',
-					'image_swatch_padding_top'             => '',
-					'image_swatch_padding_right'           => '',
-					'image_swatch_padding_bottom'          => '',
-					'image_swatch_padding_left'            => '',
-					'image_swatch_border_radius_top_left'  => '',
-					'image_swatch_border_radius_top_right' => '',
-					'image_swatch_border_radius_bottom_right' => '',
-					'image_swatch_border_radius_bottom_left' => '',
-					'button_swatch_height'                 => '',
-					'button_swatch_width'                  => '',
-					'button_swatch_padding_top'            => '',
-					'button_swatch_padding_right'          => '',
-					'button_swatch_padding_bottom'         => '',
-					'button_swatch_padding_left'           => '',
-					'button_swatch_border_radius_top_left' => '',
-					'button_swatch_border_radius_top_right' => '',
-					'button_swatch_border_radius_bottom_right' => '',
-					'button_swatch_border_radius_bottom_left' => '',
-					'button_swatch_font_size'              => '',
-					'button_swatch_color'                  => '',
-					'button_swatch_color_active'           => '',
 				];
 			}
 
@@ -330,19 +230,16 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 				if ( empty( $product ) || ! $product->is_purchasable() ) {
 					return;
 				}
-
+				$this->params   = $args;
 				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_post_card_cart' );
+				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $this->params, 'fusion_post_card_cart' );
 
 				$this->validate_args();
 
 				// Not a product therefore nothing to render.
-				$post_id = apply_filters( 'fusion_dynamic_post_id', get_the_ID() );
-				if ( ! function_exists( 'wc_get_product' ) || 'product' !== get_post_type( $post_id ) ) {
+				if ( ! function_exists( 'wc_get_product' ) || 'product' !== get_post_type( get_the_ID() ) ) {
 					return '';
 				}
-
-				add_action( 'fusion_post_cards_rendered', [ $this, 'render_variation_js' ] );
 
 				// Check items in cart.
 				$this->in_cart();
@@ -350,6 +247,7 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 				$html  = '<div ' . FusionBuilder::attributes( 'post-card-cart' ) . '>';
 				$html .= $this->get_cart_content();
 				$html .= '</div>';
+				$html .= $this->get_styles();
 
 				$this->on_render();
 
@@ -370,93 +268,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 				} elseif ( 'no' === $this->args['enable_quick_view'] ) {
 					$this->args['enable_quick_view'] = '0';
 				}
-
-				// Legacy single border width.
-				if ( isset( $this->args['button_border_width'] ) && ! isset( $this->args['button_border_top'] ) ) {
-					$this->args['button_border_top']    = $this->args['button_border_width'];
-					$this->args['button_border_right']  = $this->args['button_border_top'];
-					$this->args['button_border_bottom'] = $this->args['button_border_top'];
-					$this->args['button_border_left']   = $this->args['button_border_top'];
-				}
-				if ( isset( $this->args['button_details_border_width'] ) && ! isset( $this->args['button_details_border_top'] ) ) {
-					$this->args['button_details_border_top']    = $this->args['button_details_border_top'];
-					$this->args['button_details_border_right']  = $this->args['button_border_top'];
-					$this->args['button_details_border_bottom'] = $this->args['button_border_top'];
-					$this->args['button_details_border_left']   = $this->args['button_border_top'];
-				}
-			}
-
-			/**
-			 * Fires on first render.
-			 *
-			 * @access protected
-			 * @since 3.11
-			 */
-			protected function on_first_render() {
-				// Skip if empty.
-				if ( null === $this->args || empty( $this->args ) ) {
-					return;
-				}
-
-				if ( function_exists( 'wc_enqueue_js' ) && function_exists( 'fusion_is_post_card' ) && fusion_is_post_card() && 'yes' === $this->args['show_variations'] ) {
-					$this->enqueue_wc_variation_js( '.fusion-post-card-cart' );
-				}
-			}
-
-			/**
-			 * Fires after post cards rendered.
-			 *
-			 * @access public
-			 * @param int $element_counter The number of element.
-			 * @since 3.11
-			 */
-			public function render_variation_js( $element_counter ) {
-				if ( function_exists( 'wc_enqueue_js' ) && 'yes' === $this->args['show_variations'] ) {
-					$this->enqueue_wc_variation_js( '.fusion-post-cards-' . ( $element_counter - 1 ) );
-				}
-			}
-
-			/**
-			 * Enqueue WC Variation js
-			 *
-			 * @access protected
-			 * @param string $selector The selector.
-			 * @since 3.11
-			 */
-			protected function enqueue_wc_variation_js( $selector ) {
-				wc_enqueue_js(
-					"
-					if ( ! jQuery( '" . $selector . "' ).closest( '.product' ).length ) {
-						jQuery( '" . $selector . "' ).parent().addClass( 'product' );
-					}
-					jQuery( '" . $selector . "' ).on( 'change', '.variation_id', function( e ) {
-						if ( '' !== jQuery( this ).val() ) {
-							jQuery( this ).parent().find( '.add_to_cart_button' ).attr( 'data-product_id', jQuery(this).val() );
-						}
-						if ( jQuery.trim( jQuery( e.currentTarget ).closest( 'form' ).find( '.avada-variation' ).text() ).length ) {
-							jQuery( e.currentTarget ).closest( 'form' ).find( '.avada-variation' ).closest( 'tr' ).removeClass( 'awb-hide-element' );
-						}
-					} ).on( 'hide_variation', '.variations_form', function( e ) {
-						jQuery( e.currentTarget ).find( '.add_to_cart_button' ).removeClass( 'wc-variation-is-unavailable' ).addClass( 'disabled wc-variation-selection-needed' );
-						jQuery( e.currentTarget ).find( '.add_to_cart_button' ).attr( 'data-product_id', jQuery( e.currentTarget ).find( '[name=\"product_id\"]' ).val() );
-						jQuery( e.currentTarget ).find( '.avada-variation' ).closest( 'tr' ).addClass( 'awb-hide-element' );
-					} ).on( 'show_variation', '.variations_form', function( e ) {
-						jQuery( e.currentTarget ).find( '.add_to_cart_button' ).removeClass( 'disabled wc-variation-selection-needed wc-variation-is-unavailable' );
-					} );
-					jQuery( document.body ).on( 'adding_to_cart', function(e, \$thisbutton, data ) {
-						if ( \$thisbutton.is('.disabled') ) {
-							e.preventDefault();
-
-							if ( \$thisbutton.is('.wc-variation-is-unavailable') ) {
-								window.alert( wc_add_to_cart_variation_params.i18n_unavailable_text );
-							} else if ( \$thisbutton.is('.wc-variation-selection-needed') ) {
-								window.alert( wc_add_to_cart_variation_params.i18n_make_a_selection_text );
-							}
-							return true;
-						}
-					} );
-				"
-				);
 			}
 
 			/**
@@ -491,114 +302,38 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 					add_filter( 'woocommerce_product_add_to_cart_text', [ $this, 'add_icon_placeholder' ], 20 );
 				}
 
+				$show_quantity = 'yes' === $this->args['show_quantity_input'] && $product->is_purchasable() && $product->is_in_stock() && $product->is_type( 'simple' );
 				ob_start();
+				?>
+					<?php if ( apply_filters( 'fusion_cart_show_quantity', $show_quantity, $this->args ) ) { ?>
+						<div class="fusion-post-card-cart-quantity"><?php echo $this->get_quantity(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+					<?php } ?>
 
-				if ( $product->is_type( 'simple' ) ) {
-					$this->add_quantity_wrapper();
-				}
-
-				if ( 'yes' === $this->args['show_variations'] && $product->is_type( 'variable' ) ) {
-					remove_action( 'woocommerce_single_variation', 'woocommerce_single_variation', 10 );
-					remove_action( 'woocommerce_single_variation', 'woocommerce_single_variation_add_to_cart_button', 20 );
-					if ( ! $this->live_request ) {
-						add_action( 'woocommerce_single_variation', [ $this, 'add_quantity_wrapper' ], 10 );
-						add_action( 'woocommerce_single_variation', [ $this, 'add_cart_buttons_wrapper' ], 10 );
+					<?php if ( $this->has_buttons_wrapper() ) { ?>
+						<div class="fusion-post-card-cart-button-wrapper">
+					<?php } ?>
+					<?php
+					if ( 'yes' === $this->args['show_add_to_cart_button'] ) {
+						?>
+						<?php echo $this->get_add_to_cart(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php
 					}
+					?>
 
-					if ( '' !== $this->args['clear_content'] ) {
-						add_filter( 'woocommerce_reset_variations_link', [ $this, 'add_variation_clear_text' ], 10 );
-					}
-					woocommerce_variable_add_to_cart();
-				} else {
-					$this->add_cart_buttons_wrapper();
-				}
+					<?php if ( 'yes' === $this->args['show_product_link_button'] ) { ?>
+						<?php echo $this->get_product_link(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php } ?>
 
+					<?php if ( $this->has_buttons_wrapper() ) { ?>
+						</div>
+					<?php } ?>
+				<?php
 				$html = ob_get_clean();
 				if ( ! empty( $this->args['button_icon'] ) ) {
 					remove_filter( 'woocommerce_product_add_to_cart_text', [ $this, 'add_icon_placeholder' ], 20 );
 					$html = str_replace( '@|@', '<i ' . FusionBuilder::attributes( 'post-card-cart-icon' ) . '></i>', $html );
 				}
-
-				// Restore hook and filter for variations.
-				if ( 'yes' === $this->args['show_variations'] && $product->is_type( 'variable' ) ) {
-					add_action( 'woocommerce_single_variation', 'woocommerce_single_variation', 10 );
-					add_action( 'woocommerce_single_variation', 'woocommerce_single_variation_add_to_cart_button', 20 );
-					remove_action( 'woocommerce_single_variation', [ $this, 'add_quantity_wrapper' ], 10 );
-					remove_action( 'woocommerce_single_variation', [ $this, 'add_cart_buttons_wrapper' ], 10 );
-
-					if ( '' !== $this->args['clear_content'] ) {
-						remove_filter( 'woocommerce_reset_variations_link', [ $this, 'add_variation_clear_text' ], 10 );
-					}
-				}
-
 				return $html;
-			}
-
-			/**
-			 * Generates quantity wrapper.
-			 *
-			 * @access public
-			 * @since 3.8
-			 * @return void
-			 */
-			public function add_quantity_wrapper() {
-				global $product;
-
-				$show_quantity = 'yes' === $this->args['show_quantity_input'] && $product->is_purchasable() && $product->is_in_stock();
-				?>
-					<?php if ( apply_filters( 'fusion_cart_show_quantity', $show_quantity, $this->args ) ) { ?>
-						<div class="fusion-post-card-cart-quantity"><?php echo $this->get_quantity(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-					<?php } ?>
-				<?php
-			}
-
-			/**
-			 * Generates the cart buttons wrapper.
-			 *
-			 * @access public
-			 * @since 3.8
-			 * @return void
-			 */
-			public function add_cart_buttons_wrapper() {
-				if ( $this->has_buttons_wrapper() ) {
-					?>
-					<div class="fusion-post-card-cart-button-wrapper">
-				<?php } ?>
-				<?php
-				if ( 'yes' === $this->args['show_add_to_cart_button'] ) {
-					?>
-					<?php echo $this->get_add_to_cart(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-					<?php
-				}
-				?>
-
-				<?php if ( 'yes' === $this->args['show_product_link_button'] ) { ?>
-					<?php echo $this->get_product_link(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				<?php } ?>
-
-				<?php if ( $this->has_buttons_wrapper() ) { ?>
-					</div>
-					<?php
-				}
-			}
-
-			/**
-			 * Add variation clear text.
-			 *
-			 * @param string $text The text.
-			 * @since 3.8
-			 * @return string HTML output.
-			 */
-			public function add_variation_clear_text( $text ) {
-				if ( 'text' === $this->args['clear_content'] ) {
-					return '<a class="reset_variations" href="#">' . $this->args['clear_text'] . '</a>';
-				}
-
-				if ( 'icon' === $this->args['clear_content'] ) {
-					$icon_class = fusion_font_awesome_name_handler( $this->args['clear_icon'] );
-					return '<a class="reset_variations" href="#"><i aria-hidden="true" class="' . $icon_class . '"></i></a>';
-				}
-				return $text;
 			}
 
 			/**
@@ -686,15 +421,9 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 					$button_class .= $product->is_type( 'simple' ) ? ' add_to_cart_button ajax_add_to_cart' : '';
 					global $avada_woocommerce;
 					ob_start();
-					if ( 'yes' === $this->args['show_variations'] && $product->is_type( 'variable' ) ) {
-						$this->template_loop_variation_add_to_cart();
-					} else {
-						$avada_woocommerce->template_loop_add_to_cart( [ 'class' => 'fusion-post-card-cart-add-to-cart' . $button_class ] );
-					}
+					$avada_woocommerce->template_loop_add_to_cart( [ 'class' => 'fusion-post-card-cart-add-to-cart' . $button_class ] );
 					return ob_get_clean();
 				}
-
-				return '';
 			}
 
 			/**
@@ -741,28 +470,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 			}
 
 			/**
-			 * Generates loop add to cart button for variation.
-			 *
-			 * @access public
-			 * @since 3.8
-			 * @return void
-			 */
-			public function template_loop_variation_add_to_cart() {
-				global $product;
-
-				$button_class  = 'fusion-post-card-cart-add-to-cart add_to_cart_button ajax_add_to_cart disabled wc-variation-selection-needed';
-				$button_class .= empty( $this->args['button_size'] ) ? ' fusion-button-default-size' : '';
-				$button_class .= 'custom' === $this->args['button_style'] ? ' button-default' : '';
-
-				$add_to_cart_variation = sprintf( '<a href="#" class="%s" data-product_id="%d">%s</a>', $button_class, absint( $product->get_id() ), $this->add_icon_placeholder( $product->single_add_to_cart_text() ) );
-
-				echo str_replace( '@|@', '<i ' . FusionBuilder::attributes( 'post-card-cart-icon' ) . '></i>', $add_to_cart_variation ); //phpcs:ignore WordPress.Security.EscapeOutput
-				echo sprintf( '<input type="hidden" name="add-to-cart" value="%d" />', absint( $product->get_id() ) );
-				echo sprintf( '<input type="hidden" name="product_id" value="%d" />', absint( $product->get_id() ) );
-				echo sprintf( '<input type="hidden" name="variation_id" class="variation_id" value="0" />' );
-			}
-
-			/**
 			 * Used to set any other variables for use on front-end editor template.
 			 *
 			 * @static
@@ -771,12 +478,10 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
 				return [
-					'add_to_cart_text'       => esc_attr__( 'Add to cart', 'fusion-builder' ),
-					'quick_view_text'        => esc_attr__( 'Quick View', 'Avada' ),
-					'details_text'           => esc_attr__( 'Details', 'Avada' ),
-					'woocommerce_variations' => $fusion_settings->get( 'woocommerce_variations' ),
+					'add_to_cart_text' => esc_attr__( 'Add to cart', 'fusion-builder' ),
+					'quick_view_text'  => esc_attr__( 'Quick View', 'Avada' ),
+					'details_text'     => esc_attr__( 'Details', 'Avada' ),
 				];
 			}
 
@@ -787,71 +492,109 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 			 * @since 3.0
 			 * @return string
 			 */
-			public function get_style_vars() {
-				$fusion_settings = awb_get_fusion_settings();
+			public function get_styles() {
 
-				$custom_vars      = [];
-				$css_vars_options = [
-					'margin_top'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
+				if ( $this->styles_generated ) {
+					return;
+				}
+				$this->base_selector = '.fusion-post-card-cart';
+				$this->dynamic_css   = [];
 
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] ) );
+				}
+				if ( ! $this->is_default( 'margin_right' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_right'] ) );
+				}
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'margin_left' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_left'] ) );
+				}
+
+				$selector = $this->base_selector . ' .fusion-post-card-cart-quantity';
 				if ( 'floated' === $this->args['cart_layout'] ) {
-					$custom_vars['justify-content'] = $this->args['justify'];
-					$custom_vars['align-items']     = 'center';
+					$this->add_css_property( $this->base_selector, 'flex-direction', 'row' );
+					$this->add_css_property( $selector, 'flex-direction', 'row' );
+					$this->add_css_property( $this->base_selector, 'justify-content', $this->args['justify'] );
+					$this->add_css_property( $this->base_selector, 'align-items', 'center' );
 				} else {
-					$custom_vars['flex-direction'] = 'column';
-					$custom_vars['align-items']    = $this->args['align'];
+					$this->add_css_property( $selector, 'flex-direction', 'column' );
+					$this->add_css_property( $this->base_selector, 'flex-direction', 'column' );
+					$this->add_css_property( $selector, 'display', 'flex' );
+					$this->add_css_property( $selector, 'align-items', $this->args['align'] );
 				}
 
 				// Button wrapper if both buttons are used.
 				if ( $this->has_buttons_wrapper() ) {
+					$selector = $this->base_selector . ' .fusion-post-card-cart-button-wrapper';
 					if ( 'floated' === $this->args['buttons_layout'] ) {
-						$custom_vars['button-align-items'] = 'center';
+						$this->add_css_property( $selector, 'flex-direction', 'row' );
+						$this->add_css_property( $selector, 'align-items', 'center' );
 						if ( 'stacked' === $this->args['cart_layout'] ) {
-							$custom_vars['button-justify-content'] = $this->args['buttons_justify'];
+							$this->add_css_property( $selector, 'justify-content', $this->args['buttons_justify'] );
 						}
 					} elseif ( 'stacked' === $this->args['buttons_layout'] ) {
-						$custom_vars['button-flex-direction'] = 'column';
-						$custom_vars['button-align-items']    = $this->args['buttons_alignment'];
+						$this->add_css_property( $selector, 'flex-direction', 'column' );
+						$this->add_css_property( $selector, 'align-items', $this->args['buttons_alignment'] );
 					}
 
 					// Button wrapper expand full width.
 					if ( 'yes' === $this->args['buttons_stretch'] ) {
-						$custom_vars['button-a-justify-content'] = 'center';
-
+						$this->add_css_property( $selector . ' a', 'justify-content', 'center' );
 						// Stacked buttons next to quantity.
 						if ( 'floated' === $this->args['cart_layout'] ) {
 							if ( 'stacked' === $this->args['buttons_layout'] ) {
 
-								$custom_vars['button-flex']        = '1';
-								$custom_vars['button-align-items'] = 'stretch';
+								// Make the buttons the same width and wrapper expand..
+								$this->add_css_property( $selector, 'flex', '1' );
+								$this->add_css_property( $selector, 'align-items', 'stretch' );
 							} else {
-								$custom_vars['button-flex']   = '1';
-								$custom_vars['button-a-flex'] = '1';
+
+								// Both floated, button wrapper expand then buttons expand.
+								$this->add_css_property( $selector, 'flex', '1' );
+								$this->add_css_property( $selector . ' a', 'flex', '1' );
 							}
 						} else {
 							if ( 'stacked' === $this->args['buttons_layout'] ) {
-								$custom_vars['button-align-items'] = 'stretch';
+
+								// Make the buttons the same width.
+								$this->add_css_property( $selector, 'align-items', 'stretch' );
 							} else {
-								$custom_vars['button-a-flex'] = '1';
+
+								// Allow each button to grow equally.
+								$this->add_css_property( $selector . ' a', 'flex', '1' );
 							}
 						}
 					}
 				}
 
 				if ( 'custom' === $this->args['quantity_style'] ) {
-					$css_vars_options['quantity_margin_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_margin_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_margin_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_margin_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
+					$quantity_input   = '.fusion-body #main ' . $this->base_selector . ' .quantity input[type="number"].qty';
+					$quantity_buttons = '.fusion-body #main ' . $this->base_selector . ' .quantity input[type="button"]';
+					$quantity_both    = [ $quantity_input, $quantity_buttons ];
+
+					$selector = $this->base_selector . ' .fusion-post-card-cart-quantity';
+					if ( ! $this->is_default( 'quantity_margin_top' ) ) {
+						$this->add_css_property( $selector, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_margin_top'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_margin_right' ) ) {
+						$this->add_css_property( $selector, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_margin_right'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_margin_bottom' ) ) {
+						$this->add_css_property( $selector, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_margin_bottom'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_margin_left' ) ) {
+						$this->add_css_property( $selector, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_margin_left'] ) );
+					}
 
 					// Quantity height.
 					$height = '36px';
 					if ( ! $this->is_default( 'quantity_height' ) ) {
-						$custom_vars['quantity-height'] = fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_height'] );
+						$height = fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_height'] );
+						$this->add_css_property( $quantity_both, 'height', $height );
+						$this->add_css_property( $quantity_buttons, 'width', $height );
 					}
 
 					// Quantity width.
@@ -860,46 +603,140 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 						$width = fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_width'] );
 
 						if ( false !== strpos( $width, '%' ) ) {
-							$custom_vars['quantity-width'] = 'calc( 100% - var(--awb-quantity-height) - var(--awb-quantity-height) )';
+							$this->add_css_property( $quantity_input, 'width', 'calc( 100% - ' . $height . ' - ' . $height . ' )' );
 						} else {
-							$custom_vars['quantity-width'] = $width;
+							$this->add_css_property( $quantity_input, 'width', $width );
 						}
 					}
 
 					// Quantity wrapper.
 					if ( ! $this->is_default( 'quantity_width' ) || ! $this->is_default( 'quantity_height' ) ) {
-						$custom_vars['quantity-wrapper-width'] = 'calc( ' . $width . ' + var(--awb-quantity-height) + var(--awb-quantity-height) )';
+						$this->add_css_property( $this->base_selector . ' .quantity', 'width', 'calc( ' . $width . ' + ' . $height . ' + ' . $height . ' )' );
 					}
 
-					$css_vars_options['quantity_radius_top_left']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_radius_bottom_left']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_radius_bottom_right'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_radius_top_right']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_font_size']           = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_border_sizes_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_border_sizes_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_border_sizes_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['quantity_border_sizes_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[]                               = 'quantity_color';
-					$css_vars_options[]                               = 'quantity_background';
-					$css_vars_options[]                               = 'quantity_border_color';
-					$css_vars_options['qbutton_border_sizes_top']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['qbutton_border_sizes_right']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['qbutton_border_sizes_bottom']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['qbutton_border_sizes_left']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[]                               = 'qbutton_color';
-					$css_vars_options[]                               = 'qbutton_background';
-					$css_vars_options[]                               = 'qbutton_border_color';
-					$css_vars_options[]                               = 'qbutton_color_hover';
-					$css_vars_options[]                               = 'qbutton_background_hover';
-					$css_vars_options[]                               = 'qbutton_border_color_hover';
-					$css_vars_options['button_margin_top']            = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_margin_right']          = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_margin_bottom']         = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_margin_left']           = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
+					// Quantity border radius left side.
+					if ( ! $this->is_default( 'quantity_radius_top_left' ) ) {
+						$this->add_css_property( $this->base_selector . ' .quantity .minus', 'border-top-left-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_radius_top_left'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_radius_bottom_left' ) ) {
+						$this->add_css_property( $this->base_selector . ' .quantity .minus', 'border-bottom-left-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_radius_bottom_left'] ) );
+					}
+
+					// Quantity border radius right side.
+					if ( ! $this->is_default( 'quantity_radius_top_right' ) ) {
+						$this->add_css_property( $this->base_selector . ' .quantity .plus', 'border-top-right-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_radius_top_right'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_radius_bottom_left' ) ) {
+						$this->add_css_property( $this->base_selector . ' .quantity .plus', 'border-bottom-right-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_radius_bottom_right'] ) );
+					}
+
+					// Quantity input font size.
+					if ( ! $this->is_default( 'quantity_font_size' ) ) {
+						$quantity_font = [
+							$quantity_input,
+							$quantity_buttons,
+							$this->base_selector . ' .quantity',
+						];
+						$this->add_css_property( $quantity_font, 'font-size', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_font_size'] ) );
+					}
+
+					// Quantity input text color.
+					if ( ! $this->is_default( 'quantity_color' ) ) {
+						$this->add_css_property( $quantity_input, 'color', $this->args['quantity_color'] );
+					}
+
+					// Quantity input background color.
+					if ( ! $this->is_default( 'quantity_background' ) ) {
+						$this->add_css_property( $quantity_input, 'background-color', $this->args['quantity_background'] );
+					}
+
+					// Quantity input border size.
+					if ( ! $this->is_default( 'quantity_border_sizes_top' ) ) {
+						$this->add_css_property( $quantity_input, 'border-top-width', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_border_sizes_top'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_border_sizes_right' ) ) {
+						$this->add_css_property( $quantity_input, 'border-right-width', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_border_sizes_right'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_border_sizes_bottom' ) ) {
+						$this->add_css_property( $quantity_input, 'border-bottom-width', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_border_sizes_bottom'] ) );
+					}
+					if ( ! $this->is_default( 'quantity_border_sizes_left' ) ) {
+						$this->add_css_property( $quantity_input, 'border-left-width', fusion_library()->sanitize->get_value_with_unit( $this->args['quantity_border_sizes_left'] ) );
+					}
+
+					// Quantity input border color.
+					if ( ! $this->is_default( 'quantity_border_color' ) ) {
+						$this->add_css_property( $quantity_input, 'border-color', $this->args['quantity_border_color'] );
+					}
+
+					// Quantity buttons border size.
+					if ( ! $this->is_default( 'qbutton_border_sizes_top' ) ) {
+						$this->add_css_property( $quantity_buttons, 'border-top-width', fusion_library()->sanitize->get_value_with_unit( $this->args['qbutton_border_sizes_top'] ) );
+					}
+					if ( ! $this->is_default( 'qbutton_border_sizes_right' ) ) {
+						$this->add_css_property( $quantity_buttons, 'border-right-width', fusion_library()->sanitize->get_value_with_unit( $this->args['qbutton_border_sizes_right'] ) );
+					}
+					if ( ! $this->is_default( 'qbutton_border_sizes_bottom' ) ) {
+						$this->add_css_property( $quantity_buttons, 'border-bottom-width', fusion_library()->sanitize->get_value_with_unit( $this->args['qbutton_border_sizes_bottom'] ) );
+					}
+					if ( ! $this->is_default( 'qbutton_border_sizes_left' ) ) {
+						$this->add_css_property( $quantity_buttons, 'border-left-width', fusion_library()->sanitize->get_value_with_unit( $this->args['qbutton_border_sizes_left'] ) );
+					}
+
+					// Quantity button text color.
+					if ( ! $this->is_default( 'qbutton_color' ) ) {
+						$this->add_css_property( $quantity_buttons, 'color', $this->args['qbutton_color'] );
+					}
+
+					// Quantity button background color.
+					if ( ! $this->is_default( 'qbutton_background' ) ) {
+						$this->add_css_property( $quantity_buttons, 'background-color', $this->args['qbutton_background'] );
+					}
+
+					// Quantity button border color.
+					if ( ! $this->is_default( 'qbutton_border_color' ) ) {
+						$this->add_css_property( $quantity_buttons, 'border-color', $this->args['qbutton_border_color'] );
+					}
+
+					$hover_buttons = [
+						$quantity_buttons . ':hover',
+						$quantity_buttons . ':focus',
+					];
+
+					// Quantity button hover text color.
+					if ( ! $this->is_default( 'qbutton_color_hover' ) ) {
+						$this->add_css_property( $hover_buttons, 'color', $this->args['qbutton_color_hover'] );
+					}
+
+					// Quantity button hover background color.
+					if ( ! $this->is_default( 'qbutton_background_hover' ) ) {
+						$this->add_css_property( $hover_buttons, 'background-color', $this->args['qbutton_background_hover'] );
+					}
+
+					// Quantity button hover border color.
+					if ( ! $this->is_default( 'qbutton_border_color_hover' ) ) {
+						$this->add_css_property( $hover_buttons, 'border-color', $this->args['qbutton_border_color_hover'] );
+					}
+				}
+
+				$selector = $this->base_selector . ' .fusion-post-card-cart-add-to-cart';
+				if ( ! $this->is_default( 'button_margin_top' ) ) {
+					$this->add_css_property( $selector, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['button_margin_top'] ) );
+				}
+				if ( ! $this->is_default( 'button_margin_right' ) ) {
+					$this->add_css_property( $selector, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['button_margin_right'] ) );
+				}
+				if ( ! $this->is_default( 'button_margin_bottom' ) ) {
+					$this->add_css_property( $selector, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['button_margin_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'button_margin_left' ) ) {
+					$this->add_css_property( $selector, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['button_margin_left'] ) );
 				}
 
 				if ( 'custom' === $this->args['button_style'] ) {
+					$button       = '.fusion-body ' . $this->base_selector . ' .fusion-post-card-cart-add-to-cart';
+					$button_hover = $button . ':hover';
+
 					// Button size.
 					if ( ! $this->is_default( 'button_size' ) ) {
 
@@ -927,52 +764,84 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 						];
 
 						if ( isset( $button_size_map[ $this->args['button_size'] ] ) ) {
-							$button_dimensions                 = $button_size_map[ $this->args['button_size'] ];
-							$custom_vars['button-padding']     = $button_dimensions['padding'];
-							$custom_vars['button-line-height'] = $button_dimensions['line_height'];
-							$custom_vars['button-font-size']   = $button_dimensions['font_size'];
+							$button_dimensions = $button_size_map[ $this->args['button_size'] ];
+							$this->add_css_property( $button, 'padding', $button_dimensions['padding'] );
+							$this->add_css_property( $button, 'line-height', $button_dimensions['line_height'] );
+							$this->add_css_property( $button, 'font-size', $button_dimensions['font_size'] );
 						}
 					}
 
-					$css_vars_options['button_border_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_border_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_border_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_border_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[]                       = 'button_color';
-					$css_vars_options[]                       = 'button_border_color';
-					$css_vars_options[]                       = 'button_color_hover';
-					$css_vars_options[]                       = 'button_border_color_hover';
+					// Button border width.
+					if ( ! $this->is_default( 'button_border_width' ) ) {
+						$this->add_css_property( $button, 'border-width', fusion_library()->sanitize->get_value_with_unit( $this->args['button_border_width'] ) );
+					}
+
+					// Button text color.
+					if ( ! $this->is_default( 'button_color' ) ) {
+						$this->add_css_property( $button, 'color', $this->args['button_color'] );
+					}
 
 					// Button gradient.
-					if ( isset( $this->args['button_gradient_top'] ) && '' !== $this->args['button_gradient_top'] ) {
-						$css_vars_options[] = 'button_gradient_top';
-					}
-					if ( isset( $this->args['button_gradient_bottom'] ) && '' !== $this->args['button_gradient_bottom'] ) {
-						$css_vars_options[] = 'button_gradient_bottom';
-					} elseif ( isset( $this->args['button_gradient_top'] ) && '' !== $this->args['button_gradient_top'] ) {
-						$custom_vars['button-gradient-bottom'] = $this->args['button_gradient_top'];
+					if ( ( isset( $this->args['button_gradient_top'] ) && '' !== $this->args['button_gradient_top'] ) || ( isset( $this->args['button_gradient_bottom'] ) && '' !== $this->args['button_gradient_bottom'] ) ) {
+						$this->add_css_property( $button, 'background', $this->args['button_gradient_top'] );
+						$this->add_css_property( $button, 'background-image', 'linear-gradient( to top, ' . $this->args['button_gradient_bottom'] . ', ' . $this->args['button_gradient_top'] . ' )' );
 					}
 
-					if ( isset( $this->args['button_gradient_top_hover'] ) && '' !== $this->args['button_gradient_top_hover'] ) {
-						$css_vars_options[] = 'button_gradient_top_hover';
+					// Button border color.
+					if ( ! $this->is_default( 'button_border_color' ) ) {
+						$this->add_css_property( $button, 'border-color', $this->args['button_border_color'] );
 					}
-					if ( isset( $this->args['button_gradient_bottom_hover'] ) && '' !== $this->args['button_gradient_bottom_hover'] ) {
-						$css_vars_options[] = 'button_gradient_bottom_hover';
-					} elseif ( isset( $this->args['button_gradient_top_hover'] ) && '' !== $this->args['button_gradient_top_hover'] ) {
-						$custom_vars['button-gradient-bottom-hover'] = $this->args['button_gradient_top_hover'];
+
+					// Button hover text color.
+					if ( ! $this->is_default( 'button_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'color', $this->args['button_color_hover'] );
+					}
+
+					// Button gradient.
+					if ( ( isset( $this->args['button_gradient_top_hover'] ) && '' !== $this->args['button_gradient_top_hover'] ) || ( isset( $this->args['button_gradient_bottom_hover'] ) && '' !== $this->args['button_gradient_bottom_hover'] ) ) {
+						$this->add_css_property( $button_hover, 'background', $this->args['button_gradient_top_hover'] );
+						$this->add_css_property( $button_hover, 'background-image', 'linear-gradient( to top, ' . $this->args['button_gradient_bottom_hover'] . ', ' . $this->args['button_gradient_top_hover'] . ' )' );
+					}
+
+					// Button border color.
+					if ( ! $this->is_default( 'button_border_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'border-color', $this->args['button_border_color_hover'] );
 					}
 				} else {
-					$css_vars_options[]                 = 'link_color';
-					$css_vars_options[]                 = 'link_hover_color';
-					$css_vars_options['link_font_size'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
+
+					// Link text color.
+					if ( ! $this->is_default( 'link_color' ) ) {
+						$this->add_css_property( $selector, 'color', $this->args['link_color'] );
+					}
+
+					// Link hover text color.
+					if ( ! $this->is_default( 'link_hover_color' ) ) {
+						$this->add_css_property( $selector . ':hover', 'color', $this->args['link_hover_color'] );
+					}
+
+					// Link font size.
+					if ( ! $this->is_default( 'link_font_size' ) ) {
+						$this->add_css_property( $selector, 'font-size', $this->args['link_font_size'] );
+					}
 				}
 
-				$css_vars_options['button_details_margin_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars_options['button_details_margin_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars_options['button_details_margin_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars_options['button_details_margin_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
+				// Product link button styling.
+				$selector = $this->base_selector . ' .fusion-post-card-cart-product-link';
+				if ( ! $this->is_default( 'button_details_margin_top' ) ) {
+					$this->add_css_property( $selector, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['button_details_margin_top'] ) );
+				}
+				if ( ! $this->is_default( 'button_details_margin_right' ) ) {
+					$this->add_css_property( $selector, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['button_details_margin_right'] ) );
+				}
+				if ( ! $this->is_default( 'button_details_margin_bottom' ) ) {
+					$this->add_css_property( $selector, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['button_details_margin_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'button_details_margin_left' ) ) {
+					$this->add_css_property( $selector, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['button_details_margin_left'] ) );
+				}
 				if ( 'custom' === $this->args['product_link_style'] ) {
+					$button = '.fusion-body ' . $this->base_selector . ' .fusion-post-card-cart-product-link';
+
 					// Button size.
 					if ( ! $this->is_default( 'button_details_size' ) ) {
 
@@ -1000,172 +869,72 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 						];
 
 						if ( isset( $button_size_map[ $this->args['button_details_size'] ] ) ) {
-							$button_dimensions                         = $button_size_map[ $this->args['button_details_size'] ];
-							$custom_vars['button-details-padding']     = $button_dimensions['padding'];
-							$custom_vars['button-details-line-height'] = $button_dimensions['line_height'];
-							$custom_vars['button-details-font-size']   = $button_dimensions['font_size'];
+							$button_dimensions = $button_size_map[ $this->args['button_details_size'] ];
+							$this->add_css_property( $button, 'padding', $button_dimensions['padding'] );
+							$this->add_css_property( $button, 'line-height', $button_dimensions['line_height'] );
+							$this->add_css_property( $button, 'font-size', $button_dimensions['font_size'] );
 						}
 					}
 
-					$css_vars_options['button_details_border_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_details_border_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_details_border_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_details_border_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[]                               = 'button_details_color';
-					$css_vars_options[]                               = 'button_details_border_color';
-
-					if ( isset( $this->args['button_details_gradient_top'] ) && '' !== $this->args['button_details_gradient_top'] ) {
-						$css_vars_options[] = 'button_details_gradient_top';
-					}
-					if ( isset( $this->args['button_details_gradient_bottom'] ) && '' !== $this->args['button_details_gradient_bottom'] ) {
-						$css_vars_options[] = 'button_details_gradient_bottom';
-					} elseif ( isset( $this->args['button_details_gradient_top'] ) && '' !== $this->args['button_details_gradient_top'] ) {
-						$custom_vars['button-details-gradient-bottom'] = $this->args['button_details_gradient_top'];
+					// Button border width.
+					if ( ! $this->is_default( 'button_details_border_width' ) ) {
+						$this->add_css_property( $button, 'border-width', fusion_library()->sanitize->get_value_with_unit( $this->args['button_details_border_width'] ) );
 					}
 
-					if ( isset( $this->args['button_details_gradient_top_hover'] ) && '' !== $this->args['button_details_gradient_top_hover'] ) {
-						$css_vars_options[] = 'button_details_gradient_top_hover';
-					}
-					if ( isset( $this->args['button_details_gradient_bottom_hover'] ) && '' !== $this->args['button_details_gradient_bottom_hover'] ) {
-						$css_vars_options[] = 'button_details_gradient_bottom_hover';
-					} elseif ( isset( $this->args['button_details_gradient_top_hover'] ) && '' !== $this->args['button_details_gradient_top_hover'] ) {
-						$custom_vars['button-details-gradient-bottom-hover'] = $this->args['button_details_gradient_top_hover'];
+					// Button text color.
+					if ( ! $this->is_default( 'button_details_color' ) ) {
+						$this->add_css_property( $button, 'color', $this->args['button_details_color'] );
 					}
 
-					$css_vars_options[] = 'button_details_color_hover';
-					$css_vars_options[] = 'button_details_border_color_hover';
+					// Button gradient.
+					if ( ( isset( $this->args['button_details_gradient_top'] ) && '' !== $this->args['button_details_gradient_top'] ) || ( isset( $this->args['button_details_gradient_bottom'] ) && '' !== $this->args['button_details_gradient_bottom'] ) ) {
+						$this->add_css_property( $button, 'background', $this->args['button_details_gradient_top'] );
+						$this->add_css_property( $button, 'background-image', 'linear-gradient( to top, ' . $this->args['button_details_gradient_bottom'] . ', ' . $this->args['button_details_gradient_top'] . ' )' );
+					}
+
+					// Button border color.
+					if ( ! $this->is_default( 'button_details_border_color' ) ) {
+						$this->add_css_property( $button, 'border-color', $this->args['button_details_border_color'] );
+					}
+
+					$button_hover = $button . ':hover';
+
+					// Button hover text color.
+					if ( ! $this->is_default( 'button_details_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'color', $this->args['button_details_color_hover'] );
+					}
+
+					// Button gradient.
+					if ( ( isset( $this->args['button_details_gradient_top_hover'] ) && '' !== $this->args['button_details_gradient_top_hover'] ) || ( isset( $this->args['button_details_gradient_bottom_hover'] ) && '' !== $this->args['button_details_gradient_bottom_hover'] ) ) {
+						$this->add_css_property( $button_hover, 'background', $this->args['button_details_gradient_top_hover'] );
+						$this->add_css_property( $button_hover, 'background-image', 'linear-gradient( to top, ' . $this->args['button_details_gradient_bottom_hover'] . ', ' . $this->args['button_details_gradient_top_hover'] . ' )' );
+					}
+
+					// Button border color.
+					if ( ! $this->is_default( 'button_details_border_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'border-color', $this->args['button_details_border_color_hover'] );
+					}
 				} else {
-					$css_vars_options[] = 'product_link_color';
-					$css_vars_options[] = 'product_link_hover_color';
-					$css_vars_options[] = 'product_link_font_size';
-				}
 
-				if ( 'floated' === $this->args['variation_layout'] && ! $this->is_default( 'variation_label_area_width' ) ) {
-					$css_vars_options['variation_label_area_width'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				}
-
-				// Variation Label Typo.
-				$css_vars_options[]                       = 'label_color';
-				$css_vars_options['label_font_size']      = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars_options[]                       = 'label_line_height';
-				$css_vars_options['label_letter_spacing'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars_options[]                       = 'label_text_transform';
-
-				// Font family and weight.
-				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'label_typography', 'array' );
-				foreach ( $text_styles as $rule => $value ) {
-					$custom_vars[ 'label-typography-' . $rule ] = $value;
-				}
-
-				// Select variation type styling.
-				if ( ! $this->is_default( 'select_style' ) ) {
-					$css_vars_options['select_height']         = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['select_font_size']      = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[]                        = 'select_line_height';
-					$css_vars_options['select_letter_spacing'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[]                        = 'select_text_transform';
-
-					// Font family and weight.
-					$font_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'select_typography', 'array' );
-					foreach ( $font_styles as $rule => $value ) {
-						$custom_vars[ 'select-typography-' . $rule ] = $value;
+					// Link text color.
+					if ( ! $this->is_default( 'product_link_color' ) ) {
+						$this->add_css_property( $selector, 'color', $this->args['product_link_color'] );
 					}
 
-					$css_vars_options[]                             = 'select_color';
-					$css_vars_options[]                             = 'select_background';
-					$css_vars_options[]                             = 'select_border_color';
-					$css_vars_options['select_border_sizes_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['select_border_sizes_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['select_border_sizes_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['select_border_sizes_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
-					// Border separator with arrow.
-					if ( ! $this->is_default( 'select_border_color' ) && ! $this->is_default( 'select_border_sizes_right' ) && ! $this->is_default( 'select_border_sizes_left' ) ) {
-						$custom_vars['arrow-border-left'] = fusion_library()->sanitize->get_value_with_unit( $this->args['select_border_sizes_left'] ) . ' solid ' . $this->args['select_border_color'];
+					// Link hover text color.
+					if ( ! $this->is_default( 'product_link_hover_color' ) ) {
+						$this->add_css_property( $selector . ':hover', 'color', $this->args['product_link_hover_color'] );
 					}
 
-					$css_vars_options['border_radius_top_left']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['border_radius_top_right']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['border_radius_bottom_right'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['border_radius_bottom_left']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				}
-
-				// Swatch styling if enabled.
-				if ( ! $this->is_default( 'swatch_style' ) && $fusion_settings->get( 'woocommerce_variations' ) ) {
-					$css_vars_options['swatch_margin_top']          = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['swatch_margin_right']        = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['swatch_margin_bottom']       = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['swatch_margin_left']         = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[]                             = 'swatch_background_color';
-					$css_vars_options[]                             = 'swatch_border_color';
-					$css_vars_options[]                             = 'swatch_background_color_active';
-					$css_vars_options['swatch_border_sizes_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['swatch_border_sizes_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['swatch_border_sizes_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['swatch_border_sizes_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
-					if ( ! $this->is_default( 'swatch_border_color_active' ) ) {
-						$css_vars_options[]                       = 'swatch_border_color_active';
-						$custom_vars['swatch_border_color_hover'] = Fusion_Color::new_color( $this->args['swatch_border_color_active'] )->get_new( 'alpha', '0.5' )->to_css_var_or_rgba();
-					}
-
-					$css_vars_options['color_swatch_height']         = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_padding_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_padding_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_padding_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_padding_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_padding_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
-					// Color swatch.
-					if ( ! $this->is_default( 'color_swatch_width' ) ) {
-						$width                             = 'auto' === $this->args['color_swatch_width'] ? 'auto' : fusion_library()->sanitize->get_value_with_unit( $this->args['color_swatch_width'] );
-						$custom_vars['color_swatch_width'] = $width;
-					}
-
-					$css_vars_options['color_swatch_border_radius_top_left']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_border_radius_top_right']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_border_radius_bottom_right'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['color_swatch_border_radius_bottom_left']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
-					// Image swatch.
-					$css_vars_options['image_swatch_height']         = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['image_swatch_padding_top']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['image_swatch_padding_right']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['image_swatch_padding_bottom'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['image_swatch_padding_left']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
-					if ( ! $this->is_default( 'image_swatch_width' ) ) {
-						$width                                   = 'auto' === $this->args['image_swatch_width'] ? 'auto' : fusion_library()->sanitize->get_value_with_unit( $this->args['image_swatch_width'] );
-						$custom_vars['color_swatch_width']       = $width;
-						$custom_vars['color_swatch_image_width'] = 'auto' !== $this->args['image_swatch_width'] ? '100%' : 'auto';
-					}
-
-					$css_vars_options['image_swatch_border_radius_top_left']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['image_swatch_border_radius_top_right']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['image_swatch_border_radius_bottom_right'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['image_swatch_border_radius_bottom_left']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
-					// Button swatch.
-					$css_vars_options['button_swatch_height']                     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_padding_top']                = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_padding_right']              = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_padding_bottom']             = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_padding_left']               = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_border_radius_top_left']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_border_radius_top_right']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_border_radius_bottom_right'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_border_radius_bottom_left']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options['button_swatch_font_size']                  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					$css_vars_options[] = 'button_swatch_color';
-					$css_vars_options[] = 'button_swatch_color_active';
-
-					if ( ! $this->is_default( 'button_swatch_width' ) ) {
-						$width                              = 'auto' === $this->args['button_swatch_width'] ? 'auto' : fusion_library()->sanitize->get_value_with_unit( $this->args['button_swatch_width'] );
-						$custom_vars['button_swatch_width'] = $width;
+					// Link font size.
+					if ( ! $this->is_default( 'product_link_font_size' ) ) {
+						$this->add_css_property( $selector, 'font-size', $this->args['product_link_font_size'] );
 					}
 				}
 
-				return $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				$css                    = $this->parse_css();
+				$this->styles_generated = true;
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -1192,7 +961,7 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 			}
 
 			/**
-			 * Builds the array of attributes.
+			 * Builds the array of atributes.
 			 *
 			 * @access public
 			 * @since 3.3
@@ -1203,7 +972,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 					$this->args['hide_on_mobile'],
 					[
 						'class' => 'fusion-woo-cart fusion-post-card-cart',
-						'style' => $this->get_style_vars(),
 					]
 				);
 
@@ -1218,17 +986,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
-
-				$attr['class'] .= ' awb-variation-layout-' . $this->args['variation_layout'];
-				$attr['class'] .= ' awb-variation-clear-' . $this->args['variation_clear'];
-				$attr['class'] .= ' awb-label-' . $this->args['show_label'];
-
-				if ( '' !== $this->args['variation_text_align'] ) {
-					$attr['class'] .= ' awb-variation-text-align-' . $this->args['variation_text_align'];
-				}
-
-				$attr['class'] .= ' awb-add-to-cart-style-' . ( '' === $this->args['button_style'] ? 'link' : 'button' );
-				$attr['class'] .= ' awb-product-style-' . ( '' === $this->args['product_link_style'] ? 'link' : 'button' );
 
 				if ( $this->args['id'] ) {
 					$attr['id'] = $this->args['id'];
@@ -1247,6 +1004,8 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
 			 */
 			public function add_css_files() {
 				if ( class_exists( 'Avada' ) && class_exists( 'WooCommerce', false ) ) {
+					global $avada_woocommerce;
+					$avada_woocommerce->quick_view_init();
 					$version = Avada::get_theme_version();
 					Fusion_Dynamic_CSS::enqueue_style( Avada::$template_dir_path . '/assets/css/dynamic/woocommerce/woo-quick-view.min.css', Avada::$template_dir_url . '/assets/css/dynamic/woocommerce/woo-quick-view.min.css' );
 
@@ -1281,35 +1040,18 @@ if ( fusion_is_element_enabled( 'fusion_post_card_cart' ) ) {
  * @since 3.3
  */
 function fusion_element_post_card_cart() {
-	$fusion_settings = awb_get_fusion_settings();
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionSC_PostCardCart',
 			[
-				'name'         => esc_attr__( 'Post Card Cart', 'fusion-builder' ),
-				'shortcode'    => 'fusion_post_card_cart',
-				'icon'         => 'fusiona-post-cards-cart',
-				'templates'    => [ 'post_cards' ],
-				'component'    => true,
-				'subparam_map' => [
-					'variation_label_area_width'           => 'variation_label_width',
-					'fusion_font_family_label_typography'  => 'label_fonts',
-					'fusion_font_variant_label_typography' => 'label_fonts',
-					'label_font_size'                      => 'label_fonts',
-					'label_text_transform'                 => 'label_fonts',
-					'label_line_height'                    => 'label_fonts',
-					'label_letter_spacing'                 => 'label_fonts',
-					'label_color'                          => 'label_fonts',
-					'fusion_font_family_select_typography' => 'select_fonts',
-					'fusion_font_variant_select_typography' => 'select_fonts',
-					'select_font_size'                     => 'select_fonts',
-					'select_text_transform'                => 'select_fonts',
-					'select_line_height'                   => 'select_fonts',
-					'select_letter_spacing'                => 'select_fonts',
-					'select_color'                         => 'select_fonts',
-				],
-				'params'       => [
+				'name'      => esc_attr__( 'Post Card Cart', 'fusion-builder' ),
+				'shortcode' => 'fusion_post_card_cart',
+				'icon'      => 'fusiona-post-cards-cart',
+				'templates' => [ 'post_cards' ],
+				'component' => true,
+				'params'    => [
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Cart Layout', 'fusion-builder' ),
@@ -1383,22 +1125,6 @@ function fusion_element_post_card_cart() {
 						],
 						'callback'    => [
 							'function' => 'fusion_style_block',
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Show Variations', 'fusion-builder' ),
-						'description' => esc_attr__( 'Display the variations if product type is variable.', 'fusion-builder' ),
-						'param_name'  => 'show_variations',
-						'default'     => 'no',
-						'value'       => [
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_post_card_cart',
-							'ajax'     => true,
 						],
 					],
 					[
@@ -1489,6 +1215,11 @@ function fusion_element_post_card_cart() {
 						],
 						'dependency'  => [
 							[
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+							[
 								'element'  => 'show_add_to_cart_button',
 								'value'    => 'yes',
 								'operator' => '==',
@@ -1523,6 +1254,11 @@ function fusion_element_post_card_cart() {
 								'element'  => 'buttons_stretch',
 								'value'    => 'yes',
 								'operator' => '!=',
+							],
+							[
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 							[
 								'element'  => 'show_add_to_cart_button',
@@ -1572,6 +1308,11 @@ function fusion_element_post_card_cart() {
 								'operator' => '!=',
 							],
 							[
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+							[
 								'element'  => 'show_add_to_cart_button',
 								'value'    => 'yes',
 								'operator' => '==',
@@ -1618,7 +1359,7 @@ function fusion_element_post_card_cart() {
 						'callback'         => [
 							'function' => 'fusion_style_block',
 						],
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -1637,7 +1378,7 @@ function fusion_element_post_card_cart() {
 								'operator' => '==',
 							],
 						],
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
 						'type'             => 'dimension',
@@ -1654,7 +1395,7 @@ function fusion_element_post_card_cart() {
 						'callback'         => [
 							'function' => 'fusion_style_block',
 						],
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'       => [
 							[
 								'element'  => 'quantity_style',
@@ -1669,7 +1410,7 @@ function fusion_element_post_card_cart() {
 						'heading'          => esc_html__( 'Quantity Input Dimensions', 'fusion-builder' ),
 						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
 						'param_name'       => 'quantity_height_field',
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'            => [
 							'quantity_width'  => '',
 							'quantity_height' => '',
@@ -1691,7 +1432,7 @@ function fusion_element_post_card_cart() {
 						'heading'          => esc_html__( 'Quantity Border Radius', 'fusion-builder' ),
 						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
 						'param_name'       => 'quantity_border_radius',
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'            => [
 							'quantity_radius_top_left'     => '',
 							'quantity_radius_top_right'    => '',
@@ -1719,7 +1460,7 @@ function fusion_element_post_card_cart() {
 						'description' => esc_html__( 'Controls the font size of the select field. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
 						'param_name'  => 'quantity_font_size',
 						'value'       => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'quantity_style',
@@ -1738,7 +1479,7 @@ function fusion_element_post_card_cart() {
 						'param_name'  => 'quantity_color',
 						'value'       => '',
 						'default'     => $fusion_settings->get( 'body_typography', 'color' ),
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'quantity_style',
@@ -1757,7 +1498,7 @@ function fusion_element_post_card_cart() {
 						'param_name'  => 'quantity_background',
 						'value'       => '',
 						'default'     => 'rgba(255,255,255,0)',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'quantity_style',
@@ -1780,7 +1521,7 @@ function fusion_element_post_card_cart() {
 							'quantity_border_sizes_bottom' => '',
 							'quantity_border_sizes_left'   => '',
 						],
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'quantity_style',
@@ -1802,7 +1543,7 @@ function fusion_element_post_card_cart() {
 						'description' => esc_attr__( 'Controls the border color of the select fields.', 'fusion-builder' ),
 						'param_name'  => 'quantity_border_color',
 						'value'       => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'default'     => $fusion_settings->get( 'sep_color' ),
 						'dependency'  => [
 							[
@@ -1826,7 +1567,7 @@ function fusion_element_post_card_cart() {
 							'qbutton_border_sizes_bottom' => '',
 							'qbutton_border_sizes_left'   => '',
 						],
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'quantity_style',
@@ -1843,97 +1584,166 @@ function fusion_element_post_card_cart() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Quantity Button Text Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the select fields.', 'fusion-builder' ),
-						'param_name'    => 'qbutton_color',
-						'value'         => '',
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'default'       => $fusion_settings->get( 'body_typography', 'color' ),
-						'dependency'    => [
+						'type'             => 'subgroup',
+						'heading'          => esc_html__( 'Quantity Button Styling', 'fusion-builder' ),
+						'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+						'param_name'       => 'quantity_styling',
+						'default'          => 'regular',
+						'group'            => esc_html__( 'Design', 'fusion-builder' ),
+						'remove_from_atts' => true,
+						'value'            => [
+							'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+							'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
+						],
+						'icons'            => [
+							'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+							'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
+						],
+						'dependency'       => [
 							[
 								'element'  => 'quantity_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
-							'function' => 'fusion_style_block',
-						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'body_typography' ),
-								'preview' => [
-									'selector' => '.quantity input.minus, .quantity input.plus',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'qbutton_background', 'qbutton_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Quantity Button Background Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the background color of the select fields.', 'fusion-builder' ),
-						'param_name'    => 'qbutton_background',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'qty_bg_color' ),
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Quantity Button Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the select fields.', 'fusion-builder' ),
+						'param_name'  => 'qbutton_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'body_typography', 'color' ),
+						'subgroup'    => [
+							'name' => 'quantity_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'quantity_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'qty_bg_hover_color' ),
-								'preview' => [
-									'selector' => '.quantity input.minus, .quantity input.plus',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'qbutton_color', 'qbutton_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Quantity Button Border Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the border color of the select fields.', 'fusion-builder' ),
-						'param_name'    => 'qbutton_border_color',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'sep_color' ),
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Quantity Button Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the background color of the select fields.', 'fusion-builder' ),
+						'param_name'  => 'qbutton_background',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'qty_bg_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'quantity_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'quantity_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'qty_bg_hover_color' ),
-								'preview' => [
-									'selector' => '.quantity input.minus, .quantity input.plus',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Quantity Button Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the select fields.', 'fusion-builder' ),
+						'param_name'  => 'qbutton_border_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'sep_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'quantity_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'quantity_style',
+								'value'    => 'custom',
+								'operator' => '==',
 							],
 						],
-						'connect-state' => [ 'qbutton_color', 'qbutton_background' ],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Quantity Button Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the select fields.', 'fusion-builder' ),
+						'param_name'  => 'qbutton_color_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'body_typography', 'color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'quantity_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'quantity_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Quantity Button Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the background color of the select fields.', 'fusion-builder' ),
+						'param_name'  => 'qbutton_background_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'qty_bg_hover_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'quantity_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'quantity_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Quantity Button Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the select fields.', 'fusion-builder' ),
+						'param_name'  => 'qbutton_border_color_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'sep_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'quantity_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'quantity_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
 					],
 					[
 						'type'             => 'dimension',
@@ -1950,7 +1760,7 @@ function fusion_element_post_card_cart() {
 						'callback'         => [
 							'function' => 'fusion_style_block',
 						],
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'       => [
 							[
 								'element'  => 'show_add_to_cart_button',
@@ -1969,7 +1779,7 @@ function fusion_element_post_card_cart() {
 							'custom' => esc_attr__( 'Button', 'fusion-builder' ),
 						],
 						'default'     => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'show_add_to_cart_button',
@@ -1984,13 +1794,16 @@ function fusion_element_post_card_cart() {
 						'description' => esc_attr__( 'Controls the button size.', 'fusion-builder' ),
 						'param_name'  => 'button_size',
 						'default'     => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'       => [
 							''       => esc_attr__( 'Default', 'fusion-builder' ),
 							'small'  => esc_attr__( 'Small', 'fusion-builder' ),
 							'medium' => esc_attr__( 'Medium', 'fusion-builder' ),
 							'large'  => esc_attr__( 'Large', 'fusion-builder' ),
 							'xlarge' => esc_attr__( 'XLarge', 'fusion-builder' ),
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
 						'dependency'  => [
 							[
@@ -2005,14 +1818,14 @@ function fusion_element_post_card_cart() {
 							],
 						],
 					],
+
 					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Button Border Size', 'fusion-builder' ),
-						'param_name'       => 'button_border_width',
-						'description'      => esc_attr__( 'Controls the border size. In pixels.', 'fusion-builder' ),
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'       => [
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Button Border Size', 'fusion-builder' ),
+						'param_name'  => 'button_border_width',
+						'description' => esc_attr__( 'Controls the border size. In pixels.', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
@@ -2024,13 +1837,12 @@ function fusion_element_post_card_cart() {
 								'operator' => '==',
 							],
 						],
-						'value'            => [
-							'button_border_top'    => '',
-							'button_border_right'  => '',
-							'button_border_bottom' => '',
-							'button_border_left'   => '',
-						],
-						'callback'         => [
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_border_width' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 							'args'     => [
 
@@ -2044,7 +1856,7 @@ function fusion_element_post_card_cart() {
 						'param_name'  => 'button_icon',
 						'value'       => '',
 						'description' => esc_attr__( 'Click an icon to select, click again to deselect.', 'fusion-builder' ),
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'button_style',
@@ -2068,7 +1880,7 @@ function fusion_element_post_card_cart() {
 							'right' => esc_attr__( 'Right', 'fusion-builder' ),
 						],
 						'default'     => 'left',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'button_style',
@@ -2093,7 +1905,64 @@ function fusion_element_post_card_cart() {
 						'description' => esc_html__( 'Controls the font size of the text link. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
 						'param_name'  => 'link_font_size',
 						'value'       => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'show_add_to_cart_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'             => 'subgroup',
+						'heading'          => esc_html__( 'Add To Cart Link Styling', 'fusion-builder' ),
+						'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+						'param_name'       => 'link_styling',
+						'default'          => 'regular',
+						'group'            => esc_html__( 'Design', 'fusion-builder' ),
+						'remove_from_atts' => true,
+						'value'            => [
+							'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+							'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
+						],
+						'icons'            => [
+							'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+							'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
+						],
+						'dependency'       => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'show_add_to_cart_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Link Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the link.', 'fusion-builder' ),
+						'param_name'  => 'link_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'link_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'link_styling',
+							'tab'  => 'regular',
+						],
 						'dependency'  => [
 							[
 								'element'  => 'button_style',
@@ -2112,12 +1981,16 @@ function fusion_element_post_card_cart() {
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Link Text Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the text color of the link.', 'fusion-builder' ),
-						'param_name'  => 'link_color',
+						'heading'     => esc_attr__( 'Link Text Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text hover color of the link.', 'fusion-builder' ),
+						'param_name'  => 'link_hover_color',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'link_color' ),
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'primary_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'link_styling',
+							'tab'  => 'hover',
+						],
 						'dependency'  => [
 							[
 								'element'  => 'button_style',
@@ -2133,28 +2006,24 @@ function fusion_element_post_card_cart() {
 						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'param_name' => 'link_hover_color',
-								'default'    => $fusion_settings->get( 'link_hover_color' ),
-								'preview'    => [
-									'selector' => '.fusion-post-card-cart-add-to-cart',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Text Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_color',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'button_accent_color' ),
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'    => [
+						'type'             => 'subgroup',
+						'heading'          => esc_html__( 'Button Styling', 'fusion-builder' ),
+						'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+						'param_name'       => 'button_styling',
+						'default'          => 'regular',
+						'group'            => esc_html__( 'Design', 'fusion-builder' ),
+						'remove_from_atts' => true,
+						'value'            => [
+							'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+							'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
+						],
+						'icons'            => [
+							'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+							'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
+						],
+						'dependency'       => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
@@ -2166,31 +2035,20 @@ function fusion_element_post_card_cart() {
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
-							'function' => 'fusion_style_block',
-						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_accent_hover_color' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-add-to-cart',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_gradient_top', 'button_gradient_bottom', 'button_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Gradient Top Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_gradient_top',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'primary_color' ),
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_accent_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
@@ -2202,31 +2060,23 @@ function fusion_element_post_card_cart() {
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_gradient_top_color_hover' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-add-to-cart',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_color', 'button_gradient_bottom', 'button_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Gradient Bottom Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_gradient_bottom',
-						'value'         => '',
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'default'       => $fusion_settings->get( 'button_gradient_bottom_color' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Top Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_top',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'primary_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
@@ -2238,31 +2088,23 @@ function fusion_element_post_card_cart() {
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-add-to-cart',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_gradient_top', 'button_color', 'button_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Border Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_border_color',
-						'value'         => '',
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'default'       => $fusion_settings->get( 'button_border_color' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Bottom Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_bottom',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_gradient_bottom_color' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
@@ -2274,21 +2116,149 @@ function fusion_element_post_card_cart() {
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_border_hover_color' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-add-to-cart',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_border_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_border_color' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'show_add_to_cart_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 						],
-						'connect-state' => [ 'button_gradient_top', 'button_gradient_bottom', 'button_color' ],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Text Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_color_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_accent_hover_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'show_add_to_cart_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Top Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_top_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_gradient_top_color_hover' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'show_add_to_cart_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Bottom Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_bottom_hover',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'show_add_to_cart_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Border Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_border_color_hover',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_border_hover_color' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'show_add_to_cart_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -2300,7 +2270,7 @@ function fusion_element_post_card_cart() {
 							'custom' => esc_attr__( 'Button', 'fusion-builder' ),
 						],
 						'default'     => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'show_product_link_button',
@@ -2324,7 +2294,7 @@ function fusion_element_post_card_cart() {
 						'callback'         => [
 							'function' => 'fusion_style_block',
 						],
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'       => [
 							[
 								'element'  => 'show_product_link_button',
@@ -2339,7 +2309,64 @@ function fusion_element_post_card_cart() {
 						'description' => esc_html__( 'Controls the font size of the text link. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
 						'param_name'  => 'product_link_font_size',
 						'value'       => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'product_link_style',
+								'value'    => 'custom',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'             => 'subgroup',
+						'heading'          => esc_html__( 'Product Link Styling', 'fusion-builder' ),
+						'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+						'param_name'       => 'product_link_styling_options',
+						'default'          => 'regular',
+						'group'            => esc_html__( 'Design', 'fusion-builder' ),
+						'remove_from_atts' => true,
+						'value'            => [
+							'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+							'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
+						],
+						'icons'            => [
+							'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+							'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
+						],
+						'dependency'       => [
+							[
+								'element'  => 'product_link_style',
+								'value'    => 'custom',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Product Link Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the link.', 'fusion-builder' ),
+						'param_name'  => 'product_link_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_accent_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'product_link_styling_options',
+							'tab'  => 'regular',
+						],
 						'dependency'  => [
 							[
 								'element'  => 'product_link_style',
@@ -2358,12 +2385,16 @@ function fusion_element_post_card_cart() {
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Product Link Text Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the text color of the link.', 'fusion-builder' ),
-						'param_name'  => 'product_link_color',
+						'heading'     => esc_attr__( 'Product Link Text Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text hover color of the link.', 'fusion-builder' ),
+						'param_name'  => 'product_link_hover_color',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'button_accent_color' ),
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'primary_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'product_link_styling_options',
+							'tab'  => 'hover',
+						],
 						'dependency'  => [
 							[
 								'element'  => 'product_link_style',
@@ -2379,18 +2410,6 @@ function fusion_element_post_card_cart() {
 						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'param_name' => 'product_link_hover_color',
-								'default'    => $fusion_settings->get( 'link_hover_color' ),
-								'preview'    => [
-									'selector' => '.fusion-post-card-cart-product-link',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -2398,7 +2417,7 @@ function fusion_element_post_card_cart() {
 						'description' => esc_attr__( 'Controls the button size.', 'fusion-builder' ),
 						'param_name'  => 'button_details_size',
 						'default'     => '',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'       => [
 							''       => esc_attr__( 'Default', 'fusion-builder' ),
 							'small'  => esc_attr__( 'Small', 'fusion-builder' ),
@@ -2423,13 +2442,12 @@ function fusion_element_post_card_cart() {
 						],
 					],
 					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Button Border Size', 'fusion-builder' ),
-						'param_name'       => 'button_details_border_width',
-						'description'      => esc_attr__( 'Controls the border size. In pixels.', 'fusion-builder' ),
-						'group'            => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'       => [
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Button Border Size', 'fusion-builder' ),
+						'param_name'  => 'button_details_border_width',
+						'description' => esc_attr__( 'Controls the border size. In pixels.', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
 							[
 								'element'  => 'product_link_style',
 								'value'    => 'custom',
@@ -2441,13 +2459,12 @@ function fusion_element_post_card_cart() {
 								'operator' => '==',
 							],
 						],
-						'value'            => [
-							'button_details_border_top'    => '',
-							'button_details_border_right'  => '',
-							'button_details_border_bottom' => '',
-							'button_details_border_left'   => '',
-						],
-						'callback'         => [
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_border_width' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 							'args'     => [
 
@@ -2461,7 +2478,7 @@ function fusion_element_post_card_cart() {
 						'param_name'  => 'button_details_icon',
 						'value'       => '',
 						'description' => esc_attr__( 'Click an icon to select, click again to deselect.', 'fusion-builder' ),
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'product_link_style',
@@ -2485,7 +2502,7 @@ function fusion_element_post_card_cart() {
 							'right' => esc_attr__( 'Right', 'fusion-builder' ),
 						],
 						'default'     => 'left',
-						'group'       => esc_attr__( 'Cart', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
 								'element'  => 'product_link_style',
@@ -2505,428 +2522,56 @@ function fusion_element_post_card_cart() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Text Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_details_color',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'button_accent_color' ),
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'    => [
-							[
-								'element'  => 'product_link_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_product_link_button',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'      => [
-							'function' => 'fusion_style_block',
-						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_accent_hover_color' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-product-link',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_details_gradient_top', 'button_details_gradient_bottom', 'button_details_border_color' ],
-					],
-					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Gradient Top Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_details_gradient_top',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'button_gradient_top_color' ),
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'dependency'    => [
-							[
-								'element'  => 'product_link_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_product_link_button',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'      => [
-							'function' => 'fusion_style_block',
-						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_gradient_top_color_hover' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-product-link',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_details_color', 'button_details_gradient_bottom', 'button_details_border_color' ],
-					],
-					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Gradient Bottom Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_details_gradient_bottom',
-						'value'         => '',
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'default'       => $fusion_settings->get( 'button_gradient_bottom_color' ),
-						'dependency'    => [
-							[
-								'element'  => 'product_link_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_product_link_button',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'      => [
-							'function' => 'fusion_style_block',
-						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-product-link',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_details_color', 'button_details_gradient_top', 'button_details_border_color' ],
-					],
-					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Border Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_details_border_color',
-						'value'         => '',
-						'group'         => esc_attr__( 'Cart', 'fusion-builder' ),
-						'default'       => $fusion_settings->get( 'button_border_color' ),
-						'dependency'    => [
-							[
-								'element'  => 'product_link_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_product_link_button',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'      => [
-							'function' => 'fusion_style_block',
-						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_border_hover_color' ),
-								'preview' => [
-									'selector' => '.fusion-post-card-cart-product-link',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_details_color', 'button_details_gradient_top', 'button_details_gradient_bottom' ],
-					],
-					[
-						'heading'    => '',
-						'content'    => __( '<i class="fusiona-info-circle"></i> Please enable <b>Show Variations</b> option on <b>General Tabs</b> in order to display variation options.', 'fusion-builder' ),
-						'param_name' => 'variations_info',
-						'type'       => 'info',
-						'group'      => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency' => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'yes',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Variation Layout', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select the layout for the variations.  Floated will have the label and select side by side.  Stacked will have one per row.', 'fusion-builder' ),
-						'param_name'  => 'variation_layout',
-						'default'     => 'floated',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'value'       => [
-							'floated' => esc_attr__( 'Floated', 'fusion-builder' ),
-							'stacked' => esc_attr__( 'Stacked', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Show Label', 'fusion-builder' ),
-						'description' => esc_attr__( 'Display the variation attribute label.', 'fusion-builder' ),
-						'param_name'  => 'show_label',
-						'default'     => 'yes',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'value'       => [
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Label Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the label text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'label_fonts',
-						'choices'          => [
-							'font-family'    => 'label_typography',
-							'font-size'      => 'label_font_size',
-							'text-transform' => 'label_text_transform',
-							'line-height'    => 'label_line_height',
-							'letter-spacing' => 'label_letter_spacing',
-							'color'          => 'label_color',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => $fusion_settings->get( 'body_typography', 'color' ),
-						],
-						'remove_from_atts' => true,
-						'global'           => true,
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'show_label',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Label Width', 'fusion-builder' ),
-						'description'      => esc_html__( 'Leave empty for automatic width.  Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'variation_label_width',
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'callback'         => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'variation_label_area_width' => '',
-						],
-						'dependency'       => [
-							[
-								'element'  => 'variation_layout',
-								'value'    => 'floated',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'show_label',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Text Alignment', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select the text alignment for the variation label and variation swatches.', 'fusion-builder' ),
-						'param_name'  => 'variation_text_align',
-						'default'     => '',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'value'       => [
-							''       => esc_attr__( 'Text Flow', 'fusion-builder' ),
-							'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-							'center' => esc_attr__( 'Center', 'fusion-builder' ),
-							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-
-					// Swatch Styles.
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Swatch Style', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select whether you want to custom style the Avada variation swatches.', 'fusion-builder' ),
-						'param_name'  => 'swatch_style',
-						'value'       => [
-							''       => esc_attr__( 'Default', 'fusion-builder' ),
-							'custom' => esc_attr__( 'Custom', 'fusion-builder' ),
-						],
-						'default'     => '',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Swatch Item Margin', 'fusion-builder' ),
-						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
-						'param_name'       => 'swatch_margin',
-						'value'            => [
-							'swatch_margin_top'    => '',
-							'swatch_margin_right'  => '',
-							'swatch_margin_bottom' => '',
-							'swatch_margin_left'   => '',
-						],
-						'callback'         => [
-							'function' => 'fusion_style_block',
-						],
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'dimension',
-						'heading'     => esc_attr__( 'Swatch Border Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the border size of the color, image and button swatch fields.', 'fusion-builder' ),
-						'param_name'  => 'swatch_border_sizes',
-						'value'       => [
-							'swatch_border_sizes_top'    => '',
-							'swatch_border_sizes_right'  => '',
-							'swatch_border_sizes_bottom' => '',
-							'swatch_border_sizes_left'   => '',
-						],
-						'callback'    => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'dependency'  => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-					],
-					[
 						'type'             => 'subgroup',
-						'heading'          => esc_html__( 'Swatch Styling', 'fusion-builder' ),
+						'heading'          => esc_html__( 'Button Styling', 'fusion-builder' ),
 						'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
-						'param_name'       => 'swatch_styling',
+						'param_name'       => 'button_details_styling',
 						'default'          => 'regular',
-						'group'            => esc_html__( 'Variations', 'fusion-builder' ),
+						'group'            => esc_html__( 'Design', 'fusion-builder' ),
 						'remove_from_atts' => true,
 						'value'            => [
 							'regular' => esc_html__( 'Regular', 'fusion-builder' ),
-							'active'  => esc_html__( 'Active', 'fusion-builder' ),
+							'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
 						],
 						'icons'            => [
 							'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
-							'active'  => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
+							'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
 						],
 						'dependency'       => [
 							[
-								'element'  => 'swatch_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 						],
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Swatch Background Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the background color of the color, image and button swatch fields.', 'fusion-builder' ),
-						'param_name'  => 'swatch_background_color',
+						'heading'     => esc_attr__( 'Button Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_color',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'form_bg_color' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_accent_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'subgroup'    => [
-							'name' => 'swatch_styling',
+							'name' => 'button_details_styling',
 							'tab'  => 'regular',
 						],
 						'dependency'  => [
 							[
-								'element'  => 'swatch_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 						],
 						'callback'    => [
@@ -2935,53 +2580,26 @@ function fusion_element_post_card_cart() {
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Swatch Active Background Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the background color of the color, image and button swatch fields when active.', 'fusion-builder' ),
-						'param_name'  => 'swatch_background_color_active',
+						'heading'     => esc_attr__( 'Button Gradient Top Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_gradient_top',
 						'value'       => '',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_gradient_top_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'subgroup'    => [
-							'name' => 'swatch_styling',
-							'tab'  => 'active',
-						],
-						'dependency'  => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-						'callback'    => [
-							'function' => 'fusion_style_block',
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Swatch Border Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the border color of the color, image and button swatch fields.', 'fusion-builder' ),
-						'param_name'  => 'swatch_border_color',
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'form_border_color' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'subgroup'    => [
-							'name' => 'swatch_styling',
+							'name' => 'button_details_styling',
 							'tab'  => 'regular',
 						],
 						'dependency'  => [
 							[
-								'element'  => 'swatch_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 						],
 						'callback'    => [
@@ -2990,530 +2608,138 @@ function fusion_element_post_card_cart() {
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Swatch Active Border Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the border color of the color, image and button swatch fields when active.', 'fusion-builder' ),
-						'param_name'  => 'swatch_border_color_active',
+						'heading'     => esc_attr__( 'Button Gradient Bottom Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_gradient_bottom',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'form_focus_border_color' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_gradient_bottom_color' ),
 						'subgroup'    => [
-							'name' => 'swatch_styling',
-							'tab'  => 'active',
+							'name' => 'button_details_styling',
+							'tab'  => 'regular',
 						],
 						'dependency'  => [
 							[
-								'element'  => 'swatch_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 						],
 						'callback'    => [
 							'function' => 'fusion_style_block',
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Color Swatch Dimensions', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'color_swatch_dimensions',
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'value'            => [
-							'color_swatch_width'  => '',
-							'color_swatch_height' => '',
-						],
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Color Swatch Padding', 'fusion-builder' ),
-						'description'      => esc_attr__( 'Controls the padding of the color swatches.  Enter values including any valid CSS unit, ex: 10px or 10%.', 'fusion-builder' ),
-						'param_name'       => 'color_swatch_padding',
-						'callback'         => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'color_swatch_padding_top'    => '',
-							'color_swatch_padding_right'  => '',
-							'color_swatch_padding_bottom' => '',
-							'color_swatch_padding_left'   => '',
-						],
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Color Swatch Border Radius', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'color_swatch_border_radius',
-						'callback'         => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'color_swatch_border_radius_top_left'  => '',
-							'color_swatch_border_radius_top_right' => '',
-							'color_swatch_border_radius_bottom_right' => '',
-							'color_swatch_border_radius_bottom_left' => '',
-						],
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Image Swatch Dimensions', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'image_swatch_dimensions',
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'value'            => [
-							'image_swatch_height' => '',
-							'image_swatch_width'  => '',
-						],
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Image Swatch Padding', 'fusion-builder' ),
-						'description'      => esc_attr__( 'Controls the padding of the image swatches.  Enter values including any valid CSS unit, ex: 10px or 10%.', 'fusion-builder' ),
-						'param_name'       => 'image_swatch_padding',
-						'callback'         => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'image_swatch_padding_top'    => '',
-							'image_swatch_padding_right'  => '',
-							'image_swatch_padding_bottom' => '',
-							'image_swatch_padding_left'   => '',
-						],
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Image Swatch Border Radius', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'image_swatch_border_radius',
-						'callback'         => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'image_swatch_border_radius_top_left'  => '',
-							'image_swatch_border_radius_top_right' => '',
-							'image_swatch_border_radius_bottom_right' => '',
-							'image_swatch_border_radius_bottom_left' => '',
-						],
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Button Swatch Dimensions', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.  Leave empty for auto.', 'fusion-builder' ),
-						'param_name'       => 'button_swatch_dimensions',
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'value'            => [
-							'button_swatch_width'  => '',
-							'button_swatch_height' => '',
-						],
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Button Swatch Padding', 'fusion-builder' ),
-						'description'      => esc_attr__( 'Controls the padding of the button swatches.  Enter values including any valid CSS unit, ex: 10px or 10%.', 'fusion-builder' ),
-						'param_name'       => 'button_swatch_padding',
-						'callback'         => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'button_swatch_padding_top'    => '',
-							'button_swatch_padding_right'  => '',
-							'button_swatch_padding_bottom' => '',
-							'button_swatch_padding_left'   => '',
-						],
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Button Swatch Border Radius', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'button_swatch_border_radius',
-						'callback'         => [
-							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'button_swatch_border_radius_top_left'  => '',
-							'button_swatch_border_radius_top_right' => '',
-							'button_swatch_border_radius_bottom_right' => '',
-							'button_swatch_border_radius_bottom_left' => '',
-						],
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Button Swatch Font Size', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls the font size of the button swatches. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
-						'param_name'  => 'button_swatch_font_size',
-						'value'       => '',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'callback'    => [
-							'function' => 'fusion_style_block',
-						],
-						'dependency'  => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
 						],
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Button Swatch Text Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the text color of the button swatches.', 'fusion-builder' ),
-						'param_name'  => 'button_swatch_color',
+						'heading'     => esc_attr__( 'Button Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_border_color',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'link_color' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'callback'    => [
-							'function' => 'fusion_style_block',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_border_color' ),
+						'subgroup'    => [
+							'name' => 'button_details_styling',
+							'tab'  => 'regular',
 						],
 						'dependency'  => [
 							[
-								'element'  => 'swatch_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Button Swatch Active Text Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the text color of the button swatches when active.', 'fusion-builder' ),
-						'param_name'  => 'button_swatch_color_active',
+						'heading'     => esc_attr__( 'Button Text Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_color_hover',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'primary_color' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_accent_hover_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_details_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'product_link_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
+							],
+						],
 						'callback'    => [
 							'function' => 'fusion_style_block',
-						],
-						'dependency'  => [
-							[
-								'element'  => 'swatch_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-
-					// Select Styles.
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Select Style', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select whether you want to custom style the select fields for variations.', 'fusion-builder' ),
-						'param_name'  => 'select_style',
-						'value'       => [
-							''       => esc_attr__( 'Default', 'fusion-builder' ),
-							'custom' => esc_attr__( 'Custom', 'fusion-builder' ),
-						],
-						'default'     => '',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Select Height', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'field_height',
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'value'            => [
-							'select_height' => '',
-						],
-						'dependency'       => [
-							[
-								'element'  => 'select_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-
-					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Select Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the Select option. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'select_fonts',
-						'choices'          => [
-							'font-family'    => 'select_typography',
-							'font-size'      => 'select_font_size',
-							'text-transform' => 'select_text_transform',
-							'line-height'    => 'select_line_height',
-							'letter-spacing' => 'select_letter_spacing',
-							'color'          => 'select_color',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
-						],
-						'remove_from_atts' => true,
-						'global'           => true,
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'select_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
 						],
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Select Background Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the background color of the select fields.', 'fusion-builder' ),
-						'param_name'  => 'select_background',
+						'heading'     => esc_attr__( 'Button Gradient Top Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_gradient_top_hover',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'form_bg_color' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'callback'    => [
-							'function' => 'fusion_style_block',
+						'default'     => $fusion_settings->get( 'button_gradient_top_color_hover' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_details_styling',
+							'tab'  => 'hover',
 						],
 						'dependency'  => [
 							[
-								'element'  => 'select_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
-						],
-					],
-					[
-						'type'        => 'dimension',
-						'heading'     => esc_attr__( 'Select Border Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the border size of the select fields.', 'fusion-builder' ),
-						'param_name'  => 'select_border_sizes',
-						'value'       => [
-							'select_border_sizes_top'    => '',
-							'select_border_sizes_right'  => '',
-							'select_border_sizes_bottom' => '',
-							'select_border_sizes_left'   => '',
 						],
 						'callback'    => [
 							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
 						],
-						'dependency'  => [
-							[
-								'element'  => 'select_style',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Select Border Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the border color of the select fields.', 'fusion-builder' ),
-						'param_name'  => 'select_border_color',
+						'heading'     => esc_attr__( 'Button Gradient Bottom Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_gradient_bottom_hover',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'form_border_color' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
+						'subgroup'    => [
+							'name' => 'button_details_styling',
+							'tab'  => 'hover',
+						],
 						'dependency'  => [
 							[
-								'element'  => 'select_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 						],
 						'callback'    => [
@@ -3521,147 +2747,31 @@ function fusion_element_post_card_cart() {
 						],
 					],
 					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Select Border Radius', 'fusion-builder' ),
-						'description'      => esc_html__( 'Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'border_radius',
-						'group'            => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'       => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Border Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_details_border_color_hover',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_border_hover_color' ),
+						'subgroup'    => [
+							'name' => 'button_details_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
 							[
-								'element'  => 'select_style',
+								'element'  => 'product_link_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
+								'element'  => 'show_product_link_button',
+								'value'    => 'yes',
+								'operator' => '==',
 							],
 						],
-						'callback'         => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
-							'args'     => [
-
-								'dimension' => true,
-							],
-						],
-						'value'            => [
-							'border_radius_top_left'     => '',
-							'border_radius_top_right'    => '',
-							'border_radius_bottom_right' => '',
-							'border_radius_bottom_left'  => '',
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Variation Clear', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls how you want to disable the variation clear link.', 'fusion-builder' ),
-						'param_name'  => 'variation_clear',
-						'value'       => [
-							'absolute' => esc_attr__( 'Absolute', 'fusion-builder' ),
-							'inline'   => esc_attr__( 'Inline', 'fusion-builder' ),
-							'hide'     => esc_attr__( 'Hide', 'fusion-builder' ),
-						],
-						'default'     => 'absolute',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Clear Content', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the content type for the clear link.  Default will use WooCommerce text string.', 'fusion-builder' ),
-						'param_name'  => 'clear_content',
-						'value'       => [
-							''     => esc_attr__( 'Default', 'fusion-builder' ),
-							'text' => esc_attr__( 'Text', 'fusion-builder' ),
-							'icon' => esc_attr__( 'Icon', 'fusion-builder' ),
-						],
-						'default'     => '',
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'variation_clear',
-								'value'    => 'hide',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_post_card_cart',
-							'ajax'     => true,
-						],
-					],
-					[
-						'type'        => 'iconpicker',
-						'heading'     => esc_attr__( 'Clear Icon', 'fusion-builder' ),
-						'param_name'  => 'clear_icon',
-						'value'       => '',
-						'description' => esc_attr__( 'Click an icon to select, click again to deselect.', 'fusion-builder' ),
-						'group'       => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'variation_clear',
-								'value'    => 'hide',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'clear_content',
-								'value'    => 'icon',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_post_card_cart',
-							'ajax'     => true,
-						],
-					],
-					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Clear Text', 'fusion-builder' ),
-						'param_name'   => 'clear_text',
-						'value'        => '',
-						'description'  => esc_attr__( 'Custom text to use for the variation clear link.', 'fusion-builder' ),
-						'dynamic_data' => true,
-						'group'        => esc_attr__( 'Variations', 'fusion-builder' ),
-						'dependency'   => [
-							[
-								'element'  => 'variation_clear',
-								'value'    => 'hide',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'clear_content',
-								'value'    => 'text',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'show_variations',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-						'callback'     => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_post_card_cart',
-							'ajax'     => true,
 						],
 					],
 
@@ -3669,7 +2779,7 @@ function fusion_element_post_card_cart() {
 						'preview_selector' => '.fusion-post-card-cart',
 					],
 				],
-				'callback'     => [
+				'callback'  => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_post_card_cart',
 					'ajax'     => true,
@@ -3678,4 +2788,4 @@ function fusion_element_post_card_cart() {
 		)
 	);
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_post_card_cart' );
+add_action( 'wp_loaded', 'fusion_element_post_card_cart' );

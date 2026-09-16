@@ -8,23 +8,15 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_checklist-shortcode">
+<# if ( 'yes' === values.divider ) { #>
+	<style type="text/css">.fusion-checklist-{{ cid }}.fusion-checklist-divider .fusion-li-item { border-bottom-color:{{ values.divider_color }} !important ;}</style>
+<# } #>
 <ul {{{ _.fusionGetAttributes( checklistShortcode ) }}}></ul>
 </script>
 
 <script type="text/html" id="tmpl-fusion_li_item-shortcode">
 <span {{{ _.fusionGetAttributes( checklistShortcodeSpan ) }}}>
-	<# if ( 'numbered' === parentValues.type ) { #>
-		{{counter}}
-	<# } else { #>
-		<i {{{ _.fusionGetAttributes( checklistShortcodeIcon ) }}}></i>
-	<# } #>
+	<i {{{ _.fusionGetAttributes( checklistShortcodeIcon ) }}}></i>
 </span>
-<#
-		let itemContent = FusionPageBuilderApp.renderContent( output, cid, false );
-
-		if ( usingDynamicParent ) {
-			itemContent = '<?php esc_html_e( 'This checklist use dynamic data.  For a preview please check the front-end.', 'fusion-builder' ); ?>';
-		}
-#>
-<div {{{ _.fusionGetAttributes( checklistShortcodeItemContent ) }}}>{{{ itemContent }}}</div>
+<div {{{ _.fusionGetAttributes( checklistShortcodeItemContent ) }}}>{{{ FusionPageBuilderApp.renderContent( output, cid, false ) }}}</div>
 </script>

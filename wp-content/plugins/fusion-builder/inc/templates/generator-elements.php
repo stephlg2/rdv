@@ -42,9 +42,6 @@
 					<ul class="fusion-builder-all-modules">
 						<# _.each( generator_elements, function(module) { #>
 						<#
-						if ( 'mega_menus' === fusionBuilderConfig.template_category && 'fusion_menu' === module.label ) {
-							return;
-						}
 						if ( 'post_cards' === fusionBuilderConfig.template_category && 'fusion_post_cards' === module.label ) {
 							return;
 						}

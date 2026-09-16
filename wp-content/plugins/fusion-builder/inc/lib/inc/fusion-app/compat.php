@@ -116,6 +116,7 @@ if ( $fusion_is_builder_frame ) {
 		function() {
 			global $smile_modals, $smile_info_bars, $smile_slide_ins;
 
+
 			/**
 			 * Convert plus global modals.
 			 *

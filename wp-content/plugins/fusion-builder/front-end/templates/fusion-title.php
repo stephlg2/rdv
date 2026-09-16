@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_title-shortcode">
+{{{ style }}}
 <# if ( 'rotating' === title_type ) { #>
 	<div {{{ _.fusionGetAttributes( attr ) }}}>
 		<{{ title_tag }} {{{ _.fusionGetAttributes( headingAttr ) }}}>
@@ -54,7 +55,6 @@
 	<div class="title-sep-container">
 		<div {{{ _.fusionGetAttributes( separatorAttr ) }}}></div>
 	</div>
-	<span class="awb-title-spacer"></span>
 	<{{ title_tag }} {{{ _.fusionGetAttributes( headingAttr ) }}}>
 	<# if ( 'off' !== title_link ) { #>
 		<a href="#"> {{{ FusionPageBuilderApp.renderContent( output, cid, false ) }}} </a>
@@ -66,29 +66,22 @@
 	<# } else if ( 'center' == content_align || isFlex ) { #>
 <div {{{ _.fusionGetAttributes( attr ) }}}>
 	<#
-		var leftClasses            = 'title-sep-container title-sep-container-left',
-			rightClasses           = 'title-sep-container title-sep-container-right',
-			additionalLeftClasses  = '',
-			additionalRightClasses = '';
-
+		var leftClasses = 'title-sep-container title-sep-container-left',
+			rightClasses = 'title-sep-container title-sep-container-right';
 		_.each( ['large', 'medium', 'small' ], function( responsiveSize ) {
 			if ( ! content_align_sizes[ responsiveSize ] || 'center' === content_align_sizes[ responsiveSize ] ) {
 				return;
 			}
 			if ( 'left' == content_align_sizes[ responsiveSize ] ) {
-				additionalLeftClasses += ' fusion-no-' + responsiveSize + '-visibility';
+				leftClasses += ' fusion-no-' + responsiveSize + '-visibility';
 			} else {
-				additionalRightClasses += ' fusion-no-' + responsiveSize + '-visibility';
+				rightClasses += ' fusion-no-' + responsiveSize + '-visibility';
 			}
 		} );
-
-		leftClasses  += additionalLeftClasses;
-		rightClasses += additionalRightClasses;
 	#>
 	<div class="{{{ leftClasses }}}">
 		<div {{{ _.fusionGetAttributes( separatorAttr ) }}}></div>
 	</div>
-	<span class="awb-title-spacer{{{ additionalLeftClasses }}}"></span>
 	<{{ title_tag }} {{{ _.fusionGetAttributes( headingAttr ) }}}>
 		<# if ( 'off' !== title_link ) { #>
 			<a href="#"> {{{ FusionPageBuilderApp.renderContent( output, cid, false ) }}} </a>
@@ -96,7 +89,6 @@
 			{{{ FusionPageBuilderApp.renderContent( output, cid, false ) }}}
 		<# } #>
 	</{{ title_tag }}>
-	<span class="awb-title-spacer{{{ additionalRightClasses }}}"></span>
 	<div class="{{{ rightClasses }}}">
 		<div {{{ _.fusionGetAttributes( separatorAttr ) }}}></div>
 	</div>
@@ -110,7 +102,6 @@
 			{{{ FusionPageBuilderApp.renderContent( output, cid, false ) }}}
 		<# } #>
 	</{{ title_tag }}>
-	<span class="awb-title-spacer"></span>
 	<div class="title-sep-container">
 		<div {{{ _.fusionGetAttributes( separatorAttr ) }}}></div>
 	</div>

@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 		class FusionTB_Comments extends Fusion_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -37,7 +46,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 
 				// Ajax mechanism for live editor.
 				add_action( 'wp_ajax_get_' . $this->shortcode_handle, [ $this, 'ajax_render' ] );
-				add_action( 'pre_comment_on_post', [ $this, 'check_recaptcha' ] );
 			}
 
 			/**
@@ -60,17 +68,12 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'headings'            => 'show',
 					'heading_size'        => '2',
-					'heading_color'       => '',
 					'border_size'         => $fusion_settings->get( 'separator_border_size' ),
 					'border_color'        => $fusion_settings->get( 'sep_color' ),
-					'link_color'          => $fusion_settings->get( 'link_color' ),
-					'link_hover_color'    => $fusion_settings->get( 'link_hover_color' ),
-					'text_color'          => $fusion_settings->get( 'body_typography', 'color' ),
-					'meta_color'          => $fusion_settings->get( 'body_typography', 'color' ),
 					'avatar'              => 'square',
 					'padding'             => '40',
 					'margin_bottom'       => '',
@@ -84,9 +87,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 					'animation_type'      => '',
 					'animation_direction' => 'down',
 					'animation_speed'     => '0.1',
-					'animation_delay'     => '',
 					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'     => '',
 				];
 			}
 
@@ -99,7 +100,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'title_margin'       => $fusion_settings->get( 'title_margin' ),
 					'title_border_color' => $fusion_settings->get( 'title_border_color' ),
@@ -149,15 +150,13 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$is_builder      = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
-				$fusion_settings = awb_get_fusion_settings();
-				$this->defaults  = self::get_element_defaults();
-				$args            = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_comments' ); // here.
+				$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
+				$defaults   = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_tb_comments' );
 
-				$args['border_size'] = FusionBuilder::validate_shortcode_attr_value( $args['border_size'], 'px' );
-				$args['padding']     = FusionBuilder::validate_shortcode_attr_value( $args['padding'], 'px' );
+				$defaults['border_size'] = FusionBuilder::validate_shortcode_attr_value( $defaults['border_size'], 'px' );
+				$defaults['padding']     = FusionBuilder::validate_shortcode_attr_value( $defaults['padding'], 'px' );
 
-				$this->args = $args;
+				$this->args = $defaults;
 
 				$this->emulate_post();
 				$post_id = get_the_ID();
@@ -172,21 +171,12 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 				// Add filter to load template from FB.
 				add_filter( 'comments_template', [ $this, 'template' ] );
 
-				// Add filter to check if recaptcha needs to be added.
-				if ( ! is_user_logged_in() && $fusion_settings->get( 'recaptcha_comment_form' ) ) {
-					add_action( 'comment_form_after_fields', [ $this, 'render_recaptcha' ] );
-				}
-
-				set_query_var( 'fusion_tb_comments_args', $this->args );
+				set_query_var( 'fusion_tb_comments_args', $defaults );
 
 				comments_template();
 
 				// Remove filter.
 				remove_filter( 'comments_template', [ $this, 'template' ] );
-
-				if ( ! is_user_logged_in() && $fusion_settings->get( 'recaptcha_comment_form' ) ) {
-					remove_action( 'comment_form_after_fields', [ $this, 'render_recaptcha' ] );
-				}
 
 				$content .= ob_get_clean();
 
@@ -196,13 +186,41 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 					$content = preg_replace( '/<script\b[^>]*>(.*?)<\/script>/is', '', $content );
 				}
 
+				$styles = '<style type="text/css">';
+
+				if ( $this->args['border_size'] ) {
+					$styles .= '.fusion-comments-tb-' . $this->counter . ' .commentlist .the-comment{border-bottom-width:' . $this->args['border_size'] . ';}';
+				}
+
+				if ( $this->args['border_color'] ) {
+					$styles .= '.fusion-comments-tb-' . $this->counter . ' .commentlist .the-comment{border-color:' . $this->args['border_color'] . ';}';
+				}
+
+				if ( 'circle' === $this->args['avatar'] ) {
+					$styles .= '.fusion-comments-tb-' . $this->counter . '.circle .the-comment .avatar{border-radius: 50%;}';
+				}
+
+				if ( 'square' === $this->args['avatar'] ) {
+					$styles .= '.fusion-comments-tb-' . $this->counter . '.square .the-comment .avatar{border-radius: 0;}';
+				}
+
+				if ( 'hide' === $this->args['avatar'] ) {
+					$styles .= '.fusion-comments-tb-' . $this->counter . ' .commentlist .the-comment .comment-text{margin-left:0px;}';
+				}
+
+				if ( $this->args['padding'] ) {
+					$styles .= '.fusion-comments-tb-' . $this->counter . ' .commentlist .children{padding-left:' . $this->args['padding'] . ';}';
+				}
+
+				$styles .= '</style>';
+
 				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_comments-shortcode' ) . '>' . $content . '</div>';
 
 				$this->counter++;
 
 				$this->on_render();
 
-				return apply_filters( 'fusion_component_' . $this->shortcode_handle . '_content', $html, $args );
+				return apply_filters( 'fusion_component_' . $this->shortcode_handle . '_content', $styles . $html, $args );
 			}
 
 			/**
@@ -292,126 +310,21 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
+
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
 
-				if ( $this->args['avatar'] ) {
-					$attr['class'] .= ' avatar-' . $this->args['avatar'];
+				if ( 'hide' !== $this->args['avatar'] ) {
+					$attr['class'] .= ' ' . $this->args['avatar'];
 				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['id'] ) {
 					$attr['id'] = $this->args['id'];
 				}
 
 				return $attr;
-			}
-
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$css_vars_options = [
-					'margin_top'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'heading_color'    => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'link_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'link_hover_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'meta_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_size',
-					'padding',
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options );
-
-				return $styles;
-			}
-
-			/**
-			 * Render comment recaptcha html.
-			 *
-			 * @access public
-			 * @since 3.10
-			 * @return void
-			 */
-			public function render_recaptcha() {
-
-				AWB_Recaptcha_Helper::render_field(
-					[
-						'counter'       => $this->counter,
-						'element'       => 'comments',
-						'wrapper_class' => 'form-creator-recaptcha',
-					]
-				);
-
-				$recaptcha_error = ( isset( $_GET['recaptcha_error'] ) && '' !== $_GET['recaptcha_error'] ) ? sanitize_text_field( wp_unslash( $_GET['recaptcha_error'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification
-				$type            = ( isset( $_GET['type'] ) && '' !== $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification	
-				if ( $recaptcha_error && $type ) {
-					echo do_shortcode( '[fusion_alert margin_top="20px" type="' . $type . '"]' . $recaptcha_error . '[/fusion_alert]' );
-				}
-
-			}
-
-			/**
-			 * Check reCAPTCHA.
-			 *
-			 * @since 3.3
-			 * @access private
-			 * @param string $post_id current post id.
-			 * @return void
-			 */
-			public function check_recaptcha( $post_id ) {
-				$fusion_settings = awb_get_fusion_settings();
-				if ( $fusion_settings->get( 'recaptcha_comment_form' ) && ! isset( $_POST['g-recaptcha-response'] ) && empty( $_POST['g-recaptcha-response'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					wp_safe_redirect(
-						add_query_arg(
-							[
-								'type'            => 'error',
-								'recaptcha_error' => __( 'Sorry, ReCaptcha could not verify that you are a human. Please try again.', 'fusion-builder' ),
-							],
-							esc_url( get_permalink( $post_id ) )
-						)
-					);
-					exit;
-				}
-				if ( $fusion_settings->get( 'recaptcha_comment_form' ) && ! is_user_logged_in() && isset( $_POST['g-recaptcha-response'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					if ( $fusion_settings->get( 'recaptcha_public' ) && $fusion_settings->get( 'recaptcha_private' ) ) {
-						$response = AWB_Recaptcha_Helper::verify();
-						if ( is_array( $response ) && $response['has_error'] && $response['message'] ) {
-							wp_safe_redirect(
-								add_query_arg(
-									[
-										'type'            => 'error',
-										'recaptcha_error' => $response['message'],
-									],
-									esc_url( get_permalink( $post_id ) )
-								)
-							);
-							exit;
-						}
-					} else {
-						wp_safe_redirect(
-							add_query_arg(
-								[
-									'type'            => 'error',
-									'recaptcha_error' => esc_html__( 'reCAPTCHA configuration error. Please check the Global Options settings and your reCAPTCHA account settings.', 'fusion-builder' ),
-								],
-								esc_url( get_permalink( $post_id ) )
-							)
-						);
-						exit;
-					}
-				}
 			}
 
 			/**
@@ -430,29 +343,11 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
 			 * Load base CSS.
 			 *
 			 * @access public
-			 * @since 3.9
+			 * @since 3.0
 			 * @return void
 			 */
 			public function add_css_files() {
 				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/comments.min.css' );
-			}
-
-			/**
-			 * Sets the necessary scripts.
-			 *
-			 * @access public
-			 * @since 3.2
-			 */
-			public function on_first_render() {
-
-				// On first render is also called for live editor so when you add the element.  We don't need that here.
-				if ( null === $this->args || empty( $this->args ) ) {
-					return;
-				}
-
-				// Add reCAPTCHA script.
-				AWB_Recaptcha_Helper::enqueue_scripts();
-
 			}
 		}
 	}
@@ -466,18 +361,20 @@ if ( fusion_is_element_enabled( 'fusion_tb_comments' ) ) {
  * @since 2.2
  */
 function fusion_component_comments() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Comments',
 			[
-				'name'      => esc_attr__( 'Comments', 'fusion-builder' ),
-				'shortcode' => 'fusion_tb_comments',
-				'icon'      => 'fusiona-comments',
-				'component' => true,
-				'templates' => [ 'content' ],
-				'params'    => [
+				'name'                    => esc_attr__( 'Comments', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_comments',
+				'icon'                    => 'fusiona-comments',
+				'component'               => true,
+				'templates'               => [ 'content' ],
+				'components_per_template' => 1,
+				'params'                  => [
 					[
 						'type'        => 'sortable',
 						'heading'     => esc_attr__( 'Comments Template Order', 'fusion-builder' ),
@@ -487,18 +384,6 @@ function fusion_component_comments() {
 						'choices'     => [
 							'comments'     => esc_html__( 'Comments', 'fusion-builder' ),
 							'comment_form' => esc_html__( 'Comment Form', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Comment Avatar', 'fusion-builder' ),
-						'description' => esc_attr__( 'Make a section for user comment avatar.', 'fusion-builder' ),
-						'param_name'  => 'avatar',
-						'default'     => 'square',
-						'value'       => [
-							'square' => esc_html__( 'Square', 'fusion-builder' ),
-							'circle' => esc_html__( 'Circle', 'fusion-builder' ),
-							'hide'   => esc_html__( 'Hide', 'fusion-builder' ),
 						],
 					],
 					[
@@ -513,43 +398,19 @@ function fusion_component_comments() {
 						],
 					],
 					[
-						'heading'    => '',
-						'content'    => __( '<i class="fusiona-info-circle"></i> If you want to use reCaptcha, please enable <b>reCaptcha For Comments</b> from <b>Google reCaptcha</b> tab of the global options.', 'fusion-builder' ),
-						'param_name' => 'recaptcha_info',
-						'type'       => 'info',
-					],
-					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'HTML Heading Tag', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the heading, either div, p or the heading tag, h1-h6.', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'HTML Heading Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the size of the HTML heading that should be used, h1-h6.', 'fusion-builder' ),
 						'param_name'  => 'heading_size',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-							'p'   => 'P',
+							'1' => 'H1',
+							'2' => 'H2',
+							'3' => 'H3',
+							'4' => 'H4',
+							'5' => 'H5',
+							'6' => 'H6',
 						],
 						'default'     => '2',
-						'dependency'  => [
-							[
-								'element'  => 'headings',
-								'value'    => 'show',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Heading Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the heading color.', 'fusion-builder' ),
-						'param_name'  => 'heading_color',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'value'       => '',
 						'dependency'  => [
 							[
 								'element'  => 'headings',
@@ -563,7 +424,6 @@ function fusion_component_comments() {
 						'heading'     => esc_attr__( 'Comment Separator Border Size', 'fusion-builder' ),
 						'description' => esc_attr__( 'Controls the border size of the separators. In pixels.', 'fusion-builder' ),
 						'param_name'  => 'border_size',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'       => '',
 						'min'         => '0',
 						'max'         => '50',
@@ -575,7 +435,6 @@ function fusion_component_comments() {
 						'heading'     => esc_attr__( 'Comment Separator Border Color', 'fusion-builder' ),
 						'description' => esc_attr__( 'Controls the border color of the separators.', 'fusion-builder' ),
 						'param_name'  => 'border_color',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'       => '',
 						'default'     => $fusion_settings->get( 'sep_color' ),
 						'dependency'  => [
@@ -591,66 +450,22 @@ function fusion_component_comments() {
 						'heading'     => esc_attr__( 'Comment Indent', 'fusion-builder' ),
 						'description' => esc_attr__( 'Set left padding for child comments. In pixels.', 'fusion-builder' ),
 						'param_name'  => 'padding',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'       => '40',
 						'min'         => '0',
 						'max'         => '100',
 						'step'        => '1',
 					],
 					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Comment Separator Border Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the border color of the separators.', 'fusion-builder' ),
-						'param_name'  => 'border_color',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'sep_color' ),
-						'dependency'  => [
-							[
-								'element'  => 'border_size',
-								'value'    => '0',
-								'operator' => '!=',
-							],
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Comment Avatar', 'fusion-builder' ),
+						'description' => esc_attr__( 'Make a section for user comment avatar.', 'fusion-builder' ),
+						'param_name'  => 'avatar',
+						'default'     => 'square',
+						'value'       => [
+							'square' => esc_html__( 'Square', 'fusion-builder' ),
+							'circle' => esc_html__( 'Circle', 'fusion-builder' ),
+							'hide'   => esc_html__( 'Hide', 'fusion-builder' ),
 						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Link Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the link color.', 'fusion-builder' ),
-						'param_name'  => 'link_color',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'link_color' ),
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'default'    => $fusion_settings->get( 'link_hover_color' ),
-								'param_name' => 'link_hover_color',
-								'preview'    => [
-									'selector' => 'a',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Text Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the text color.', 'fusion-builder' ),
-						'param_name'  => 'text_color',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'body_typography', 'color' ),
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Meta Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the meta color.', 'fusion-builder' ),
-						'param_name'  => 'meta_color',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'body_typography', 'color' ),
 					],
 					[
 						'type'             => 'dimension',
@@ -658,7 +473,6 @@ function fusion_component_comments() {
 						'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
 						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
 						'param_name'       => 'margin',
-						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'            => [
 							'margin_top'    => '',
 							'margin_right'  => '',
@@ -692,7 +506,7 @@ function fusion_component_comments() {
 						'preview_selector' => '.fusion-comments-tb',
 					],
 				],
-				'callback'  => [
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_comments',
 					'ajax'     => true,

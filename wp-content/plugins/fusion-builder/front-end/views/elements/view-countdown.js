@@ -84,6 +84,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					headingAttr            = {},
 					subHeadingAttr         = {},
 					dashhtml               = '',
+					styles                 = '',
 					headingText            = '',
 					subheadingText         = '',
 					linkUrl                = '',
@@ -92,13 +93,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values );
-				this.values = atts.values;
 
 				// Create attribute objects
 				wrapperAttributes      = this.buildWrapperAtts( atts.values );
 				counterAttributes      = this.buildCounterAtts( atts.values, atts.extras );
 				countdownShortcodeLink = this.buildLinkAtts( atts.values, atts.extras );
 				dashhtml               = this.buildDashHtml( atts.values, atts.extras );
+				styles                 = this.buildStyles( atts.values );
 				headingAttr            = this.buildHeadingAttr( atts.values );
 				subHeadingAttr         = this.buildSubHeadingAttr( atts.values );
 				headingText            = atts.values.heading_text;
@@ -115,6 +116,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				atts.counterAttributes      = counterAttributes;
 				atts.countdownShortcodeLink = countdownShortcodeLink;
 				atts.dashhtml               = dashhtml;
+				atts.styles                 = styles;
 				atts.headingAttr            = headingAttr;
 				atts.subHeadingAttr         = subHeadingAttr;
 				atts.heading_text           = headingText;
@@ -155,12 +157,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildWrapperAtts: function( values ) {
 				var wrapperAttributes = {
-					class: 'countdown-shortcode fusion-countdown fusion-countdown-cid' + this.model.get( 'cid' ) + ' fusion-countdown-' + values.layout + ' fusion-countdown-label-' + values.label_position,
-					style: this.getStyles()
+					class: 'countdown-shortcode fusion-countdown fusion-countdown-cid' + this.model.get( 'cid' ) + ' fusion-countdown-' + values.layout + ' fusion-countdown-label-' + values.label_position
 				},
 				bgColor;
 
-				if ( values.heading_text || values.subheading_text ) {
+				if ( values.heading_text && values.subheading_text ) {
 					wrapperAttributes[ 'class' ] += ' fusion-countdown-has-heading';
 				}
 
@@ -170,7 +171,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				wrapperAttributes = _.fusionVisibilityAtts( values.hide_on_mobile, wrapperAttributes );
 
-				bgColor = jQuery.AWB_Color( values.background_color );
+				bgColor = jQuery.Color( values.background_color );
 				if ( ! values.background_image && ( ! values.background_color || 0 === bgColor.alpha() || 'transparent' === values.background_color ) ) {
 					wrapperAttributes[ 'class' ] += ' fusion-no-bg';
 				}
@@ -182,8 +183,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( values.id ) {
 					wrapperAttributes.id = values.id;
 				}
-
-				wrapperAttributes = _.fusionAnimations( values, wrapperAttributes );
 
 				return wrapperAttributes;
 			},
@@ -205,19 +204,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					date,
 					month;
 
-				if ( ! values.subheading_text && ! values.heading_text && ! values.link_url ) {
-					counterAttributes[ 'class' ] += ' awb-flex-grow';
-				}
-
 				if ( 'site_time' === values.timezone ) {
 					counterAttributes[ 'data-gmt-offset' ] = extras.gmt_offset;
 				}
 				function pad( num, size ) {
 					s = '000000000' + num;
 					return s.substr( s.length - size );
-				}
-				if ( 'object' === typeof values.countdown_end && 'string' === typeof values.countdown_end.date ) {
-					values.countdown_end = values.countdown_end.date;
 				}
 				if ( values.countdown_end ) {
 					date  = new Date( values.countdown_end );
@@ -300,7 +292,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					values.dash_titles = 'long';
 				}
 
-				counterBoxColor = jQuery.AWB_Color( values.counter_box_color );
+				counterBoxColor = jQuery.Color( values.counter_box_color );
 				if ( ! values.counter_box_color || 0 === counterBoxColor.alpha() || 'transparent' === values.counter_box_color ) {
 					dashClass = ' fusion-no-bg';
 				}
@@ -330,52 +322,103 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds styles.
 			 *
 			 * @since 2.0
+			 * @param {Object} values - The values.
 			 * @return {string}
 			 */
-			getStyles: function() {
-				var customVars = {},
-					cssVars    = [
-						'border_radius',
-						'counter_box_color',
-						'counter_border_color',
-						'counter_border_radius',
-						'counter_font_size',
-						'counter_text_color',
-						'label_font_size',
-						'label_color',
-						'heading_font_size',
-						'heading_text_color',
-						'subheading_font_size',
-						'subheading_text_color',
-						'link_text_color',
-						'element_margin_top',
-						'element_margin_right',
-						'element_margin_bottom',
-						'element_margin_left'
-					];
+			buildStyles: function( values ) {
+				var styles = '',
+					cid = this.model.get( 'cid' ),
+					counterBoxSpacing;
 
-				cssVars.counter_padding_top     = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.counter_padding_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.counter_padding_bottom  = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.counter_padding_left    = { 'callback': _.fusionGetValueWithUnit };
+				if ( values.background_image ) {
+					styles += '.fusion-countdown-cid' + cid + ' {';
+					styles += 'background:url(' + values.background_image + ') ' + values.background_position + ' ' + values.background_repeat + ' ' + values.background_color + ';';
 
-				if ( '' !== this.values.background_image && ! this.isDefault( 'background_image' ) ) {
-					customVars.background = 'url(' + this.values.background_image + ') ' + this.values.background_position + ' ' + this.values.background_repeat + ' ' + this.values.background_color;
-					if ( 'no-repeat' === this.values.background_repeat ) {
-						customVars[ 'background-size' ] = 'cover';
+					if ( 'no-repeat' === values.background_repeat ) {
+						styles += '-webkit-background-size:cover;-moz-background-size:cover;-o-background-size:cover;background-size:cover;';
 					}
-				} else if ( '' !== this.values.background_color && ! this.isDefault( 'background_color' ) ) {
-					customVars.background = this.values.background_color;
-				}
-				if ( '' !== this.values.counter_box_spacing ) {
-					customVars[ 'counter-box-spacing' ] = ( parseFloat( this.values.counter_box_spacing ) / 2 ) + this.values.counter_box_spacing.replace( parseFloat( this.values.counter_box_spacing ), '' );
+					styles += '}';
+
+				} else if ( values.background_color ) {
+					styles += '.fusion-countdown-cid' + cid + ' {background-color:' + values.background_color + ';}';
 				}
 
-				if ( '' !== this.values.counter_border_size ) {
-					customVars[ 'counter-border-size' ] = parseFloat( this.values.counter_border_size );
+				if ( values.border_radius ) {
+					styles += '.fusion-countdown-cid' + cid + ', .fusion-countdown-cid' + cid + ' .fusion-dash {border-radius:' + values.border_radius + ';}';
 				}
 
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customVars );
+				if ( values.counter_box_spacing ) {
+					counterBoxSpacing = parseFloat( values.counter_box_spacing );
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-dash-wrapper  {padding:' + ( counterBoxSpacing / 2 ) + values.counter_box_spacing.replace( counterBoxSpacing, '' ) + ';}';
+				}
+
+				if ( values.counter_box_color ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-dash {background-color:' + values.counter_box_color + ';}';
+				}
+
+				styles += '.fusion-countdown-cid' + cid + ' .fusion-dash {padding:' + values.counter_padding_top + ' ' + values.counter_padding_right + ' ' + values.counter_padding_bottom + ' ' + values.counter_padding_left + ';}';
+
+				if ( 0 !== parseInt( values.counter_border_size ) ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-dash {border:' + values.counter_border_size + ' solid ' +  values.counter_border_color + ';}';
+				}
+
+				if ( values.counter_border_radius ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-dash {border-radius:' + values.counter_border_radius + ';}';
+				}
+
+				if ( values.counter_font_size ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-countdown-counter-wrapper {font-size:' + values.counter_font_size + ';}';
+				}
+
+				if ( values.counter_text_color ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-countdown-counter-wrapper {color:' + values.counter_text_color + ';}';
+				}
+
+				if ( values.label_font_size ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-dash-title {font-size:' + values.label_font_size + ';}';
+				}
+
+				if ( values.label_color ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-dash-title {color:' + values.label_color + ';}';
+				}
+
+				if ( values.heading_font_size ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-countdown-heading {font-size:' + values.heading_font_size + ';}';
+				}
+
+				if ( values.heading_text_color ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-countdown-heading {color:' + values.heading_text_color + ';}';
+				}
+
+				if ( values.subheading_font_size ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-countdown-subheading {font-size:' + values.subheading_font_size + ';}';
+				}
+
+				if ( values.subheading_text_color ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-countdown-subheading {color:' + values.subheading_text_color + ';}';
+				}
+
+				if ( values.link_text_color ) {
+					styles += '.fusion-countdown-cid' + cid + ' .fusion-countdown-link {color:' + values.link_text_color + ';}';
+				}
+
+				if ( values.element_margin_top ) {
+					styles += '.fusion-countdown-cid' + cid + ' {margin-top:' + values.element_margin_top + ';}';
+				}
+
+				if ( values.element_margin_bottom ) {
+					styles += '.fusion-countdown-cid' + cid + ' {margin-bottom:' + values.element_margin_bottom + ';}';
+				}
+
+				if ( values.element_margin_left ) {
+					styles += '.fusion-countdown-cid' + cid + ' {margin-left:' + values.element_margin_left + ';}';
+				}
+
+				if ( values.element_margin_right ) {
+					styles += '.fusion-countdown-cid' + cid + ' {margin-right:' + values.element_margin_right + ';}';
+				}
+
+				return styles;
 			},
 
 			/**

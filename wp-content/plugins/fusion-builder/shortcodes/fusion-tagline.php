@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 			private $tagline_box_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -50,53 +59,35 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				return [
-					'hide_on_mobile'                    => fusion_builder_default_visibility( 'string' ),
-					'class'                             => '',
-					'id'                                => '',
-					'fusion_font_family_title_font'     => '',
-					'fusion_font_variant_title_font'    => '',
-					'title_font_size'                   => '',
-					'title_line_height'                 => '',
-					'title_letter_spacing'              => '',
-					'title_text_transform'              => '',
-					'title_color'                       => $fusion_settings->get( 'h2_typography', 'color' ),
-					'description_font_size'             => '',
-					'content_font_size'                 => '',
-					'backgroundcolor'                   => $fusion_settings->get( 'tagline_bg' ),
-					'border'                            => '0px',
-					'bordercolor'                       => $fusion_settings->get( 'tagline_border_color' ),
-					'button'                            => '',
-					'buttoncolor'                       => 'default',
-					'button_border_radius_top_left'     => $fusion_settings->get( 'button_border_radius', 'top_left' ),
-					'button_border_radius_top_right'    => $fusion_settings->get( 'button_border_radius', 'top_right' ),
-					'button_border_radius_bottom_right' => $fusion_settings->get( 'button_border_radius', 'bottom_right' ),
-					'button_border_radius_bottom_left'  => $fusion_settings->get( 'button_border_radius', 'bottom_left' ),
-					'button_size'                       => 'default-size',
-					'button_type'                       => $fusion_settings->get( 'button_type' ),
-					'content_alignment'                 => 'left',
-					'description'                       => '',
-					'highlightposition'                 => 'left',
-					'link'                              => '',
-					'linktarget'                        => '_self',
-					'padding_top'                       => '',
-					'padding_right'                     => '',
-					'padding_bottom'                    => '',
-					'padding_left'                      => '',
-					'margin_bottom'                     => ( '' !== $fusion_settings->get( 'tagline_margin', 'bottom' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'tagline_margin', 'bottom' ) ) : '0px',
-					'margin_top'                        => ( '' !== $fusion_settings->get( 'tagline_margin', 'top' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'tagline_margin', 'top' ) ) : '0px',
-					'modal'                             => '',
-					'shadow'                            => 'no',
-					'shadowopacity'                     => '0.7',
-					'title'                             => '',
-					'animation_type'                    => '',
-					'animation_direction'               => 'left',
-					'animation_speed'                   => '',
-					'animation_delay'                   => '',
-					'animation_offset'                  => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                   => '',
+					'hide_on_mobile'       => fusion_builder_default_visibility( 'string' ),
+					'class'                => '',
+					'id'                   => '',
+					'backgroundcolor'      => $fusion_settings->get( 'tagline_bg' ),
+					'border'               => '0px',
+					'bordercolor'          => $fusion_settings->get( 'tagline_border_color' ),
+					'button'               => '',
+					'buttoncolor'          => 'default',
+					'button_border_radius' => $fusion_settings->get( 'button_border_radius' ),
+					'button_size'          => $fusion_settings->get( 'button_size' ),
+					'button_type'          => $fusion_settings->get( 'button_type' ),
+					'content_alignment'    => 'left',
+					'description'          => '',
+					'highlightposition'    => 'left',
+					'link'                 => '',
+					'linktarget'           => '_self',
+					'margin_bottom'        => ( '' !== $fusion_settings->get( 'tagline_margin', 'bottom' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'tagline_margin', 'bottom' ) ) : '0px',
+					'margin_top'           => ( '' !== $fusion_settings->get( 'tagline_margin', 'top' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'tagline_margin', 'top' ) ) : '0px',
+					'modal'                => '',
+					'shadow'               => 'no',
+					'shadowopacity'        => '0.7',
+					'title'                => '',
+					'animation_type'       => '',
+					'animation_direction'  => 'left',
+					'animation_speed'      => '',
+					'animation_offset'     => $fusion_settings->get( 'animation_offset' ),
 				];
 			}
 
@@ -130,7 +121,7 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'primary_color' => esc_attr( $fusion_settings->get( 'primary_color' ) ),
 				];
@@ -173,7 +164,7 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 				}
 
 				// BC compatibility for button shape.
-				if ( isset( $args['button_shape'] ) && ! isset( $args['button_border_radius'] ) && ! isset( $args['border_radius_top_left'] ) ) {
+				if ( isset( $args['button_shape'] ) && ! isset( $args['button_border_radius'] ) ) {
 					$args['button_shape'] = strtolower( $args['button_shape'] );
 
 					$button_radius = [
@@ -187,15 +178,7 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 						$args['button_shape'] = 'round3d';
 					}
 
-					$defaults['button_border_radius_top_left']     = isset( $button_radius[ $args['button_shape'] ] ) ? $button_radius[ $args['button_shape'] ] : '0px';
-					$defaults['button_border_radius_top_right']    = $defaults['button_border_radius_top_left'];
-					$defaults['button_border_radius_bottom_right'] = $defaults['button_border_radius_top_left'];
-					$defaults['button_border_radius_bottom_left']  = $defaults['button_border_radius_top_left'];
-				} elseif ( isset( $args['buton_border_radius'] ) && ! isset( $args['button_border_radius_top_left'] ) ) {
-					$defaults['button_border_radius_top_left']     = $args['buton_border_radius'];
-					$defaults['button_border_radius_top_right']    = $defaults['button_border_radius_top_left'];
-					$defaults['button_border_radius_bottom_right'] = $defaults['button_border_radius_top_left'];
-					$defaults['button_border_radius_bottom_left']  = $defaults['button_border_radius_top_left'];
+					$defaults['button_border_radius'] = isset( $button_radius[ $args['button_shape'] ] ) ? $button_radius[ $args['button_shape'] ] : $defaults['button_border_radius'];
 				}
 
 				$defaults['button_type'] = strtolower( $defaults['button_type'] );
@@ -210,19 +193,6 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 
 				$this->args     = $defaults;
 				$desktop_button = $title_tag = $additional_content = '';
-
-				$this->args['padding_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->args['padding_bottom'], 'px' );
-				$this->args['padding_left']   = FusionBuilder::validate_shortcode_attr_value( $this->args['padding_left'], 'px' );
-				$this->args['padding_right']  = FusionBuilder::validate_shortcode_attr_value( $this->args['padding_right'], 'px' );
-				$this->args['padding_top']    = FusionBuilder::validate_shortcode_attr_value( $this->args['padding_top'], 'px' );
-
-				$fusion_settings = awb_get_fusion_settings();
-				if ( ! apply_filters( 'awb_load_button_presets', ( '1' === $fusion_settings->get( 'button_presets' ) ) ) ) {
-					$this->args['buttoncolor'] = 'default';
-				}
-
-				// Single string for CSS.
-				$this->args['button_border_radius'] = fusion_library()->sanitize->get_value_with_unit( $this->args['button_border_radius_top_left'] ) . ' ' . fusion_library()->sanitize->get_value_with_unit( $this->args['button_border_radius_top_right'] ) . ' ' . fusion_library()->sanitize->get_value_with_unit( $this->args['button_border_radius_bottom_right'] ) . ' ' . fusion_library()->sanitize->get_value_with_unit( $this->args['button_border_radius_bottom_left'] );
 
 				$styles = apply_filters( 'fusion_builder_tagline_box_style', "<style type='text/css'>.reading-box-container-{$this->tagline_box_counter} .element-bottomshadow:before,.reading-box-container-{$this->tagline_box_counter} .element-bottomshadow:after{opacity:{$shadowopacity};}</style>", $defaults, $this->tagline_box_counter );
 
@@ -308,13 +278,19 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 					]
 				);
 
-				$attr['style'] = '';
-
 				if ( $this->args['animation_type'] ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] = '';
+
+				if ( $this->args['margin_top'] || '0' === $this->args['margin_top'] ) {
+					$attr['style'] .= 'margin-top:' . fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] ) . ';';
+				}
+
+				if ( $this->args['margin_bottom'] || '0' === $this->args['margin_bottom'] ) {
+					$attr['style'] .= 'margin-bottom:' . fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] ) . ';';
+				}
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -329,40 +305,6 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
-
-				// Title typography.
-				$content_typography = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'title_font', 'array' );
-
-				foreach ( $content_typography as $rule => $value ) {
-					$custom_vars[ 'title-' . $rule ] = $value;
-				}
-
-				$css_vars_options = [
-					'title_color'           => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'title_font_size'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'title_line_height'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'title_letter_spacing'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'description_font_size' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'content_font_size'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'title_text_transform',
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
-			}
-
-			/**
 			 * Builds the reading-box attributes array.
 			 *
 			 * @access public
@@ -370,6 +312,8 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 			 * @return array
 			 */
 			public function reading_box_attr() {
+
+				global $fusion_settings;
 
 				$attr = [
 					'class' => 'reading-box',
@@ -397,8 +341,6 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 					$attr['style'] .= 'border-' . $this->args['highlightposition'] . '-color:var(--primary_color);';
 				}
 				$attr['style'] .= 'border-style:solid;';
-
-				$attr['style'] .= Fusion_Builder_Padding_Helper::get_paddings_style( $this->args );
 
 				return $attr;
 			}
@@ -443,7 +385,7 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 				}
 
 				if ( $this->args['button_border_radius'] ) {
-					$attr['style'] .= 'border-radius:' . $this->args['button_border_radius'];
+					$attr['style'] .= 'border-radius:' . ( (int) $this->args['button_border_radius'] ) . 'px;';
 				}
 
 				return $attr;
@@ -458,9 +400,7 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 			 * @return array
 			 */
 			public function add_styling() {
-				global $wp_version, $content_media_query, $six_fourty_media_query, $three_twenty_six_fourty_media_query, $ipad_portrait_media_query, $content_min_media_query, $dynamic_css_helpers;
-
-				$fusion_settings = awb_get_fusion_settings();
+				global $wp_version, $content_media_query, $six_fourty_media_query, $three_twenty_six_fourty_media_query, $ipad_portrait_media_query, $content_min_media_query, $fusion_settings, $dynamic_css_helpers;
 
 				$main_elements = apply_filters( 'fusion_builder_element_classes', [ '.fusion-reading-box-container' ], '.fusion-reading-box-container' );
 
@@ -524,7 +464,7 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
 								'label'       => esc_html__( 'Tagline Box Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the tagline box background.', 'fusion-builder' ),
 								'id'          => 'tagline_bg',
-								'default'     => 'var(--awb-color2)',
+								'default'     => '#f9f9fb',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 							],
@@ -591,7 +531,8 @@ if ( fusion_is_element_enabled( 'fusion_tagline_box' ) ) {
  * @since 1.0
  */
 function fusion_element_tagline_box() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -604,59 +545,8 @@ function fusion_element_tagline_box() {
 				'preview_id'      => 'fusion-builder-block-module-tagline-preview-template',
 				'allow_generator' => true,
 				'inline_editor'   => true,
-				'help_url'        => 'https://avada.com/documentation/tagline-box-element/',
-				'subparam_map'    => [
-					'fusion_font_family_title_font'  => 'title_typography',
-					'fusion_font_variant_title_font' => 'title_typography',
-					'title_font_size'                => 'title_typography',
-					'title_line_height'              => 'title_typography',
-					'title_letter_spacing'           => 'title_typography',
-					'title_text_transform'           => 'title_typography',
-					'title_color'                    => 'title_typography',
-				],
+				'help_url'        => 'https://theme-fusion.com/documentation/fusion-builder/elements/tagline-box-element/',
 				'params'          => [
-					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Title Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the tagline title. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'title_typography',
-						'choices'          => [
-							'font-family'    => 'title_font',
-							'font-size'      => 'title_font_size',
-							'text-transform' => 'title_text_transform',
-							'line-height'    => 'title_line_height',
-							'letter-spacing' => 'title_letter_spacing',
-							'color'          => 'title_color',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => $fusion_settings->get( 'h2_typography', 'color' ),
-						],
-						'remove_from_atts' => true,
-						'global'           => true,
-						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Description Font Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the font size for the description text. Enter value including CSS unit (px, em, rem), ex: 10px', 'fusion-builder' ),
-						'param_name'  => 'description_font_size',
-						'value'       => '',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Content Font Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the font size for the content text. Enter value including CSS unit (px, em, rem), ex: 10px', 'fusion-builder' ),
-						'param_name'  => 'content_font_size',
-						'value'       => '',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					],
 					[
 						'type'        => 'colorpickeralpha',
 						'heading'     => esc_attr__( 'Background Color', 'fusion-builder' ),
@@ -774,11 +664,11 @@ function fusion_element_tagline_box() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window <br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'linktarget',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => '_self',
 						'dependency'  => [
@@ -844,19 +734,16 @@ function fusion_element_tagline_box() {
 						],
 					],
 					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_html__( 'Button Border Radius', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the border radius. Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-						'param_name'       => 'button_border_radius',
-						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-						'value'            => [
-							'button_border_radius_top_left'     => '',
-							'button_border_radius_top_right'    => '',
-							'button_border_radius_bottom_right' => '',
-							'button_border_radius_bottom_left'  => '',
-						],
-						'dependency'       => [
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Button Border Radius', 'fusion-builder' ),
+						'param_name'  => 'button_border_radius',
+						'description' => esc_attr__( 'Controls the border radius of the tagline button. In pixels.', 'fusion-builder' ),
+						'min'         => '0',
+						'max'         => '50',
+						'step'        => '1',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_border_radius' ),
+						'dependency'  => [
 							[
 								'element'  => 'link',
 								'value'    => '',
@@ -865,7 +752,7 @@ function fusion_element_tagline_box() {
 						],
 					],
 					[
-						'type'        => ( apply_filters( 'awb_load_button_presets', ( '1' === $fusion_settings->get( 'button_presets' ) ) ) ? 'select' : 'hidden' ),
+						'type'        => 'select',
 						'heading'     => esc_attr__( 'Button Color', 'fusion-builder' ),
 						'description' => esc_attr__( 'Choose the button color.', 'fusion-builder' ),
 						'param_name'  => 'buttoncolor',
@@ -915,20 +802,6 @@ function fusion_element_tagline_box() {
 						'value'        => esc_attr__( 'Your Content Goes Here', 'fusion-builder' ),
 						'placeholder'  => true,
 						'dynamic_data' => true,
-					],
-					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Tagline Box Padding', 'fusion-builder' ),
-						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
-						'param_name'       => 'padding',
-						'value'            => [
-							'padding_top'    => '',
-							'padding_right'  => '',
-							'padding_bottom' => '',
-							'padding_left'   => '',
-						],
-						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					'fusion_margin_placeholder'    => [
 						'param_name'  => 'dimensions',

@@ -35,7 +35,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					FusionPageBuilderEvents.trigger( 'fusion-element-removed' );
 				}
 			}
-
 		} );
 	} );
 }( jQuery ) );

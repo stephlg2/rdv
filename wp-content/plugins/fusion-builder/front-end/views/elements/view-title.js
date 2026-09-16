@@ -41,7 +41,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values );
-				this.values = atts.values;
 
 				// Create attribute objects
 				attributes.attr          			= this.buildAttr( atts.values );
@@ -49,6 +48,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.animatedAttr  			= this.buildAnimatedAttr( atts.values );
 				attributes.rotatedAttr   			= this.buildRotatedAttr( atts.values );
 				attributes.separatorAttr 			= this.builderSeparatorAttr( atts.values );
+				attributes.style         			= this.buildStyleBlock( atts.values, atts.extras );
 
 				// Any extras that need passed on.
 				attributes.cid            			= this.model.get( 'cid' );
@@ -62,7 +62,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.after_text     			= atts.values.after_text;
 				attributes.rotation_text  			= atts.values.rotation_text;
 				attributes.title_link  			    = atts.values.title_link;
-				attributes.title_tag      			= 'div' === atts.values.size || 'p' === atts.values.size ? atts.values.size : 'h' + atts.values.size;
+				attributes.title_tag      			= 'div' === atts.values.size ? 'div' : 'h' + atts.values.size;
 				attributes.isFlex		  			= this.flexDisplay();
 				attributes.content_align_sizes		= {
 					large: atts.values.content_align,
@@ -126,53 +126,64 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 			},
 
-			getStyleVars: function() {
-				var cssVars          = [ 'margin_top', 'margin_right', 'margin_bottom', 'margin_left' ],
+			buildStyleBlock: function( values, extras ) {
+				var style = '<style type="text/css">',
 					bottomHighlights = [ 'underline', 'double_underline', 'underline_zigzag', 'underline_zigzag', 'curly' ];
 
-				cssVars.push( 'text_color' );
+				if ( 'highlight' === values.title_type && '' !== values.highlight_color ) {
+					style += '.fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + ' svg path{stroke:' + values.highlight_color + '!important}';
+				}
 
-				if ( 'highlight' === this.values.title_type ) {
-					if ( ! this.isDefault( 'highlight_color' ) ) {
-						cssVars.push( 'highlight_color' );
+				if ( 'highlight' === values.title_type && '' !== values.highlight_top_margin && bottomHighlights.includes( values.highlight_effect ) ) {
+					style += '.fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + ' svg{margin-top:' + values.highlight_top_margin + 'px!important}';
+				}
+
+				if ( 'highlight' === values.title_type && '' !== values.highlight_width ) {
+					style += '.fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + ' svg path{stroke-width:' + values.highlight_width + '!important}';
+				}
+
+				if ( 'rotating' === values.title_type && '' !== values.text_color && ( 'clipIn' === values.rotation_effect || 'typeIn' === values.rotation_effect ) ) {
+					style += '.fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + ' .fusion-animated-texts-wrapper::before{background-color:' + values.text_color + '!important}';
+				}
+
+				// Old legacy CSS only.
+				if ( ! ( '' === values.margin_top_mobile && '' === values.margin_bottom_mobile ) && ! ( '0px' === values.margin_top_mobile && '20px' === values.margin_bottom_mobile ) && ( '0px' === values.margin_top_small && '20px' === values.margin_bottom_small ) ) {
+					style += '@media only screen and (max-width:' + extras.content_break_point + 'px) {';
+					style += '.fusion-body .fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + '{margin-top:' + values.margin_top_mobile + '!important;margin-bottom:' + values.margin_bottom_mobile + '!important;}';
+					style += '}';
+				}
+
+				// If medium element values are set, use them.
+				if ( ! ( '' === values.margin_top_medium && '' === values.margin_right_medium && '' === values.margin_bottom_medium && '' === values.margin_left_medium ) ) {
+					style += '@media only screen and (max-width:' + extras.visibility_medium + 'px) {';
+					style += '.fusion-body .fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + '{margin-top:' + values.margin_top_medium + '!important;margin-right:' + values.margin_right_medium + '!important;margin-bottom:' + values.margin_bottom_medium + '!important;margin-left:' + values.margin_left_medium + '!important;}';
+					style += '}';
+				} else if ( ! ( '' === values.margin_top && '' === values.margin_right && '' === values.margin_bottom && '' === values.margin_left ) ) {
+					// If no medium element values are set, inherit large ones to make sure that not the content breakpoint media query takes over with mobile values.
+					style += '@media only screen and (max-width:' + extras.visibility_medium + 'px) {';
+					style += '.fusion-body .fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + '{margin-top:' + values.margin_top + '!important; margin-right:' + values.margin_right + '!important; margin-bottom:' + values.margin_bottom + '!important; margin-left:' + values.margin_left + '!important;}';
+					style += '}';
+				}
+
+				if ( ! ( '' === values.margin_top_small && '' === values.margin_right_small  && '' === values.margin_bottom_small && '' === values.margin_left_small  ) ) {
+					style += '@media only screen and (max-width:' + extras.visibility_small + 'px) {';
+					style += '.fusion-body .fusion-title.fusion-title-cid' + this.model.get( 'cid' ) + '{margin-top:' + values.margin_top_small + '!important;margin-right:' + values.margin_right_small + '!important; margin-bottom:' + values.margin_bottom_small + '!important; margin-left:' + values.margin_left_small + '!important;}';
+					style += '}';
+				}
+
+				if ( 'text' === values.title_type && 'on' === values.title_link ) {
+					if ( '' !== values.link_color ) {
+						style += '.fusion-title.fusion-title-text.fusion-title-cid' + this.model.get( 'cid' ) + ' a{color:' + values.link_color + '}';
 					}
 
-					if ( ! this.isDefault( 'highlight_top_margin' )  && bottomHighlights.includes( this.values.highlight_effect ) ) {
-						cssVars.highlight_top_margin = { 'callback': _.fusionGetValueWithUnit };
+					if ( '' !== values.link_hover_color ) {
+						style += '.fusion-title.fusion-title-text.fusion-title-cid' + this.model.get( 'cid' ) + ' a:hover{color:' + values.link_hover_color + '}';
 					}
-
-					cssVars.push( 'highlight_width' );
 				}
 
-				if ( ! this.flexDisplay() && ! ( '' === this.values.margin_top_mobile && '' === this.values.margin_bottom_mobile ) ) {
-					this.values.margin_top_small    = this.values.margin_top_mobile;
-					this.values.margin_bottom_small = this.values.margin_bottom_mobile;
-				}
+				style += '</style>';
 
-				cssVars.margin_top_small     = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_right_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_bottom_small  = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_left_small    = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_top_medium    = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_right_medium  = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_bottom_medium = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_left_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.text_stroke_size   = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.push( 'text_stroke_color' );
-
-				if ( 'text' === this.values.title_type && 'on' === this.values.title_link ) {
-					cssVars.push( 'link_color' );
-					cssVars.push( 'link_hover_color' );
-				}
-
-				if ( 'none' !== this.values.text_overflow ) {
-					cssVars.push( 'text_overflow' );
-				}
-
-				cssVars.push( 'sep_color' );
-				cssVars.font_size = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVars );
+				return style;
 			},
 
 			/**
@@ -184,10 +195,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildAttr: function( values ) {
 				var styles,
-					titleSize = 'div',
+					titleSize = 'two',
 					attr      = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-title title fusion-title-cid' + this.model.get( 'cid' ),
-						style: this.getStyleVars()
+						style: ''
 					} );
 
 				attr[ 'class' ] += _.fusionGetStickyClass( values.sticky_display );
@@ -199,6 +210,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						attr[ 'class' ] += ' sep-' + style;
 					} );
 
+					if ( values.sep_color ) {
+						attr.style = 'border-bottom-color:' + values.sep_color + ';';
+					}
 				} else if ( -1 !== values.style_type.indexOf( 'none' ) || 'text' !== values.title_type ) {
 					attr[ 'class' ] += ' fusion-sep-none';
 				}
@@ -215,7 +229,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr[ 'class' ] += ' fusion-loop-' + values.loop_animation;
 				}
 
-				if ( 'rotating' === values.title_type && '' !== values.rotation_effect ) {
+				if ( '' !== values.rotation_effect ) {
 					attr[ 'class' ] += ' fusion-title-' + values.rotation_effect;
 				}
 
@@ -236,21 +250,41 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					titleSize = 'five';
 				} else if ( '6' == values.size ) {
 					titleSize = 'six';
-				} else if ( 'p' == values.size ) {
-					titleSize = 'paragraph';
 				}
 
 				attr[ 'class' ] += ' fusion-title-size-' + titleSize;
 
+				if ( 'undefined' !== typeof values.font_size && '' !== values.font_size ) {
+					attr.style += 'font-size:' + values.font_size + ';';
+				}
+
+				// Text shadow.
+				if ( 'no' !== values.text_shadow ) {
+					attr.style += 'text-shadow:' + values.text_shadow + ';';
+				}
+
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
+
+				if ( '' === values.margin_top && '' === values.margin_bottom ) {
+					attr.style += ' margin-top:0px; margin-bottom:0px';
+					attr[ 'class' ] += ' fusion-title-default-margin';
+				}
+
 				attr = _.fusionAnimations( values, attr );
-
-				if ( 'yes' === values.text_stroke ) {
-					attr[ 'class' ] += ' fusion-text-has-stroke';
-				}
-
-				if ( 'none' !== values.text_overflow ) {
-					attr[ 'class' ] += ' fusion-has-text-overflow';
-				}
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
@@ -273,11 +307,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildHeadingAttr: function( values ) {
 				var self        = this,
 					headingAttr = {
-						class: 'fusion-title-heading title-heading-' + values.content_align,
+						class: 'title-heading-' + values.content_align,
 						style: ''
 					};
 
-				if ( 'div' === values.size || 'p' === values.size  ) {
+				if ( 'div' === values.size ) {
 					headingAttr[ 'class' ] += ' title-heading-tag';
 				}
 
@@ -308,27 +342,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					headingAttr.style += 'letter-spacing:' + values.letter_spacing + ';';
 				}
 
-				if ( 'undefined' !== typeof values.text_transform && '' !== values.text_transform ) {
-					headingAttr.style += 'text-transform:' + values.text_transform + ';';
-				}
-
-				if ( 'text' === values.title_type && 'yes' === values.gradient_font ) {
-					headingAttr.style      += _.getGradientFontString( values );
-					headingAttr[ 'class' ] += ' awb-gradient-text';
+				if ( 'undefined' !== typeof values.text_color && '' !== values.text_color ) {
+					headingAttr.style += 'color:' + values.text_color + ';';
 				}
 
 				if ( '' !== values.style_tag ) {
 					headingAttr.style += values.style_tag;
-				}
-
-				// Text shadow.
-				if ( 'no' !== values.text_shadow ) {
-
-					if ( 'yes' === values.gradient_font ) {
-						headingAttr.style += 'filter:drop-shadow(' + values.text_shadow + ');';
-					} else {
-						headingAttr.style += 'text-shadow:' + values.text_shadow + ';';
-					}
 				}
 
 				if ( 'text' === values.title_type ) {

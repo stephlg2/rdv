@@ -34,6 +34,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Create attribute objects
 				attributes.attr            = this.buildAttr( atts.values );
+				attributes.attrSrc         = this.buildAttrSrc( atts.values );
 				attributes.title_attribute = ! _.isEmpty( atts.values.title_attribute ) ? atts.values.title_attribute : 'Vimeo video player ' + this.model.get( 'cid' );
 				attributes.values          = atts.values;
 
@@ -69,9 +70,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				values.height = _.fusionValidateAttrValue( values.height, '' );
 				values.width  = _.fusionValidateAttrValue( values.width, '' );
-
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -86,15 +84,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Attributes.
 				var attrVimeo = _.fusionVisibilityAtts( values.hide_on_mobile, {
 					class: 'fusion-video fusion-vimeo',
-					style: this.getStyleVars( values )
+					style: ''
 				} );
 
 				if ( 'yes' === values.center ) {
 					attrVimeo[ 'class' ] += ' center-video';
+				} else {
+					attrVimeo.style += 'max-width:' + values.width + 'px;max-height:' + values.height + 'px;';
 				}
 
 				if ( '' !== values.alignment ) {
 					attrVimeo[ 'class' ] += ' fusion-align' + values.alignment;
+					attrVimeo.style += ' width:100%';
 				}
 
 				if ( 'true' == values.autoplay || 'yes' === values.autoplay ) {
@@ -112,28 +113,24 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return attrVimeo;
 			},
 
-			getStyleVars: function( values ) {
-				var cssVars,
-					customCssVars = {};
-				this.values = values;
+			/**
+			 * Builds attributes.
+			 *
+			 * @since 2.0
+			 * @param {Object} values - The values object.
+			 * @return {Object}
+			 */
+			buildAttrSrc: function( values ) {
+				var videoSCAttr = {
+					class: 'video-shortcode'
+				};
 
-				cssVars = [
-					'margin_top',
-					'margin_bottom'
-				];
-
-				if ( 'yes' !== values.center ) {
-					customCssVars[ 'max-width' ]  = values.width + 'px';
-					customCssVars[ 'max-height' ] = values.height + 'px';
+				if ( 'yes' === values.center ) {
+					videoSCAttr.style = 'max-width:' + values.width + 'px;max-height:' + values.height + 'px;';
 				}
 
-				if ( '' !== values.alignment ) {
-					customCssVars.width = '100%';
-				}
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCssVars );
+				return videoSCAttr;
 			}
-
 		} );
 	} );
 }( jQuery ) );

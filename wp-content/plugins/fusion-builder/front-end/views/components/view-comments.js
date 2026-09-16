@@ -25,9 +25,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values );
-				this.values = atts.values;
 
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 
 				attributes.output      = this.buildOutput( atts );
 				attributes.placeholder = this.getComponentPlaceholder();
@@ -89,23 +89,33 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
-				if ( values.avatar ) {
-					attr[ 'class' ] += ' avatar-' + values.avatar;
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
 				}
 
-				if ( 'hide' === values.headings ) {
-					attr[ 'class' ] += ' hide-headings';
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
 				}
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
 				}
 
+				if ( 'hide' !== values.avatar ) {
+					attr[ 'class' ] += ' ' + values.avatar;
+				}
+
 				if ( '' !== values.id ) {
 					attr.id = values.id;
 				}
-
-				attr.style += this.getStyleVariables();
 
 				attr = _.fusionAnimations( values, attr );
 
@@ -113,31 +123,52 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  2.2
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function() {
+			buildStyleBlock: function( values ) {
+				var styles = '<style type="text/css">';
 
-				var cssVarsOptions = [
-					'border_color',
-					'heading_color',
-					'link_color',
-					'link_hover_color',
-					'text_color',
-					'meta_color',
-					'border_size',
-					'padding'
-				];
+				if ( '' !== values.border_size ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + ' .commentlist .the-comment{border-bottom-width:' + values.border_size + ';}';
+				}
 
-				cssVarsOptions.margin_top     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left    = { 'callback': _.fusionGetValueWithUnit };
+				if ( '' !== values.border_color ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + ' .commentlist .the-comment{border-color:' + values.border_color + ';}';
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions );
+				if ( 'hide' === values.avatar ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + ' .commentlist .the-comment .comment-text{margin-left:0px;}';
+				}
+
+				if ( 'circle' === values.avatar ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + '.circle .the-comment .avatar{border-radius: 50%;}';
+				}
+
+				if ( 'square' === values.avatar ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + '.square .the-comment .avatar{border-radius: 0;}';
+				}
+
+				if ( '' !== values.padding ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + ' .commentlist .children{padding-left:' + values.padding + ';}';
+				}
+
+				if ( 'hide' === values.avatar ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + ' .avatar{display:none;}';
+				}
+
+				if ( 'hide' === values.headings ) {
+					styles += '.fusion-comments-tb-' + this.model.get( 'cid' ) + ' .fusion-title{display:none;}';
+				}
+
+				styles += '</style>';
+
+				return styles;
 			}
+
 		} );
 	} );
 }( jQuery ) );

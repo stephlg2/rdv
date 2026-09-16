@@ -95,9 +95,7 @@
 							if ( 'fusion_form' === FusionApp.data.postDetails.post_type && 'fusion_form' === module.label ) {
 								return;
 							}
-							if ( 'mega_menus' === FusionApp.data.template_category && 'fusion_menu' === module.label ) {
-								return;
-							}
+
 							if ( 'post_cards' === FusionApp.data.template_category && 'fusion_post_cards' === module.label ) {
 								return;
 							}

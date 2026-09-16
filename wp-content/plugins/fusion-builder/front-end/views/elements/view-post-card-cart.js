@@ -1,3 +1,4 @@
+/* global avadaAddQuantityBoxes */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function () {
@@ -8,51 +9,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		// Post Card Cart Component View.
 		FusionPageBuilder.fusion_post_card_cart = FusionPageBuilder.ElementView.extend( {
 
-			onInit: function() {
-				var params = this.model.get( 'params' );
-
-				// Check for newer margin params.  If unset but regular is, copy from there.
-				if ( 'object' === typeof params ) {
-
-					// Split border width into 4.
-					if ( 'undefined' === typeof params.button_border_top && 'undefined' !== typeof params.button_border_width && '' !== params.button_border_width ) {
-						params.button_border_top    = parseInt( params.button_border_width ) + 'px';
-						params.button_border_right  = params.button_border_top;
-						params.button_border_bottom = params.button_border_top;
-						params.button_border_left   = params.button_border_top;
-						delete params.button_border_width;
-					}
-
-					// Split border width into 4.
-					if ( 'undefined' === typeof params.button_details_border_top && 'undefined' !== typeof params.button_details_border_width && '' !== params.button_details_border_width ) {
-						params.button_details_border_top    = parseInt( params.button_details_border_width ) + 'px';
-						params.button_details_border_right  = params.button_details_border_top;
-						params.button_details_border_bottom = params.button_details_border_top;
-						params.button_details_border_left   = params.button_details_border_top;
-						delete params.button_details_border_width;
-					}
-					this.model.set( 'params', params );
-				}
-			},
-
 			afterPatch: function () {
-				var $quantityBoxes = this.$el.find( 'div.quantity:not(.buttons_added), td.quantity:not(.buttons_added)' ).find( '.qty' ),
-					$form = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( this.$el.find( '.variations_form' ) );
-
-				if ( $quantityBoxes.length && 'function' === typeof jQuery( '#fb-preview' )[ 0 ].contentWindow.avadaAddQuantityBoxes ) {
-					jQuery( '#fb-preview' )[ 0 ].contentWindow.avadaAddQuantityBoxes( '.qty', $quantityBoxes );
-				}
-
-				if ( $form.length && 'function' === typeof $form.wc_variation_form ) {
-					$form.wc_variation_form();
-					$form.on( 'hide_variation', function( e ) {
-						jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( e.currentTarget ).find( '.avada-variation' ).closest( 'tr' ).addClass( 'awb-hide-element' );
-					} ).on( 'found_variation.wc-variation-form', function( e ) {
-						if ( jQuery.trim( jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( e.currentTarget ).find( '.avada-variation' ).text() ).length ) {
-							jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( e.currentTarget ).find( '.avada-variation' ).closest( 'tr' ).removeClass( 'awb-hide-element' );
-						}
-					} );
-				}
+				var $quantityBoxes = this.$el.find( 'div.quantity:not(.buttons_added), td.quantity:not(.buttons_added)' ).find( '.qty' );
+				avadaAddQuantityBoxes( '.qty', $quantityBoxes );
 			},
 
 			/**
@@ -67,13 +26,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.values = atts.values;
 				this.extras = atts.extras;
-				this.query_data = atts.query_data;
 				this.setIconDefaults();
 
 				// Any extras that need passed on.
 				attributes.cid = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
 				attributes.output = this.buildOutput( atts );
+				attributes.styles = this.buildStyleBlock();
 
 				return attributes;
 			},
@@ -105,23 +64,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function ( values ) {
 				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
 					class: 'fusion-woo-cart fusion-post-card-cart',
-					style: this.getStyleVars()
+					style: ''
 				} );
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
 				}
-
-				attr[ 'class' ] += ' awb-variation-layout-' + this.values.variation_layout;
-				attr[ 'class' ] += ' awb-variation-clear-' + this.values.variation_clear;
-				attr[ 'class' ] += ' awb-label-' + this.values.show_label;
-
-				if ( '' !== values.variation_text_align ) {
-					attr[ 'class' ] += ' awb-variation-text-align-' + values.variation_text_align;
-				}
-
-				attr[ 'class' ] += ' awb-add-to-cart-style-' + ( '' === this.values.button_style ? 'link' : 'button' );
-				attr[ 'class' ] += ' awb-product-style-' + ( '' === this.values.product_link_style ? 'link' : 'button' );
 
 				if ( '' !== values.id ) {
 					attr.id = values.id;
@@ -143,11 +91,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildOutput: function ( atts ) {
 				var quantity = '',
 						buttons = '',
-						output = '';
-
-				if ( 'yes' === atts.values.show_variations && 'variable' === this.getProductType() && 'undefined' !== typeof atts.query_data && 'undefined' !== typeof atts.query_data.fusion_post_card_cart ) {
-					output = atts.query_data.fusion_post_card_cart;
-				}
+						output;
 				if ( 'yes' === atts.values.show_add_to_cart_button ) {
 					buttons += this.buildAddToCart( );
 				}
@@ -157,23 +101,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( 'yes' === atts.values.show_quantity_input ) {
 					quantity = this.buildQuantity( );
 				}
-
-				// Add wrapper.
-				if ( 'yes' === atts.values.show_variations && 'variable' === this.getProductType() ) {
-					quantity = '<div class="awb-post-card-cart-variation-wrapper">' + quantity;
-				}
-
-				output += quantity;
+				output = quantity;
 				if ( this.has_buttons_wrapper() ) {
 					output += '<div class="fusion-post-card-cart-button-wrapper">';
 				}
 				output += buttons;
 				if ( this.has_buttons_wrapper() ) {
-					output += '</div>';
-				}
-
-				// Closing wrapper.
-				if ( 'yes' === atts.values.show_variations && 'variable' === this.getProductType() ) {
 					output += '</div>';
 				}
 				return output;
@@ -201,18 +134,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {String}
 			 */
 			buildAddToCart: function ( ) {
-				var output = '',
-					button_class = [ 'fusion-post-card-cart-add-to-cart' ];
-
-				if ( '' === this.values.button_size ) {
-					button_class.push( 'fusion-button-default-size' );
-				}
-
-				if ( 'custom' === this.values.button_style ) {
-					button_class.push( 'button-default' );
-				}
-
-				output = '<a href="#" data-quantity="1" class="' + button_class.join( ' ' ) + '" aria-label="Add Temp Product" rel="nofollow">';
+				var output = '';
+				var button_class  = '' === this.values.button_size  ? ' fusion-button-default-size' : '';
+					button_class += 'custom' === this.values.button_style ? ' button-default' : '';
+				output = '<a href="#" data-quantity="1" class="fusion-post-card-cart-add-to-cart ' + button_class + '"' +
+				' aria-label="Add Temp Product" rel="nofollow">';
 				if ( '' !== this.values.button_icon && 'left' === this.values.icon_position ) {
 					output += '<i class="' + this.values.button_icon + ' button-icon-left" aria-hidden="true"></i>';
 				}
@@ -278,369 +204,402 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVars: function () {
-				var customVars     = {},
-					cssVarsOptions = [],
-					buttonSizeMap = {
-						small: {
-							padding: '9px 20px',
-							line_height: '14px',
-							font_size: '12px'
-						},
-						medium: {
-							padding: '11px 23px',
-							line_height: '16px',
-							font_size: '13px'
-						},
-						large: {
-							padding: '13px 29px',
-							line_height: '17px',
-							font_size: '14px'
-						},
-						xlarge: {
-							padding: '17px 40px',
-							line_height: '21px',
-							font_size: '18px'
-						}
+			buildStyleBlock: function () {
+				var selector, quantity_input, quantity_buttons, quantity_both, height, width, quantity_font, hover_buttons, button, button_hover, button_size_map, button_dimensions, css;
+				this.baseSelector = '.fusion-post-card-cart';
+				this.dynamic_css = {};
+				button_size_map = {
+					small: {
+						padding: '9px 20px',
+						line_height: '14px',
+						font_size: '12px'
 					},
-					width,
-					buttonDimensions;
+					medium: {
+						padding: '11px 23px',
+						line_height: '16px',
+						font_size: '13px'
+					},
+					large: {
+						padding: '13px 29px',
+						line_height: '17px',
+						font_size: '14px'
+					},
+					xlarge: {
+						padding: '17px 40px',
+						line_height: '21px',
+						font_size: '18px'
+					}
+				};
 
-				cssVarsOptions.margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top = { 'callback': _.fusionGetValueWithUnit };
+				if ( !this.isDefault( 'margin_top' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-top', _.fusionGetValueWithUnit( this.values.margin_top ) );
+				}
 
+				if ( !this.isDefault( 'margin_right' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-right', _.fusionGetValueWithUnit( this.values.margin_right ) );
+				}
+
+				if ( !this.isDefault( 'margin_bottom' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-bottom', _.fusionGetValueWithUnit( this.values.margin_bottom ) );
+				}
+
+				if ( !this.isDefault( 'margin_left' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-left', _.fusionGetValueWithUnit( this.values.margin_left ) );
+				}
+
+				selector = this.baseSelector + ' .fusion-post-card-cart-quantity';
 				if ( 'floated' === this.values.cart_layout ) {
-					customVars[ 'justify-content' ] = this.values.justify;
-					customVars[ 'align-items' ]     = 'center';
+					this.addCssProperty( this.baseSelector, 'flex-direction', 'row' );
+					this.addCssProperty( selector, 'flex-direction', 'row' );
+					this.addCssProperty( this.baseSelector, 'justify-content', this.values.justify );
+					this.addCssProperty( this.baseSelector, 'align-items', 'center' );
 				} else {
-					customVars[ 'flex-direction' ] = 'column';
-					customVars[ 'align-items' ]    = this.values.align;
+					this.addCssProperty( selector, 'flex-direction', 'column' );
+					this.addCssProperty( this.baseSelector, 'flex-direction', 'column' );
+					this.addCssProperty( selector, 'display', 'flex' );
+					this.addCssProperty( selector, 'align-items', this.values.align );
 				}
 
 				// Button wrapper if both buttons are used.
-				if ( this.has_buttons_wrapper() ) {
+				if ( this.has_buttons_wrapper( ) ) {
+					selector = this.baseSelector + ' .fusion-post-card-cart-button-wrapper';
 					if ( 'floated' === this.values.buttons_layout ) {
-						customVars[ 'button-align-items' ] = 'center';
+						this.addCssProperty( selector, 'flex-direction', 'row' );
+						this.addCssProperty( selector, 'align-items', 'center' );
 						if ( 'stacked' === this.values.cart_layout ) {
-							customVars[ 'button-justify-content' ] = this.values.buttons_justify;
+							this.addCssProperty( selector, 'justify-content', this.values.buttons_justify );
 						}
+
 					} else if ( 'stacked' === this.values.buttons_layout ) {
-						customVars[ 'button-flex-direction' ] = 'column';
-						customVars[ 'button-align-items' ]    = this.values.buttons_alignment;
+						this.addCssProperty( selector, 'flex-direction', 'column' );
+						this.addCssProperty( selector, 'align-items', this.values.buttons_alignment );
 					}
 
-					// Button wrapper expand full width.
 					if ( 'yes' === this.values.buttons_stretch ) {
-						customVars[ 'button-a-justify-content' ] = 'center';
+						this.addCssProperty( selector + ' a', 'justify-content', 'center' );
 
-						// Stacked buttons next to quantity.
+						// Stacked buttons next to quantity
 						if ( 'floated' === this.values.cart_layout ) {
 							if ( 'stacked' === this.values.buttons_layout ) {
+								// Make the buttons the same width and wrapper expand..
+								this.addCssProperty( selector, 'flex', '1' );
+								this.addCssProperty( selector, 'align-items', 'stretch' );
+							} else {
+								// Both floated, button wrapper expand then buttons expand.
+								this.addCssProperty( selector, 'flex', '1' );
+								this.addCssProperty( selector + ' a', 'flex', '1' );
+							}
 
-								customVars[ 'button-flex' ]        = '1';
-								customVars[ 'button-align-items' ] = 'stretch';
-							} else {
-								customVars[ 'button-flex' ]   = '1';
-								customVars[ 'button-a-flex' ] = '1';
-							}
 						} else if ( 'stacked' === this.values.buttons_layout ) {
-								customVars[ 'button-align-items' ] = 'stretch';
+								// Make the buttons the same width.
+								this.addCssProperty( selector, 'align-items', 'stretch' );
 							} else {
-								customVars[ 'button-a-flex' ] = '1';
+								// Allow each button to grow equally.
+								this.addCssProperty( selector + ' a', 'flex', '1' );
 							}
+
 					}
+
 				}
 
 				if ( 'custom' === this.values.quantity_style ) {
-					cssVarsOptions.quantity_margin_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_margin_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_margin_left   = { 'callback': _.fusionGetValueWithUnit };
-
-					// Quantity height.
-					if ( ! this.isDefault( 'quantity_height' ) ) {
-						customVars[ 'quantity-height' ] = _.fusionGetValueWithUnit( this.values.quantity_height );
+					quantity_input = '.fusion-body #main ' + this.baseSelector + ' .quantity input[type="number"].qty';
+					quantity_buttons = '.fusion-body #main ' + this.baseSelector + ' .quantity input[type="button"]';
+					quantity_both = [ quantity_input, quantity_buttons ];
+					selector = this.baseSelector + ' .fusion-post-card-cart-quantity';
+					if ( !this.isDefault( 'quantity_margin_top' ) ) {
+						this.addCssProperty( selector, 'margin-top', _.fusionGetValueWithUnit( this.values.quantity_margin_top ) );
 					}
 
-					// Quantity width.
+					if ( !this.isDefault( 'quantity_margin_right' ) ) {
+						this.addCssProperty( selector, 'margin-right', _.fusionGetValueWithUnit( this.values.quantity_margin_right ) );
+					}
+
+					if ( !this.isDefault( 'quantity_margin_bottom' ) ) {
+						this.addCssProperty( selector, 'margin-bottom', _.fusionGetValueWithUnit( this.values.quantity_margin_bottom ) );
+					}
+
+					if ( !this.isDefault( 'quantity_margin_left' ) ) {
+						this.addCssProperty( selector, 'margin-left', _.fusionGetValueWithUnit( this.values.quantity_margin_left ) );
+					}
+
+					height = '36px';
+					if ( !this.isDefault( 'quantity_height' ) ) {
+						height = _.fusionGetValueWithUnit( this.values.quantity_height );
+						this.addCssProperty( quantity_both, 'height', height );
+						this.addCssProperty( quantity_buttons, 'width', height );
+					}
+
 					width = '36px';
-					if ( ! this.isDefault( 'quantity_width' ) ) {
+					if ( !this.isDefault( 'quantity_width' ) ) {
 						width = _.fusionGetValueWithUnit( this.values.quantity_width );
-
-						if ( width.includes( '%' ) ) {
-							customVars[ 'quantity-width' ] = 'calc( 100% - var(--awb-quantity-height) - var(--awb-quantity-height) )';
+						if ( false !== width.includes( '%' ) ) {
+							this.addCssProperty( quantity_input, 'width', 'calc( 100% - ' + height + ' - ' + height + ' )' );
 						} else {
-							customVars[ 'quantity-width' ] = width;
+							this.addCssProperty( quantity_input, 'width', width );
 						}
+
 					}
 
-					// Quantity wrapper.
-					if ( ! this.isDefault( 'quantity_width' ) || ! this.isDefault( 'quantity_height' ) ) {
-						customVars[ 'quantity-wrapper-width' ] = 'calc( ' + width + ' + var(--awb-quantity-height) + var(--awb-quantity-height) )';
+					if ( !this.isDefault( 'quantity_width' ) || !this.isDefault( 'quantity_height' ) ) {
+						this.addCssProperty( this.baseSelector + ' .quantity', 'width', 'calc( ' + width + ' + ' + height + ' + ' + height + ' )' );
 					}
 
-					cssVarsOptions.quantity_radius_top_left     = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_radius_bottom_left  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_radius_top_right    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_font_size           = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_border_sizes_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_border_sizes_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_border_sizes_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.quantity_border_sizes_left   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push(  'quantity_color' );
-					cssVarsOptions.push(  'quantity_background' );
-					cssVarsOptions.push(  'quantity_border_color' );
-					cssVarsOptions.qbutton_border_sizes_top     = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.qbutton_border_sizes_right   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.qbutton_border_sizes_bottom  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.qbutton_border_sizes_left    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push(  'qbutton_color' );
-					cssVarsOptions.push(  'qbutton_background' );
-					cssVarsOptions.push(  'qbutton_border_color' );
-					cssVarsOptions.push(  'qbutton_color_hover' );
-					cssVarsOptions.push(  'qbutton_background_hover' );
-					cssVarsOptions.push(  'qbutton_border_color_hover' );
-					cssVarsOptions.button_margin_top            = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_margin_right          = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_margin_bottom         = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_margin_left           = { 'callback': _.fusionGetValueWithUnit };
+					if ( !this.isDefault( 'quantity_radius_top_left' ) ) {
+						this.addCssProperty( this.baseSelector + ' .quantity .minus', 'border-top-left-radius', _.fusionGetValueWithUnit( this.values.quantity_radius_top_left ) );
+					}
+
+					if ( !this.isDefault( 'quantity_radius_bottom_left' ) ) {
+						this.addCssProperty( this.baseSelector + ' .quantity .minus', 'border-bottom-left-radius', _.fusionGetValueWithUnit( this.values.quantity_radius_bottom_left ) );
+					}
+
+					if ( !this.isDefault( 'quantity_radius_top_right' ) ) {
+						this.addCssProperty( this.baseSelector + ' .quantity .plus', 'border-top-right-radius', _.fusionGetValueWithUnit( this.values.quantity_radius_top_right ) );
+					}
+
+					if ( !this.isDefault( 'quantity_radius_bottom_left' ) ) {
+						this.addCssProperty( this.baseSelector + ' .quantity .plus', 'border-bottom-right-radius', _.fusionGetValueWithUnit( this.values.quantity_radius_bottom_right ) );
+					}
+
+					if ( !this.isDefault( 'quantity_font_size' ) ) {
+						quantity_font = [ quantity_input, quantity_buttons, this.baseSelector + ' .quantity' ];
+						this.addCssProperty( quantity_font, 'font-size', _.fusionGetValueWithUnit( this.values.quantity_font_size ) );
+					}
+
+					if ( !this.isDefault( 'quantity_color' ) ) {
+						this.addCssProperty( quantity_input, 'color', this.values.quantity_color );
+					}
+
+					if ( !this.isDefault( 'quantity_background' ) ) {
+						this.addCssProperty( quantity_input, 'background-color', this.values.quantity_background );
+					}
+
+					if ( !this.isDefault( 'quantity_border_sizes_top' ) ) {
+						this.addCssProperty( quantity_input, 'border-top-width', _.fusionGetValueWithUnit( this.values.quantity_border_sizes_top ) );
+					}
+
+					if ( !this.isDefault( 'quantity_border_sizes_right' ) ) {
+						this.addCssProperty( quantity_input, 'border-right-width', _.fusionGetValueWithUnit( this.values.quantity_border_sizes_right ) );
+					}
+
+					if ( !this.isDefault( 'quantity_border_sizes_bottom' ) ) {
+						this.addCssProperty( quantity_input, 'border-bottom-width', _.fusionGetValueWithUnit( this.values.quantity_border_sizes_bottom ) );
+					}
+
+					if ( !this.isDefault( 'quantity_border_sizes_left' ) ) {
+						this.addCssProperty( quantity_input, 'border-left-width', _.fusionGetValueWithUnit( this.values.quantity_border_sizes_left ) );
+					}
+
+					if ( !this.isDefault( 'quantity_border_color' ) ) {
+						this.addCssProperty( quantity_input, 'border-color', this.values.quantity_border_color );
+					}
+
+					if ( !this.isDefault( 'qbutton_border_sizes_top' ) ) {
+						this.addCssProperty( quantity_buttons, 'border-top-width', _.fusionGetValueWithUnit( this.values.qbutton_border_sizes_top ) );
+					}
+
+					if ( !this.isDefault( 'qbutton_border_sizes_right' ) ) {
+						this.addCssProperty( quantity_buttons, 'border-right-width', _.fusionGetValueWithUnit( this.values.qbutton_border_sizes_right ) );
+					}
+
+					if ( !this.isDefault( 'qbutton_border_sizes_bottom' ) ) {
+						this.addCssProperty( quantity_buttons, 'border-bottom-width', _.fusionGetValueWithUnit( this.values.qbutton_border_sizes_bottom ) );
+					}
+
+					if ( !this.isDefault( 'qbutton_border_sizes_left' ) ) {
+						this.addCssProperty( quantity_buttons, 'border-left-width', _.fusionGetValueWithUnit( this.values.qbutton_border_sizes_left ) );
+					}
+
+					if ( !this.isDefault( 'qbutton_color' ) ) {
+						this.addCssProperty( quantity_buttons, 'color', this.values.qbutton_color );
+					}
+
+					if ( !this.isDefault( 'qbutton_background' ) ) {
+						this.addCssProperty( quantity_buttons, 'background-color', this.values.qbutton_background );
+					}
+
+					if ( !this.isDefault( 'qbutton_border_color' ) ) {
+						this.addCssProperty( quantity_buttons, 'border-color', this.values.qbutton_border_color );
+					}
+
+					hover_buttons = [ quantity_buttons + ':hover', quantity_buttons + ':focus' ];
+					// Quantity button hover text color.
+					if ( !this.isDefault( 'qbutton_color_hover' ) ) {
+						this.addCssProperty( hover_buttons, 'color', this.values.qbutton_color_hover );
+					}
+
+					if ( !this.isDefault( 'qbutton_background_hover' ) ) {
+						this.addCssProperty( hover_buttons, 'background-color', this.values.qbutton_background_hover );
+					}
+
+					if ( !this.isDefault( 'qbutton_border_color_hover' ) ) {
+						this.addCssProperty( hover_buttons, 'border-color', this.values.qbutton_border_color_hover );
+					}
+
+				}
+
+				selector = this.baseSelector + ' .fusion-post-card-cart-add-to-cart';
+				if ( !this.isDefault( 'button_margin_top' ) ) {
+					this.addCssProperty( selector, 'margin-top', _.fusionGetValueWithUnit( this.values.button_margin_top ) );
+				}
+
+				if ( !this.isDefault( 'button_margin_right' ) ) {
+					this.addCssProperty( selector, 'margin-right', _.fusionGetValueWithUnit( this.values.button_margin_right ) );
+				}
+
+				if ( !this.isDefault( 'button_margin_bottom' ) ) {
+					this.addCssProperty( selector, 'margin-bottom', _.fusionGetValueWithUnit( this.values.button_margin_bottom ) );
+				}
+
+				if ( !this.isDefault( 'button_margin_left' ) ) {
+					this.addCssProperty( selector, 'margin-left', _.fusionGetValueWithUnit( this.values.button_margin_left ) );
 				}
 
 				if ( 'custom' === this.values.button_style ) {
+					button = '.fusion-body ' + this.baseSelector + ' .fusion-post-card-cart-add-to-cart';
+					button_hover = button + ':hover';
 					// Button size.
-					if ( ! this.isDefault( 'button_size' ) ) {
-
-						if ( 'object' === typeof buttonSizeMap[ this.values.button_size ] ) {
-							buttonDimensions                 = buttonSizeMap[ this.values.button_size ];
-							customVars[ 'button-padding' ]     = buttonDimensions.padding;
-							customVars[ 'button-line-height' ] = buttonDimensions.line_height;
-							customVars[ 'button-font-size' ]   = buttonDimensions.font_size;
+					if ( !this.isDefault( 'button_size' ) ) {
+						if ( 'undefined' !== typeof button_size_map[ this.values.button_size ] ) {
+							button_dimensions = button_size_map[ this.values.button_size ];
+							this.addCssProperty( button, 'padding', button_dimensions.padding );
+							this.addCssProperty( button, 'line-height', button_dimensions.line_height );
+							this.addCssProperty( button, 'font-size', button_dimensions.font_size );
 						}
+
 					}
 
-					cssVarsOptions.button_border_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_border_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_border_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_border_left   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push( 'button_color' );
-					cssVarsOptions.push( 'button_border_color' );
-					cssVarsOptions.push( 'button_color_hover' );
-					cssVarsOptions.push( 'button_border_color_hover' );
-
-					// Button gradient.
-					if ( 'string' === typeof this.values.button_gradient_top && '' !== this.values.button_gradient_top ) {
-						cssVarsOptions.push( 'button_gradient_top' );
-					}
-					if ( 'string' === typeof this.values.button_gradient_bottom && '' !== this.values.button_gradient_bottom ) {
-						cssVarsOptions.push( 'button_gradient_bottom' );
-					} else if ( 'string' === typeof this.values.button_gradient_top && '' !== this.values.button_gradient_top ) {
-						customVars[ 'button-gradient-bottom' ] = this.values.button_gradient_top;
+					if ( !this.isDefault( 'button_border_width' ) ) {
+						this.addCssProperty( button, 'border-width', _.fusionGetValueWithUnit( this.values.button_border_width ) );
 					}
 
-					if ( 'string' === typeof this.values.button_gradient_top_hover && '' !== this.values.button_gradient_top_hover ) {
-						cssVarsOptions.push( 'button_gradient_top_hover' );
+					if ( !this.isDefault( 'button_color' ) ) {
+						this.addCssProperty( button, 'color', this.values.button_color );
 					}
-					if ( 'string' === typeof this.values.button_gradient_bottom_hover && '' !== this.values.button_gradient_bottom_hover ) {
-						cssVarsOptions.push( 'button_gradient_bottom_hover' );
-					} else if ( 'string' === typeof this.values.button_gradient_top_hover && '' !== this.values.button_gradient_top_hover ) {
-						customVars[ 'button-gradient-bottom-hover' ] = this.values.button_gradient_top_hover;
+
+					if ( ( 'undefined' !== typeof this.values.button_gradient_top && '' !== this.values.button_gradient_top ) ||
+						( 'undefined' !== this.values.button_gradient_bottom && '' !== this.values.button_gradient_bottom ) ) {
+						this.addCssProperty( button, 'background', this.values.button_gradient_top );
+						this.addCssProperty( button, 'background-image', 'linear-gradient( to top, ' + this.values.button_gradient_bottom + ', ' + this.values.button_gradient_top + ' )' );
 					}
+
+					if ( !this.isDefault( 'button_border_color' ) ) {
+						this.addCssProperty( button, 'border-color', this.values.button_border_color );
+					}
+
+					if ( !this.isDefault( 'button_color_hover' ) ) {
+						this.addCssProperty( button_hover, 'color', this.values.button_color_hover );
+					}
+
+					if ( ( this.values.button_gradient_top_hover && '' !== this.values.button_gradient_top_hover ) ||
+						( this.values.button_gradient_bottom_hover && '' !== this.values.button_gradient_bottom_hover ) ) {
+						this.addCssProperty( button_hover, 'background', this.values.button_gradient_top_hover );
+						this.addCssProperty( button_hover, 'background-image', 'linear-gradient( to top, ' + this.values.button_gradient_bottom_hover + ', ' + this.values.button_gradient_top_hover + ' )' );
+					}
+
+					if ( !this.isDefault( 'button_border_color_hover' ) ) {
+						this.addCssProperty( button_hover, 'border-color', this.values.button_border_color_hover );
+					}
+
 				} else {
-					cssVarsOptions.push( 'link_color' );
-					cssVarsOptions.push( 'link_hover_color' );
-					cssVarsOptions.link_font_size = { 'callback': _.fusionGetValueWithUnit };
+					// Link text color.
+					if ( !this.isDefault( 'link_color' ) ) {
+						this.addCssProperty( selector, 'color', this.values.link_color );
+					}
+
+					if ( !this.isDefault( 'link_hover_color' ) ) {
+						this.addCssProperty( selector + ':hover', 'color', this.values.link_hover_color );
+					}
+
+					if ( !this.isDefault( 'link_font_size' ) ) {
+						this.addCssProperty( selector, 'font-size', this.values.link_font_size );
+					}
+
 				}
 
-				cssVarsOptions.button_details_margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_details_margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_details_margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_details_margin_left   = { 'callback': _.fusionGetValueWithUnit };
+				// Product link button styling
+				selector = this.baseSelector + ' .fusion-post-card-cart-product-link';
+				if ( !this.isDefault( 'button_details_margin_top' ) ) {
+					this.addCssProperty( selector, 'margin-top', _.fusionGetValueWithUnit( this.values.button_details_margin_top ) );
+				}
+
+				if ( !this.isDefault( 'button_details_margin_right' ) ) {
+					this.addCssProperty( selector, 'margin-right', _.fusionGetValueWithUnit( this.values.button_details_margin_right ) );
+				}
+
+				if ( !this.isDefault( 'button_details_margin_bottom' ) ) {
+					this.addCssProperty( selector, 'margin-bottom', _.fusionGetValueWithUnit( this.values.button_details_margin_bottom ) );
+				}
+
+				if ( !this.isDefault( 'button_details_margin_left' ) ) {
+					this.addCssProperty( selector, 'margin-left', _.fusionGetValueWithUnit( this.values.button_details_margin_left ) );
+				}
 
 				if ( 'custom' === this.values.product_link_style ) {
+					button = '.fusion-body ' + this.baseSelector + ' .fusion-post-card-cart-product-link';
 					// Button size.
-					if ( ! this.isDefault( 'button_details_size' ) ) {
-
-						if ( 'object' === typeof buttonSizeMap[ this.values.button_details_size ] ) {
-							buttonDimensions                         = buttonSizeMap[ this.values.button_details_size ];
-							customVars[ 'button-details-padding' ]     = buttonDimensions.padding;
-							customVars[ 'button-details-line-height' ] = buttonDimensions.line_height;
-							customVars[ 'button-details-font-size' ]   = buttonDimensions.font_size;
+					if ( !this.isDefault( 'button_details_size' ) ) {
+						if ( 'undefined' !== typeof button_size_map[ this.values.button_details_size ] ) {
+							button_dimensions = button_size_map[ this.values.button_details_size ];
+							this.addCssProperty( button, 'padding', button_dimensions.padding );
+							this.addCssProperty( button, 'line-height', button_dimensions.line_height );
+							this.addCssProperty( button, 'font-size', button_dimensions.font_size );
 						}
+
 					}
 
-					cssVarsOptions.button_details_border_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_details_border_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_details_border_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_details_border_left   = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push(  'button_details_color' );
-					cssVarsOptions.push(  'button_details_border_color' );
-
-					if ( 'string' === typeof this.values.button_details_gradient_top && '' !== this.values.button_details_gradient_top ) {
-						cssVarsOptions.push( 'button_details_gradient_top' );
+					if ( !this.isDefault( 'button_details_border_width' ) ) {
+						this.addCssProperty( button, 'border-width', _.fusionGetValueWithUnit( this.values.button_details_border_width ) );
 					}
-					if ( 'string' === typeof this.values.button_details_gradient_bottom && '' !== this.values.button_details_gradient_bottom ) {
-						cssVarsOptions.push( 'button_details_gradient_bottom' );
-					} else if ( 'string' === typeof this.values.button_details_gradient_top && '' !== this.values.button_details_gradient_top ) {
-						customVars[ 'button-details-gradient-bottom' ] = this.values.button_details_gradient_top;
+					if ( !this.isDefault( 'button_details_color' ) ) {
+						this.addCssProperty( button, 'color', this.values.button_details_color );
 					}
 
-					if ( 'string' === typeof this.values.button_details_gradient_top_hover && '' !== this.values.button_details_gradient_top_hover ) {
-						cssVarsOptions.push( 'button_details_gradient_top_hover' );
-					}
-					if ( 'string' === typeof this.values.button_details_gradient_bottom_hover && '' !== this.values.button_details_gradient_bottom_hover ) {
-						cssVarsOptions.push( 'button_details_gradient_bottom_hover' );
-					} else if ( 'string' === typeof this.values.button_details_gradient_top_hover && '' !== this.values.button_details_gradient_top_hover ) {
-						customVars[ 'button-details-gradient-bottom-hover' ] = this.values.button_details_gradient_top_hover;
+					if ( ( 'undefined' !== typeof this.values.button_details_gradient_top && '' !== this.values.button_details_gradient_top ) ||
+					( 'undefined' !== typeof this.values.button_details_gradient_bottom && '' !== this.values.button_details_gradient_bottom ) ) {
+						this.addCssProperty( button, 'background', this.values.button_details_gradient_top );
+						this.addCssProperty( button, 'background-image', 'linear-gradient( to top, ' + this.values.button_details_gradient_bottom + ', ' + this.values.button_details_gradient_top + ' )' );
 					}
 
-					cssVarsOptions.push( 'button_details_color_hover' );
-					cssVarsOptions.push( 'button_details_border_color_hover' );
+					if ( !this.isDefault( 'button_details_border_color' ) ) {
+						this.addCssProperty( button, 'border-color', this.values.button_details_border_color );
+					}
+
+					button_hover = button + ':hover';
+					// Button hover text color.
+					if ( !this.isDefault( 'button_details_color_hover' ) ) {
+						this.addCssProperty( button_hover, 'color', this.values.button_details_color_hover );
+					}
+
+					if ( ( 'undefined' !== typeof this.values.button_details_gradient_top_hover && '' !== this.values.button_details_gradient_top_hover ) ||
+					( 'undefined' !== typeof this.values.button_details_gradient_bottom_hover && '' !== this.values.button_details_gradient_bottom_hover ) ) {
+						this.addCssProperty( button_hover, 'background', this.values.button_details_gradient_top_hover );
+						this.addCssProperty( button_hover, 'background-image', 'linear-gradient( to top, ' + this.values.button_details_gradient_bottom_hover + ', ' + this.values.button_details_gradient_top_hover + ' )' );
+					}
+
+					if ( !this.isDefault( 'button_details_border_color_hover' ) ) {
+						this.addCssProperty( button_hover, 'border-color', this.values.button_details_border_color_hover );
+					}
+
 				} else {
-					cssVarsOptions.push( 'product_link_color' );
-					cssVarsOptions.push( 'product_link_hover_color' );
-					cssVarsOptions.push( 'product_link_font_size' );
-				}
-
-				if ( 'floated' === this.values.variation_layout && ! this.isDefault( 'variation_label_area_width' ) ) {
-					cssVarsOptions.variation_label_area_width = { 'callback': _.fusionGetValueWithUnit };
-				}
-
-				// Variation Label Typo.
-				cssVarsOptions.push( 'label_color' );
-				cssVarsOptions.label_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.push( 'label_line_height' );
-				cssVarsOptions.label_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.push( 'label_text_transform' );
-
-				// Font family and weight.
-				jQuery.each( _.fusionGetFontStyle( 'label_typography', this.values, 'object' ), function( rule, value ) {
-					customVars[ 'label-typography-' + rule ] = value;
-				} );
-
-				// Select variation type styling.
-				if ( ! this.isDefault( 'select_style' ) ) {
-					cssVarsOptions.select_height         = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.select_font_size      = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push( 'select_line_height' );
-					cssVarsOptions.select_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push( 'select_text_transform' );
-
-					// Font family and weight.
-					jQuery.each( _.fusionGetFontStyle( 'select_typography', this.values, 'object' ), function( rule, value ) {
-						customVars[ 'select-typography-' + rule ] = value;
-					} );
-
-					cssVarsOptions.push( 'select_color' );
-					cssVarsOptions.push( 'select_background' );
-					cssVarsOptions.push( 'select_border_color' );
-					cssVarsOptions.select_border_sizes_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.select_border_sizes_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.select_border_sizes_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.select_border_sizes_left   = { 'callback': _.fusionGetValueWithUnit };
-
-					// Border separator with arrow.
-					if ( ! this.isDefault( 'select_border_color' ) && ! this.isDefault( 'select_border_sizes_right' ) && ! this.isDefault( 'select_border_sizes_left' ) ) {
-						customVars[ 'arrow-border-left' ] = _.fusionGetValueWithUnit( this.values.select_border_sizes_left ) + ' solid ' + this.values.select_border_color;
+					// Link text color.
+					if ( !this.isDefault( 'product_link_color' ) ) {
+						this.addCssProperty( selector, 'color', this.values.product_link_color );
 					}
 
-					cssVarsOptions.border_radius_top_left     = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.border_radius_top_right    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.border_radius_bottom_left  = { 'callback': _.fusionGetValueWithUnit };
+					if ( !this.isDefault( 'product_link_hover_color' ) ) {
+						this.addCssProperty( selector + ':hover', 'color', this.values.product_link_hover_color );
+					}
+
+					if ( !this.isDefault( 'product_link_font_size' ) ) {
+						this.addCssProperty( selector, 'font-size', this.values.product_link_font_size );
+					}
+
 				}
 
-				// Swatch styling if enabled.
-				if ( ! this.isDefault( 'swatch_style' ) ) {
-					cssVarsOptions.swatch_margin_top          = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.swatch_margin_right        = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.swatch_margin_bottom       = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.swatch_margin_left         = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push( 'swatch_background_color' );
-					cssVarsOptions.push( 'swatch_border_color' );
-					cssVarsOptions.push( 'swatch_background_color_active' );
-					cssVarsOptions.swatch_border_sizes_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.swatch_border_sizes_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.swatch_border_sizes_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.swatch_border_sizes_left   = { 'callback': _.fusionGetValueWithUnit };
+				css = this.parseCSS();
 
-					if ( ! this.isDefault( 'swatch_border_color_active' ) ) {
-						cssVarsOptions.push( 'swatch_border_color_active' );
-						customVars.swatch_border_color_hover = jQuery.AWB_Color( this.values.swatch_border_color_active ).alpha( 0.5 ).toVarOrRgbaString();
-					}
-
-					cssVarsOptions.color_swatch_height         = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_padding_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_padding_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_padding_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_padding_left   = { 'callback': _.fusionGetValueWithUnit };
-
-					// Color swatch.
-					if ( ! this.isDefault( 'color_swatch_width' ) ) {
-						customVars.color_swatch_width =  'auto' === this.values.color_swatch_width ? 'auto' : _.fusionGetValueWithUnit( this.values.color_swatch_width );
-					}
-
-					cssVarsOptions.color_swatch_border_radius_top_left     = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_border_radius_top_right    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.color_swatch_border_radius_bottom_left  = { 'callback': _.fusionGetValueWithUnit };
-
-					// Image swatch.
-					cssVarsOptions.image_swatch_height         = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.image_swatch_padding_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.image_swatch_padding_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.image_swatch_padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.image_swatch_padding_left   = { 'callback': _.fusionGetValueWithUnit };
-
-					if ( ! this.isDefault( 'image_swatch_width' ) ) {
-						customVars.color_swatch_width       = 'auto' === this.values.image_swatch_width ? 'auto' : _.fusionGetValueWithUnit( this.values.image_swatch_width );
-						customVars.color_swatch_image_width = 'auto' !== this.values.image_swatch_width ? '100%' : 'auto';
-					}
-
-					cssVarsOptions.image_swatch_border_radius_top_left     = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.image_swatch_border_radius_top_right    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.image_swatch_border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.image_swatch_border_radius_bottom_left  = { 'callback': _.fusionGetValueWithUnit };
-
-					// Button swatch.
-					cssVarsOptions.button_swatch_height                     = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_padding_top                = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_padding_right              = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_padding_bottom             = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_padding_left               = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_border_radius_top_left     = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_border_radius_top_right    = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_border_radius_bottom_left  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.button_swatch_font_size                  = { 'callback': _.fusionGetValueWithUnit };
-					cssVarsOptions.push( 'button_swatch_color' );
-					cssVarsOptions.push( 'button_swatch_color_active' );
-
-					if ( ! this.isDefault( 'button_swatch_width' ) ) {
-						customVars.button_swatch_width = 'auto' === this.values.button_swatch_width ? 'auto' : _.fusionGetValueWithUnit( this.values.button_swatch_width );
-					}
-				}
-
-				return this.getCustomCssVars( customVars ) + this.getCssVarsForOptions( cssVarsOptions );
-			},
-
-			/**
-			 * Get product type.
-			 *
-			 * @since  3.8.1
-			 * @param  {Object} values - The values object.
-			 * @return {String}
-			 */
-			getProductType: function () {
-				var product_type = 'simple';
-
-				if ( 'undefined' !== typeof this.query_data && 'undefined' !== typeof this.query_data.product_type ) {
-					product_type = this.query_data.product_type;
-				}
-				return product_type;
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

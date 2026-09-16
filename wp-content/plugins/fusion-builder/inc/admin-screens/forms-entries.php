@@ -7,10 +7,10 @@
 
 $fusion_forms = new Fusion_Form_DB_Forms();
 $forms        = $fusion_forms->get_formatted();
-ksort( $forms );
+ksort( $forms )
 ?>
 <?php Fusion_Builder_Admin::header( 'form-entries' ); ?>
-<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_form', 'create_posts' ) ) : ?>
+
 <div class="fusion-builder-important-notice fusion-template-builder avada-db-card avada-db-card-first">
 	<div class="intro-text">
 		<h1><?php esc_html_e( 'Form Builder', 'fusion-builder' ); ?></h1>
@@ -23,7 +23,7 @@ ksort( $forms );
 				printf(
 					/* translators: %s: "Forms Documentation Link". */
 					esc_html__( 'Please see the %s.', 'fusion-builder' ),
-					'<a href="https://avada.com/documentation/category/forms/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Forms Documentation', 'fusion-builder' ) . '</a>'
+					'<a href="https://theme-fusion.com/documentation/avada/forms/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Forms Documentation', 'fusion-builder' ) . '</a>'
 				);
 				?>
 			</p>
@@ -43,7 +43,7 @@ ksort( $forms );
 		</div>
 	</form>
 </div>
-<?php endif; ?>
+
 <div class="fusion-form-welcome-content">
 	<?php
 	$form_id = key( $forms );
@@ -58,15 +58,9 @@ ksort( $forms );
 			<?php ob_start(); ?>
 			<select id="fusion-forms" onchange="document.location='<?php echo esc_attr( admin_url( 'admin.php?page=avada-form-entries&form_id=' ) ); ?>' + this.value;">
 				<?php foreach ( $forms as $key => $form_data ) : ?>
-					<?php
-					$form_title = get_the_title( $form_data['form_id'] );
-					if ( '' !== $form_title ) :
-						?>
-					?>
 					<option class="fusion-form" <?php selected( (int) $key, (int) $form_id ); ?> value="<?php echo esc_attr( $key ); ?>">
-						<?php echo esc_html( $form_title ); ?>
+						<?php echo esc_html( get_the_title( $form_data['form_id'] ) ); ?>
 					</option>
-					<?php endif; ?>
 				<?php endforeach; ?>
 			</select>
 			<?php
@@ -89,7 +83,7 @@ ksort( $forms );
 		<div class="fusion-builder-important-notice avada-db-card">
 			<h2><?php esc_html_e( 'No Form Entries Available', 'fusion-builder' ); ?></h2>
 			<p>
-				<?php esc_html_e( 'Currently no entries are available. If you haven\'t created a form already, you can do it above by adding a name for your new Avada Form and by clicking "Create New Form" button. Saved forms can be displayed on any page or post using the Avada Form element or the Avada Form widget.', 'fusion-builder' ); ?>
+				<?php esc_html_e( 'Currently you have no forms created. Add a name for your new Avada Form above and click "Create New Form" button. Saved forms can be displayed on any page or post using the Avada Form element or the Avada Form widget.', 'fusion-builder' ); ?>
 			</p>
 			<p>
 				<?php esc_html_e( 'Once there are form submissions from users, the entries will be displayed here. You can then view individual entries for each form.', 'fusion-builder' ); ?>

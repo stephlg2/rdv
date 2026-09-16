@@ -9,20 +9,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		FusionPageBuilder.fusion_counter_box = FusionPageBuilder.ChildElementView.extend( {
 
 			/**
-			 * Runs after view DOM is patched.
-			 *
-			 * @since 2.0
-			 * @return {void}
-			 */
-			afterPatch: function() {
-				this._refreshJs();
-				if ( 'undefined' !== typeof this.model.attributes.selectors ) {
-					this.model.attributes.selectors[ 'class' ] += ' ' + this.className;
-					this.setElementAttributes( this.$el, this.model.attributes.selectors );
-				}
-			},
-
-			/**
 			 * Runs during render() call.
 			 *
 			 * @since 2.0
@@ -31,8 +17,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			onRender: function() {
 				if ( 'undefined' !== typeof this.model.attributes.selectors ) {
 					this.model.attributes.selectors[ 'class' ] += ' ' + this.className;
+					this.model.attributes.selectors[ 'class' ] += ( 'video' === this.model.attributes.params.type ) ? ' video' : ' image';
 					this.setElementAttributes( this.$el, this.model.attributes.selectors );
 				}
+			},
+
+			/**
+			 * Runs after view DOM is patched.
+			 *
+			 * @since 2.0
+			 * @return {void}
+			 */
+			afterPatch: function() {
+
+				if ( 'undefined' !== typeof this.model.attributes.selectors ) {
+					this.model.attributes.selectors[ 'class' ] += ' ' + this.className;
+					this.model.attributes.selectors[ 'class' ] += ( 'video' === this.model.attributes.params.type ) ? ' video' : ' image';
+					this.setElementAttributes( this.$el, this.model.attributes.selectors );
+				}
+
+				this._refreshJs();
 			},
 
 			/**
@@ -58,9 +62,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.validateParentValues( parentValues );
 
-				counterBoxContainer        = this.buildContainerAtts();
+				counterBoxContainer        = this.buildContainerAtts( atts.values, parentValues );
 				counterWrapper             = this.buildCounterWrapper( atts.values, parentValues );
-				counterBoxShortcodeContent = this.buildContentAttr();
+				counterBoxShortcodeContent = this.buildContentAttr( parentValues );
 				this.setSelectors( atts.values, parentValues );
 
 				// Reset attribute objet.
@@ -115,12 +119,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds attributes.
 			 *
 			 * @since 2.0
+			 * @param {Object} values - The values.
+			 * @param {Object} parentValues - The parent element values.
 			 * @return {Object}
 			 */
-			buildContainerAtts: function() {
+			buildContainerAtts: function( values, parentValues ) {
 				var counterBoxContainer = {
 					class: 'counter-box-container'
 				};
+
+				counterBoxContainer.style = 'border: 1px solid ' + parentValues.border_color + ';';
 
 				return counterBoxContainer;
 			},
@@ -176,6 +184,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					selectedIcon = ( values.icon ) ? values.icon : parentValues.icon;
 					counterBoxShortcodeIcon = {
 						class: 'counter-box-icon fontawesome-icon ' + _.fusionFontAwesome( selectedIcon ),
+						style: 'font-size:' + parentValues.icon_size + 'px;',
 						'aria-hidden': 'true'
 					};
 					iconOutput = '<i ' + _.fusionGetAttributes( counterBoxShortcodeIcon ) + '></i>';
@@ -185,7 +194,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// counterBoxShortcodeCounterContainer Atributes.
 				counterBoxShortcodeCounterContainer = {
-					class: 'content-box-percentage content-box-counter'
+					class: 'content-box-percentage content-box-counter',
+					style: 'color:' + parentValues.color + ';font-size:' + parentValues.title_size + 'px;line-height:normal;'
 				};
 
 				return '<div ' + _.fusionGetAttributes( counterBoxShortcodeCounterContainer ) + '>' + counter + '</div>';
@@ -195,11 +205,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds attributes.
 			 *
 			 * @since 2.0
+			 * @param {Object} parentValues - The parent element values.
 			 * @return {Object}
 			 */
-			buildContentAttr: function() {
+			buildContentAttr: function( parentValues ) {
 				var counterBoxShortcodeContent = {
-					class: 'counter-box-content'
+					class: 'counter-box-content',
+					style: 'color:' + parentValues.body_color + ';font-size:' + parentValues.body_size + 'px;'
 				};
 
 				// Make content editable.

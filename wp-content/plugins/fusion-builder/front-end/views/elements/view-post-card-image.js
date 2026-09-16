@@ -25,6 +25,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
 				attributes.output      = this.buildOutput( atts );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 
 				return attributes;
 			},
@@ -39,15 +40,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function( values ) {
 				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-' + FusionApp.settings.woocommerce_product_box_design + '-product-image-wrapper fusion-woo-product-image fusion-post-card-image fusion-post-card-image-' + this.model.get( 'cid' ),
-						style: this.getStyleVariables( values )
+						style: ''
 					} );
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( '' !== values.aspect_ratio ) {
-					attr[ 'class' ] += ' has-aspect-ratio';
 				}
 
 				if ( '' !== values.id ) {
@@ -80,40 +77,54 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.3
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var cssVarsOptions = [
-					'crossfade_bg_color',
-					'aspect_ratio_position'
-				],
-				customVars = [],
-				aspectRatio,
-				width,
-				height;
+			buildStyleBlock: function( values ) {
+                var self = this,
+                    sides, margin_name, css;
 
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_top_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_top_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_bottom_left = { 'callback': _.fusionGetValueWithUnit };
+                this.baseSelector = '.fusion-post-card-image.fusion-post-card-image-' + this.model.get( 'cid' );
+				this.dynamic_css  = {};
 
-				if ( 'custom' ===  values.aspect_ratio && '' !==  values.custom_aspect_ratio ) {
-					customVars.aspect_ratio = `100 / ${values.custom_aspect_ratio}`;
-				} else {
-					aspectRatio = values.aspect_ratio.split( '-' );
-					width 		= aspectRatio[ 0 ] || '';
-					height 		= aspectRatio[ 1 ] || '';
-					customVars.aspect_ratio = `${width} / ${height}`;
+                sides = [ 'top', 'right', 'bottom', 'left' ];
+
+				// Margins.
+				jQuery.each( sides, function( index, side ) {
+					// Element margin.
+					margin_name = 'margin_' + side;
+					if ( '' !==  self.values[ margin_name ] ) {
+						self.addCssProperty( self.baseSelector, 'margin-' + side,  _.fusionGetValueWithUnit( self.values[ margin_name ] ) );
+					}
+				} );
+
+				if ( ! this.isDefault( 'crossfade_bg_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .crossfade-images', 'background-color', values.crossfade_bg_color );
 				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				// Border Radius.
+				if (  !  this.isDefault( 'border_radius_top_left' ) ) {
+					this.addCssProperty( this.baseSelector, 'border-top-left-radius',  _.fusionGetValueWithUnit( this.values.border_radius_top_left ) );
+				}
+
+				if (  !  this.isDefault( 'border_radius_top_right' ) ) {
+					this.addCssProperty( this.baseSelector, 'border-top-right-radius',  _.fusionGetValueWithUnit( this.values.border_radius_top_right ) );
+				}
+
+				if (  !  this.isDefault( 'border_radius_bottom_right' ) ) {
+					this.addCssProperty( this.baseSelector, 'border-bottom-right-radius',  _.fusionGetValueWithUnit( this.values.border_radius_bottom_right ) );
+				}
+
+				if (  !  this.isDefault( 'border_radius_bottom_left' ) ) {
+					this.addCssProperty( this.baseSelector, 'border-bottom-left-radius',  _.fusionGetValueWithUnit( this.values.border_radius_bottom_left ) );
+				}
+
+				css = this.parseCSS();
+
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

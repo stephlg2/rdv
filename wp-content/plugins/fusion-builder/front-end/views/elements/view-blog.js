@@ -36,7 +36,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Validate values.
 				this.validateValues( atts.values );
 				this.extras = atts.extras;
-				this.values = atts.values;
 
 				// Create attribute objects.
 				attributes.attr      = this.buildAttr( atts.values );
@@ -151,7 +150,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function( values ) {
 				var attr      = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-blog-shortcode fusion-blog-archive',
-						style: this.getStyleVariables( values )
+						style: ''
 					} ),
 					blogLayout  = '',
 					cid         = this.model.get( 'cid' );
@@ -182,22 +181,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( '' !== values.margin_top ) {
-					attr.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_right ) {
-					attr.style += 'margin-right:' + values.margin_right + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
-
-				if ( '' !== values.margin_left ) {
-					attr.style += 'margin-left:' + values.margin_left + ';';
 				}
 
 				if ( '' !== values.id ) {
@@ -362,9 +345,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					readMoreLinkAttributes          = {},
 					contentSepAttr                  = {},
 					contentSepTypes                 = '',
-					postTitleTag                    = '',
-					timelineTitleTag                = '',
-					self                            = this,
 					isThereMetaAbove                = false,
 					isThereMetaBelow                = false,
 					isThereContent                  = false;
@@ -429,8 +409,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 								timelineDate = '</div>';
 							}
 
-							timelineTitleTag = self.getTitleTag( values, 'timeline_title' );
-							timelineDate += '<' + timelineTitleTag + ' class="fusion-timeline-date" style="background-color:' + values.grid_element_color + ';">' + post.timeline_date_format + '</' + timelineTitleTag + '>';
+							timelineDate += '<h3 class="fusion-timeline-date" style="background-color:' + values.grid_element_color + ';">' + post.timeline_date_format + '</h3>';
 							timelineDate += '<div class="fusion-collapse-month">';
 						}
 
@@ -490,11 +469,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					};
 
 					if ( 'masonry' === values.layout ) {
-						color    = jQuery.AWB_Color( values.grid_box_color );
-						colorCSS = color.toVarOrRgbaString();
+						color    = jQuery.Color( values.grid_box_color );
+						colorCSS = color.toRgbaString();
 						if ( 0 === color.alpha() ) {
-							color = color.alpha( 1 );
-							colorCSS = color.toVarOrRgbaString();
+							colorCSS = color.toHexString();
 						}
 
 						if ( 0 === color.alpha() || 'transparent' === values.grid_element_color ) {
@@ -508,9 +486,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						blogFusionPostWrapper.style += 'border-color:' + values.grid_element_color + ';';
 
 					} else if ( 'grid' === values.layout ) {
-						color       = jQuery.AWB_Color( values.grid_box_color );
-						colorCSS    = color.toVarOrRgbaString();
-						borderColor = jQuery.AWB_Color( values.grid_element_color );
+						color       = jQuery.Color( values.grid_box_color );
+						colorCSS    = color.toRgbaString();
+						borderColor = jQuery.Color( values.grid_element_color );
 
 						if ( 0 === borderColor.alpha() || 'transparent' === values.grid_element_color ) {
 							blogFusionPostWrapper.style += 'border:none;';
@@ -522,8 +500,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						blogFusionPostWrapper.style += 'border-color:' + values.grid_element_color + ';';
 
 					} else if ( 'timeline' === values.layout ) {
-						color    = jQuery.AWB_Color( values.grid_box_color );
-						colorCSS = color.toVarOrRgbaString();
+						color    = jQuery.Color( values.grid_box_color );
+						colorCSS = color.toRgbaString();
 						blogFusionPostWrapper.style = 'background-color:' + colorCSS + ';';
 					}
 
@@ -578,7 +556,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 
 						dateAndFormat += '<div class="fusion-format-box">';
-						dateAndFormat += '<i class="awb-icon-' + formatClass + '" aria-hidden="true"></i>';
+						dateAndFormat += '<i class="fusion-icon-' + formatClass + '" aria-hidden="true"></i>';
 						dateAndFormat += '</div>';
 
 						preTitleContent += dateAndFormat;
@@ -605,6 +583,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							jQuery.each( contentSepTypes, function( index, type ) {
 								contentSepAttr[ 'class' ] += ' sep-' + type;
 							} );
+
+							contentSepAttr.style = 'border-color:' + values.grid_separator_color;
 
 							contentSep = '<div ' + _.fusionGetAttributes( contentSepAttr ) + '></div>';
 						}
@@ -661,8 +641,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						blogShortcodePostTitle[ 'class' ] += ' entry-title';
 					}
 
-					postTitleTag = self.getTitleTag( values, 'post' );
-					headerContent = preTitleContent + '<' + postTitleTag + ' ' + _.fusionGetAttributes( blogShortcodePostTitle ) + '>' + link + '</' + postTitleTag + '>' + metaData + contentSep;
+					headerContent = preTitleContent + '<h2 ' + _.fusionGetAttributes( blogShortcodePostTitle ) + '>' + link + '</h2>' + metaData + contentSep;
 
 					html += headerContent;
 
@@ -752,34 +731,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Get the title HTML tag.
-			 *
-			 * @param {Array} values
-			 * @param {string} title Either 'post' or 'timeline_title'.
-			 * @returns
-			 */
-			getTitleTag: function( values, title ) {
-				var title_value;
-				if ( 'post' === title ) {
-					title_value = values.title_size;
-					if ( ! title_value ) {
-						return 'h2';
-					}
-				} else if ( 'timeline_title' === title ) {
-					title_value = values.timeline_title_size;
-					if ( ! title_value ) {
-						return 'h3';
-					}
-				}
-
-				if ( !isNaN( title_value ) && !isNaN( parseFloat( title_value ) ) ) {
-					return 'h' + title_value;
-				}
-
-				return title_value;
-			},
-
-			/**
 			 * Build the styles.
 			 *
 			 * @since 2.0
@@ -794,35 +745,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				styles += '.fusion-blog-shortcode-cid' + cid + ' .fusion-posts-container{margin-left: -' + ( parseFloat( values.blog_grid_column_spacing ) / 2 ) + 'px !important; margin-right:-' + ( parseFloat( values.blog_grid_column_spacing ) / 2 ) + 'px !important;}';
 
 				return styles;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				const customVars = [],
-				cssVarsOptions = [
-					'title_line_height',
-					'title_text_transform',
-					'timeline_title_line_height',
-					'timeline_title_text_transform'
-				];
-
-				cssVarsOptions.title_font_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.timeline_title_font_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.timeline_title_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-
-				if ( ! this.isDefault( 'grid_separator_color' ) ) {
-					customVars.grid_separator_color = values.grid_separator_color;
-				}
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getFontStylingVars( 'title_font', values ) + this.getFontStylingVars( 'timeline_title_font', values ) + this.getCustomCssVars( customVars, false );
 			}
-
 		} );
 	} );
 }( jQuery ) );

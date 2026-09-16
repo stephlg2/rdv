@@ -7,12 +7,11 @@
 
 ?>
 <script type="text/template" id="fusion-builder-modules-template">
-	<div class="fusion-builder-modal-top-container fusion-has-close-on-top">
+	<div class="fusion-builder-modal-top-container">
 		<h2 class="fusion-builder-settings-heading">
 			{{ fusionBuilderText.select_element }}
 			<input type="text" class="fusion-elements-filter" placeholder="{{ fusionBuilderText.search_elements }}" />
 		</h2>
-		<div class="fusion-builder-modal-close fusiona-plus2"></div>
 
 		<ul class="fusion-tabs-menu">
 			<# if ( 'undefined' !== typeof components && components.length && 0 < componentsCounter ) { #>
@@ -30,9 +29,6 @@
 			<# } #>
 			<# if ( 'false' == FusionPageBuilderApp.innerColumn  && true !== FusionPageBuilderApp.shortcodeGenerator ) { #>
 				<li class=""><a href="#inner-columns">{{ fusionBuilderText.inner_columns }}</a></li>
-			<# } #>
-			<# if ( '1' === fusionBuilderConfig.studio_status ) { #>
-				<li><a href="#fusion-builder-elements-studio"><i class="fusiona-avada-logo"></i> <?php esc_html_e( 'Studio', 'fusion-builder' ); ?></a></li>
 			<# } #>
 		</ul>
 	</div>
@@ -98,9 +94,6 @@
 							if ( 'fusion_form' === fusionBuilderConfig.post_type && 'fusion_form' === module.label ) {
 								return;
 							}
-							if ( 'mega_menus' === fusionBuilderConfig.template_category && 'fusion_menu' === module.label ) {
-								return;
-							}
 							if ( 'post_cards' === fusionBuilderConfig.template_category && 'fusion_post_cards' === module.label ) {
 								return;
 							}
@@ -141,26 +134,12 @@
 						<?php echo fusion_builder_generator_column_layouts(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					</div>
 				<# } #>
-				<# if ( '1' === fusionBuilderConfig.studio_status ) { #>
-					<div id="fusion-builder-elements-studio" class="fusion-tab-content">
-						<?php if ( function_exists( 'Avada' ) && Avada()->registration->is_registered() ) : ?>
-							<div class="studio-wrapper">
-								<aside>
-									<ul></ul>
-								</aside>
-								<section>
-									<div class="fusion-builder-element-content fusion-loader"><span class="fusion-builder-loader"></span><span class="awb-studio-import-status"></span></div>
-									<ul class="studio-imports"></ul>
-								</section>
-								<?php AWB_Studio::studio_import_options_template(); ?>
-							</div>
-						<?php else : ?>
-							<h2 class="awb-studio-not-reg"><?php esc_html_e( 'The product needs to be registered to access the Avada Studio.', 'fusion-builder' ); ?></h2>
-						<?php endif; ?>
-					</div>
-				<# } #>
 				<div id="custom-elements" class="fusion-tab-content"></div>
 			</div>
 		</div>
+	</div>
+
+	<div class="fusion-builder-modal-bottom-container">
+		<a href="#" class="fusion-builder-modal-close"><span>{{ fusionBuilderText.cancel }}</span></a>
 	</div>
 </script>

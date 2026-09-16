@@ -40,7 +40,6 @@
 			public static $theInstance;
 			public static $version = "4.0";
 			public $is_field = false;
-			public $field_name = '';
 
 			/**
 			 * Class Constructor. Defines the args for the extions class
@@ -160,6 +159,9 @@
 				$this->parent->get_options();
 				$backup_options                 = $this->parent->options;
 				$backup_options['fusionredux-backup'] = '1';
+				if ( isset( $var['REDUX_imported'] ) ) {
+					unset( $var['REDUX_imported'] );
+				}
 
 				// No need to escape this, as it's been properly escaped previously and through json_encode
 				$content = json_encode( $backup_options );

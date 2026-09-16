@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_radio' ) ) {
 		class FusionForm_Radio extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -39,7 +57,6 @@ if ( fusion_is_element_enabled( 'fusion_form_radio' ) ) {
 					'label'             => '',
 					'name'              => '',
 					'required'          => '',
-					'empty_notice'      => '',
 					'placeholder'       => '',
 					'options'           => '',
 					'form_field_layout' => '',
@@ -86,6 +103,8 @@ if ( fusion_is_element_enabled( 'fusion_form_radio' ) ) {
  */
 function fusion_form_radio() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_Radio',
@@ -108,7 +127,7 @@ function fusion_form_radio() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,
@@ -126,20 +145,6 @@ function fusion_form_radio() {
 					],
 					[
 						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Empty Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter text validation notice that should display if data input is empty.', 'fusion-builder' ),
-						'param_name'  => 'empty_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'required',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Tooltip Text', 'fusion-builder' ),
 						'param_name'  => 'tooltip',
 						'value'       => '',
@@ -149,7 +154,7 @@ function fusion_form_radio() {
 						'type'           => 'form_options',
 						'heading'        => esc_html__( 'Options', 'fusion-builder' ),
 						'param_name'     => 'options',
-						'description'    => esc_html__( 'Add options for the input field. Use the checkbox to preselect a value.', 'fusion-builder' ),
+						'description'    => esc_html__( 'Add options for the input field.', 'fusion-builder' ),
 						'value'          => 'W1tmYWxzZSwiT3B0aW9uIl1d',
 						'allow_multiple' => 'no',
 					],

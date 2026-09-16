@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 		class FusionSC_FusionText extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The text counter.
 			 *
 			 * @access private
@@ -50,15 +59,13 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
 					'animation_direction'           => 'left',
 					'animation_offset'              => $fusion_settings->get( 'animation_offset' ),
 					'animation_speed'               => '',
-					'animation_delay'               => '',
 					'animation_type'                => '',
-					'animation_color'               => '',
 					'class'                         => '',
 					'columns'                       => $fusion_settings->get( 'text_columns' ),
 					'column_min_width'              => $fusion_settings->get( 'text_column_min_width' ),
@@ -69,7 +76,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 					'line_height'                   => '',
 					'letter_spacing'                => '',
 					'text_color'                    => '',
-					'text_transform'                => '',
 					'hide_on_mobile'                => fusion_builder_default_visibility( 'string' ),
 					'sticky_display'                => '',
 					'id'                            => '',
@@ -83,7 +89,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 					'margin_left'                   => '',
 					'margin_right'                  => '',
 					'margin_top'                    => '',
-					'logics'                        => '',
 				];
 			}
 
@@ -116,10 +121,11 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
+				$this->params   = $args;
 				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_text' );
+				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $this->params, 'fusion_text' );
 
 				$content = apply_filters( 'fusion_shortcode_content', $content, 'fusion_text', $args );
 
@@ -127,11 +133,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 
 				if ( 'default' === $this->args['rule_style'] ) {
 					$this->args['rule_style'] = $fusion_settings->get( 'text_rule_style' );
-				}
-
-				if ( '' !== $this->args['logics'] ) {
-					// Add form element data to a form.
-					$this->add_field_data_to_form();
 				}
 
 				$html = '<div ' . FusionBuilder::attributes( 'text-element-wrapper' ) . '>' . wpautop( $content, false ) . '</div>';
@@ -158,8 +159,13 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 
 				$attr = [
 					'class' => 'fusion-text fusion-text-' . $this->element_id,
-					'style' => $this->get_style_vars(),
+					'style' => '',
 				];
+
+				// Alignment.
+				if ( ! empty( $this->args['content_alignment'] ) ) {
+					$attr['style'] .= 'text-align:' . $this->args['content_alignment'] . ';';
+				}
 
 				if ( fusion_builder_container()->is_flex() ) {
 
@@ -174,8 +180,45 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 
 				// Only add styling if more than one column is used.
 				if ( 1 < $this->args['columns'] ) {
-					$attr['class'] .= ' awb-text-cols fusion-text-columns-' . $this->args['columns'];
+					$attr['class'] .= ' fusion-text-split-columns fusion-text-columns-' . $this->args['columns'];
+
+					$browser_prefixes = [ '-webkit-', '-moz-', '' ];
+
+					foreach ( $browser_prefixes as $prefix ) {
+
+						$attr['style'] .= ' ' . $prefix . 'column-count:' . $this->args['columns'] . ';';
+
+						if ( $this->args['column_spacing'] ) {
+							$attr['style'] .= ' ' . $prefix . 'column-gap:' . FusionBuilder::validate_shortcode_attr_value( $this->args['column_spacing'], 'px' ) . ';';
+						}
+
+						if ( $this->args['column_min_width'] ) {
+							$attr['style'] .= ' ' . $prefix . 'column-width:' . FusionBuilder::validate_shortcode_attr_value( $this->args['column_min_width'], 'px' ) . ';';
+						}
+
+						if ( 'none' !== $this->args['rule_style'] ) {
+							$attr['style'] .= ' ' . $prefix . 'column-rule:' . $this->args['rule_size'] . 'px ' . $this->args['rule_style'] . ' ' . $this->args['rule_color'] . ';';
+						}
+					}
 				}
+
+				if ( '' !== $this->args['font_size'] ) {
+					$attr['style'] .= 'font-size:' . fusion_library()->sanitize->get_value_with_unit( $this->args['font_size'] ) . ';';
+				}
+
+				if ( '' !== $this->args['line_height'] ) {
+					$attr['style'] .= 'line-height:' . fusion_library()->sanitize->size( $this->args['line_height'] ) . ';';
+				}
+
+				if ( '' !== $this->args['letter_spacing'] ) {
+					$attr['style'] .= 'letter-spacing:' . fusion_library()->sanitize->get_value_with_unit( $this->args['letter_spacing'] ) . ';';
+				}
+
+				if ( '' !== $this->args['text_color'] ) {
+					$attr['style'] .= 'color:' . fusion_library()->sanitize->color( $this->args['text_color'] ) . ';';
+				}
+
+				$attr['style'] .= Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font' );
 
 				if ( $this->args['animation_type'] ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
@@ -185,14 +228,10 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 
 				$attr['class'] .= Fusion_Builder_Sticky_Visibility_Helper::get_sticky_class( $this->args['sticky_display'] );
 
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
+
 				if ( '' !== $this->args['margin_bottom'] ) {
 					$attr['class'] .= ' fusion-text-no-margin';
-				}
-
-				// Hide field if it has got logics.
-				if ( isset( $this->args['logics'] ) && '' !== $this->args['logics'] && '[]' !== base64_decode( $this->args['logics'] ) ) {
-					$attr['data-form-element-name'] = 'fusion_text_' . $this->element_id;
-					$attr['class']                 .= ' fusion-form-field-hidden';
 				}
 
 				if ( $this->args['class'] ) {
@@ -207,46 +246,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 			}
 
 			/**
-			 * Get the style vars.
-			 *
-			 * @return string
-			 */
-			public function get_style_vars() {
-				$sanitize        = fusion_library()->sanitize;
-				$css_vars        = [
-					'content_alignment',
-					'font_size'      => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-					'line_height'    => [ 'callback' => [ $sanitize, 'size' ] ],
-					'letter_spacing' => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-					'text_transform',
-					'text_color'     => [ 'callback' => [ $sanitize, 'color' ] ],
-				];
-				$custom_css_vars = [];
-
-				// Only add styling if more than one column is used.
-				if ( 1 < $this->args['columns'] ) {
-					array_push( $css_vars, 'columns' );
-
-					if ( $this->args['column_spacing'] ) {
-						$custom_css_vars['column_spacing'] = FusionBuilder::validate_shortcode_attr_value( $this->args['column_spacing'], 'px' );
-					}
-
-					if ( $this->args['column_min_width'] ) {
-						$custom_css_vars['column_min_width'] = FusionBuilder::validate_shortcode_attr_value( $this->args['column_min_width'], 'px' );
-					}
-
-					if ( 'none' !== $this->args['rule_style'] ) {
-						$custom_css_vars['rule_style'] = $this->args['rule_size'] . 'px ' . $this->args['rule_style'] . ' ' . $this->args['rule_color'];
-					}
-				}
-
-				$margin    = Fusion_Builder_Margin_Helper::get_margin_vars( $this->args );
-				$font_vars = $this->get_font_styling_vars( 'text_font' );
-
-				return $this->get_css_vars_for_options( $css_vars ) . $this->get_custom_css_vars( $custom_css_vars ) . $margin . $font_vars;
-			}
-
-			/**
 			 * Used to set any other variables for use on front-end editor template.
 			 *
 			 * @static
@@ -255,52 +254,13 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'visibility_medium' => $fusion_settings->get( 'visibility_medium' ),
 					'visibility_small'  => $fusion_settings->get( 'visibility_small' ),
 				];
 			}
 
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.0
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/text.min.css' );
-			}
-
-			/**
-			 * Adds field data to the form.
-			 *
-			 * @access public
-			 * @since 3.10.2
-			 * @return void
-			 */
-			public function add_field_data_to_form() {
-				global $fusion_form;
-
-				if ( ! isset( $fusion_form['form_fields'] ) ) {
-					$fusion_form['form_fields'] = [];
-				}
-
-				$fusion_form['form_fields'][] = 'fusion_text';
-
-				if ( isset( $this->args['label'] ) ) {
-					$fusion_form['field_labels'][ $this->args['name'] ] = $this->args['label'];
-				}
-
-				$field_name = str_replace( 'fusion_form_', '', 'fusion_text' );
-				$name       = isset( $this->args['name'] ) ? $this->args['name'] : $field_name . '_' . $this->text_counter;
-
-				if ( isset( $this->args['logics'] ) ) {
-					$fusion_form['field_logics'][ $name ] = base64_decode( $this->args['logics'] );
-				}
-				$fusion_form['field_types'][ $name ] = $field_name;
-			}
 
 			/**
 			 * Adds settings to element options panel.
@@ -310,6 +270,8 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 			 * @return array $sections Title settings.
 			 */
 			public function add_options() {
+				global $fusion_settings;
+
 				return [
 					'text_shortcode_section' => [
 						'label'       => esc_html__( 'Text Block', 'fusion-builder' ),
@@ -330,11 +292,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 									'max'  => '6',
 									'step' => '1',
 								],
-								'css_vars'    => [
-									[
-										'name' => '--text_columns',
-									],
-								],
 							],
 							'text_column_min_width' => [
 								'label'           => esc_html__( 'Column Min Width', 'fusion-builder' ),
@@ -344,11 +301,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 								'type'            => 'dimension',
 								'transport'       => 'postMessage',
 								'soft_dependency' => true,
-								'css_vars'        => [
-									[
-										'name' => '--text_column_min_width',
-									],
-								],
 							],
 							'text_column_spacing'   => [
 								'label'           => esc_html__( 'Column Spacing', 'fusion-builder' ),
@@ -358,11 +310,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 								'type'            => 'dimension',
 								'transport'       => 'postMessage',
 								'soft_dependency' => true,
-								'css_vars'        => [
-									[
-										'name' => '--text_column_spacing',
-									],
-								],
 							],
 							'text_rule_style'       => [
 								'label'           => esc_html__( 'Rule Style', 'fusion-builder' ),
@@ -381,11 +328,6 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 									'ridge'  => esc_html__( 'Ridge', 'fusion-builder' ),
 								],
 								'soft_dependency' => true,
-								'css_vars'        => [
-									[
-										'name' => '--text_rule_style',
-									],
-								],
 							],
 							'text_rule_size'        => [
 								'label'           => esc_html__( 'Rule Size', 'fusion-builder' ),
@@ -405,7 +347,7 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
 								'label'           => esc_html__( 'Rule Color', 'fusion-builder' ),
 								'description'     => esc_html__( 'Controls the color of the vertical line between columns.', 'fusion-builder' ),
 								'id'              => 'text_rule_color',
-								'default'         => 'var(--awb-color3)',
+								'default'         => $fusion_settings->get( 'sep_color' ),
 								'type'            => 'color-alpha',
 								'transport'       => 'postMessage',
 								'soft_dependency' => true,
@@ -427,7 +369,16 @@ if ( fusion_is_element_enabled( 'fusion_text' ) ) {
  * @since 1.0
  */
 function fusion_element_text() {
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
+
+	$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
+	$to_link    = '';
+
+	if ( $is_builder ) {
+		$to_link = '<span class="fusion-panel-shortcut" data-fusion-option="body_typography_important_note_info">' . esc_html__( 'Global Options Body Typography Settings', 'fusion-builder' ) . '</span>';
+	} else {
+		$to_link = '<a href="' . esc_url( $fusion_settings->get_setting_link( 'headers_typography_important_note_info' ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Global Options Body Typography Settings', 'fusion-builder' ) . '</a>';
+	}
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -440,15 +391,7 @@ function fusion_element_text() {
 				'preview_id'      => 'fusion-builder-block-module-text-preview-template',
 				'allow_generator' => true,
 				'inline_editor'   => true,
-				'help_url'        => 'https://avada.com/documentation/text-block-element/',
-				'subparam_map'    => [
-					'fusion_font_family_text_font'  => 'main_typography',
-					'fusion_font_variant_text_font' => 'main_typography',
-					'font_size'                     => 'main_typography',
-					'line_height'                   => 'main_typography',
-					'letter_spacing'                => 'main_typography',
-					'text_transform'                => 'main_typography',
-				],
+				'help_url'        => 'https://theme-fusion.com/documentation/fusion-builder/elements/text-block-element/',
 				'params'          => [
 					[
 						'type'        => 'range',
@@ -494,16 +437,16 @@ function fusion_element_text() {
 						'description' => esc_attr__( 'Select the style of the vertical line between columns. Some of the styles depend on the rule size and color.', 'fusion-builder' ),
 						'param_name'  => 'rule_style',
 						'value'       => [
-							''       => esc_html__( 'Default', 'fusion-builder' ),
-							'none'   => esc_attr__( 'None', 'fusion-builder' ),
-							'solid'  => esc_attr__( 'Solid', 'fusion-builder' ),
-							'dashed' => esc_attr__( 'Dashed', 'fusion-builder' ),
-							'dotted' => esc_attr__( 'Dotted', 'fusion-builder' ),
-							'double' => esc_attr__( 'Double', 'fusion-builder' ),
-							'groove' => esc_attr__( 'Groove', 'fusion-builder' ),
-							'ridge'  => esc_attr__( 'Ridge', 'fusion-builder' ),
+							'default' => esc_html__( 'Default', 'fusion-builder' ),
+							'none'    => esc_attr__( 'None', 'fusion-builder' ),
+							'solid'   => esc_attr__( 'Solid', 'fusion-builder' ),
+							'dashed'  => esc_attr__( 'Dashed', 'fusion-builder' ),
+							'dotted'  => esc_attr__( 'Dotted', 'fusion-builder' ),
+							'double'  => esc_attr__( 'Double', 'fusion-builder' ),
+							'groove'  => esc_attr__( 'Groove', 'fusion-builder' ),
+							'ridge'   => esc_attr__( 'Ridge', 'fusion-builder' ),
 						],
-						'default'     => '',
+						'default'     => 'default',
 						'dependency'  => [
 							[
 								'element'  => 'columns',
@@ -578,28 +521,41 @@ function fusion_element_text() {
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
-						'type'             => 'typography',
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
-						'heading'          => esc_attr__( 'Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the text typography.', 'fusion-builder' ),
-						'param_name'       => 'main_typography',
+						'heading'          => esc_attr__( 'Font Family', 'fusion-builder' ),
+						/* translators: URL for the link. */
+						'description'      => sprintf( esc_html__( 'Controls the font family of the text.  Leave empty if the global font family for the text should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'       => 'text_font',
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-						'choices'          => [
-							'font-family'    => 'text_font',
-							'font-size'      => 'font_size',
-							'line-height'    => 'line_height',
-							'letter-spacing' => 'letter_spacing',
-							'text-transform' => 'text_transform',
-						],
 						'default'          => [
-							'font-family'    => '',
-							'variant'        => '',
-							'font-size'      => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'text-transform' => '',
+							'font-family'  => '',
+							'font-variant' => '400',
 						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Line Height', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the line height of the text. Enter value including any valid CSS unit, ex: 28px.', 'fusion-builder' ),
+						'param_name'  => 'line_height',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Letter Spacing', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the letter spacing of the text. Enter value including any valid CSS unit, ex: 2px.', 'fusion-builder' ),
+						'param_name'  => 'letter_spacing',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
 						'type'        => 'colorpickeralpha',
@@ -630,39 +586,6 @@ function fusion_element_text() {
 					],
 					'fusion_animation_placeholder'         => [
 						'preview_selector' => '.fusion-text',
-					],
-					[
-						'type'        => 'fusion_logics',
-						'heading'     => esc_html__( 'Conditional Logic', 'fusion-builder' ),
-						'param_name'  => 'logics',
-						'description' => esc_html__( 'Add conditional logic when the element is used within a form.', 'fusion-builder' ),
-						'group'       => esc_attr__( 'Extras', 'fusion-builder' ),
-						'placeholder' => [
-							'id'          => 'placeholder',
-							'title'       => esc_html__( 'Select A Field', 'fusion-builder' ),
-							'type'        => 'text',
-							'comparisons' => [
-								'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-								'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-								'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-								'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-								'contains'     => esc_attr__( 'Contains', 'fusion-builder' ),
-							],
-						],
-						'comparisons' => [
-							'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-							'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-							'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-							'contains'     => esc_attr__( 'Contains', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => '_post_type_edited',
-								'value'    => 'fusion_form',
-								'operator' => '==',
-							],
-						],
 					],
 					[
 						'type'        => 'checkbox_button_set',

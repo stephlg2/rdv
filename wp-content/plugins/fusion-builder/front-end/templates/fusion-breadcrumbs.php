@@ -8,7 +8,8 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_breadcrumbs-shortcode">
-	<nav {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
+	{{{styles}}}
+	<div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
 		{{{output}}}
-	</nav>
+	</div>
 </script>

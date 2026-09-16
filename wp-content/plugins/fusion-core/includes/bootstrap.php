@@ -11,7 +11,7 @@
 if ( ! class_exists( 'FusionCore_Plugin' ) ) {
 	require_once FUSION_CORE_PATH . '/includes/class-fusioncore-plugin.php';
 }
-add_action( 'plugins_loaded', [ 'FusionCore_Plugin', 'get_instance' ] ); // @phpstan-ignore-line
+add_action( 'plugins_loaded', [ 'FusionCore_Plugin', 'get_instance' ] );
 
 /**
  * Setup Avada Slider.
@@ -20,9 +20,12 @@ add_action( 'plugins_loaded', [ 'FusionCore_Plugin', 'get_instance' ] ); // @php
  * @return void
  */
 function setup_fusion_slider() {
-	$fusion_settings = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+	global $fusion_settings;
+	if ( ! $fusion_settings && class_exists( 'Fusion_Settings' ) ) {
+		$fusion_settings = Fusion_Settings::get_instance();
+	}
 
-	if ( ! $fusion_settings || '0' !== $fusion_settings->get( 'status_fusion_slider' ) ) {
+	if ( ! class_exists( 'Fusion_Settings' ) || '0' !== $fusion_settings->get( 'status_fusion_slider' ) ) {
 		include_once FUSION_CORE_PATH . '/fusion-slider/class-fusion-slider.php';
 	}
 }
@@ -38,7 +41,10 @@ add_action( 'after_setup_theme', 'setup_fusion_slider', 10 );
 function fusion_init_shortcodes() {
 	if ( class_exists( 'Avada' ) ) {
 
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
+		if ( ! $fusion_settings && class_exists( 'Fusion_Settings' ) ) {
+			$fusion_settings = Fusion_Settings::get_instance();
+		}
 
 		$filenames = glob( FUSION_CORE_PATH . '/shortcodes/*.php', GLOB_NOSORT );
 		foreach ( $filenames as $filename ) {
@@ -103,6 +109,26 @@ function fusion_core_deactivation() {
 function fusion_core_reset_patcher_counter() {
 	delete_site_transient( 'fusion_patcher_check_num' );
 }
+
+/**
+ * Instantiate the patcher class.
+ */
+function fusion_core_patcher_activation() {
+	if ( class_exists( 'Fusion_Patcher' ) ) {
+		new Fusion_Patcher(
+			[
+				'context'     => 'fusion-core',
+				'version'     => FUSION_CORE_VERSION,
+				'name'        => 'Avada-Core',
+				'parent_slug' => 'avada',
+				'page_title'  => esc_attr__( 'Avada Patcher', 'fusion-core' ),
+				'menu_title'  => esc_attr__( 'Patcher', 'fusion-core' ),
+				'classname'   => 'FusionCore_Plugin',
+			]
+		);
+	}
+}
+add_action( 'after_setup_theme', 'fusion_core_patcher_activation', 17 );
 
 /**
  * Add content filter if WPTouch is active.

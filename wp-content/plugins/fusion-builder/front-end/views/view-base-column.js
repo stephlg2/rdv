@@ -21,6 +21,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.listenTo( FusionEvents, 'fusion-param-changed-' + this.model.get( 'cid' ), this.onOptionChange );
 				this.listenTo( this.model.children, 'add', this.addChildView );
+				this.listenTo( FusionEvents, 'fusion-wireframe-toggle', this.wireFrameToggled );
 
 				// Responsive control updates on resize.
 				this.listenTo( FusionEvents, 'fusion-preview-viewport-update', this.onPreviewResize );
@@ -43,7 +44,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @since 2.0.0
 			 * @return null
 			 */
-			beforePatch: function() {}, // eslint-disable-line no-empty-function
+			beforePatch: function() {
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.$el.find( '.fusion-builder-column-content' ).removeClass( 'ui-sortable' );
+				}
+			},
 
 			/**
 			 * Runs after view DOM is patched.
@@ -77,6 +82,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}, 300 );
 
 				this._refreshJs();
+
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.$el.find( '.fusion-builder-column-content' ).addClass( 'ui-sortable' );
+				}
 			},
 
 			/**
@@ -121,23 +130,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.setResponsiveColumnStyles();
 				this.$el.find( '.fusion-column-responsive-styles' ).last().html( this.responsiveStyles );
 
-				const attr = this.buildAttr();
-				this.$el.attr( 'style', attr.style );
 				this.delegateChildEvents();
-			},
-
-			/**
-			 * Checks if the width is custom.
-			 *
-			 * @since 2.1
-			 * @return {bool}
-			 */
-			isCustomWidth: function ( width ) {
-				if ( 'string' === typeof width && ( width.includes( 'px' ) || width.includes( 'calc' ) ) ) {
-					return true;
-				}
-					return false;
-
 			},
 
 			/**
@@ -169,15 +162,19 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Border sizes.
 				if ( ( 'undefined' === typeof params.border_sizes_top || 'undefined' === typeof params.border_sizes_bottom || 'undefined' === typeof params.border_sizes_left || 'undefined' === typeof params.border_sizes_right ) && 'string' === typeof params.border_size ) {
-					if ( 'all' === params.border_position ) {
-						borderSize = _.fusionGetValueWithUnit( params.border_size );
-						params.border_sizes_top    = borderSize;
-						params.border_sizes_bottom = borderSize;
-						params.border_sizes_left   = borderSize;
-						params.border_sizes_right  = borderSize;
-					} else {
-						params[ 'border_sizes_' + params.border_position ] = _.fusionGetValueWithUnit( params.border_size );
+					switch ( params.border_position ) {
+						case 'all':
+							borderSize = _.fusionGetValueWithUnit( params.border_size );
+							params.border_sizes_top    = borderSize;
+							params.border_sizes_bottom = borderSize;
+							params.border_sizes_left   = borderSize;
+							params.border_sizes_right  = borderSize;
+							break;
+
+						default:
+							params[ 'border_sizes_' + params.border_position ] = _.fusionGetValueWithUnit( params.border_size );
 					}
+
 					delete params.border_size;
 				}
 
@@ -196,7 +193,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					directions     = { top: 's', bottom: 's' },
 					parentWidth    = 'fusion_builder_column_inner' === this.model.get( 'type' ) ? $el.closest( '.fusion-builder-row-container-inner' ).width() : $el.closest( '.fusion-row' ).width(),
 					isFlex         = false,
-					widthType	   = self.getVisibleWidth(),
 					$spacers       = this.$el.find( '> .fusion-column-wrapper > .fusion-column-spacers, > .fusion-column-margins' );
 
 				// If flex we also use left and right.
@@ -221,16 +217,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						percentSpacing  = false;
 
 					// No value, use half column spacing (not upsized).
-					if ( isFlex && ( ! actualDimension || '' === actualDimension ) && ( 'top' === direction || 'bottom' === direction ) ) {
-						if ( self.values[ 'margin_' + direction ] ) {
+					if ( ! actualDimension || '' === actualDimension ) {
+						if ( isFlex &&
+							( 'top' === direction || 'bottom' === direction ) &&
+							self.values[ 'margin_' + direction ] ) {
 							actualDimension = self.values[ 'margin_' + direction ];
+						} else {
+							actualDimension = self.getHalfSpacing();
 						}
-						if ( optionKey.includes( 'small' ) && '' !== self.values[ 'margin_' + direction + '_medium' ] ) {
-							actualDimension = self.values[ 'margin_' + direction + '_medium' ];
-						}
-					}
-					if ( ! actualDimension ) {
-						actualDimension = self.getHalfSpacing();
 					}
 
 					// Check if using a percentage.
@@ -256,12 +250,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					// Set initial width or height.
 					if ( 'left' === direction || 'right' === direction ) {
-						if ( percentSpacing && 'custom' === widthType ) {
-							self.marginResize[ direction ].width( 0 );
-						} else {
-							self.marginResize[ direction ].width( actualDimension );
-						}
-
+						self.marginResize[ direction ].width( actualDimension );
 					} else {
 						self.marginResize[ direction ].height( actualDimension );
 					}
@@ -719,12 +708,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				columnSize = jQuery( event.target ).data( 'column-size' );
 
-				// Check if there's a setings view and veify if it's the one corresponding to this element.
+				// Check if there's a setings view and verifify if it's the one corresponding to this element.
 				if ( FusionPageBuilderApp.SettingsHelpers.openSettingsView && FusionPageBuilderApp.SettingsHelpers.openSettingsView.model.cid === this.model.cid ) {
+
 					if ( FusionPageBuilderApp.SettingsHelpers.openSettingsView.tabsRendered.design ) {
-						return FusionPageBuilderApp.SettingsHelpers.openSettingsView.$el.find( '.fusion-option-' + widthKeys[ index ] + ' .ui-button[data-value="' + columnSize + '"]' ).trigger( 'click' );
+						return jQuery( FusionPageBuilderApp.SettingsHelpers.openSettingsView.$el
+							.find( '.ui-button[data-value="' + columnSize + '"]' )[ index ] )
+							.trigger( 'click' );
 					}
-					jQuery( FusionPageBuilderApp.SettingsHelpers.openSettingsView.$el.find( '.width-value' )[ index ] ).val( columnSize );
+					jQuery( FusionPageBuilderApp.SettingsHelpers.openSettingsView.$el
+							.find( '.width-value' )[ index ] ).val( columnSize );
 				}
 
 				// Update model.
@@ -838,7 +831,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 				};
 
-				if ( ! jQuery( event.currentTarget ).closest( '.fusion-builder-empty-column' ).length ) {
+				if ( ! jQuery( event.currentTarget ).closest( '.fusion-builder-empty-column' ).length && ! FusionPageBuilderApp.wireframeActive ) {
 					closestParent = jQuery( event.currentTarget ).closest( '.fusion-builder-live-element' );
 					if ( closestParent.length ) {
 						viewSettings.targetElement = closestParent;
@@ -938,9 +931,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var borderRadius;
 
 				// Alpha related checks.
-				this.values.alpha_background_color     = jQuery.AWB_Color( this.values.background_color ).alpha();
-				this.values.alpha_gradient_start_color = jQuery.AWB_Color( this.values.gradient_start_color ).alpha();
-				this.values.alpha_gradient_end_color   = jQuery.AWB_Color( this.values.gradient_end_color ).alpha();
+				this.values.alpha_background_color     = jQuery.Color( this.values.background_color ).alpha();
+				this.values.alpha_gradient_start_color = jQuery.Color( this.values.gradient_start_color ).alpha();
+				this.values.alpha_gradient_end_color   = jQuery.Color( this.values.gradient_end_color ).alpha();
 
 				if ( '' !== this.values.margin_bottom ) {
 					this.values.margin_bottom = _.fusionGetValueWithUnit( this.values.margin_bottom );
@@ -991,10 +984,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				columnSize = 'undefined' === typeof columnSize ? 1 : columnSize;
 				values     = 'undefined' === typeof values ? this.values : values;
 
-				if ( -1 !== value.indexOf( '%' ) && this.isCustomWidth( columnSize ) ) {
-					return '0px';
-				}
-
 				// If value is in percentage and not calc, make it relative to container.
 				if ( 0 < parseFloat( columnSize ) &&  -1 !== value.indexOf( '%' ) && -1 === value.indexOf( 'calc' ) ) {
 					// If all are in % just work it out.
@@ -1002,8 +991,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						return ( parseFloat( value ) / parseFloat( columnSize ) / 100 * ( 100 - parseFloat( values.column_spacing ) ) ) + '%';
 					}
 
-					// Not all % then we need to use calc.
-					return 'calc( ' + ( parseFloat( value ) / parseFloat( columnSize ) / 100 ) + ' * calc( 100% - ' + values.column_spacing + ' ) )';
+						// Not all % then we need to use calc.
+						return 'calc( ' + ( parseFloat( value ) / parseFloat( columnSize ) / 100 ) + ' * calc( 100% - ' + values.column_spacing + ' ) )';
 
 				}
 				return value;
@@ -1076,7 +1065,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						this.values.type_small = this.validateColumnSize( this.values.type_small );
 					}
 
-					// Not full width medium, inherit from large if set.
+					// Full width medium, inherit from large if set.
 					if ( 1 !== parseInt( this.values.type_medium ) ) {
 						if ( '' === this.values.spacing_left_medium ) {
 							this.values.spacing_left_medium = this.values.spacing_left;
@@ -1262,10 +1251,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				// Greater than one, assume percentage and divide by 100.
-				if ( 1 < parseFloat( columnSize ) && -1 == columnSize.indexOf( 'px' ) && -1 == columnSize.indexOf( 'calc' ) ) {
+				if ( 1 < parseFloat( columnSize ) ) {
 					return parseFloat( columnSize ) / 100;
 				}
-				// Return if not float.
+
 				return columnSize;
 			},
 
@@ -1318,9 +1307,139 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 			},
 
-			getResponsiveColumnVars: function() {
-				var self    = this,
-					cssVars = [];
+			setSharedStyles: function() {
+				this.setBackgroundColorStyle();
+				this.setBackgroundImage();
+				this.setBorderStyle();
+				this.setBorderRadiusStyle();
+				this.setBoxShadowStyle();
+				this.setWrapperStyleBg();
+			},
+
+			setBackgroundColorStyle: function() {
+				this.values.background_color_style = '';
+				if ( '' !== this.values.background_color && ( '' === this.values.background_image || 0 !== this.values.alpha_background_color ) ) {
+					this.values.background_color_style = 'background-color:' + this.values.background_color + ';';
+				}
+			},
+
+			setBackgroundImage: function() {
+
+				this.values.background_image_style = '';
+				if ( '' !== this.values.background_image ) {
+					this.values.background_image_style += 'background-image: url(\'' + this.values.background_image + '\');';
+				}
+
+				if ( '' !== _.getGradientString( this.values, 'column' ) ) {
+					this.values.background_image_style += 'background-image:' + _.getGradientString( this.values, 'column' ) + ';';
+				}
+
+				if ( '' !== this.values.background_position ) {
+					this.values.background_image_style += 'background-position:' + this.values.background_position + ';';
+				}
+
+				if ( 'none' !== this.values.background_blend_mode ) {
+					this.values.background_image_style += 'background-blend-mode: ' + this.values.background_blend_mode + ';';
+				}
+
+				if ( '' !== this.values.background_repeat ) {
+					this.values.background_image_style += 'background-repeat:' + this.values.background_repeat + ';';
+					if ( 'no-repeat' === this.values.background_repeat ) {
+						this.values.background_image_style += '-webkit-background-size:cover;-moz-background-size:cover;-o-background-size:cover;background-size:cover;';
+					}
+				}
+			},
+
+			setBorderStyle: function() {
+				var border = {
+					'top': 0,
+					'bottom': 0,
+					'right': 0,
+					'left': 0
+				};
+				this.values.border_full_style = '';
+
+				if ( '' === this.values.border_sizes_top && '' === this.values.border_sizes_bottom && '' === this.values.border_sizes_left && '' === this.values.border_sizes_right ) {
+
+					// Backwards-compatibility.
+					if ( '' !== this.values.border_color && '' !== this.values.border_size && '' !== this.values.border_style ) {
+						this.values.border_full_style = 'border' + this.values.border_position + ':' + this.values.border_size + ' ' + this.values.border_style + ' ' + this.values.border_color + ';';
+					}
+				} else {
+
+					// Border-sizes.
+					if ( '' !== this.values.border_sizes_top && 'undefined' !== typeof this.values.border_sizes_top ) {
+						border.top = this.values.border_sizes_top;
+					}
+					if ( '' !== this.values.border_sizes_bottom && 'undefined' !== typeof this.values.border_sizes_bottom ) {
+						border.bottom = this.values.border_sizes_bottom;
+					}
+					if ( '' !== this.values.border_sizes_left && 'undefined' !== typeof this.values.border_sizes_left ) {
+						border.left = this.values.border_sizes_left;
+					}
+					if ( '' !== this.values.border_sizes_right && 'undefined' !== typeof this.values.border_sizes_right ) {
+						border.right = this.values.border_sizes_right;
+					}
+
+					// Border-styles.
+					if ( '' !== this.values.border_color ) {
+						this.values.border_full_style += 'border-width: ' + border.top + ' ' + border.right + ' ' + border.bottom + ' ' + border.left + ';';
+						this.values.border_full_style += 'border-color:' + this.values.border_color + ';';
+
+						// Border-style.
+						if ( '' !== this.values.border_style ) {
+							this.values.border_full_style += 'border-style:' + this.values.border_style + ';';
+						}
+					}
+				}
+			},
+
+			setBorderRadiusStyle: function() {
+				this.values.border_radius_style = '';
+				if ( '' !== this.values.border_radius ) {
+					this.values.border_radius_style = 'border-radius:' + this.values.border_radius + ';overflow:hidden;';
+				}
+			},
+
+			setBoxShadowStyle: function() {
+				this.values.box_shadow_styles = '';
+				if ( 'yes' === this.values.box_shadow ) {
+					this.values.box_shadow_styles = 'box-shadow:' + _.fusionGetBoxShadowStyle( this.values ).trim() + ';';
+				}
+			},
+
+			setWrapperStyleBg: function() {
+				this.values.wrapper_style_bg = '';
+
+				// Background color.
+				if ( this.values.hover_or_link ) {
+					this.values.wrapper_style_bg += this.values.background_color_style;
+				}
+
+				// Background image.
+				if ( ( ! cssua.ua.ie && ! cssua.ua.edge ) || this.values.hover_or_link ) {
+					this.values.wrapper_style_bg += this.values.background_image_style;
+				}
+
+				// Border.
+				if ( 'liftup' === this.values.hover_type && '' !== this.values.border_full_style ) {
+					this.values.wrapper_style_bg += this.values.border_full_style;
+				}
+
+				// Border radius.
+				if ( '' !== this.values.border_radius_style ) {
+					this.values.wrapper_style_bg += this.values.border_radius_style;
+				}
+
+				// Box shadow.
+				if ( 'liftup' === this.values.hover_type && '' !== this.values.box_shadow_styles ) {
+					this.values.wrapper_style_bg += this.values.box_shadow_styles;
+				}
+			},
+
+			setResponsiveColumnStyles: function() {
+				var self   = this,
+					extras = jQuery.extend( true, {}, fusionAllElements.fusion_builder_column.extras );
 
 				this.responsiveStyles = '';
 
@@ -1329,76 +1448,27 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				_.each( [ 'large', 'medium', 'small' ], function( size ) {
-					var widthKey,
+					var columnStyles        	= '',
+						wireframeColumnStyles	= '',
+						columnWrapperStyles 	= '',
+						hoverWrapperStyles  	= '',
+						uiWrapperStyles     	= '',
+						dragStyles          	= '',
+						widthKey,
+						paddingKey,
 						keyBase,
 						orderKey,
-						flex_grow_key,
-						flex_shrink_key,
 						spacingKey;
 
 					// Width.
 					widthKey = 'large' === size ? 'column_size' : 'type_' + size;
-					if ( 'string' === typeof self.values[ widthKey ] && ( self.values[ widthKey ].indexOf( 'px' ) || self.values[ widthKey ].indexOf( 'px' ) ) ) {
-						cssVars[ 'width-' + size ] =  self.values[ widthKey ];
-					} else if ( '' !== self.values[ widthKey ] && 'auto' !== self.values[ widthKey ] && 0 < parseFloat( self.values[ widthKey ] ) ) {
-						cssVars[ 'width-' + size ] =  ( parseFloat( self.values[ widthKey ] ) * 100 ) + '%';
+					if ( '' !== self.values[ widthKey ] && 'auto' !== self.values[ widthKey ] && 0 < parseFloat( self.values[ widthKey ] ) ) {
+						columnStyles 			+= 'width:' + ( parseFloat( self.values[ widthKey ] ) * 100 ) + '%;';
+						wireframeColumnStyles 	+= 'width:' + ( ( parseFloat( self.values[ widthKey ] ) * 100 )  - 3 ) + '%;';
 					} else if ( 'auto' === self.values[ widthKey ] ) {
-						cssVars[ 'width-' + size ] =  'auto';
+						columnStyles 			+= 'width: auto;';
+						wireframeColumnStyles 	+= 'width: 97%;';
 					}
-
-					// Order.
-					orderKey = 'large' === size ? 'order' : 'order_' + size;
-					if ( '' !== self.values[ orderKey ] ) {
-						cssVars[ 'order-' + size ] = parseInt( self.values[ orderKey ] );
-					}
-
-					flex_grow_key = 'large' === size ? 'flex_grow' : 'flex_grow_' + size;
-					flex_shrink_key = 'large' === size ? 'flex_shrink' : 'flex_shrink_' + size;
-					if ( 0 < parseInt( self.values[ flex_grow_key ] ) ) {
-						cssVars[ flex_grow_key ] = parseInt( self.values[ flex_grow_key ] );
-					}
-					if ( 0 < parseInt( self.values[ flex_shrink_key ] ) ) {
-						cssVars[ flex_shrink_key ] = parseInt( self.values[ flex_shrink_key ] );
-					}
-
-					_.each( [ 'top', 'right', 'bottom', 'left' ], function( direction ) {
-
-						// Margin.
-						keyBase    = 'left' === direction || 'right' === direction ? 'upsized_spacing' : 'margin';
-						spacingKey = 'large' === size ? keyBase + '_' + direction : keyBase + '_' + direction + '_' + size;
-						if ( '' !== self.values[ spacingKey ] ) {
-							if ( 'margin' === keyBase ) {
-								cssVars[ 'margin-' + direction + '-' + size ] = self.values[ spacingKey ];
-							} else if ( 'upsized_spacing' === keyBase ) {
-								if ( -1 !== self.values[ spacingKey ].indexOf( '%' ) && 'custom' === self.getVisibleWidth() ) {
-									cssVars[ 'spacing-' + direction + '-' + size ] = '0px';
-								} else {
-									cssVars[ 'spacing-' + direction + '-' + size ] = self.values[ spacingKey ];
-								}
-							}
-						}
-					} );
-				} );
-				return this.getCustomCssVars( cssVars );
-			},
-
-			setResponsiveColumnStyles: function() {
-				var self    = this,
-					extras  = jQuery.extend( true, {}, fusionAllElements.fusion_builder_column.extras );
-
-				this.responsiveStyles = '';
-
-				if ( ! this.values.flex ) {
-					return;
-				}
-
-				_.each( [ 'large', 'medium', 'small' ], function( size ) {
-					var uiWrapperStyles     	= '',
-						dragStyles          	= '',
-						columnStyles          = '',
-						keyBase,
-						orderKey,
-						spacingKey;
 
 					// Order.
 					orderKey = 'large' === size ? 'order' : 'order_' + size;
@@ -1408,10 +1478,24 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					_.each( [ 'top', 'right', 'bottom', 'left' ], function( direction ) {
 
+						// Padding.
+						paddingKey = 'large' === size ? 'padding_' + direction : 'padding_' + direction + '_' + size;
+						if ( '' !== self.values[ paddingKey ] ) {
+							columnWrapperStyles += 'padding-' + direction + ' : ' + self.values[ paddingKey ] + ' !important;';
+						}
+
 						// Margin.
 						keyBase    = 'left' === direction || 'right' === direction ? 'upsized_spacing' : 'margin';
 						spacingKey = 'large' === size ? keyBase + '_' + direction : keyBase + '_' + direction + '_' + size;
 						if ( '' !== self.values[ spacingKey ] ) {
+							if ( 'margin' === keyBase ) {
+								columnStyles += 'margin-' + direction + ' : ' + self.values[ spacingKey ] + ';';
+							} else {
+								columnWrapperStyles += 'margin-' + direction + ' : ' + self.values[ spacingKey ] + ';';
+							}
+							if ( self.values.hover_or_link && 'margin' !== keyBase ) {
+								hoverWrapperStyles += 'margin-' + direction + ':' + self.values[ spacingKey ] + ';';
+							}
 							if ( 'left' === direction ) {
 								uiWrapperStyles += direction + ':' + self.values[ spacingKey ] + ';';
 							}
@@ -1421,13 +1505,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 					} );
 
+					if ( '' === columnStyles && '' === columnWrapperStyles ) {
+						return;
+					}
+
 					// Wrap CSS selectors
 					if ( '' !== columnStyles ) {
 						columnStyles = '.fusion-body .' + self.values.shortcode_classname + '-' + self.values.column_counter + '{' + columnStyles + '}';
 					}
+					if ( '' != wireframeColumnStyles ) {
+						wireframeColumnStyles = '.fusion-body.fusion-builder-ui-wireframe .' + self.values.shortcode_classname + '-' + self.values.column_counter + '{' + wireframeColumnStyles + '}';
+					}
 
+					if ( '' !== columnWrapperStyles ) {
+						columnWrapperStyles = '.' + self.values.shortcode_classname + '-' + self.values.column_counter + ' > .fusion-column-wrapper {' + columnWrapperStyles + '}';
+					}
+					if ( '' !== hoverWrapperStyles ) {
+						hoverWrapperStyles = '.fusion-flex-container .fusion-row .' + self.values.shortcode_classname + '-' + self.values.column_counter + ' > .fusion-column-inner-bg {' + hoverWrapperStyles + '}';
+					}
 					if ( '' !== uiWrapperStyles ) {
-						uiWrapperStyles  = '.fusion-body .fusion-flex-container .fusion-row .' + self.values.shortcode_classname + '-' + self.values.column_counter + ' > .fusion-builder-module-controls-type-column {' + uiWrapperStyles + '}';
+						uiWrapperStyles  = '.fusion-body:not(.fusion-builder-ui-wireframe) .fusion-flex-container .fusion-row .' + self.values.shortcode_classname + '-' + self.values.column_counter + ' > .fusion-builder-module-controls-type-column {' + uiWrapperStyles + '}';
 					}
 					if ( '' !== dragStyles ) {
 						dragStyles  = '.fusion-flex-container .fusion-row .' + self.values.shortcode_classname + '-' + self.values.column_counter + '.fusion-being-dragged:after, .fusion-builder-live .fusion-flex-container .fusion-nested-columns.editing .' + self.values.shortcode_classname + '-' + self.values.column_counter + ':hover:after {' + dragStyles + '}';
@@ -1435,10 +1532,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					// Large styles, no wrapping needed.
 					if ( 'large' === size ) {
-						self.responsiveStyles += uiWrapperStyles + dragStyles + columnStyles;
+						self.responsiveStyles += columnStyles + wireframeColumnStyles + columnWrapperStyles + hoverWrapperStyles + uiWrapperStyles + dragStyles;
 					} else {
 						// Medium and Small size screen styles.
-						self.responsiveStyles += '@media only screen and (max-width:' + extras[ 'visibility_' + size ] + 'px) {' + uiWrapperStyles + dragStyles + columnStyles + '}';
+						self.responsiveStyles += '@media only screen and (max-width:' + extras[ 'visibility_' + size ] + 'px) {' + columnStyles + wireframeColumnStyles + columnWrapperStyles + hoverWrapperStyles + uiWrapperStyles + dragStyles + '}';
 					}
 				} );
 			},
@@ -1446,43 +1543,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function() {
 				var attr = {
 						'class': 'fusion-layout-column ' + this.model.get( 'type' ) + ' ' + this.values.shortcode_classname + '-' + this.values.column_counter + ' fusion-builder-column-live-' + this.values.column_counter,
-						'style': this.getStyleVars()
+						'style': ''
 					};
-
-				// Sticky column.
-				if ( 'on' === this.values.sticky ) {
-					attr[ 'class' ] += ' awb-sticky';
-
-					if ( '' !== this.values.sticky_offset && 0 !== this.values.sticky_offset ) {
-
-						// If its not a selector then get value and set to css variable.
-						if ( ! this.values.sticky_offset.includes( '.' ) && ! this.values.sticky_offset.includes( '#' ) ) {
-							attr.style += '--awb-sticky-offset:' + _.fusionGetValueWithUnit( this.values.sticky_offset ) + ';';
-						} else {
-							attr[ 'data-sticky-offset' ] = this.values.sticky_offset;
-						}
-					}
-
-					// Not ideal, but easier to join and keep the rest of the logic the same.
-					if ( 'object' === typeof this.values.sticky_devices ) {
-						this.values.sticky_devices = this.values.sticky_devices.join( ',' );
-					}
-					if ( 'string' === typeof this.values.sticky_devices && '' !== this.values.sticky_devices ) {
-						this.values.sticky_devices = this.values.sticky_devices.replaceAll( '-visibility', '' ).split( ',' );
-
-						this.values.sticky_devices.forEach( ( stickyDevice ) => {
-							attr[ 'class' ] += ' awb-sticky-' + stickyDevice.replaceAll( ' ', '' );
-						} );
-					}
-				}
-
-				if ( 'on' === this.values.absolute ) {
-					attr[ 'class' ] += ' awb-absolute';
-				}
-
-				if ( this.values.z_index ) {
-					attr.style += 'z-index:' + this.values.z_index + ';';
-				}
 
 				// Flexbox column.
 				if ( this.values.flex ) {
@@ -1523,6 +1585,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					if ( '' !== this.values.column_spacing_style ) {
 						attr.style += this.values.column_spacing_style;
 					}
+
+					// Top margin.
+					if ( '' !== this.values.margin_top ) {
+						attr.style += 'margin-top:' + this.values.margin_top + ';';
+					}
+
+					// Bottom margin.
+					if ( '' !== this.values.margin_bottom ) {
+						attr.style += 'margin-bottom:' + this.values.margin_bottom + ';';
+					}
 				}
 
 				// Custom CSS class.
@@ -1560,11 +1632,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== this.values.id ) {
 					attr.id = this.values.id;
 				}
-
-				if ( this.values.motion_effects ) {
-					attr[ 'data-motion-effect' ] = true;
-				}
-
 				return attr;
 			},
 
@@ -1574,12 +1641,42 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						'style': ''
 					};
 
-				// Image URL for empty dimension calculations.
-				attr[ 'data-bg-url' ] = this.values.background_image;
+			// Check if we have a hover, markup is different so need extra.
+			if ( ! this.values.hover_or_link ) {
+				// $bg_color_fix . '" ' . $lazy_bg
+				attr.style += this.values.wrapper_style_bg;
+
+				if ( cssua.ua.ie || cssua.ua.edge ) {
+					attr.style += 'background-color:transparent;';
+				}
+			}
+
+			// Image URL for empty dimension calculations.
+			attr[ 'data-bg-url' ] = this.values.background_image;
+
+				if ( ! this.values.hover_or_link ) {
+					attr.style += this.values.background_color_style;
+				}
+
+				// Border.
+				if ( '' !== this.values.border_full_style ) {
+					attr.style += this.values.border_full_style;
+				}
+
+				// Border radius.
+				if ( '' !== this.values.border_radius_style ) {
+					attr.style += this.values.border_radius_style;
+				}
 
 				// Box shadow.
-				if ( 'liftup' !== this.values.hover_type && '' !== this.values.box_shadow ) {
+				if ( 'liftup' !== this.values.hover_type && '' !== this.values.box_shadow_styles ) {
+					attr.style += this.values.box_shadow_styles;
 					attr[ 'class' ] += ' fusion-column-has-shadow'; // Move this to appropriate.
+				}
+
+				// Padding.
+				if ( '' !== this.values.padding ) {
+					attr.style += 'padding: ' + this.values.padding + ';';
 				}
 
 				// Flex.
@@ -1600,20 +1697,47 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return attr;
 			},
 
+			buildIeExtraAttr: function() {
+				var attr = {
+						'class': 'fusion-column-wrapper',
+						'style': 'content:\'\';z-index:-1;position:absolute;top:0;right:0;bottom:0;left:0;'
+					};
+
+				// Border radius.
+				if ( '' !== this.values.border_radius_style ) {
+					this.values.wrapper_style_bg += this.values.border_radius_style;
+				}
+
+				if ( '' !== this.values.background_image_style ) {
+					attr.style += this.values.background_image_style;
+					if ( '' !== this.values.background_color && 1 === this.values.alpha_background_color ) {
+						attr.style += 'background-color:' + this.values.background_color + ';';
+					}
+				}
+
+				// Box shadow.
+				if ( 'liftup' !== this.values.hover_type && '' !== this.values.box_shadow_styles ) {
+					attr[ 'class' ] += ' fusion-column-has-shadow';
+				}
+
+				return attr;
+			},
+
 			buildHoverWrapperAttr: function() {
 				var attr = {
 						'class': 'fusion-column-inner-bg hover-type-' + this.values.hover_type,
 						'style': ''
 					};
 
+				if ( ( 'zoomin' === this.values.hover_type || 'zoomout' === this.values.hover_type || '' !== this.values.link ) && '' !== this.values.border_radius_style ) {
+					attr.style += 'overflow:hidden;' + this.values.border_radius_style + ';';
+				}
 
 				return attr;
 			},
 
 			buildAnchorAttr: function() {
 				var attr = {};
-
-				attr[ 'class' ] = 'fusion-column-anchor';
 
 				if ( '' !== this.values.link ) {
 					attr.href = this.values.link;
@@ -1625,11 +1749,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} else if ( 'lightbox' === this.values.target ) {
 					attr[ 'data-rel' ] = 'iLightbox';
 				}
-
-				if ( '' !== this.values.link_description ) {
-					attr[ 'aria-label' ] = this.values.link_description;
-				}
-
 				return attr;
 			},
 
@@ -1639,262 +1758,27 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						'style': ''
 					};
 
+				// Background style.
+				if ( '' !== this.values.wrapper_style_bg ) {
+					attr.style += this.values.wrapper_style_bg;
+				}
+
 				return attr;
 			},
 
-			getStyleVars: function() {
-				var cssVars = [
-						'z_index',
-						'z_index_hover'
-					],
-					borderVars,
-					innerVarPrefix,
-					customCssVars = {};
+			builderIeSpanAttr: function() {
+				var attr = {
+						'class': 'fusion-column-inner-bg-image'
+					};
 
-				cssVars.padding_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_left = { 'callback': _.fusionGetValueWithUnit };
-
-				cssVars.padding_top_medium = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_right_medium = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_bottom_medium = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_left_medium = { 'callback': _.fusionGetValueWithUnit };
-
-				cssVars.padding_top_small = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_right_small = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_bottom_small = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.padding_left_small = { 'callback': _.fusionGetValueWithUnit };
-
-				// Overflow.
-				if ( '' !== this.values.overflow ) {
-					customCssVars.overflow = this.values.overflow;
-				} else if ( this.values.border_radius ) {
-					customCssVars.overflow = 'hidden';
-				}
-
-				// Some variables needs to be placed directly on column, some on an inner div helper.
-				// This is a quick way to not check for "hover_or_link" every time.
-				innerVarPrefix = ( this.values.hover_or_link ? 'inner-' : '' );
-
-				if ( 'on' === this.values.absolute && 'on' !== this.values.sticky ) {
-					customCssVars[ 'container-position' ] = 'absolute';
-
-					cssVars.absolute_top =    { 'callback': _.fusionGetValueWithUnit };
-					cssVars.absolute_right =  { 'callback': _.fusionGetValueWithUnit };
-					cssVars.absolute_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.absolute_left =   { 'callback': _.fusionGetValueWithUnit };
-				}
-
-				if ( '' !== this.values.background_color && ( '' === this.values.background_image || 0 !== this.values.alpha_background_color ) ) {
-						customCssVars[ innerVarPrefix + 'bg-color' ] = this.values.background_color;
-				}
-
-				if ( '' !== this.values.background_color_hover ) {
-						customCssVars[ innerVarPrefix + 'bg-color-hover' ] = this.values.background_color_hover;
-				}
-
-				if ( '' !== this.values.background_color_medium ) {
-						customCssVars[ innerVarPrefix + 'bg-color-medium' ] = this.values.background_color_medium;
-				}
-
-				if ( '' !== this.values.background_color_medium_hover ) {
-						customCssVars[ innerVarPrefix + 'bg-color-medium-hover' ] = this.values.background_color_medium_hover;
-				}
-
-				if ( '' !== this.values.background_color_small ) {
-						customCssVars[ innerVarPrefix + 'bg-color-small' ] = this.values.background_color_small;
-				}
-
-				if ( '' !== this.values.background_color_small_hover ) {
-						customCssVars[ innerVarPrefix + 'bg-color-small-hover' ] = this.values.background_color_small_hover;
-				}
-
-				if ( '' !== this.values.background_image ) {
-					customCssVars[ innerVarPrefix + 'bg-image' ] = 'url(\'' + this.values.background_image + '\')';
-				}
-
-				if ( '' !== this.values.background_image_medium ) {
-					customCssVars[ innerVarPrefix + 'bg-image-medium' ] = 'url(\'' + this.values.background_image_medium + '\')';
-				}
-
-				if ( '' !== this.values.background_image_small ) {
-					customCssVars[ innerVarPrefix + 'bg-image-small' ] = 'url(\'' + this.values.background_image_small + '\')';
-				}
-
-				if ( '' !== _.getGradientString( this.values, 'column' ) ) {
-					customCssVars[ innerVarPrefix + 'bg-image' ] = _.getGradientString( this.values, 'column' );
-
-					if ( '' !== this.values.background_image_medium ) {
-						customCssVars[ innerVarPrefix + 'bg-image_medium' ] = _.getGradientString( this.values, 'column', 'medium' );
-					}
-
-					if ( '' !== this.values.background_image_small ) {
-						customCssVars[ innerVarPrefix + 'bg-image_small' ] = _.getGradientString( this.values, 'column', 'small' );
+				if ( '' !== this.values.background_image_style ) {
+					attr.style += this.values.background_image_style;
+					if ( '' !== this.values.background_color && 1 === this.values.alpha_background_color ) {
+						attr.style += 'background-color:' + this.values.background_color + ';';
 					}
 				}
 
-				if ( this.values.background_position && ! this.isDefault( 'background_position' ) ) {
-					customCssVars[ innerVarPrefix + 'bg-position' ] = this.values.background_position;
-				}
-
-				if ( this.values.background_position_medium ) {
-					customCssVars[ innerVarPrefix + 'bg-position-medium' ] = this.values.background_position_medium;
-				}
-
-				if ( this.values.background_position_small ) {
-					customCssVars[ innerVarPrefix + 'bg-position-small' ] = this.values.background_position_small;
-				}
-
-				if ( ! this.isDefault( 'background_blend_mode' ) ) {
-					customCssVars[ innerVarPrefix + 'bg-blend' ] = this.values.background_blend_mode;
-				}
-
-				if ( this.values.background_blend_mode_medium ) {
-					customCssVars[ innerVarPrefix + 'bg-blend-medium' ] = this.values.background_blend_mode_medium;
-				}
-
-				if ( this.values.background_blend_mode_small ) {
-					customCssVars[ innerVarPrefix + 'bg-blend-small' ] = this.values.background_blend_mode_small;
-				}
-
-				if ( '' !== this.values.background_repeat ) {
-					customCssVars[ innerVarPrefix + 'bg-repeat' ] = this.values.background_repeat;
-				}
-
-				if ( '' !== this.values.background_repeat ) {
-					customCssVars[ innerVarPrefix + 'bg-repeat' ] = this.values.background_repeat;
-				}
-
-				if ( '' !== this.values.background_repeat_medium ) {
-					customCssVars[ innerVarPrefix + 'bg-repeat-medium' ] = this.values.background_repeat_medium;
-				}
-
-				if ( '' !== this.values.background_repeat_small ) {
-					customCssVars[ innerVarPrefix + 'bg-repeat-small' ] = this.values.background_repeat_small;
-				}
-
-				if ( 'no-repeat' === this.values.background_repeat ) {
-					customCssVars[ innerVarPrefix + 'bg-size' ] = 'cover';
-				}
-
-				if ( '' !== this.values.background_size ) {
-					const backgroundSize = 'custom' === this.values.background_size ? this.values.background_custom_size : this.values.background_size;
-					customCssVars[ innerVarPrefix + 'bg-size' ] = backgroundSize;
-				}
-
-				if ( '' !== this.values.background_size_medium ) {
-					const backgroundSizeMedium = 'custom' === this.values.background_size_medium ? this.values.background_custom_size_medium : this.values.background_size_medium;
-					customCssVars[ innerVarPrefix + 'bg-size-medium' ] = backgroundSizeMedium;
-				}
-
-				if ( '' !== this.values.background_size_small ) {
-					const backgroundSizeSmall = 'custom' === this.values.background_size_small ? this.values.background_custom_size_small : this.values.background_size_small;
-					customCssVars[ innerVarPrefix + 'bg-size-small' ] = backgroundSizeSmall;
-				}
-
-				borderVars = this.getBorderVars();
-
-				if ( 'yes' === this.values.box_shadow ) {
-					if ( 'liftup' === this.values.hover_type ) {
-						customCssVars.inner_bg_box_shadow = _.fusionGetBoxShadowStyle( this.values ).trim();
-					} else {
-						customCssVars.box_shadow = _.fusionGetBoxShadowStyle( this.values ).trim();
-					}
-				}
-
-				const transformVars = _.fusionGetTransformVars( this.values, '--awb-transform', '--awb-transform-hover', '--awb-transform-parent-hover' );
-
-				if ( this.values.transform_origin && '50% 50%' !== this.values.transform_origin ) {
-					customCssVars.transform_origin = this.values.transform_origin;
-				}
-
-				const filterVars = _.getFilterVars( this.values );
-
-				if ( ! this.isDefault( 'transition_duration' ) || ! this.isDefault( 'transition_easing' ) ) {
-					customCssVars.transition = _.fusionGetTransitionStyle( this.values );
-				}
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCssVars ) + borderVars + transformVars + filterVars + this.getResponsiveColumnVars();
-			},
-
-			getBorderVars: function() {
-				var customCssVars = {},
-					borderOnInner = ( 'liftup' === this.values.hover_type ? true : false );
-
-				if ( '' !== this.values.border_color ) {
-					customCssVars[ 'border-color' ] = this.values.border_color;
-					if ( borderOnInner ) {
-						customCssVars[ 'inner-border-color' ] = this.values.border_color;
-					}
-
-					if ( this.values.border_color_hover ) {
-						customCssVars[ 'border-color-hover' ] = this.values.border_color_hover;
-
-						if ( borderOnInner ) {
-							customCssVars[ 'inner-border-color-hover' ] = this.values.border_color_hover;
-						}
-					}
-
-					if ( this.values.border_sizes_top ) {
-						customCssVars[ 'border-top' ] = this.values.border_sizes_top;
-
-						if ( borderOnInner ) {
-							customCssVars[ 'inner-border-top' ] = this.values.border_sizes_top;
-						}
-					}
-
-					if ( this.values.border_sizes_right ) {
-						customCssVars[ 'border-right' ] = this.values.border_sizes_right;
-
-						if ( borderOnInner ) {
-							customCssVars[ 'inner-border-right' ] = this.values.border_sizes_right;
-						}
-					}
-
-					if ( this.values.border_sizes_bottom ) {
-						customCssVars[ 'border-bottom' ] = this.values.border_sizes_bottom;
-
-						if ( borderOnInner ) {
-							customCssVars[ 'inner-border-bottom' ] = this.values.border_sizes_bottom;
-						}
-					}
-
-					if ( this.values.border_sizes_left ) {
-						customCssVars[ 'border-left' ] = this.values.border_sizes_left;
-
-						if ( borderOnInner ) {
-							customCssVars[ 'inner-border-left' ] = this.values.border_sizes_left;
-						}
-					}
-
-					if ( '' !== this.values.border_style ) {
-						customCssVars[ 'border-style' ] = this.values.border_style;
-
-						if ( borderOnInner ) {
-							customCssVars[ 'inner-border-style' ] = this.values.border_style;
-						}
-					}
-				}
-
-				if ( '' !== this.values.border_radius ) {
-					customCssVars.border_radius = this.values.border_radius;
-
-					if ( ( 'zoomin' === this.values.hover_type || 'zoomout' === this.values.hover_type || '' !== this.values.link ) ) {
-						customCssVars[ 'inner-bg-border-radius' ] = this.values.border_radius;
-					}
-
-					// Lift up and border radius we need to apply radius to lift up markup.
-					if ( this.values.hover_or_link && 'liftup' === this.values.hover_type ) {
-						customCssVars[ 'liftup-border-radius' ] = this.values.border_radius;
-					}
-				}
-
-				if ( ( 'zoomin' === this.values.hover_type || 'zoomout' === this.values.hover_type || this.values.link ) && '' !== this.values.border_radius ) {
-					customCssVars[ 'inner-bg-overflow' ] = 'hidden';
-				}
-
-				return this.getCustomCssVars( customCssVars );
+				return attr;
 			},
 
 			/**
@@ -1930,10 +1814,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( columnSize.includes( '_' ) ) {
 					this.$el.find( '.column-size-' + columnSize ).addClass( 'active-size' );
 				}
-				if ( 'custom' === columnSize ) {
-					columnSize = '<span class="fusiona-column"></span>';
-				}
-				this.$el.find( '.fusion-column-size-label' ).html( columnSize.replace( '_', '/' ) );
+				this.$el.find( '.fusion-column-size-label' ).text( columnSize.replace( '_', '/' ) );
 
 			},
 
@@ -1964,14 +1845,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( 'auto' === width ) {
 					return 'auto';
 				}
-				if ( ! width.includes( '_' ) && ! width.includes( 'px' ) && ! width.includes( 'calc' ) ) {
+				if ( ! width.includes( '_' ) ) {
 					return width.split( '.' )[ 0 ] + '%';
 				}
-				if ( width.includes( 'px' ) || width.includes( 'calc' ) ) {
-					return 'custom';
-				}
 				return width;
-
 			},
 
 			/**
@@ -2008,8 +1885,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			getTemplateAtts: function() {
 				var styleSelector,
-					data   = {},
-					wrapperAttr;
+					data   = {};
 
 				this.setArgs();
 
@@ -2022,42 +1898,35 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.setColumnMapData();
 
+				// Sets styles which are used on multiple elements.
+				this.setSharedStyles();
+
 				// Sets styles for responsive options.
 				if ( this.values.flex ) {
 					this.setResponsiveColumnStyles();
 				}
 
-				let columnSelector = '.fusion-builder-column-live-' + this.model.get( 'cid' );
-
-				if ( 'fusion_builder_column_inner' === this.model.get( 'type' ) ) {
-					columnSelector = '.fusion-builder-live-nested-column-' + this.model.get( 'cid' );
+				// Lift up and border radius we need to apply radius to lift up markup.
+				if ( this.values.hover_or_link && '' !== this.values.border_radius_style && 'liftup' === this.values.hover_type ) {
+					this.styles += '.fusion-builder-column-' + this.values.column_counter + ' .hover-type-liftup:before{' + this.values.border_radius_style + ';}';
 				}
 
 				// Get the filter style
 				if ( 'fusion_builder_column' === this.model.get( 'type' ) ) {
-					styleSelector = columnSelector;
+					styleSelector = '.fusion-builder-column-live-' + this.model.get( 'cid' );
 				} else {
-					styleSelector = { regular: columnSelector, hover: columnSelector + ':hover' };
+					styleSelector = { regular: '.fusion-builder-column .fusion-column-wrapper-live-' + this.model.get( 'cid' ), hover: '.fusion-builder-column:hover .fusion-column-wrapper-live-' + this.model.get( 'cid' ) };
 				}
 
-				// Get Transform selector.
-				let transformSelector = '';
-				let transformEditSelector = '';
-
-				if ( 'fusion_builder_column' === this.model.get( 'type' ) ) {
-					transformSelector = columnSelector;
-					transformEditSelector = columnSelector + '.fusion-builder-element-edited';
-				} else {
-					transformSelector = { regular: columnSelector, hover: columnSelector + ':hover' };
-					transformEditSelector = { regular: '.fusion-builder-element-edited' + columnSelector, hover: '.fusion-builder-element-edited' + columnSelector  + ':hover' };
-				}
-
+				data.ieExtra               = ! this.values.flex && ( cssua.ua.ie || cssua.ua.edge ) && this.values.hover_or_link ? this.buildIeExtraAttr() : false;
+				data.ieSpanExtra           = this.values.hover_or_link && '' !== this.values.background_color_style && ( cssua.ua.ie || cssua.ua.edge ) ? this.builderIeSpanAttr() : false;
 				data.wrapperAttr           = this.buildWrapperAttr();
 				data.center_content        = this.values.center_content;
 				data.hoverWrapperAttr      = this.buildHoverWrapperAttr();
 				data.anchorAttr            = this.buildAnchorAttr();
 				data.hoverInnerWrapperAttr = this.buildHoverInnerWrapperAttr();
 				data.styles                = this.styles;
+				data.filterStyle           = _.fusionGetFilterStyleElem( this.values, styleSelector, this.model.get( 'cid' ) );
 				data.nestedClass           = 'fusion_builder_column_inner' === this.model.get( 'type' ) ? ' fusion-nested-column-content' : '';
 				data.cid                   = this.model.get( 'cid' );
 				data.hoverOrLink           = this.values.hover_or_link;
@@ -2066,16 +1935,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				data.responsiveStyles      = 'undefined' !== typeof this.responsiveStyles ? this.responsiveStyles : '';
 				data.isGlobal              = ( 'undefined' !== typeof this.values.fusion_global ) ? 'yes' : 'no';
 				data.hideMargin            = 'fusion_builder_column_inner' !== this.model.get( 'type' ) && 'post_cards' === FusionApp.data.fusion_element_type;
-				data.column_tag            = this.values.column_tag;
-				wrapperAttr                = this.buildAttr();
-
-				// Flag as having filters.
-				if ( '' !== _.getFilterVars( this.values ) ) {
-					wrapperAttr[ 'class' ] += ' fusion-has-filters';
-				}
 
 				// Main wrapper is the actual view.
-				this.model.set( 'selectors', wrapperAttr );
+				this.model.set( 'selectors', this.buildAttr() );
 
 				return data;
 			},
@@ -2488,6 +2350,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					} );
 				}
 			}
+
 		} );
 	} );
 }( jQuery ) );

@@ -12,7 +12,7 @@
 		$display_notification = '' === get_user_meta( get_current_user_id(), 'fusion-template-builder-layouts', true ) ? true : false;
 		$wrapper_class        = true === $display_notification ? 'fusion-has-notification' : '';
 	?>
-<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_tb_section', 'create_posts' ) ) : ?>
+
 	<div class="fusion-builder-important-notice-wrapper <?php echo esc_attr( $wrapper_class ); ?>">
 
 		<div class="fusion-builder-important-notice fusion-builder-template-notification avada-db-card" data-dismissible="true" data-dismiss-type="user_meta" data-dismiss-option="fusion-template-builder-layouts" data-nonce="<?php echo esc_attr( wp_create_nonce( 'fusion_admin_notice' ) ); ?>">
@@ -58,7 +58,7 @@
 					printf(
 						/* translators: %s: "Avada Layouts Documentation Link". */
 						esc_html__( 'Please see the %s.', 'fusion-builder' ),
-						'<a href="https://avada.com/documentation/category/layouts/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Layouts Documentation', 'fusion-builder' ) . '</a>'
+						'<a href="https://theme-fusion.com/documentation/avada/layouts/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Layouts Documentation', 'fusion-builder' ) . '</a>'
 					);
 					?>
 					</p>
@@ -97,7 +97,7 @@
 		</div>
 
 	</div>
-<?php endif; ?>
+
 	<div class="fusion-template-builder-data-items avada-db-table">
 		<?php
 			$fusion_template_builder_table = new Fusion_Template_Builder_Table();

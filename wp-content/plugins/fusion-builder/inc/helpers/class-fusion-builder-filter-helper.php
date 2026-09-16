@@ -61,31 +61,6 @@ class Fusion_Builder_Filter_Helper {
 			],
 		];
 
-		if ( isset( $args['parent_hover'] ) && $args['parent_hover'] ) {
-			$filter_options[] = [
-				'type'        => 'select',
-				'heading'     => esc_attr__( 'Hover Element', 'fusion-builder' ),
-				'description' => esc_attr__( 'Select which element should be hovered to apply the filter hover options.', 'fusion-builder' ),
-				'param_name'  => 'filter_hover_element',
-				'group'       => esc_attr__( 'Extras', 'fusion-builder' ),
-				'default'     => 'self',
-				'value'       => [
-					'self'   => esc_attr__( 'Self', 'fusion-builder' ),
-					'parent' => esc_attr__( 'Parent', 'fusion-builder' ),
-				],
-				'subgroup'    => [
-					'name' => 'filter_type',
-					'tab'  => 'Hover',
-				],
-				'callback'    => [
-					'function' => 'fusion_update_filter_style',
-					'args'     => [
-						'selector_base' => $selector_base,
-					],
-				],
-			];
-		}
-
 		foreach ( $states as $key ) {
 			$filter_options = array_merge(
 				$filter_options,
@@ -348,51 +323,15 @@ class Fusion_Builder_Filter_Helper {
 
 		$filter_style_hover = self::get_filter_styles( $atts, 'hover' );
 		if ( '' !== $filter_style_hover ) {
-			$hover_selector = $selector . ':hover';
-			if ( 'parent' === $atts['filter_hover_element'] ) {
-				if ( strpos( $selector, 'nested-column-' ) !== false ) {
-					$hover_selector  = '.fusion-column-wrapper:hover > .fusion-builder-row >' . $selector;
-					$hover_selector .= ', .fusion-column-inner-bg:hover + .fusion-column-wrapper > .fusion-builder-row >' . $selector;
-				} else {
-					$hover_selector = '.fusion-builder-row:hover > ' . $selector;
-				}
-			}
+
 			// Add transition.
 			$filter_style = str_replace( '}', 'transition: filter 0.3s ease;}', $filter_style );
 
 			// Hover state.
-			$filter_style .= $hover_selector . '{filter: ' . $filter_style_hover . ';}';
+			$filter_style .= $selector . ':hover{filter: ' . $filter_style_hover . ';}';
 		}
 
 		return '' !== $filter_style ? $opening_style_tag . $filter_style . $closing_style_tag : '';
 	}
-
-	/**
-	 * Get filter style element.
-	 *
-	 * @param array $atts The filter parameters.
-	 * @param bool  $parent_hover Whether or not the parent is hover.
-	 * @return string
-	 */
-	public static function get_filter_vars( $atts, $parent_hover = false ) {
-		$filter_style       = self::get_filter_styles( $atts, 'regular' );
-		$filter_style_hover = self::get_filter_styles( $atts, 'hover' );
-
-		$final_vars = '';
-
-		if ( '' !== $filter_style ) {
-			$final_vars .= '--awb-filter:' . $filter_style . ';';
-		}
-
-		if ( '' !== $filter_style_hover ) {
-			$final_vars .= '--awb-filter-transition:filter 0.3s ease;';
-			$final_vars .= '--awb-filter-hover:' . $filter_style_hover . ';';
-
-			if ( 'parent' === $atts['filter_hover_element'] && $parent_hover ) {
-				$final_vars .= '--awb-filter-parent-hover:' . $filter_style_hover . ';';
-			}
-		}
-
-		return $final_vars;
-	}
 }
+

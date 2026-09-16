@@ -19,8 +19,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				'click [data-action="paste-before"]': 'pasteBefore',
 				'click [data-action="paste-after"]': 'pasteAfter',
 				'click [data-action="paste-start"]': 'pasteStart',
-				'click [data-action="paste-end"]': 'pasteEnd',
-				'click [data-action="invert"]': 'invertTrigger'
+				'click [data-action="paste-end"]': 'pasteEnd'
 			},
 
 			/**
@@ -67,13 +66,17 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Trigger edit on relevant element.
+			 * Trigger edit on relavent element.
 			 *
 			 * @since 2.0.0
 			 */
 			editTrigger: function( event ) {
 				if ( 'fusion_builder_row_inner' === this.model.parent.attributes.element_type ) {
-					this.model.parentView.editRow( event );
+					if ( FusionPageBuilderApp.wireframeActive ) {
+						this.model.parentView.editNestedColumn( event );
+					} else {
+						this.model.parentView.editRow( event );
+					}
 				} else {
 					this.model.parentView.settings( event );
 				}
@@ -106,9 +109,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				case 'fusion_builder_row_inner':
 					this.model.parentView.cloneNestedRow( event );
 					break;
-				case 'fusion_builder_form_step':
-					this.model.parentView.cloneSpecialElement( event );
-					break;
 				default:
 					this.model.parentView.cloneElement( event );
 					break;
@@ -123,7 +123,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			removeTrigger: function( event ) {
 
 				switch ( this.model.parent.attributes.element_type ) {
-				case 'fusion_builder_form_step':
 				case 'fusion_builder_container':
 					this.model.parentView.removeContainer( event );
 					break;
@@ -324,49 +323,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.remove();
 
-			},
-
-			/**
-			 * Invert trigger.
-			 *
-			 * @since 3.7
-			 */
-			invertTrigger: function() {
-				var type    = this.model.parent.attributes.element_type,
-					content = this.model.parentView.getContent(),
-					target  = false,
-					parentId;
-
-				parentId                                = this.model.parent.attributes.cid;
-				FusionPageBuilderApp.targetContainerCID = this.model.parent.attributes.cid;
-				target                                  = this.model.parentView.$el;
-
-				// get all the colors and hold them.
-				const reversedColors = {};
-
-				for ( let i = 1, revI = 8; 8 >= i; i++, revI-- ) {
-					reversedColors[ '--awb-color' + i ] = '--awb-color' + revI;
-					reversedColors[ '--awb-color' + i + '-h' ] = '--awb-color' + revI + '-h';
-					reversedColors[ '--awb-color' + i + '-s' ] = '--awb-color' + revI + '-s';
-					reversedColors[ '--awb-color' + i + '-l' ] = '--awb-color' + revI + '-l';
-					reversedColors[ '--awb-color' + i + '-a' ] = '--awb-color' + revI + '-a';
-				}
-				reversedColors[ 'background_blend_mode="multiply"' ] = 'background_blend_mode="lighten"';
-				reversedColors[ 'background_blend_mode="lighten"' ] = 'background_blend_mode="multiply"';
-
-				const patterns = new RegExp( Object.keys( reversedColors ).join( '|' ), 'g' );
-				content = content.replace( patterns, function( matched ) {
-					return reversedColors[ matched ];
-				} );
-
-				FusionPageBuilderApp.shortcodesToBuilder( content, parentId, false, false, target, 'after' );
-
-				this.model.parentView.removeContainer( false, true );
-
-				// Save history state
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.invert + ' ' + fusionAllElements[ type ].name + ' ' + fusionBuilderText.element );
-
-				FusionEvents.trigger( 'fusion-content-changed' );
 			}
 		} );
 	} );

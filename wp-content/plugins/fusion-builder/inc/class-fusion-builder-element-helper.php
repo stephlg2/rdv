@@ -45,9 +45,6 @@ class Fusion_Builder_Element_Helper {
 			'fusion_filter_placeholder'              => 'Fusion_Builder_Filter_Helper::get_params',
 			'fusion_border_radius_placeholder'       => 'Fusion_Builder_Border_Radius_Helper::get_params',
 			'fusion_gradient_placeholder'            => 'Fusion_Builder_Gradient_Helper::get_params',
-			'fusion_pattern_placeholder'             => 'Fusion_Builder_Pattern_Helper::get_params',
-			'fusion_mask_placeholder'                => 'Fusion_Builder_Mask_Helper::get_params',
-			'fusion_gradient_text_placeholder'       => 'Fusion_Builder_Gradient_Helper::get_text_params',
 			'fusion_margin_placeholder'              => 'Fusion_Builder_Margin_Helper::get_params',
 			'fusion_margin_mobile_placeholder'       => 'Fusion_Builder_Margin_Helper::get_params',
 			'fusion_box_shadow_placeholder'          => 'Fusion_Builder_Box_Shadow_Helper::get_params',
@@ -56,9 +53,6 @@ class Fusion_Builder_Element_Helper {
 			'fusion_sticky_visibility_placeholder'   => 'Fusion_Builder_Sticky_Visibility_Helper::get_params',
 			'fusion_form_logics_placeholder'         => 'Fusion_Builder_Form_Logics_Helper::get_params',
 			'fusion_conditional_render_placeholder'  => 'Fusion_Builder_Conditional_Render_Helper::get_params',
-			'fusion_transform_placeholder'           => 'Fusion_Builder_Transform_Helper::get_params',
-			'fusion_transition_placeholder'          => 'Fusion_Builder_Transition_Helper::get_params',
-			'fusion_motion_effects_placeholder'      => 'Fusion_Builder_Motion_Effects_Helper::get_params',
 		];
 
 		foreach ( $placeholders_to_params as $placeholder => $param_callback ) {
@@ -96,8 +90,8 @@ class Fusion_Builder_Element_Helper {
 	 * @return array
 	 */
 	public static function add_responsive_params( $responsive_atts, $params, $shortcode ) {
-
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
+		$fusion_settings = fusion_get_fusion_settings();
 
 		foreach ( $responsive_atts as $att ) {
 			$position          = array_search( $att['name'], array_keys( $params ), true );
@@ -203,146 +197,40 @@ class Fusion_Builder_Element_Helper {
 	 * @param array  $params Element params.
 	 * @param string $param Font family param name.
 	 * @param string $format Format of returned value, string or array.
-	 * @param bool   $important Add !important to css props. only for string format.
 	 * @return mixed
 	 */
-	public static function get_font_styling( $params, $param = 'font_family', $format = 'string', $important = false ) {
+	public static function get_font_styling( $params, $param = 'font_family', $format = 'string' ) {
 		$style = [];
 
 		if ( '' !== $params[ 'fusion_font_family_' . $param ] ) {
-			if ( false !== strpos( $params[ 'fusion_font_family_' . $param ], 'var(' ) ) {
-				$style['font-family'] = $params[ 'fusion_font_family_' . $param ];
-				if ( function_exists( 'AWB_Global_Typography' ) ) {
-					$style['font-weight'] = AWB_Global_Typography()->get_var_string( $style['font-family'], 'font-weight' );
-					$style['font-style']  = AWB_Global_Typography()->get_var_string( $style['font-family'], 'font-style' );
-				}
-			} elseif ( false !== strpos( $params[ 'fusion_font_family_' . $param ], '\'' ) || 'inherit' === $params[ 'fusion_font_family_' . $param ] || false !== strpos( $params[ 'fusion_font_family_' . $param ], ',' ) || false !== strpos( $params[ 'fusion_font_family_' . $param ], 'var(' ) ) {
+			if ( false !== strpos( $params[ 'fusion_font_family_' . $param ], '\'' ) || 'inherit' === $params[ 'fusion_font_family_' . $param ] || false !== strpos( $params[ 'fusion_font_family_' . $param ], ',' ) ) {
 				$style['font-family'] = $params[ 'fusion_font_family_' . $param ];
 			} else {
 				$style['font-family'] = '"' . $params[ 'fusion_font_family_' . $param ] . '"';
 			}
+		}
 
-			if ( '' !== $params[ 'fusion_font_variant_' . $param ] && ! isset( $style['font-weight'] ) ) {
-				$weight = str_replace( 'italic', '', $params[ 'fusion_font_variant_' . $param ] );
-				if ( $weight !== $params[ 'fusion_font_variant_' . $param ] ) {
-					$style['font-style'] = 'italic';
-				} else {
-					$style['font-style'] = 'normal';
-				}
-				if ( '' !== $weight ) {
-					$style['font-weight'] = $weight;
-				}
+		if ( '' !== $params[ 'fusion_font_variant_' . $param ] ) {
+			$weight = str_replace( 'italic', '', $params[ 'fusion_font_variant_' . $param ] );
+			if ( $weight !== $params[ 'fusion_font_variant_' . $param ] ) {
+				$style['font-style'] = 'italic';
+			}
+			if ( '' !== $weight ) {
+				$style['font-weight'] = $weight;
 			}
 		}
 
 		if ( 'string' === $format ) {
 			$style_str = '';
-			$important = $important ? ' !important' : '';
 
 			foreach ( $style as $key => $value ) {
-				$style_str .= $key . ':' . $value . $important . ';';
+				$style_str .= $key . ':' . $value . ';';
 			}
 
 			return $style_str;
 		}
 
 		return $style;
-	}
-
-	/**
-	 * Adds states params.
-	 *
-	 * @since 3.0
-	 * @access public
-	 * @param array  $states_atts Element states attributes.
-	 * @param array  $params          Element params.
-	 * @param string $shortcode       Shortcode handle.
-	 * @return array
-	 */
-	public static function add_states_params( $states_atts, $params, $shortcode ) {
-
-		$fusion_settings = awb_get_fusion_settings();
-
-		foreach ( $states_atts as $att ) {
-			$position      = array_search( $att['name'], array_keys( $params ), true );
-			$states        = isset( $att['states'] ) ? $att['states'] : [];
-			$states_params = [];
-
-			foreach ( $states as $key => $state ) {
-				$param                         = $params[ $att['name'] ];
-				$param['param_name']           = isset( $state['param_name'] ) ? $state['param_name'] : $att['name'] . '_' . $key;
-				$param['description']          = $att['description'];
-				$param['default_option']       = false;
-				$param['default_state_option'] = $att['name'];
-				$param['state']                = $key;
-
-				if ( isset( $state['default'] ) ) {
-					$param['default'] = $state['default'];
-				}
-
-				// Add relative description.
-				if ( isset( $param['description'] ) ) {
-
-					$builder_map         = fusion_builder_map_descriptions( $shortcode, $param['param_name'] );
-					$dynamic_description = '';
-
-					if ( is_array( $builder_map ) ) {
-						$setting             = ( isset( $builder_map['theme-option'] ) && '' !== $builder_map['theme-option'] ) ? $builder_map['theme-option'] : '';
-						$subset              = ( isset( $builder_map['subset'] ) && '' !== $builder_map['subset'] ) ? $builder_map['subset'] : '';
-						$type                = ( isset( $builder_map['type'] ) && '' !== $builder_map['type'] ) ? $builder_map['type'] : '';
-						$reset               = ( ( isset( $builder_map['reset'] ) || 'range' === $type ) && '' !== $param['default'] ) ? $param['param_name'] : '';
-						$check_page          = isset( $builder_map['check_page'] ) ? $builder_map['check_page'] : false;
-						$dynamic_description = $fusion_settings->get_default_description( $setting, $subset, $type, $reset, $param, $check_page );
-						$dynamic_description = apply_filters( 'fusion_builder_option_dynamic_description', $dynamic_description, $shortcode, $param['param_name'] );
-
-						$param['default_option'] = $setting;
-						$param['default_subset'] = $subset;
-						$param['option_map']     = $type;
-					}
-
-					if ( '' !== $dynamic_description ) {
-						$param['description'] = apply_filters( 'fusion_builder_option_description', $att['description'] . $dynamic_description, $shortcode, $param['param_name'] );
-					}
-				}
-
-				if ( isset( $state['preview'] ) ) {
-					$param['preview'] = $state['preview'];
-				}
-
-				if ( isset( $state['value'] ) ) {
-					$param['value'] = $state['value'];
-				}
-
-				if ( isset( $state['callback'] ) ) {
-					$param['callback'] = $state['callback'];
-				}
-
-				// Build responsive hover field.
-				if ( isset( $att['responsive'] ) && isset( $att['responsive']['additional_states'] ) && is_array( $att['responsive']['additional_states'] ) ) {
-					foreach ( $att['responsive']['additional_states'] as $responsive_state ) {
-						$r_param                         = $param;
-						$r_param['param_name']           = str_replace( $key, $responsive_state . '_' . $key, $param['param_name'] );
-						$r_param['default_state_option'] = $att['name'] . '_' . $responsive_state;
-						$r_param['responsive']['state']  = $responsive_state;
-
-						$states_params[ $r_param['param_name'] ] = $r_param;
-					}
-				}
-
-				$states_params[ $param['param_name'] ] = $param;
-			}
-
-			$position_2 = $position;
-
-			if ( isset( $att['states']['exclude_main_state'] ) && true === $att['states']['exclude_main_state'] ) {
-				$position_2 = $position + 1;
-			}
-
-			// Insert states params.
-			$params = array_merge( array_slice( $params, 0, $position ), $states_params, array_slice( $params, $position_2 ) );
-		}
-
-		return $params;
 	}
 
 }
@@ -352,6 +240,3 @@ add_filter( 'fusion_builder_element_params', 'Fusion_Builder_Element_Helper::pla
 
 // Add responsive filter.
 add_filter( 'fusion_builder_responsive_params', 'Fusion_Builder_Element_Helper::add_responsive_params', 10, 3 );
-
-// Add states filter.
-add_filter( 'fusion_builder_states_params', 'Fusion_Builder_Element_Helper::add_states_params', 10, 3 );

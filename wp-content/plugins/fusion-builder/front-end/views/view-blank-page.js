@@ -15,7 +15,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			events: {
 				'click .fusion-builder-new-section-add': 'addContainer',
 				'click .fusion-builder-video-button': 'openVideoModal',
-				'click #fusion-load-studio-dialog': 'openLibrary'
+				'click #fusion-load-template-dialog': 'openLibrary'
 			},
 
 			/**
@@ -41,13 +41,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.$el.addClass( 'fusion-builder-scheme-' + colorScheme );
 
-				this.$el.addClass( 'fusion-post-' + FusionApp.data.postDetails.post_type );
-
-				// Add is-empty class to remove close icon in Off Canvas.
-				if ( 'awb_off_canvas' === FusionApp.data.postDetails.post_type ) {
-					jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).find( '.awb-off-canvas' ).addClass( 'is-empty' );
-				}
-
 				this.$el.find( '#video-dialog' ).dialog( {
 					dialogClass: 'fusion-builder-dialog fusion-video-dialog',
 					autoOpen: false,
@@ -63,11 +56,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Calculate color scheme depend on hex color.
 			 *
 			 * @since 2.0.0
-			 * @param {string} color - The hex color code to calculate color scheme against.
+			 * @param {string} hexColor - The hex color code to calculate color scheme against.
 			 * @return {string}
 			 */
-			getColorScheme: function( color ) {
-				return 0.5 < jQuery.AWB_Color( color ).lightness() ? 'light' : 'dark';
+			getColorScheme: function( hexColor ) {
+				hexColor = 'string' !== typeof hexColor ? '#ffffff' : hexColor.replace( '#', '' );
+				return ( parseInt( hexColor, 16 ) > 0xffffff / 2 ) ? 'light' : 'dark';
 			},
 
 			/**
@@ -185,11 +179,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			removeBlankPageHelper: function( event ) {
 				if ( event ) {
 					event.preventDefault();
-				}
-
-				// Remove is-empty class to add back close icon in Off Canvas.
-				if ( 'awb_off_canvas' === FusionApp.data.postDetails.post_type ) {
-					jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).find( '.awb-off-canvas' ).removeClass( 'is-empty' );
 				}
 
 				FusionPageBuilderViewManager.removeView( this.model.get( 'cid' ) );

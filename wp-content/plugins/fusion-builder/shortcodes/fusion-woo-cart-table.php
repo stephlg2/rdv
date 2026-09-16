@@ -17,6 +17,15 @@ if ( class_exists( 'WooCommerce' ) ) {
 		class FusionSC_WooCartTable extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * An array of available columns
 			 *
 			 * @since 3.3
@@ -111,11 +120,6 @@ if ( class_exists( 'WooCommerce' ) ) {
 			public function simulate_cart_page( $page ) {
 
 				global $post;
-
-				if ( is_admin() && ! fusion_doing_ajax() ) {
-					return $page;
-				}
-
 				if ( empty( $post ) && fusion_doing_ajax() && isset( $_POST['fusion_load_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 					if ( isset( $_POST['post_id'] ) && ! empty( $_POST['post_id'] ) ) { // phpcs:ignore WordPress.Security
 						$post_id = $_POST['post_id']; // phpcs:ignore WordPress.Security
@@ -132,17 +136,6 @@ if ( class_exists( 'WooCommerce' ) ) {
 					}
 					if ( strpos( $post->post_content, 'fusion_woo_cart_table' ) > 0 || strpos( $post->post_content, 'fusion_woo_cart_totals' ) > 0 ) {
 						$page = $post->ID;
-					}
-				} else {
-					if ( isset( $_POST['_wp_http_referer'] ) && isset( $_POST['cart'] ) && is_array( $_POST['cart'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-						$id = url_to_postid( $_POST['_wp_http_referer'] ); // phpcs:ignore WordPress.Security
-						if ( ! empty( $id ) ) {
-							$post = get_post( $id );
-							if ( isset( $post->post_content ) && ! empty( $post->post_content ) &&
-								( strpos( $post->post_content, 'fusion_woo_cart_table' ) > 0 || strpos( $post->post_content, 'fusion_woo_cart_totals' ) > 0 ) ) {
-									return $id;
-							}
-						}
 					}
 				}
 
@@ -176,8 +169,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
-
+				global $fusion_settings;
 				return [
 					// Element margin.
 					'margin_top'                       => '',
@@ -199,30 +191,21 @@ if ( class_exists( 'WooCommerce' ) ) {
 					'fusion_font_family_heading_font'  => '',
 					'fusion_font_variant_heading_font' => '',
 					'heading_font_size'                => '',
-					'heading_text_transform'           => '',
-					'heading_line_height'              => '',
-					'heading_letter_spacing'           => '',
 
 					// Text styles.
 					'text_color'                       => '',
 					'fusion_font_family_text_font'     => '',
 					'fusion_font_variant_text_font'    => '',
 					'text_font_size'                   => '',
-					'text_text_transform'              => '',
-					'text_line_height'                 => '',
-					'text_letter_spacing'              => '',
 
 					'border_color'                     => '',
 
-					'hide_on_mobile'                   => fusion_builder_default_visibility( 'string' ),
 					'class'                            => '',
 					'id'                               => '',
 					'animation_type'                   => '',
 					'animation_direction'              => 'down',
 					'animation_speed'                  => '0.1',
-					'animation_delay'                  => '',
 					'animation_offset'                 => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                  => '',
 
 					'table_columns'                    => 'name,price,quantity,subtotal,remove',
 					'coupons_visibility'               => 'show',
@@ -248,7 +231,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 				$this->args     = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_tb_woo_cart_table' );
 
 				ob_start();
-				if ( is_object( WC()->cart ) && WC()->cart->is_empty() && ! fusion_is_preview_frame() ) {
+				if ( WC()->cart->is_empty() && ! fusion_is_preview_frame() ) {
 					$content = apply_filters( 'fusion_shortcode_content', $content, 'fusion_woo_cart_table', $args );
 					$html    = preg_replace( '!^<p>(.*?)</p>$!i', '$1', trim( $content ) );
 				} else {
@@ -279,7 +262,8 @@ if ( class_exists( 'WooCommerce' ) ) {
 					</form>
 					</div>
 					<?php
-					$html = ob_get_clean();
+					$html  = ob_get_clean();
+					$html .= $this->get_styles();
 				}
 
 				$this->on_render();
@@ -301,43 +285,38 @@ if ( class_exists( 'WooCommerce' ) ) {
 				}
 
 				if ( fusion_is_preview_frame() || fusion_doing_ajax() ) {
-					if ( ! is_object( WC()->cart ) || WC()->cart->is_empty() ) {
+					if ( WC()->cart->is_empty() ) {
 						echo $this->generate_cart_dummy_products(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						return ob_get_clean();
 					}
 				}
-
-				do_action( 'woocommerce_before_calculate_totals', WC()->cart );
 				?>
 				<tbody>
 				<?php
 				$columns = explode( ',', $this->args['table_columns'] );
-				if ( is_object( WC()->cart ) ) {
-					foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
-						$_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+				foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+					$_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
-						if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
-							$product_permalink = apply_filters( 'woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink( $cart_item ) : '', $cart_item, $cart_item_key );
-							?>
-							<tr class="woocommerce-cart-form__cart-item <?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ); ?>">
-							<?php
+					if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+						$product_permalink = apply_filters( 'woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink( $cart_item ) : '', $cart_item, $cart_item_key );
+						?>
+						<tr class="woocommerce-cart-form__cart-item <?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ); ?>">
+						<?php
 
-							foreach ( $columns as $column ) :
-								$method = $this->columns[ $column ]['method'];
-								if ( is_callable( [ $this, $method ] ) ) {
-									echo $this->$method( $_product, $cart_item_key, $cart_item, $product_permalink ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-								}
-							endforeach;
-							?>
-							</tr>
-							<?php
-						}
+						foreach ( $columns as $column ) :
+							$method = $this->columns[ $column ]['method'];
+							if ( is_callable( [ $this, $method ] ) ) {
+								echo $this->$method( $_product, $cart_item_key, $cart_item, $product_permalink ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							}
+						endforeach;
+						?>
+						</tr>
+						<?php
 					}
 				}
 				?>
 				</tbody>
 				<?php
-				do_action( 'woocommerce_after_calculate_totals', WC()->cart );
 				return ob_get_clean();
 			}
 
@@ -518,8 +497,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 				?>
 				<td class="product-price" data-title="<?php esc_attr_e( 'Price', 'woocommerce' ); ?>">
 					<?php
-					$price = is_object( WC()->cart ) ? WC()->cart->get_product_price( $_product ) : '';
-					echo apply_filters( 'woocommerce_cart_item_price', $price, $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					echo apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $_product ), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					?>
 				</td>
 				<?php
@@ -641,45 +619,106 @@ if ( class_exists( 'WooCommerce' ) ) {
 				return ob_get_clean();
 			}
 
+
 			/**
-			 * Get the style variables.
+			 * Generates the element styles
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.3
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$css_vars_options = [
-					'margin_top'                   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_top'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_bottom'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_left'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_right'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'heading_font_size'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'heading_letter_spacing'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_font_size'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_letter_spacing'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'heading_cell_backgroundcolor' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'heading_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'table_cell_backgroundcolor'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_color'                   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_color'                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'fusion_font_family_heading_font',
-					'fusion_font_variant_heading_font',
-					'heading_line_height',
-					'heading_text_transform',
-					'fusion_font_family_text_font',
-					'fusion_font_variant_text_font',
-					'text_line_height',
-					'text_text_transform',
-				];
+			public function get_styles() {
+				$this->base_selector = '.fusion-woo-cart_table-' . $this->counter;
+				$this->dynamic_css   = [];
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options );
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-top', $this->args['margin_top'] );
+				}
 
-				return $styles;
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-bottom', $this->args['margin_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'margin_left' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-left', $this->args['margin_left'] );
+				}
+
+				if ( ! $this->is_default( 'margin_right' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-right', $this->args['margin_right'] );
+
+				}
+
+				$selector = $this->base_selector . ' tbody tr td, ' . $this->base_selector . ' thead tr th';
+				if ( ! $this->is_default( 'cell_padding_top' ) ) {
+					$this->add_css_property( $selector, 'padding-top', $this->args['cell_padding_top'] );
+				}
+
+				if ( ! $this->is_default( 'cell_padding_bottom' ) ) {
+					$this->add_css_property( $selector, 'padding-bottom', $this->args['cell_padding_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'cell_padding_left' ) ) {
+					$this->add_css_property( $selector, 'padding-left', $this->args['cell_padding_left'] );
+				}
+
+				if ( ! $this->is_default( 'cell_padding_right' ) ) {
+					$this->add_css_property( $selector, 'padding-right', $this->args['cell_padding_right'] );
+				}
+
+				if ( ! $this->is_default( 'cell_padding_bottom' ) || ! $this->is_default( 'cell_padding_top' ) ) {
+					$this->add_css_property( $this->base_selector . '.shop_table tbody tr', 'height', 'auto' );
+				}
+
+				$selector = $this->base_selector . ' thead tr th';
+				if ( ! $this->is_default( 'heading_cell_backgroundcolor' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['heading_cell_backgroundcolor'] );
+				}
+
+				if ( ! $this->is_default( 'heading_color' ) ) {
+					$this->add_css_property( $selector, 'color', $this->args['heading_color'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_family_heading_font' ) ) {
+					$this->add_css_property( $selector, 'font-family', $this->args['fusion_font_family_heading_font'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_variant_heading_font' ) ) {
+					$this->add_css_property( $selector, 'font-weight', $this->args['fusion_font_variant_heading_font'] );
+				}
+
+				if ( ! $this->is_default( 'heading_font_size' ) ) {
+					$this->add_css_property( $selector, 'font-size', $this->args['heading_font_size'] );
+				}
+
+				$selector = $this->base_selector . ' tbody tr td';
+				if ( ! $this->is_default( 'table_cell_backgroundcolor' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['table_cell_backgroundcolor'] );
+				}
+
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( [ $selector, $selector . ' a', $selector . ' .amount' ], 'color', $this->args['text_color'], true );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_family_text_font' ) ) {
+					$this->add_css_property( $selector, 'font-family', $this->args['fusion_font_family_text_font'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_variant_text_font' ) ) {
+					$this->add_css_property( $selector, 'font-weight', $this->args['fusion_font_variant_text_font'] );
+				}
+
+				if ( ! $this->is_default( 'text_font_size' ) ) {
+					$this->add_css_property( $selector, 'font-size', $this->args['text_font_size'] );
+				}
+
+				$selector = $this->base_selector . ' tr, ' . $this->base_selector . ' tr td, ' . $this->base_selector . ' tr th';
+				if ( ! $this->is_default( 'border_color' ) ) {
+					$this->add_css_property( $selector, 'border-color', $this->args['border_color'], true );
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 
@@ -691,19 +730,11 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 * @return array
 			 */
 			public function attr() {
-				$attr = fusion_builder_visibility_atts(
-					$this->args['hide_on_mobile'],
-					[
-						'class' => 'shop_table shop_table_responsive cart woocommerce-cart-form__contents fusion-woo-cart_table fusion-woo-cart_table-' . $this->counter,
-						'style' => '',
-					]
-				);
 
-				if ( ! $this->is_default( 'cell_padding_bottom' ) || ! $this->is_default( 'cell_padding_top' ) ) {
-					$attr['class'] .= '  has-auto-height';
-				}
-
-				$attr['style'] .= $this->get_style_variables();
+				$attr = [
+					'class' => 'shop_table shop_table_responsive cart woocommerce-cart-form__contents fusion-woo-cart_table fusion-woo-cart_table-' . $this->counter,
+					'style' => '',
+				];
 
 				return $attr;
 
@@ -721,7 +752,6 @@ if ( class_exists( 'WooCommerce' ) ) {
 
 				$attr = [
 					'class' => 'fusion-woo-cart_table-wrapper',
-					'style' => '',
 				];
 
 				if ( $this->args['animation_type'] && ! fusion_doing_ajax() ) {
@@ -752,7 +782,6 @@ if ( class_exists( 'WooCommerce' ) ) {
 					WC()->cart->empty_cart();
 					$referer = wp_get_referer() ? esc_url( remove_query_arg( 'empty_cart' ) ) : wc_get_cart_url();
 					wp_safe_redirect( $referer );
-					exit;
 				}
 			}
 
@@ -790,7 +819,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 							FusionBuilder::$js_folder_url . '/general/fusion-cart-table.js',
 							FusionBuilder::$js_folder_path . '/general/fusion-cart-table.js',
 							[ 'jquery' ],
-							FUSION_BUILDER_VERSION,
+							'1',
 							true
 						);
 
@@ -837,22 +866,6 @@ function fusion_element_woo_cart_table() {
 					'icon'          => 'fusiona-cart-table',
 					'help_url'      => '',
 					'inline_editor' => true,
-					'subparam_map'  => [
-						'fusion_font_family_heading_font'  => 'heading_fonts',
-						'fusion_font_variant_heading_font' => 'heading_fonts',
-						'heading_font_size'                => 'heading_fonts',
-						'heading_text_transform'           => 'heading_fonts',
-						'heading_line_height'              => 'heading_fonts',
-						'heading_letter_spacing'           => 'heading_fonts',
-						'heading_color'                    => 'heading_fonts',
-						'fusion_font_variant_text_font'    => 'text_fonts',
-						'fusion_font_family_text_font'     => 'text_fonts',
-						'text_font_size'                   => 'text_fonts',
-						'text_text_transform'              => 'text_fonts',
-						'text_line_height'                 => 'text_fonts',
-						'text_letter_spacing'              => 'text_fonts',
-						'text_color'                       => 'text_fonts',
-					],
 					'params'        => [
 						[
 							'type'        => 'connected_sortable',
@@ -906,6 +919,13 @@ function fusion_element_woo_cart_table() {
 							'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
 							'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
 							'param_name'       => 'margin',
+							'callback'         => [
+								'function' => 'fusion_style_block',
+								'args'     => [
+
+									'dimension' => true,
+								],
+							],
 							'value'            => [
 								'margin_top'    => '',
 								'margin_right'  => '',
@@ -978,30 +998,33 @@ function fusion_element_woo_cart_table() {
 							],
 						],
 						[
-							'type'             => 'typography',
-							'heading'          => esc_attr__( 'Heading Cell Typography', 'fusion-builder' ),
-							'description'      => esc_html__( 'Controls the typography of the heading. Leave empty for the global font family.', 'fusion-builder' ),
-							'param_name'       => 'heading_fonts',
-							'choices'          => [
-								'font-family'    => 'heading_font',
-								'font-size'      => 'heading_font_size',
-								'text-transform' => 'heading_text_transform',
-								'line-height'    => 'heading_line_height',
-								'letter-spacing' => 'heading_letter_spacing',
-								'color'          => 'heading_color',
+							'type'        => 'colorpickeralpha',
+							'heading'     => esc_attr__( 'Heading Cell Text Color', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the color of the heading text, ex: #000.' ),
+							'param_name'  => 'heading_color',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
 							],
-							'default'          => [
-								'font-family'    => '',
-								'variant'        => '400',
-								'font-size'      => '',
-								'text-transform' => '',
-								'line-height'    => '',
-								'letter-spacing' => '',
-								'color'          => '',
+							'dependency'  => [
+								[
+									'element'  => 'table_header_visibility',
+									'value'    => 'show',
+									'operator' => '==',
+								],
 							],
+						],
+						[
+							'type'             => 'font_family',
 							'remove_from_atts' => true,
-							'global'           => true,
-							'group'            => esc_attr__( 'Design', 'fusion-builder' ),
+							'heading'          => esc_attr__( 'Heading Cell Font Family', 'fusion-builder' ),
+							'description'      => esc_html__( 'Controls the font family of the heading.', 'fusion-builder' ),
+							'param_name'       => 'heading_font',
+							'default'          => [
+								'font-family'  => '',
+								'font-variant' => '',
+							],
 							'dependency'       => [
 								[
 									'element'  => 'table_header_visibility',
@@ -1009,46 +1032,65 @@ function fusion_element_woo_cart_table() {
 									'operator' => '!=',
 								],
 							],
-							'callback'         => [
-								'function' => 'fusion_style_block',
-							],
-						],
-						[
-							'type'             => 'typography',
-							'heading'          => esc_attr__( 'Content Typography', 'fusion-builder' ),
-							'description'      => esc_html__( 'Controls the typography of the content text. Leave empty for the global font family.', 'fusion-builder' ),
-							'param_name'       => 'text_fonts',
-							'choices'          => [
-								'font-family'    => 'text_font',
-								'font-size'      => 'text_font_size',
-								'text-transform' => 'text_text_transform',
-								'line-height'    => 'text_line_height',
-								'letter-spacing' => 'text_letter_spacing',
-								'color'          => 'text_color',
-							],
-							'default'          => [
-								'font-family'    => '',
-								'variant'        => '400',
-								'font-size'      => '',
-								'text-transform' => '',
-								'line-height'    => '',
-								'letter-spacing' => '',
-								'color'          => '',
-							],
-							'remove_from_atts' => true,
-							'global'           => true,
 							'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 							'callback'         => [
 								'function' => 'fusion_style_block',
 							],
 						],
 						[
-							'type'        => 'checkbox_button_set',
-							'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
-							'param_name'  => 'hide_on_mobile',
-							'value'       => fusion_builder_visibility_options( 'full' ),
-							'default'     => fusion_builder_default_visibility( 'array' ),
-							'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
+							'type'        => 'textfield',
+							'heading'     => esc_attr__( 'Heading Cell Font Size', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+							'param_name'  => 'heading_font_size',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
+							],
+							'dependency'  => [
+								[
+									'element'  => 'table_header_visibility',
+									'value'    => 'show',
+									'operator' => '==',
+								],
+							],
+						],
+						[
+							'type'        => 'colorpickeralpha',
+							'heading'     => esc_attr__( 'Text Color', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the color of the text, ex: #000.' ),
+							'param_name'  => 'text_color',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
+							],
+						],
+						[
+							'type'             => 'font_family',
+							'remove_from_atts' => true,
+							'heading'          => esc_attr__( 'Text Font Family', 'fusion-builder' ),
+							'description'      => esc_html__( 'Controls the font family of the text.', 'fusion-builder' ),
+							'param_name'       => 'text_font',
+							'default'          => [
+								'font-family'  => '',
+								'font-variant' => '',
+							],
+							'group'            => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'         => [
+								'function' => 'fusion_style_block',
+							],
+						],
+						[
+							'type'        => 'textfield',
+							'heading'     => esc_attr__( 'Text Font Size', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+							'param_name'  => 'text_font_size',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
+							],
 						],
 						[
 							'type'        => 'textfield',
@@ -1076,4 +1118,4 @@ function fusion_element_woo_cart_table() {
 		);
 	}
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_woo_cart_table' );
+add_action( 'wp_loaded', 'fusion_element_woo_cart_table' );

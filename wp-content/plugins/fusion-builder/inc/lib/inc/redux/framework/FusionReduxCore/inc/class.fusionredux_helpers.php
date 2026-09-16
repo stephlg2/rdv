@@ -606,7 +606,7 @@
 					foreach ( $files as $key => $value ) {
 						if ( ! in_array( $value, array( ".", ".." ) ) ) {
 							if ( is_dir( $template_path . DIRECTORY_SEPARATOR . $value ) ) {
-								$sub_files = self::scan_template_files( $template_path . DIRECTORY_SEPARATOR . $value );
+								$sub_files = fusionredux_scan_template_files( $template_path . DIRECTORY_SEPARATOR . $value );
 								foreach ( $sub_files as $sub_file ) {
 									$result[] = $value . DIRECTORY_SEPARATOR . $sub_file;
 								}
@@ -643,14 +643,12 @@
 					return $data[0];
 				} else {
 					$file_data = $filesystem->execute( 'get_contents', $file );
+
+					$file_data = str_replace( "\r", "\n", $file_data );
 					$version   = '';
 
-					if ( null !== $file_data ) {
-						$file_data = str_replace( "\r", "\n", $file_data );
-
-						if ( preg_match( '/^[ \t\/*#@]*' . preg_quote( '@version', '/' ) . '(.*)$/mi', $file_data, $match ) && $match[1] ) {
-							$version = _cleanup_header_comment( $match[1] );
-						}
+					if ( preg_match( '/^[ \t\/*#@]*' . preg_quote( '@version', '/' ) . '(.*)$/mi', $file_data, $match ) && $match[1] ) {
+						$version = _cleanup_header_comment( $match[1] );
 					}
 
 					return $version;

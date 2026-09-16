@@ -25,6 +25,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
 				attributes.output      = this.buildOutput( atts );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 
 				return attributes;
 			},
@@ -55,37 +56,40 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return output;
 			},
 
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param  {Object} values - The values object.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var text_styles, css,
+self = this;
 
-				// Title typography.
-				jQuery.each( _.fusionGetFontStyle( 'text_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'text-' + rule ] = value;
+				this.baseSelector = '.fusion-content-tb-' + this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				if ( !this.isDefault( 'content_alignment' ) ) {
+				  this.addCssProperty( this.baseSelector, 'text-align',  this.values.content_alignment );
+				}
+
+				if ( !this.isDefault( 'font_size' ) ) {
+				  this.addCssProperty( this.baseSelector, 'font-size',  _.fusionGetValueWithUnit( this.values.font_size ) );
+				}
+
+				text_styles = _.fusionGetFontStyle( 'text_font', values, 'object' );
+				jQuery.each( text_styles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector, rule, value );
 				} );
 
-				cssVarsOptions = [
-					'content_alignment',
-					'line_height',
-					'text_transform'
-				];
+				if ( !this.isDefault( 'line_height' ) ) {
+				  this.addCssProperty( this.baseSelector, 'line-height',  _.fusionGetValueWithUnit( this.values.line_height ) );
+				}
 
-				cssVarsOptions.font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_color     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left    = { 'callback': _.fusionGetValueWithUnit };
+				if ( !this.isDefault( 'letter_spacing' ) ) {
+				  this.addCssProperty( this.baseSelector, 'letter-spacing',  _.fusionGetValueWithUnit( this.values.letter_spacing ) );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				if ( !this.isDefault( 'text_color' ) ) {
+				  this.addCssProperty( this.baseSelector, 'color',  _.fusionGetValueWithUnit( this.values.text_color ) );
+				}
+
+				css = this.parseCSS();
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			},
 
 			/**
@@ -101,7 +105,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
-				attr.style += this.getStyleVariables( values );
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];

@@ -83,7 +83,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Validate values.
 				this.validateValues( atts );
 				this.extras = atts.extras;
-				atts.parentCid = atts.parent;
 
 				// Create attribute objects.
 				this.buildAttr( atts );
@@ -110,8 +109,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.parentCid    = atts.parent;
 				attributes.values       = atts.values;
 				attributes.parentValues = atts.parentValues;
-
-				attributes.usingDynamicParent = this.isParentHasDynamicContent( atts.parentValues );
 
 				return attributes;
 			},
@@ -217,7 +214,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function( atts ) {
 				var attr              = {
 						class: 'fusion-column content-box-column',
-						style: this.getChildCssVars( atts.values, atts.parentValues )
+						style: ''
 					},
 					cid               = this.model.get( 'cid' ),
 					values            = atts.values,
@@ -293,48 +290,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				this.model.set( 'selectors', attr );
-			},
-
-			getChildCssVars: function( values, parentValues ) {
-				var cssVars = [
-					'backgroundcolor',
-					'iconcolor',
-					'iconcolor_hover',
-					'circlecolor_hover'
-				],
-					fullIconSize = '',
-					customCssVars = [];
-				this.values = values;
-
-				if ( 'transparent' === values.circlecolor || 0 === jQuery.AWB_Color( values.circlecolor ).alpha() ) {
-					customCssVars.circle_hover_accent_color = 'transparent';
-				}
-
-				if ( -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ] ) && values.image && values.image_width && values.image_height ) {
-					if ( 'right' === parentValues.icon_align ) {
-						customCssVars[ 'content-padding-right' ] = ( parseFloat( values.image_width ) + 20 ) + 'px';
-					} else {
-						customCssVars[ 'content-padding-left' ] = ( parseFloat( values.image_width ) + 20 ) + 'px';
-					}
-				} else if ( -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ] ) && values.icon ) {
-					if ( 'yes' === parentValues.icon_circle ) {
-						fullIconSize = ( parseFloat( parentValues.icon_size ) + parseFloat( values.circlebordersize ) + parseFloat( values.outercirclebordersize ) ) * 2;
-					} else {
-						fullIconSize = parentValues.icon_size;
-					}
-
-					if ( 'right' === parentValues.icon_align ) {
-						customCssVars[ 'content-padding-right' ] = ( parseFloat( fullIconSize ) + 20 ) + 'px';
-					} else {
-						customCssVars[ 'content-padding-left' ] = ( parseFloat( fullIconSize ) + 20 ) + 'px';
-					}
-				}
-
-				if ( -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ] ) ) {
-					customCssVars[ 'content-text-align' ] = parentValues.icon_align;
-				}
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCssVars );
 			},
 
 			/**
@@ -417,6 +372,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 					}
 
+					if ( values.iconcolor ) {
+						attr.style += 'color:' + values.iconcolor + ';';
+					}
+
 					if ( values.iconflip ) {
 						attr[ 'class' ] += ' fa-flip-' + values.iconflip;
 					}
@@ -484,7 +443,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					parentValues      = atts.parentValues,
 					marginDirection   = '',
 					margin            = '',
-					transparentCircle = 'transparent' === values.circlecolor || 0 === jQuery.AWB_Color( values.circlecolor ).alpha();
+					transparentCircle = 'transparent' === values.circlecolor || 0 === jQuery.Color( values.circlecolor ).alpha();
 
 				if ( values.icon ) {
 
@@ -552,8 +511,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildContentBoxHeadingAttr: function( atts ) {
 				var attr           = {
-						class: 'content-box-heading',
-						style: this.getHeadingCssVars( atts.values )
+						class: 'content-box-heading'
 					},
 					values         = atts.values,
 					parentValues   = atts.parentValues,
@@ -563,7 +521,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( parentValues.title_size ) {
 					fontSize = parseFloat( parentValues.title_size );
 
-					attr.style += 'line-height:' + ( fontSize + 5 ) + 'px;';
+					attr.style = 'font-size:' + fontSize + 'px;line-height:' + ( fontSize + 5 ) + 'px;';
 					attr[ 'data-fontsize' ]          = fontSize;
 					attr[ 'data-lineheight' ]        = ( fontSize + 5 );
 					attr[ 'data-inline-fontsize' ]   = fontSize + 'px';
@@ -611,20 +569,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return attr;
 			},
 
-			getHeadingCssVars: function( values ) {
-				this.values = values;
-				const heading_tag = 'div' === values.heading_size || 'p' === values.heading_size ? values.heading_size : 'h' + values.heading_size;
-
-				let cssVars = '';
-				if ( values.title_size ) {
-					cssVars = this.getHeadingFontVars( heading_tag, { 'font-size': _.fusionGetValueWithUnit( values.title_size, 'px' ) } );
-				} else {
-					cssVars = this.getHeadingFontVars( heading_tag, { 'font-size': 'var(--content_box_title_size)' } );
-				}
-
-				return cssVars;
-			},
-
 			/**
 			 * Builds attributes.
 			 *
@@ -668,6 +612,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					fullIconSize   = '';
 
 				if ( -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ] ) && values.image && values.image_width && values.image_height ) {
+					if ( 'right' === parentValues.icon_align ) {
+						attr.style += 'padding-right:' + ( parseFloat( values.image_width ) + 20 ) + 'px;';
+					} else {
+						attr.style += 'padding-left:' + ( parseFloat( values.image_width ) + 20 ) + 'px;';
+					}
+
 					if ( 'timeline-vertical' === parentValues.layout ) {
 						imageHeight = values.image_height;
 						if ( imageHeight > parseFloat( parentValues.title_size ) && 0 < imageHeight - parseFloat( parentValues.title_size ) - 15 ) {
@@ -675,6 +625,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 					}
 				} else if ( -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ] ) && values.icon ) {
+					if ( 'yes' === parentValues.icon_circle ) {
+						fullIconSize = ( parseFloat( parentValues.icon_size ) + parseFloat( values.circlebordersize ) + parseFloat( values.outercirclebordersize ) ) * 2;
+					} else {
+						fullIconSize = parentValues.icon_size;
+					}
+
+					if ( 'right' === parentValues.icon_align ) {
+						attr.style += 'padding-right:' + ( parseFloat( fullIconSize ) + 20 ) + 'px;';
+					} else {
+						attr.style += 'padding-left:' + ( parseFloat( fullIconSize ) + 20 ) + 'px;';
+					}
+
 					if ( 'timeline-vertical' === parentValues.layout ) {
 						if ( fullIconSize > parseFloat( parentValues.title_size ) && 0 < fullIconSize - parseFloat( parentValues.title_size ) - 15 ) {
 							if ( 'timeline-vertical' === parentValues.layout ) {
@@ -684,6 +646,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							}
 						}
 					}
+				}
+
+				if ( 'right' === parentValues.icon_align && '' !== attr.style && ( -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ] ) ) ) {
+					attr.style += ' text-align:' + parentValues.icon_align + ';';
+				} else if ( 'right' === parentValues.icon_align && '' === attr.style && ( -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ] ) ) ) {
+					attr.style += ' text-align:' + parentValues.icon_align + ';';
+				}
+
+				if ( parentValues.body_color ) {
+					attr.style += 'color:' + parentValues.body_color + ';';
 				}
 
 				attr = _.fusionInlineEditor( {
@@ -728,7 +700,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					positionTop = fullIconSize / 2;
 
-					if ( values.backgroundcolor && 'transparent' !== values.backgroundcolor && 0 !== jQuery.AWB_Color( values.backgroundcolor ).alpha() ) {
+					if ( values.backgroundcolor && 'transparent' !== values.backgroundcolor && 0 !== jQuery.Color( values.backgroundcolor ).alpha() ) {
 						positionTop += 35;
 					}
 
@@ -767,7 +739,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					positionTop        = fullIconSize;
 					positionHorizontal = fullIconSize / 2;
-					if ( values.backgroundcolor && 'transparent' !== values.backgroundcolor && 0 !== jQuery.AWB_Color( values.backgroundcolor ).alpha() ) {
+					if ( values.backgroundcolor && 'transparent' !== values.backgroundcolor && 0 !== jQuery.Color( values.backgroundcolor ).alpha() ) {
 						positionTop        += 35;
 						positionHorizontal += 35;
 					}
@@ -830,7 +802,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( values.backgroundcolor ) {
-					if ( 'transparent' !== values.backgroundcolor && 0 !== jQuery.AWB_Color( values.backgroundcolor ).alpha() ) {
+					attr.style = 'background-color:' + values.backgroundcolor + ';';
+
+					if ( 'transparent' !== values.backgroundcolor && 0 !== jQuery.Color( values.backgroundcolor ).alpha() ) {
 						attr[ 'class' ] += '-background';
 					}
 				}
@@ -893,10 +867,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					parentValues           = atts.parentValues,
 					parentCid              = atts.parentCid,
 					circleHoverAccentColor = '',
-					transparentChild       = false,
+					transparentChild       = '',
 					hoverAccentColor       = '';
 
-				if ( 'transparent' === values.circlecolor || 0 === jQuery.AWB_Color( values.circlecolor ).alpha() || 'no' === parentValues.icon_circle ) {
+				if ( 'transparent' === values.circlecolor || 0 === jQuery.Color( values.backgroundcolor ).alpha() || 'no' === parentValues.icon_circle ) {
 					transparentChild = true;
 				}
 
@@ -955,14 +929,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 
 					} else if ( 'button' === parentValues.link_type ) {
-						contentBoxShortcodeLink[ 'class' ] += 'fusion-read-more-button fusion-content-box-button fusion-button button-default fusion-button-default-size button-' + extras.button_type.toLowerCase();
+						contentBoxShortcodeLink[ 'class' ] += 'fusion-read-more-button fusion-content-box-button fusion-button button-default button-' + extras.button_size.toLowerCase() + ' button-' + extras.button_type.toLowerCase();
 					}
 				}
 
 				if ( 'button-bar' === parentValues.link_type && 'timeline-vertical' === parentValues.layout && readmore ) {
 
 					additionMargin = 20 + 15;
-					if ( values.backgroundcolor && 'transparent' !== values.backgroundcolor && 0 !== jQuery.AWB_Color( values.backgroundcolor ).alpha() ) {
+					if ( values.backgroundcolor && 'transparent' !== values.backgroundcolor && 0 !== jQuery.Color( values.backgroundcolor ).alpha() ) {
 						additionMargin += 35;
 					}
 

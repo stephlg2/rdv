@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_post_card_image-shortcode">
+	{{{styles}}}
 	<div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
 		{{{output}}}
 	</div>

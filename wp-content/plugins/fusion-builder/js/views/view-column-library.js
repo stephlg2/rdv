@@ -1,4 +1,4 @@
-/* global FusionPageBuilderEvents, fusionBuilderConfig, FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText, fusionAllElements, FusionPageBuilderViewManager */
+/* global FusionPageBuilderEvents, FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText, fusionAllElements, FusionPageBuilderViewManager */
 /* eslint no-unused-vars: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
@@ -7,7 +7,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 	$( document ).ready( function() {
 
 		// Column Library View
-		FusionPageBuilder.ColumnLibraryView = FusionPageBuilder.BaseLibraryView.extend( {
+		FusionPageBuilder.ColumnLibraryView = window.wp.Backbone.View.extend( {
 
 			className: 'fusion_builder_modal_settings',
 
@@ -17,10 +17,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				'click .fusion-builder-column-layouts li': 'addColumns',
 				'click .fusion_builder_custom_columns_load': 'addCustomColumn',
 				'click .fusion_builder_custom_sections_load': 'addCustomSection',
-				'click .fusion-special-item': 'addSpecialItem',
-				'click .awb-import-options-toggle': 'toggleImportOptions',
-				'click #fusion-builder-sections-studio .awb-import-studio-item': 'loadStudioContainer',
-				'click #fusion-builder-columns-studio .awb-import-studio-item': 'loadStudioColumn'
+				'click .fusion-special-item': 'addSpecialItem'
+			},
+
+			initialize: function( attributes ) {
+				this.listenTo( FusionPageBuilderEvents, 'fusion-columns-added', this.removeView );
+				this.listenTo( FusionPageBuilderEvents, 'fusion-modal-view-removed', this.removeView );
+
+				this.options = attributes;
 			},
 
 			render: function() {
@@ -34,9 +38,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Show saved custom sections
 				if ( 'container' === FusionPageBuilderApp.activeModal ) {
 					FusionPageBuilderApp.showSavedElements( 'sections', this.$el.find( '#custom-sections' ) );
-					this.loadStudio( 'sections' );
-				} else {
-					this.loadStudio( 'columns' );
 				}
 
 				setTimeout( function() {
@@ -44,323 +45,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}, 50 );
 
 				return this;
-			},
-
-			loadStudioColumn: function( event ) {
-				var layoutID,
-					self          = this,
-					$layout       = jQuery( event.currentTarget ).closest( '.fusion-page-layout' ),
-					importOptions = FusionPageBuilderApp.studio.getImportOptions( event );
-
-				if ( event ) {
-					event.preventDefault();
-				}
-
-				FusionPageBuilderApp.activeModal = 'column';
-
-				if ( true === FusionPageBuilderApp.layoutIsLoading ) {
-					return;
-				}
-				FusionPageBuilderApp.layoutIsLoading = true;
-
-				layoutID  = $layout.data( 'layout-id' );
-
-				jQuery.ajax( {
-					type: 'POST',
-					url: FusionPageBuilderApp.ajaxurl,
-					dataType: 'JSON',
-					data: {
-						action: 'fusion_builder_load_layout',
-						fusion_load_nonce: FusionPageBuilderApp.fusion_load_nonce,
-						fusion_is_global: false,
-						fusion_layout_id: layoutID,
-						overWriteType: importOptions.overWriteType,
-						shouldInvert: importOptions.shouldInvert,
-						imagesImport: importOptions.imagesImport,
-						fusion_studio: true,
-						category: 'columns',
-						post_id: fusionBuilderConfig.post_id
-					},
-
-					beforeSend: function() {
-						jQuery( '#fusion-builder-columns-studio' ).find( '.fusion-loader' ).show();
-						jQuery( '#fusion-builder-columns-studio' ).find( '.studio-wrapper' ).addClass( 'loading' );
-
-						jQuery( '.fusion-loader .awb-studio-import-status' ).html( fusionBuilderText.studio_importing_content );
-					},
-
-					success: function( data ) {
-						var i,
-							promises = [],
-							dfd      = jQuery.Deferred(),  // Master deferred.
-							dfdNext  = dfd; // Next deferred in the chain.
-
-						dfd.resolve();
-
-						// Reset array.
-						self.mediaImportKeys = [];
-
-						// We have the content, let's check for assets.
-						// Filter out empty properties (now those are empty arrays).
-						if ( 'object' === typeof data.avada_media ) {
-							Object.keys( data.avada_media ).forEach( function( key ) {
-								// We expect and object.
-								if ( 'object' === typeof data.avada_media[ key ] && ! Array.isArray( data.avada_media[ key ] ) ) {
-									self.mediaImportKeys.push( key );
-								}
-							} );
-						}
-
-						// Import studio media if needed.
-						if ( 0 < self.mediaImportKeys.length ) {
-
-							// Set first AJAX response as initial data.
-							FusionPageBuilderApp.studio.setImportData( data );
-
-							for ( i = 0; i < self.mediaImportKeys.length; i++ ) {
-
-								// IIFE to freeze the value of i.
-								( function( k ) { // eslint-disable-line no-loop-func
-
-									dfdNext = dfdNext.then( function() {
-										return self.importStudioMedia( FusionPageBuilderApp.studio.getImportData(), self.mediaImportKeys[ k ], importOptions );
-									} );
-
-									promises.push( dfdNext );
-								}( i ) );
-
-							}
-
-							jQuery.when.apply( null, promises ).then(
-								function() {
-
-									/*
-									var lastAjaxResponse;
-
-									if ( 1 === promises.length ) {
-										lastAjaxResponse = arguments[ 0 ];
-									} else {
-										lastAjaxResponse = arguments[ promises.length - 1 ][ 0 ];
-									}
-									*/
-
-									FusionPageBuilderApp.shortcodesToBuilder( FusionPageBuilderApp.studio.getImportData().post_content, FusionPageBuilderApp.parentRowId );
-									FusionPageBuilderApp.layoutIsLoading = false;
-									FusionPageBuilderEvents.trigger( 'fusion-studio-content-imported', FusionPageBuilderApp.studio.getImportData() );
-
-									self.studioColumnImportComplete( event );
-
-									FusionPageBuilderApp.studio.resetImportData();
-								},
-								function() {
-
-									jQuery( '.fusion-loader .awb-studio-import-status' ).html( fusionBuilderText.studio_importing_content_failed );
-
-									self.studioColumnImportComplete( event );
-
-									FusionPageBuilderApp.studio.resetImportData();
-								}
-							);
-						} else {
-
-							FusionPageBuilderApp.shortcodesToBuilder( data.post_content, FusionPageBuilderApp.parentRowId );
-							FusionPageBuilderApp.layoutIsLoading = false;
-							FusionPageBuilderEvents.trigger( 'fusion-studio-content-imported', data );
-
-							self.studioColumnImportComplete( event );
-						}
-					}
-				} );
-			},
-
-			/**
-			 * Does what needs to be done when column is imported.
-			 *
-			 * @since 3.5
-			 * @param {Object} event - The event.
-			 */
-			studioColumnImportComplete: function( event ) {
-				var $layout           = jQuery( event.currentTarget ).closest( '.fusion-page-layout' ),
-					title             = $layout.find( '.fusion_module_title' ).text();
-
-				jQuery( '#fusion-builder-columns-studio' ).find( '.fusion-loader' ).hide();
-				jQuery( '#fusion-builder-columns-studio' ).find( '.studio-wrapper' ).removeClass( 'loading' );
-
-				FusionPageBuilderApp.loaded = true;
-
-				// Save history state
-				fusionHistoryManager.turnOnTracking();
-				window.fusionHistoryState = fusionBuilderText.added_studio_column + title;
-
-				FusionPageBuilderEvents.trigger( 'fusion-columns-added' );
-				FusionPageBuilderEvents.trigger( 'fusion-element-cloned' );
-
-
-				// Unset 'added' attribute from newly created row model
-				this.model.unset( 'added' );
-			},
-
-			loadStudioContainer: function( event ) {
-				var self              = this,
-					parentID          = this.model.get( 'parent' ),
-					parentView        = FusionPageBuilderViewManager.getView( parentID ),
-					$layout           = jQuery( event.currentTarget ).closest( '.fusion-page-layout' ),
-					importOptions     = FusionPageBuilderApp.studio.getImportOptions( event ),
-					layoutID,
-					targetContainer;
-
-				targetContainer = parentView.$el.prev( '.fusion_builder_container' );
-				FusionPageBuilderApp.targetContainerCID = targetContainer.find( '.fusion-builder-data-cid' ).data( 'cid' );
-
-				if ( event ) {
-					event.preventDefault();
-				}
-
-				if ( 'undefined' !== typeof parentView ) {
-					parentView.removeContainer();
-				}
-
-				if ( true === FusionPageBuilderApp.layoutIsLoading ) {
-					return;
-				}
-
-				FusionPageBuilderApp.layoutIsLoading = true;
-
-				layoutID = $layout.data( 'layout-id' );
-
-				jQuery.ajax( {
-					type: 'POST',
-					url: FusionPageBuilderApp.ajaxurl,
-					dataType: 'JSON',
-					data: {
-						action: 'fusion_builder_load_layout',
-						fusion_load_nonce: FusionPageBuilderApp.fusion_load_nonce,
-						fusion_is_global: false,
-						fusion_layout_id: layoutID,
-						overWriteType: importOptions.overWriteType,
-						shouldInvert: importOptions.shouldInvert,
-						imagesImport: importOptions.imagesImport,
-						fusion_studio: true,
-						category: 'sections',
-						post_id: fusionBuilderConfig.post_id
-					},
-
-					beforeSend: function() {
-						jQuery( '#fusion-builder-sections-studio' ).find( '.fusion-loader' ).show();
-						jQuery( '#fusion-builder-sections-studio' ).find( '.studio-wrapper' ).addClass( 'loading' );
-
-						jQuery( '.fusion-loader .awb-studio-import-status' ).html( fusionBuilderText.studio_importing_content );
-					},
-
-					success: function( data ) {
-						var i,
-							promises = [],
-							dfd      = jQuery.Deferred(),  // Master deferred.
-							dfdNext  = dfd; // Next deferred in the chain.
-
-						dfd.resolve();
-
-						// Reset array.
-						self.mediaImportKeys = [];
-
-						// We have the content, let's check for assets.
-						// Filter out empty properties (now those are empty arrays).
-						if ( 'object' === typeof data.avada_media ) {
-							Object.keys( data.avada_media ).forEach( function( key ) {
-								// We expect and object.
-								if ( 'object' === typeof data.avada_media[ key ] && ! Array.isArray( data.avada_media[ key ] ) ) {
-									self.mediaImportKeys.push( key );
-								}
-							} );
-						}
-
-						// Import studio media if needed.
-						if ( 0 < self.mediaImportKeys.length ) {
-
-							// Set first AJAX response as initial data.
-							FusionPageBuilderApp.studio.setImportData( data );
-
-							for ( i = 0; i < self.mediaImportKeys.length; i++ ) {
-
-								// IIFE to freeze the value of i.
-								( function( k ) { // eslint-disable-line no-loop-func
-
-									dfdNext = dfdNext.then( function() {
-										return self.importStudioMedia( FusionPageBuilderApp.studio.getImportData(), self.mediaImportKeys[ k ], importOptions );
-									} );
-
-									promises.push( dfdNext );
-								}( i ) );
-
-							}
-
-							jQuery.when.apply( null, promises ).then(
-								function() {
-
-									/*
-									var lastAjaxResponse;
-
-									if ( 1 === promises.length ) {
-										lastAjaxResponse = arguments[ 0 ];
-									} else {
-										lastAjaxResponse = arguments[ promises.length - 1 ][ 0 ];
-									}
-									*/
-
-									FusionPageBuilderApp.shortcodesToBuilder( FusionPageBuilderApp.studio.getImportData().post_content, FusionPageBuilderApp.parentRowId );
-									FusionPageBuilderApp.layoutIsLoading = false;
-									FusionPageBuilderEvents.trigger( 'fusion-studio-content-imported', FusionPageBuilderApp.studio.getImportData() );
-
-									self.studioContainerImportComplete( event );
-
-									FusionPageBuilderApp.studio.resetImportData();
-								},
-								function() {
-
-									jQuery( '.fusion-loader .awb-studio-import-status' ).html( fusionBuilderText.studio_importing_content_failed );
-
-									self.studioContainerImportComplete( event );
-
-									FusionPageBuilderApp.studio.resetImportData();
-								}
-							);
-						} else {
-
-							FusionPageBuilderApp.shortcodesToBuilder( data.post_content, FusionPageBuilderApp.parentRowId );
-							FusionPageBuilderApp.layoutIsLoading = false;
-							FusionPageBuilderEvents.trigger( 'fusion-studio-content-imported', data );
-
-							self.studioContainerImportComplete( event );
-						}
-					}
-				} );
-			},
-
-			/**
-			 * Does what needs to be done when container is imported.
-			 *
-			 * @since 3.5
-			 * @param {Object} event - The event.
-			 */
-			studioContainerImportComplete: function( event ) {
-				var $layout = jQuery( event.currentTarget ).closest( '.fusion-page-layout' ),
-					title   = $layout.find( '.fusion_module_title' ).text();
-
-				jQuery( '#fusion-builder-sections-studio' ).find( '.fusion-loader' ).hide();
-				jQuery( '#fusion-builder-sections-studio' ).find( '.studio-wrapper' ).removeClass( 'loading' );
-
-				FusionPageBuilderApp.loaded = true;
-
-				// Save history state
-				fusionHistoryManager.turnOnTracking();
-				window.fusionHistoryState = fusionBuilderText.added_studio_section + title;
-
-				FusionPageBuilderEvents.trigger( 'fusion-columns-added' );
-				FusionPageBuilderEvents.trigger( 'fusion-element-cloned' );
-
-				// Unset 'added' attribute from newly created section model
-				this.model.unset( 'added' );
-
 			},
 
 			addCustomColumn: function( event ) {
@@ -504,6 +188,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			},
 
+			removeView: function() {
+				FusionPageBuilderApp.activeModal = '';
+				this.remove();
+			},
+
 			addCustomSection: function( event ) {
 				var thisModel  = this.model,
 					parentID   = this.model.get( 'parent' ),
@@ -584,12 +273,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				targetContainer = parentView.$el.prev( '.fusion_builder_container' );
-
-				// Check if it is added from form step.
-				if ( parentView.$el.prev().hasClass( 'fusion-builder-form-step' ) ) {
-					targetContainer = parentView.$el.prev();
-				}
-
 				FusionPageBuilderApp.targetContainerCID = targetContainer.find( '.fusion-builder-data-cid' ).data( 'cid' );
 				moduleID = FusionPageBuilderViewManager.generateCid();
 
@@ -597,7 +280,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					{
 						type: jQuery( event.currentTarget ).data( 'type' ),
 						added: 'manually',
-						element_type: jQuery( event.currentTarget ).data( 'type' ),
+						module_type: jQuery( event.currentTarget ).data( 'type' ),
 						cid: moduleID,
 						params: params,
 						view: parentView,
@@ -608,11 +291,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( 'undefined' !== typeof parentView ) {
 					FusionPageBuilderApp.targetContainerCID = '';
-					if ( ! targetContainer.length && 'fusion_builder_form_step' === jQuery( event.currentTarget ).data( 'type' ) ) {
-						parentView.removeContainer( event, true, false );
-					} else {
-						parentView.removeContainer();
-					}
+					parentView.removeContainer();
 				}
 
 				// Save history state

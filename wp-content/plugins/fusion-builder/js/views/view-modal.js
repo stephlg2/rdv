@@ -164,8 +164,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				FusionPageBuilderApp.activeModal = '';
 
 				// Close colorpickers before saving
-				this.$el.find( '.awb-color-picker' ).each( function() {
-					$( this ).awbColorPicker( 'close' );
+				this.$el.find( '.wp-color-picker' ).each( function() {
+					$( this ).wpColorPicker( 'close' );
 				} );
 
 				// Destroy CodeMirror editor instance
@@ -302,8 +302,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				// Close colorpickers before saving
-				this.$el.find( '.awb-color-picker' ).each( function() {
-					$( this ).awbColorPicker( 'close' );
+				this.$el.find( '.wp-color-picker' ).each( function() {
+					$( this ).wpColorPicker( 'close' );
 				} );
 
 				// Destroy CodeMirror editor instance
@@ -343,6 +343,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						settingValue              = self.getSettingValue( $thisEl, false );
 						attributes.params[ name ] = settingValue;
 					}
+
 				} );
 
 				// Get dynamic values and store.
@@ -355,7 +356,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attributes.dynamic_params = {};
 				}
 
-				// Escapes &, <, >, ", `, and ' characters.
+				// Escapes &, <, >, ", `, and ' characters
 				if ( 'undefined' !== typeof fusionAllElements[ this.model.get( 'element_type' ) ].escape_html && true === fusionAllElements[ this.model.get( 'element_type' ) ].escape_html ) {
 					attributes.params.element_content = _.escape( attributes.params.element_content );
 				}
@@ -420,7 +421,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							attributes.params.element_content = '[fusion_builder_row][/fusion_builder_row]';
 						}
 
-						console.log( 'Saving', attributes.params );
 						this.model.set( attributes, { silent: true } );
 
 						generatedShortcode = FusionPageBuilderApp.generateElementShortcode( this.model, false, true );
@@ -502,8 +502,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							FusionPageBuilderApp.fusionBuilderMCEremoveEditor( editorID );
 						} );
 
-						console.log( 'Saving 2', attributes.params );
-
 						this.remove();
 
 						FusionPageBuilderEvents.trigger( 'fusion-modal-view-removed' );
@@ -534,17 +532,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					FusionPageBuilderApp.fusionBuilderMCEremoveEditor( editorID );
 				} );
 
-				// Form step title.
-				if ( 'fusion_builder_form_step' === this.model.get( 'element_type' ) && 'undefined' !== typeof this.model.attributes.params.title ) {
-					let title = '';
-					if ( '' !== this.model.attributes.params.title ) {
-						title = fusionBuilderText.form_step + ' - ' + this.model.attributes.params.title;
-					} else {
-						title = fusionBuilderText.form_step;
-					}
-					$( '.fusion-builder-special-item-' + this.model.get( 'cid' ) ).find( '.fusion-builder-form-step-title' ).html( title );
-				}
-
 				FusionPageBuilderApp.activeModal = '';
 
 				FusionPageBuilderEvents.trigger( 'fusion-settings-modal-save' );
@@ -557,10 +544,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Skip options within repeater.
 				if ( $thisEl.parents( '.repeater-fields, .dynamic-param-fields' ).length && ! fromRepeater ) {
 					return;
-				}
-
-				if ( 'string' == typeof $thisEl.attr( 'data-subset' ) ) {
-					return $thisEl.attr( 'name' );
 				}
 
 				// Multi element
@@ -606,13 +589,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Escape input fields
 				if ( $thisEl.is( 'input' ) && '' !== settingValue ) {
-					if ( ! $thisEl.hasClass( 'fusion-builder-upload-field' ) && ! $thisEl.is( '#generator_element_content' ) && ! $thisEl.is( '#generator_multi_child_content' ) && ! $thisEl.closest( 'ul' ).hasClass( 'dynamic-param-fields' ) ) {
+					if ( ! $thisEl.hasClass( 'fusion-builder-upload-field' ) && ! $thisEl.is( '#generator_element_content' ) && ! $thisEl.is( '#generator_multi_child_content' ) ) {
 						settingValue = _.escape( settingValue );
 					}
 				}
 
-				// Encode raw field.
-				if ( $thisEl.hasClass( 'fusion-builder-raw-textarea' ) || $thisEl.hasClass( 'fusion-builder-raw-text' ) ) {
+				// Encode raw-textarea.
+				if ( $thisEl.hasClass( 'fusion-builder-raw-textarea' ) ) {
 					settingValue = FusionPageBuilderApp.base64Encode( settingValue );
 				}
 
@@ -747,7 +730,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					if ( $( this ).val() ) {
 						value = $( this ).val().toLowerCase();
 
-						thisEl.find( '.fusion-builder-all-modules li, .studio-imports li' ).each( function() {
+						thisEl.find( '.fusion-builder-all-modules li' ).each( function() {
 							var shortcode = jQuery( this ).find( '.fusion_module_label' ).length ? jQuery( this ).find( '.fusion_module_label' ).text().trim().toLowerCase() : '';
 
 							name = $( this ).find( '.fusion_module_title' ).text().trim().toLowerCase();
@@ -773,7 +756,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					} else {
 
 						thisEl.find( '.fusion-builder-all-modules li' ).show();
-						thisEl.find( '.studio-imports li' ).show();
 					}
 				} );
 			}

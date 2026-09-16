@@ -32,7 +32,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.checked       = 'yes' === atts.values.checked ? ' checked ' : '';
 				attributes.labelPosition = 'undefined' !== typeof this.formData._fusion.label_position ? this.formData._fusion.label_position : 'above';
 				attributes.label         = 'undefined' !== typeof params.label && '' !== params.label ? atts.values.label : '';
-				attributes.inputType     = 'undefined' !== typeof parentView.model.attributes.params.multiple_select && 'yes' === parentView.model.attributes.params.multiple_select ? 'checkbox' : 'radio';
+				attributes.inputType     = undefined !== typeof parentView.model.attributes.params.multiple_select && 'yes' === parentView.model.attributes.params.multiple_select ? 'checkbox' : 'radio';
 
 				return attributes;
 			}

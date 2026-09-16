@@ -6,7 +6,7 @@
  * Add any modifications necessary under a child theme.
  *
  * @author     ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Avada Builder
  * @subpackage Core
  */
@@ -115,7 +115,7 @@ if ( ! class_exists( 'Avada_Woocommerce' ) && ! class_exists( 'FusionBuilder_Woo
 		 * @access public
 		 */
 		public function woocommerce_scripts() {
-			wp_enqueue_script( 'fusion_builder_woocommerce_js', FUSION_BUILDER_PLUGIN_URL . 'inc/woocommerce/js/woocommerce.js', [], FUSION_BUILDER_VERSION, true );
+			wp_enqueue_script( 'fusion_builder_woocommerce_js', FUSION_BUILDER_PLUGIN_URL . 'inc/woocommerce/js/woocommerce.js', '', FUSION_BUILDER_VERSION, true );
 			$dynamic_css_obj = Fusion_Dynamic_CSS::get_instance();
 			$mode            = ( method_exists( $dynamic_css_obj, 'get_mode' ) ) ? $dynamic_css_obj->get_mode() : $dynamic_css_obj->mode;
 

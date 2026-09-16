@@ -5,9 +5,8 @@
  * @package fusion-builder
  */
 
-$fusion_settings     = awb_get_fusion_settings();
+$fusion_settings     = fusion_get_fusion_settings();
 $theme_options_style = strtolower( $fusion_settings->get( 'title_style_type' ) );
-$text_transform      = $fusion_settings->get( 'button_text_transform' );
 ?>
 <script type="text/template" id="fusion-builder-block-module-title-preview-template">
 
@@ -33,25 +32,17 @@ $text_transform      = $fusion_settings->get( 'button_text_transform' );
 <# } else { #>
 	<div class="fusion-title-preview">
 		<#
-		var style_type = ( params.style_type ) ? params.style_type.replace( ' ', '_' ) : 'default',
-			content = params.element_content,
-			text_blocks       = jQuery.parseHTML( content ),
-			shortcode_content = '',
-			text_color        = params.text_color,
-			text_transform    = '' !== params.text_transform ? params.text_transform : '<?php echo esc_attr( $text_transform ); ?>',
-			styleTag          = '';
-
-		if ( 'none' !== text_transform ) {
-			styleTag += 'text-transform: ' + text_transform + ';';
-		}
+		var style_type = ( params.style_type ) ? params.style_type.replace( ' ', '_' ) : 'default';
+		var
+		content = params.element_content,
+		text_blocks       = jQuery.parseHTML( content ),
+		shortcode_content = '',
+		text_color        = params.text_color,
+		styleTag          = '';
 
 		if ( 'default' === params.style_type ) {
 			style_type = '<?php echo esc_attr( $theme_options_style ); ?>';
 			style_type = style_type.replace( ' ', '_' );
-		}
-
-		if ( text_color && ( -1 !== text_color.indexOf( 'var(--' ) ) ) {
-			text_color = getComputedStyle( document.documentElement ).getPropertyValue( text_color.replace( 'var(', '' ).replace( ')', '' ) );
 		}
 
 		if ( text_color && ( -1 !== text_color.replace( /\s/g, '' ).indexOf( 'rgba(255,255,255' ) || '#ffffff' === text_color ) ) {

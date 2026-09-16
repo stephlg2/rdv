@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 			public $element_counter = 1;
 
 			/**
+			 * Whether styles are already generated or not.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var bool
+			 */
+			protected $styles_generated = false;
+
+			/**
 			 * An array of generated CSS rules.
 			 *
 			 * @access protected
@@ -33,6 +42,15 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 			 * @var array
 			 */
 			protected $element_css = [];
+
+			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
 
 			/**
 			 * Constructor.
@@ -48,7 +66,12 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 				// Ajax mechanism for live editor.
 				add_action( 'wp_ajax_get_fusion_post_card_image', [ $this, 'ajax_render' ] );
 
+				// Add generated CSS rules to parent post card.
+				add_filter( 'fusion_post_cards_elements_css', [ $this, 'append_and_clear_element_css' ] );
+
 				add_action( 'fusion_post_card_rendered', [ $this, 'parent_post_card_rendered' ] );
+
+				add_action( 'fusion_post_cards_rendered', [ $this, 'parent_post_cards_rendered' ] );
 			}
 
 			/**
@@ -60,7 +83,7 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
 					'hide_on_mobile'             => fusion_builder_default_visibility( 'string' ),
@@ -93,18 +116,11 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 
 					'crossfade_bg_color'         => '',
 
-					// aspect ratio.
-					'aspect_ratio'               => '',
-					'custom_aspect_ratio'        => '',
-					'aspect_ratio_position'      => '',
-
 					// Animation.
 					'animation_type'             => '',
 					'animation_direction'        => 'down',
 					'animation_speed'            => '0.1',
-					'animation_delay'            => '',
 					'animation_offset'           => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'            => '',
 				];
 			}
 
@@ -131,7 +147,7 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 
 					// Check if dynamic source is a term and if so emulate.
 					if ( isset( $_POST['fusion_meta'] ) ) {
-						$meta = fusion_string_to_array( $_POST['fusion_meta'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+						$meta = fusion_string_to_array( wp_unslash( $_POST['fusion_meta'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 						if ( isset( $meta['_fusion']['dynamic_content_preview_type'] ) && 'term' === $meta['_fusion']['dynamic_content_preview_type'] && isset( $meta['_fusion']['preview_term'] ) && '' !== $meta['_fusion']['preview_term'] ) {
 							$GLOBALS['wp_query']->is_tax         = true;
 							$GLOBALS['wp_query']->is_archive     = true;
@@ -176,6 +192,13 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 
 				$image = $this->get_post_card_image_content( get_the_ID() );
 
+				$this->generate_styles();
+
+				// Add styles to output if in Live Editor.
+				if ( $is_builder ) {
+					$html .= $this->get_styles();
+				}
+
 				$html .= '<div ' . FusionBuilder::attributes( 'post-card-image' ) . '>' . $image . '</div>';
 
 				$this->on_render();
@@ -192,6 +215,17 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 			 */
 			public function parent_post_card_rendered() {
 				$this->element_counter = 1;
+
+				if ( ! $this->styles_generated ) {
+					$this->styles_generated = true;
+				}
+			}
+
+			/**
+			 * Set necesarry stuff after the post cards element has rendered.
+			 */
+			public function parent_post_cards_rendered() {
+				$this->styles_generated = false;
 			}
 
 			/**
@@ -255,18 +289,6 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 					add_filter( 'fusion_builder_post_links_target', [ $this, 'set_rollover_image_link_target' ], 11, 2 );
 				}
 
-				// Add necessary class for image variation changes.
-				if ( 'product' === get_post_type( $post_id ) ) {
-					$image_args['attributes'] = [
-						'class' => 'woocommerce-product-gallery__image',
-					];
-
-					add_filter( 'wp_get_attachment_image_attributes', [ $this, 'add_product_image_attr' ], 10, 3 );
-					add_filter( 'awb_crossfade_image_classes', [ $this, 'add_to_crossfade_attr' ], 10, 2 );
-				}
-
-				$image_args['aspect_ratio'] = $this->get_aspect_ratio_value();
-
 				if ( 'crossfade' !== $this->args['layout'] || is_tax() ) {
 					$image = avada_first_featured_image_markup( $image_args );
 				} else {
@@ -277,48 +299,9 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 					remove_filter( 'fusion_builder_post_links_target', [ $this, 'set_rollover_image_link_target' ], 11 );
 				}
 
-				if ( 'product' === get_post_type( $post_id ) ) {
-					remove_filter( 'wp_get_attachment_image_attributes', [ $this, 'add_product_image_attr' ], 10, 3 );
-					remove_filter( 'awb_crossfade_image_classes', [ $this, 'add_to_crossfade_attr' ], 10, 2 );
-				}
-
 				fusion_library()->images->set_grid_image_meta( [] );
 
 				return $image;
-			}
-
-			/**
-			 * Add data attribute to product image.
-			 *
-			 * @param array  $attr The attributes.
-			 * @param Object $attachment The attachment.
-			 * @param string $size The size.
-			 * @since 3.8
-			 * @return array
-			 */
-			public function add_product_image_attr( $attr, $attachment, $size ) {
-				$full_size = apply_filters( 'woocommerce_gallery_full_size', apply_filters( 'woocommerce_product_thumbnails_large_size', 'full' ) );
-				$full_src  = wp_get_attachment_image_src( $attachment->ID, $full_size );
-
-				$attr['data-caption']            = _wp_specialchars( get_post_field( 'post_excerpt', $attachment->ID ), ENT_QUOTES, 'UTF-8', true );
-				$attr['data-src']                = esc_url( $full_src[0] );
-				$attr['data-large_image']        = esc_url( $full_src[0] );
-				$attr['data-large_image_width']  = esc_attr( $full_src[1] );
-				$attr['data-large_image_height'] = esc_attr( $full_src[2] );
-				return $attr;
-			}
-
-			/**
-			 * Add data attribute to product image.
-			 *
-			 * @param array  $classes The classes.
-			 * @param Object $attachment The attachment.
-			 * @since 3.8
-			 * @return array
-			 */
-			public function add_to_crossfade_attr( $classes, $attachment ) {
-				$classes[] = 'woocommerce-product-gallery__image';
-				return $classes;
 			}
 
 			/**
@@ -401,14 +384,13 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 			 * @return array
 			 */
 			public function attr() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				$attr = fusion_builder_visibility_atts(
 					$this->args['hide_on_mobile'],
 					[
 						'class'       => 'fusion-' . $fusion_settings->get( 'woocommerce_product_box_design', false, 'classic' ) . '-product-image-wrapper fusion-woo-product-image fusion-post-card-image fusion-post-card-image-' . $this->element_counter,
 						'data-layout' => $this->args['layout'],
-						'style'       => $this->get_style_variables(),
 					]
 				);
 
@@ -435,69 +417,128 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
 				if ( 'crossfade' === $this->args['layout'] ) {
 					$attr['class'] .= ' product-images';
 				}
-
-				if ( '' !== $this->args['aspect_ratio'] ) {
-					$attr['class'] .= ' has-aspect-ratio';
-				}
-
-				// Add necessary class for image variation changes.
-				if ( 'product' === get_post_type( get_the_ID() ) ) {
-					$attr['class'] .= ' images';
-				}
-
 				return $attr;
 
 			}
 
 			/**
-			 * Get the style variables.
+			 * Generate CSS styles.
 			 *
 			 * @access protected
-			 * @since 3.9
-			 * @return string
+			 * @since 3.3
+			 * @return void
 			 */
-			protected function get_style_variables() {
-				$custom_vars      = [];
-				$css_vars_options = [
-					'margin_top'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'crossfade_bg_color'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_radius_top_left'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_top_right'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_bottom_right' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_bottom_left'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'aspect_ratio_position',
-				];
+			protected function generate_styles() {
 
-				if ( ! $this->is_default( 'aspect_ratio' ) ) {
-					$custom_vars['aspect_ratio'] = $this->get_aspect_ratio_value();
+				if ( $this->styles_generated ) {
+					return;
+				}
+				$this->base_selector = '.fusion-post-card-image-' . $this->element_counter;
+
+				$sides = [ 'top', 'right', 'bottom', 'left' ];
+
+				// Margins.
+				foreach ( $sides as $side ) {
+
+					// Element margin.
+					$margin_name = 'margin_' . $side;
+
+					if ( '' !== $this->args[ $margin_name ] ) {
+						$this->element_css[] = [
+							'selector'  => $this->base_selector,
+							'rule'      => 'margin-' . $side,
+							'value'     => fusion_library()->sanitize->get_value_with_unit( $this->args[ $margin_name ] ),
+							'important' => false,
+						];
+					}
 				}
 
-				return $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				if ( ! $this->is_default( 'crossfade_bg_color' ) ) {
+					$this->element_css[] = [
+						'selector'  => $this->base_selector . ' .crossfade-images',
+						'rule'      => 'background-color',
+						'value'     => fusion_library()->sanitize->color( $this->args['crossfade_bg_color'] ),
+						'important' => false,
+					];
+				}
+
+				// Border radius.
+				if ( ! $this->is_default( 'border_radius_top_left' ) ) {
+					$this->element_css[] = [
+						'selector'  => $this->base_selector,
+						'rule'      => 'border-top-left-radius',
+						'value'     => fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_top_left'] ),
+						'important' => false,
+					];
+				}
+
+				if ( ! $this->is_default( 'border_radius_top_right' ) ) {
+					$this->element_css[] = [
+						'selector'  => $this->base_selector,
+						'rule'      => 'border-top-right-radius',
+						'value'     => fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_top_right'] ),
+						'important' => false,
+					];
+				}
+
+				if ( ! $this->is_default( 'border_radius_bottom_right' ) ) {
+					$this->element_css[] = [
+						'selector'  => $this->base_selector,
+						'rule'      => 'border-bottom-right-radius',
+						'value'     => fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_bottom_right'] ),
+						'important' => false,
+					];
+				}
+
+				if ( ! $this->is_default( 'border_radius_bottom_left' ) ) {
+					$this->element_css[] = [
+						'selector'  => $this->base_selector,
+						'rule'      => 'border-bottom-left-radius',
+						'value'     => fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_bottom_left'] ),
+						'important' => false,
+					];
+				}
 			}
 
 			/**
-			 * Get the aspect ratio css value. Returns empty if not set.
+			 * Get the styles.
 			 *
-			 * @since 3.9
+			 * @access protected
+			 * @since 3.3
 			 * @return string
 			 */
-			private function get_aspect_ratio_value() {
-				$value = '';
+			protected function get_styles() {
+				$this->dynamic_css = [];
 
-				if ( 'custom' === $this->args['aspect_ratio'] && '' !== $this->args['custom_aspect_ratio'] ) {
-					$value = 100 / $this->args['custom_aspect_ratio'];
-				} elseif ( ! empty( $this->args['aspect_ratio'] ) ) {
-					$aspect_ratio = explode( '-', $this->args['aspect_ratio'] );
-					$width        = isset( $aspect_ratio[0] ) ? $aspect_ratio[0] : '';
-					$height       = isset( $aspect_ratio[1] ) ? $aspect_ratio[1] : '';
-
-					$value = $width . ' / ' . $height;
+				foreach ( $this->element_css as $rule ) {
+					$this->add_css_property( $rule['selector'], $rule['rule'], $rule['value'], $rule['important'] );
 				}
 
-				return $value;
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
+			}
+
+			/**
+			 * Filter callback, appends generated CSS rules and resets used vars.
+			 *
+			 * @access public
+			 * @since 3.3
+			 * @param  array $css  CSS rules.
+			 * @return array
+			 */
+			public function append_and_clear_element_css( $css ) {
+
+				// Append generated CSS.
+				if ( ! empty( $this->element_css ) ) {
+					array_push( $css, $this->element_css );
+				}
+
+				// Reset.
+				$this->element_css      = [];
+				$this->styles_generated = false;
+
+				return $css;
 			}
 
 			/**
@@ -533,7 +574,7 @@ if ( fusion_is_element_enabled( 'fusion_post_card_image' ) ) {
  * @since 3.3
  */
 function fusion_element_post_card_image() {
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -544,7 +585,7 @@ function fusion_element_post_card_image() {
 				'icon'      => 'fusiona-post-cards-image',
 				'templates' => [ 'post_cards' ],
 				'component' => true,
-				'help_url'  => 'https://avada.com/documentation/post-card-image-element/',
+				'help_url'  => 'https://theme-fusion.com/documentation/avada/elements/post-card-image-element/',
 				'params'    => [
 					[
 						'type'        => 'radio_button_set',
@@ -561,59 +602,6 @@ function fusion_element_post_card_image() {
 							'function' => 'fusion_ajax',
 							'action'   => 'get_fusion_post_card_image',
 							'ajax'     => true,
-						],
-					],
-					[
-						'type'        => 'select',
-						'heading'     => esc_attr__( 'Image Aspect Ratio', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select an aspect ratio for the image.', 'fusion-builder' ),
-						'param_name'  => 'aspect_ratio',
-						'value'       => [
-							''       => esc_attr__( 'Automatic', 'fusion-builder' ),
-							'1-1'    => esc_attr__( '1:1', 'fusion-builder' ),
-							'2-1'    => esc_attr__( '2:1', 'fusion-builder' ),
-							'2-3'    => esc_attr__( '2:3', 'fusion-builder' ),
-							'3-1'    => esc_attr__( '3:1', 'fusion-builder' ),
-							'3-2'    => esc_attr__( '3:2', 'fusion-builder' ),
-							'4-1'    => esc_attr__( '4:1', 'fusion-builder' ),
-							'4-3'    => esc_attr__( '4:3', 'fusion-builder' ),
-							'5-4'    => esc_attr__( '5:4', 'fusion-builder' ),
-							'16-9'   => esc_attr__( '16:9', 'fusion-builder' ),
-							'9-16'   => esc_attr__( '9:16', 'fusion-builder' ),
-							'21-9'   => esc_attr__( '21:9', 'fusion-builder' ),
-							'9-21'   => esc_attr__( '9:21', 'fusion-builder' ),
-							'custom' => esc_attr__( 'Custom', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Custom Aspect Ratio', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set a custom aspect ratio for the image.', 'fusion-builder' ),
-						'param_name'  => 'custom_aspect_ratio',
-						'min'         => 1,
-						'max'         => 500,
-						'value'       => 100,
-						'dependency'  => [
-							[
-								'element'  => 'aspect_ratio',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'image_focus_point',
-						'heading'     => esc_attr__( 'Image Focus Point', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set the image focus point by dragging the blue dot.', 'fusion-builder' ),
-						'param_name'  => 'aspect_ratio_position',
-						'image'       => 'element_content',
-						'image_id'    => 'image_id',
-						'dependency'  => [
-							[
-								'element'  => 'aspect_ratio',
-								'value'    => '',
-								'operator' => '!=',
-							],
 						],
 					],
 					[
@@ -778,11 +766,11 @@ function fusion_element_post_card_image() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window.<br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'image_link_target',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => '_self',
 						'dependency'  => [
@@ -900,4 +888,4 @@ function fusion_element_post_card_image() {
 		)
 	);
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_post_card_image' );
+add_action( 'wp_loaded', 'fusion_element_post_card_image' );

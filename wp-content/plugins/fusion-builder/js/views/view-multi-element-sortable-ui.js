@@ -1,4 +1,4 @@
-/* global FusionPageBuilderApp, fusionBuilderConfig, FusionPageBuilderEvents, fusionAllElements, FusionPageBuilderViewManager, fusionMultiElements, fusionBuilderText */
+/* global FusionPageBuilderApp, FusionPageBuilderEvents, fusionAllElements, FusionPageBuilderViewManager, fusionMultiElements */
 /* jshint -W024 */
 /* eslint no-unused-vars: 0 */
 /* eslint guard-for-in: 0 */
@@ -19,11 +19,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.listenTo( FusionPageBuilderEvents, 'fusion-multi-element-edited', this.generateContent );
 				this.listenTo( FusionPageBuilderEvents, 'fusion-multi-remove-sortables-view', this.removeView );
-
-				this.listenTo( FusionPageBuilderEvents, 'fusion-dynamic-data-added', this.addDynamic );
-				this.listenTo( FusionPageBuilderEvents, 'fusion-dynamic-data-removed', this.removeDynamicStatus );
-
-				this.listenTo( FusionPageBuilderEvents, 'fusion-dynamic-data-toggle', this.dynamicParentToggle );
 
 				this.element_type = this.$el.data( 'element_type' );
 
@@ -53,16 +48,15 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			events: {
-				'click .fusion-builder-add-multi-child': 'addChildElement',
-				'click .fusion-builder-add-predefined-multi-child': 'addPredefinedChildElement',
-				'click .fusion-builder-add-multi-gallery-images': 'addChildrenToGalleryAndImageCarouselElements'
+				'click .fusion-builder-add-multi-child': 'addChildElement'
 			},
 
 			render: function() {
 				return this;
 			},
 
-			addChildElement: function( event, predefinedParams, customParams ) {
+			addChildElement: function( event ) {
+
 				var params = {},
 					defaultParams,
 					value,
@@ -72,7 +66,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					event.preventDefault();
 				}
 
-				defaultParams = predefinedParams ? predefinedParams : fusionAllElements[ this.element_type ].params;
+				defaultParams = fusionAllElements[ this.element_type ].params;
 
 				allowGenerator = ( 'undefined' !== typeof fusionAllElements[ this.element_type ].allow_generator ) ? fusionAllElements[ this.element_type ].allow_generator : '';
 
@@ -85,10 +79,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 					params[ param.param_name ] = value;
 				} );
-
-				if ( customParams ) {
-					params = { ...params, ...customParams };
-				}
 
 				this.model.collection.add( [
 					{
@@ -111,99 +101,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			},
 
-			addPredefinedChildElement: function( event ) {
-				var self = this,
-					modalView;
-
-				event.preventDefault();
-
-				if ( jQuery( '.fusion-builder-settings-bulk-dialog' ).length ) {
-					return;
-				}
-
-				modalView = new FusionPageBuilder.BulkAddView( {
-					choices: fusionBuilderConfig.predefined_choices
-				} );
-
-				jQuery( modalView.render().el ).dialog( {
-					title: ( fusionBuilderText.bulk_add + ' / ' + fusionBuilderText.bulk_add_predefined ),
-					dialogClass: 'fusion-builder-settings-bulk-dialog',
-					resizable: false,
-					width: 500,
-					draggable: false,
-					buttons: [
-						{
-							text: fusionBuilderText.cancel,
-							click: function() {
-								jQuery( this ).dialog( 'close' );
-							}
-						},
-						{
-							text: fusionBuilderText.bulk_add_insert_choices,
-							click: function() {
-								var choices = modalView.getChoices();
-
-								event.preventDefault();
-
-								_.each( choices, function( choice ) {
-									var predefinedParams = {};
-
-									if ( -1 !== choice.indexOf( '||' ) ) {
-
-										// We have multiple params in one choice.
-										_.each( choice.split( '||' ), function( param ) {
-											var paramKeyValue = param.split( '|' );
-
-											predefinedParams[ paramKeyValue[ 0 ] ] = {};
-											predefinedParams[ paramKeyValue[ 0 ] ].param_name = paramKeyValue[ 0 ].trim();
-											predefinedParams[ paramKeyValue[ 0 ] ].value      = paramKeyValue[ 1 ].trim();
-
-										} );
-									} else {
-
-										// Use choice as element_content.
-										predefinedParams = {
-											'element_content': {
-												param_name: 'element_content',
-												value: choice
-											}
-										};
-									}
-
-									self.addChildElement( null, predefinedParams );
-
-									// Update preview.
-									FusionPageBuilderEvents.trigger( 'fusion-multi-child-update-preview' );
-								} );
-
-								jQuery( this ).dialog( 'close' );
-							},
-							class: 'ui-button-blue'
-						}
-					],
-					open: function() {
-						jQuery( '.fusion-builder-modal-settings-container' ).css( 'z-index', 9998 );
-					},
-					beforeClose: function() {
-						jQuery( '.fusion-builder-modal-settings-container' ).css( 'z-index', 99999 );
-						jQuery( this ).remove();
-					}
-
-				} );
-			},
-
-			/**
-			 * Manages the "bulk add" button click of the gallery element and image carousel element.
-			 *
-			 * @since 3.5
-			 * @param {Object} event The jQuery event
-			 * @return {void}
-			 */
-			addChildrenToGalleryAndImageCarouselElements: function( event ) {
-				var btn = jQuery( event.currentTarget ).closest( '.fusion-builder-main-settings' ).find( '.fusion-multiple-upload-image input' );
-				btn.trigger( 'click' );
-			},
-
 			generateContent: function() {
 				var content = '';
 
@@ -211,8 +108,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					var $thisEl = $( this );
 					content += FusionPageBuilderApp.generateElementShortcode( $thisEl, false );
 				} );
-
-				content = jQuery( '<div>' + content + '</div>' ).find( 'script, noscript' ).remove().end().html();
 
 				this.$el.parents().find( '#fusion_builder_content_main' ).html( content );
 
@@ -235,8 +130,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					var $thisEl = $( this );
 					content += FusionPageBuilderApp.generateElementShortcode( $thisEl, false );
 				} );
-
-				content = jQuery( '<div>' + content + '</div>' ).find( 'script, noscript' ).remove().end().html();
 
 				parentModel.attributes.params.element_content = content;
 
@@ -431,11 +324,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				} );
 
-				setTimeout( function() {
-					// Update preview.
-					FusionPageBuilderEvents.trigger( 'fusion-multi-child-update-preview' );
-				}, 200 );
-
 				if ( 'fusion_gallery' === thisEl.model.attributes[ 'data-element_type' ] ) {
 
 					// Fetch attachments if neccessary.
@@ -468,73 +356,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							}, 200 );
 						}
 					}
-				}
-			},
-
-			addDynamic: function( param ) {
-
-				if ( 'parent_dynamic_content' !== param ) {
-					return;
-				}
-
-				const self = this;
-
-				// Add dynamic class.
-				jQuery( `[data-option-id=${param}]` ).closest( '.fusion-builder-option-advanced-module-settings' ).addClass( 'has-dynamic-data' );
-
-				// Remove children.
-				const $children = jQuery( `[data-option-id=${param}]` ).closest( '.fusion-builder-option-advanced-module-settings' ).find( '.fusion-builder-sortable-options li' );
-
-				$children.each( function() {
-					jQuery( this ).find( '.fusion-builder-multi-setting-remove' ).click();
-				} );
-
-				// Add the dynamic child.
-				this.addChildElement( null, null, { dynamic_parent: true } );
-
-				setTimeout( () => {
-					self.adjustChildrenMargin( param );
-				}, 10 );
-
-			},
-
-			removeDynamicStatus: function( param ) {
-
-				if ( 'parent_dynamic_content' !== param ) {
-					return;
-				}
-
-				// Remove dynamic class.
-				jQuery( `[data-option-id=${param}]` ).closest( '.fusion-builder-option-advanced-module-settings' ).removeClass( 'has-dynamic-data' );
-
-				// Remove children.
-				// Remove all children.
-				const $children = jQuery( `[data-option-id=${param}]` ).closest( '.fusion-builder-option-advanced-module-settings' ).find( '.fusion-builder-sortable-options li' );
-
-				$children.each( function() {
-					jQuery( this ).find( '.fusion-builder-multi-setting-remove' ).click();
-				} );
-
-				this.adjustChildrenMargin( param, true );
-			},
-
-			dynamicParentToggle: function( param ) {
-
-				if ( 'parent_dynamic_content' !== param ) {
-					return;
-				}
-
-				this.adjustChildrenMargin( param );
-			},
-
-			adjustChildrenMargin: function( param, remove ) {
-				const $children = jQuery( `[data-option-id=${param}]` ).closest( '.fusion-builder-option-advanced-module-settings' ).find( '.fusion-builder-sortable-options' );
-				const dynamicHeight = jQuery( `[data-option-id=${param}]` ).find( '.dynamic-wrapper' ).outerHeight();
-
-				if ( remove ) {
-					$children.css( 'margin-top', 0 );
-				} else {
-					$children.css( 'margin-top', ( 30 + dynamicHeight ) + 'px' );
 				}
 			}
 		} );

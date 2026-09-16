@@ -32,6 +32,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.model.attributes.selectors[ 'class' ] += ' ' + this.className;
 					this.setElementAttributes( this.$el, this.model.attributes.selectors );
 				}
+
+				this._refreshJs();
 			},
 
 			/**
@@ -44,8 +46,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				this.values = atts.values;
-
 				this.validateValues( atts.values );
 				this.buildReviewAttr( atts.values );
 
@@ -55,8 +55,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.imageAttr      = this.buildImageAttr( atts.values );
 				attributes.thumbnailAttr  = this.buildThumbnailAttr( atts );
 				attributes.blockquoteAttr = this.buildBlockquoteAttr( atts );
-				attributes.quoteAttr      = this.buildQuoteAttr();
-				attributes.authorAttr     = this.buildAuthorAttr();
+				attributes.quoteAttr      = this.buildQuoteAttr( atts );
+				attributes.authorAttr     = this.buildAuthorAttr( atts );
 
 				attributes.cid     = this.model.get( 'cid' );
 				attributes.parent  = this.model.get( 'parent' );
@@ -102,10 +102,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					class: 'review '
 				};
 
-				if ( this.isFirstChild() ) {
-					reviewAttr[ 'class' ] += 'active-testimonial ';
-				}
-
 				if ( 'none' === values.avatar ) {
 					reviewAttr[ 'class' ] += 'no-avatar';
 				} else if ( 'image' === values.avatar ) {
@@ -128,14 +124,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var imageAttr = {
 					class: 'testimonial-image',
 					src: values.image,
-					alt: '',
-					style: ''
-				},
-				customVars = [];
+					alt: ''
+				};
 
 				if ( 'image' === values.avatar ) {
-					customVars.border_radius = values.image_border_radius;
-					imageAttr.style          = this.getCustomCssVars( customVars );
+					imageAttr.style = '-webkit-border-radius: ' + values.image_border_radius + ';-moz-border-radius: ' + values.image_border_radius + ';border-radius: ' + values.image_border_radius + ';';
 				}
 
 				return imageAttr;
@@ -150,12 +143,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildThumbnailAttr: function( atts ) {
 				var values = atts.values,
+					parentValues = atts.parentValues,
 					thumbnailAttr = {
 						class: 'testimonial-thumbnail'
 					};
 
 				if ( 'image' !== values.avatar ) {
 					thumbnailAttr[ 'class' ] += ' doe';
+					thumbnailAttr.style = 'color:' + parentValues.textcolor + ';';
 				}
 
 				return thumbnailAttr;
@@ -171,11 +166,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildBlockquoteAttr: function( atts ) {
 				var parentValues = atts.parentValues,
 					blockquoteAttr = {
-						class: ''
+						style: 'background-color:' + parentValues.backgroundcolor + ';'
 					};
 
-				if ( 'clean' === parentValues.design && ( 'transparent' === parentValues.backgroundcolor || 0 === jQuery.AWB_Color( parentValues.backgroundcolor ).alpha() ) ) {
-					blockquoteAttr[ 'class' ] += ' has-transparent-color';
+				if ( 'clean' === parentValues.design && ( 'transparent' === parentValues.backgroundcolor || 0 === jQuery.Color( parentValues.backgroundcolor ).alpha() ) ) {
+					blockquoteAttr.style += 'margin: -25px;';
 				}
 
 				return blockquoteAttr;
@@ -185,12 +180,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds attributes.
 			 *
 			 * @since 2.0
+			 * @param {Object} atts - The attributes.
 			 * @return {Object}
 			 */
-			buildQuoteAttr: function() {
-				var quoteAttr = {
-					class: 'fusion-clearfix'
-				};
+			buildQuoteAttr: function( atts ) {
+				var parentValues = atts.parentValues,
+					quoteAttr = {
+						style: 'background-color:' + parentValues.backgroundcolor + ';color:' + parentValues.textcolor + ';'
+					};
 
 				return quoteAttr;
 			},
@@ -199,12 +196,15 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds attributes.
 			 *
 			 * @since 2.0
+			 * @param {Object} atts - The attributes.
 			 * @return {Object}
 			 */
-			buildAuthorAttr: function() {
-				var authorAttr = {
-					class: 'author'
-				};
+			buildAuthorAttr: function( atts ) {
+				var parentValues = atts.parentValues,
+					authorAttr = {
+						class: 'author',
+						style: 'color:' + parentValues.textcolor + ';'
+					};
 
 				return authorAttr;
 			}

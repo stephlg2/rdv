@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -69,7 +78,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 
 					// Element margin.
@@ -83,9 +92,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 					'fusion_font_family_text_font'  => '',
 					'fusion_font_variant_text_font' => '',
 					'text_font_size'                => '',
-					'text_text_transform'           => '',
-					'text_line_height'              => '',
-					'text_letter_spacing'           => '',
 
 					'hide_on_mobile'                => fusion_builder_default_visibility( 'string' ),
 					'class'                         => '',
@@ -93,9 +99,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 					'animation_type'                => '',
 					'animation_direction'           => 'down',
 					'animation_speed'               => '0.1',
-					'animation_delay'               => '',
 					'animation_offset'              => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'               => '',
 				];
 			}
 
@@ -133,13 +137,13 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 
 					$this->emulate_product();
 
+					// We need to set global $post because Woo template expects it.
+					$post = get_post( $product->get_id() );
+
 					if ( ! $this->is_product() ) {
 						echo wp_json_encode( $return_data );
 						wp_die();
 					}
-
-					// We need to set global $post because Woo template expects it.
-					$post = get_post( $product->get_id() );
 
 					$return_data['woo_short_description'] = $this->get_woo_short_description_content( $defaults );
 					$this->restore_product();
@@ -171,7 +175,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 					return;
 				}
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_short_description-shortcode' ) . '>' . $this->get_woo_short_description_content( $this->args ) . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_short_description-shortcode' ) . '>' . $this->get_woo_short_description_content( $this->args ) . '</div>';
 
 				$this->restore_product();
 
@@ -214,46 +219,45 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.2
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-short-description-tb.fusion-woo-short-description-tb-' . $this->counter;
+				$this->dynamic_css   = [];
 
-				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font', 'array' );
-				foreach ( $text_styles as $rule => $value ) {
-					$custom_vars[ 'text-' . $rule ] = $value;
+				// Text styles.
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .woocommerce-product-details__short-description', 'color', $this->args['text_color'] );
 				}
 
-				$css_vars_options = [
-					'margin_bottom'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_top'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_font_size'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_letter_spacing' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_color'          => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_line_height',
-					'text_text_transform',
-				];
+				if ( ! $this->is_default( 'text_font_size' ) ) {
+					$this->add_css_property( $this->base_selector . ' .woocommerce-product-details__short-description', 'font-size', fusion_library()->sanitize->get_value_with_unit( $this->args['text_font_size'] ) );
+				}
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				// Text typography styles.
+				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font', 'array' );
+				foreach ( $text_styles as $rule => $value ) {
+					$this->add_css_property( $this->base_selector . ' .woocommerce-product-details__short-description', $rule, $value );
+				}
 
-				return $styles;
-			}
+				$sides = [ 'top', 'right', 'bottom', 'left' ];
 
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/woo-short-description.min.css' );
+				foreach ( $sides as $side ) {
+
+					// Element margin.
+					$margin_name = 'margin_' . $side;
+
+					if ( '' !== $this->args[ $margin_name ] ) {
+						$this->add_css_property( $this->base_selector, 'margin-' . $side, fusion_library()->sanitize->get_value_with_unit( $this->args[ $margin_name ] ) );
+					}
+				}
+
+				$css = $this->parse_css();
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -274,8 +278,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
 				if ( $this->args['animation_type'] ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -299,32 +301,31 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_short_description' ) ) {
  * @since 3.2
  */
 function fusion_component_woo_short_description() {
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Woo_Short_Description',
 			[
-				'name'         => esc_attr__( 'Woo Short Description', 'fusion-builder' ),
-				'shortcode'    => 'fusion_tb_woo_short_description',
-				'icon'         => 'fusiona-woo-short-description',
-				'component'    => true,
-				'templates'    => [ 'content', 'post_cards', 'page_title_bar' ],
-				'subparam_map' => [
-					'fusion_font_family_text_font'  => 'main_typography',
-					'fusion_font_variant_text_font' => 'main_typography',
-					'text_font_size'                => 'main_typography',
-					'text_text_transform'           => 'main_typography',
-					'text_line_height'              => 'main_typography',
-					'text_letter_spacing'           => 'main_typography',
-					'text_color'                    => 'main_typography',
-				],
-				'params'       => [
+				'name'      => esc_attr__( 'Woo Short Description', 'fusion-builder' ),
+				'shortcode' => 'fusion_tb_woo_short_description',
+				'icon'      => 'fusiona-woo-short-description',
+				'component' => true,
+				'templates' => [ 'content', 'post_cards', 'page_title_bar' ],
+				'params'    => [
 					[
 						'type'             => 'dimension',
 						'remove_from_atts' => true,
 						'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
 						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
 						'param_name'       => 'margin',
+						'callback'         => [
+							'function' => 'fusion_style_block',
+							'args'     => [
+
+								'dimension' => true,
+							],
+						],
 						'value'            => [
 							'margin_top'    => '',
 							'margin_right'  => '',
@@ -337,31 +338,39 @@ function fusion_component_woo_short_description() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the description text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'main_typography',
-						'choices'          => [
-							'font-family'    => 'text_font',
-							'font-size'      => 'text_font_size',
-							'text-transform' => 'text_text_transform',
-							'line-height'    => 'text_line_height',
-							'letter-spacing' => 'text_letter_spacing',
-							'color'          => 'text_color',
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the text, ex: #000.' ),
+						'param_name'  => 'text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
-						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_attr__( 'Text Font Family', 'fusion-builder' ),
+						'description'      => esc_html__( 'Controls the font family of the text.', 'fusion-builder' ),
+						'param_name'       => 'text_font',
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '',
+						],
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'callback'         => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Text Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px. Note: font size will be applied only to plain text.', 'fusion-builder' ),
+						'param_name'  => 'text_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
 					],
@@ -391,7 +400,7 @@ function fusion_component_woo_short_description() {
 						'preview_selector' => '.fusion-woo-short-description-tb',
 					],
 				],
-				'callback'     => [
+				'callback'  => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_woo_short_description',
 					'ajax'     => true,

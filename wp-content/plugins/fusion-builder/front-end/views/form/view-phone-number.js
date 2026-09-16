@@ -18,7 +18,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Create attribute objects;
 				attributes.styles = this.buildStyles( atts.values );
-				attributes.html   = this.generateFormFieldHtml( this.generateInputField( atts.values, 'tel' ) );
+				attributes.html   = this.generateFormFieldHtml( this.generateInputField( atts.values, 'phone-number' ) );
 
 				return attributes;
 			}

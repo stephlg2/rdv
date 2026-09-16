@@ -26,6 +26,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid    = this.model.get( 'cid' );
 				attributes.attr   = this.buildAttr( atts.values );
+				attributes.styles = this.buildStyleBlock( atts.values );
 				attributes.output = this.buildOutput( atts );
 				attributes.query_data = atts.query_data;
 				attributes.values = atts.values;
@@ -67,8 +68,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildAttr: function( values ) {
 				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'catalog-ordering fusion-woo-sorting fusion-woo-sorting-' + this.model.get( 'cid' ),
-						style: ''
+						class: 'catalog-ordering fusion-woo-sorting fusion-woo-sorting-' + this.model.get( 'cid' )
 					} );
 
 				if ( '' !== values[ 'class' ] ) {
@@ -78,8 +78,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.id ) {
 					attr.id = values.id;
 				}
-
-				attr.style += this.getStyleVariables();
 
 				attr = _.fusionAnimations( values, attr );
 
@@ -107,26 +105,100 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function() {
+			buildStyleBlock: function( values ) {
+				var css, selectors;
 
-				var cssVarsOptions = [
-					'dropdown_bg_color',
-					'dropdown_hover_bg_color',
-					'dropdown_text_color',
-					'dropdown_border_color'
+				this.baseSelector = '.fusion-woo-sorting.fusion-woo-sorting-' +  this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				selectors = [ this.baseSelector ];
+
+				// Fix z-index issue.
+				this.addCssProperty( selectors, 'z-index', '100' );
+				this.addCssProperty( selectors, 'position', 'relative' );
+
+				// Margin styles.
+				if ( ! this.isDefault( 'margin_top' ) ) {
+					this.addCssProperty( selectors, 'margin-top', values.margin_top );
+				}
+				if ( ! this.isDefault( 'margin_right' ) ) {
+					this.addCssProperty( selectors, 'margin-right', values.margin_right );
+				}
+				if ( ! this.isDefault( 'margin_bottom' ) ) {
+					this.addCssProperty( selectors, 'margin-bottom', values.margin_bottom );
+				} else {
+					this.addCssProperty( selectors, 'margin-bottom', '0px' );
+				}
+				if ( ! this.isDefault( 'margin_left' ) ) {
+					this.addCssProperty( selectors, 'margin-left', values.margin_left );
+				}
+
+				selectors = [
+					this.baseSelector + ' .order-dropdown .current-li',
+					this.baseSelector + ' .order-dropdown ul li a:not(:hover)',
+					this.baseSelector + '.catalog-ordering .order li a:not(:hover)',
+					this.baseSelector + ' .fusion-grid-list-view li:not(.active-view):not(:hover)'
 				];
 
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
+				// Dropdown bg color.
+				if ( ! this.isDefault( 'dropdown_bg_color' ) ) {
+					this.addCssProperty( selectors, 'background-color', values.dropdown_bg_color );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions );
+				selectors = [
+					this.baseSelector + ' .order-dropdown ul li a:hover',
+					this.baseSelector + '.catalog-ordering .order li a:hover',
+					this.baseSelector + ' .fusion-grid-list-view li:hover',
+					this.baseSelector + ' .fusion-grid-list-view li.active-view'
+				];
+
+				// Dropdown hover / active bg color.
+				if ( ! this.isDefault( 'dropdown_hover_bg_color' ) ) {
+					this.addCssProperty( selectors, 'background-color', values.dropdown_hover_bg_color );
+				}
+
+				selectors = [
+					this.baseSelector + ' .order-dropdown',
+					this.baseSelector + ' .order-dropdown a',
+					this.baseSelector + ' .order-dropdown ul li a',
+					this.baseSelector + ' .order-dropdown a:hover',
+					this.baseSelector + ' .order-dropdown > li:after',
+					this.baseSelector + ' .order-dropdown ul li a:hover',
+					this.baseSelector + '.catalog-ordering .order li a',
+					this.baseSelector + ' .fusion-grid-list-view a',
+					this.baseSelector + ' .fusion-grid-list-view li:hover',
+					this.baseSelector + ' .fusion-grid-list-view li.active-view a i'
+				];
+
+				// Dropdown text color.
+				if ( ! this.isDefault( 'dropdown_text_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.dropdown_text_color );
+				}
+
+				selectors = [
+					this.baseSelector + ' .order-dropdown > li:after',
+					this.baseSelector + ' .order-dropdown .current-li',
+					this.baseSelector + ' .order-dropdown ul li a',
+					this.baseSelector + '.catalog-ordering .order li a',
+					this.baseSelector + ' .fusion-grid-list-view',
+					this.baseSelector + ' .fusion-grid-list-view li'
+				];
+
+				// Dropdown border color.
+				if ( ! this.isDefault( 'dropdown_border_color' ) ) {
+					this.addCssProperty( selectors, 'border-color', values.dropdown_border_color );
+				}
+
+				css = this.parseCSS();
+
+				return ( css ) ? '<style>' + css + '</style>' : '';
+
 			}
 
 		} );

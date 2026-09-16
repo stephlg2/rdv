@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_woo_sorting-shortcode">
+{{{ styles }}}
 <div {{{ _.fusionGetAttributes( attr ) }}}>
 	{{{ output }}}
 </div>

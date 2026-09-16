@@ -31,13 +31,6 @@
 		 */
 		class FusionReduxFramework_options_object {
 
-			public $parent;
-			public $field;
-			public $value;
-			public $is_field;
-			public $extension_dir;
-			public $extension_url;
-
 			/**
 			 * Field Constructor.
 			 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -46,7 +39,7 @@
 			 * @access      public
 			 * @return      void
 			 */
-			function __construct( $field = array(), $value = '', $parent = null ) {
+			function __construct( $field = array(), $value = '', $parent ) {
 
 				$this->parent   = $parent;
 				$this->field    = $field;
@@ -140,7 +133,7 @@
 					'fusionredux-options-object',
 					$this->extension_url . 'options_object/field_options_object' . FusionRedux_Functions::isMin() . '.js',
 					array( 'jquery' ),
-					FusionReduxFramework_Extension_options_object::$version,
+					FusionReduxFramework_extension_options_object::$version,
 					true
 				);
 

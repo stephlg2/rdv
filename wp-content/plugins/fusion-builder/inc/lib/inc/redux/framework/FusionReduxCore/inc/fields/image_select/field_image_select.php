@@ -34,10 +34,6 @@ if ( ! class_exists( 'FusionReduxFramework_image_select' ) ) {
 	 */
 	class FusionReduxFramework_image_select {
 
-		public $parent;
-		public $field;
-		public $value;
-
 		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -117,7 +113,57 @@ if ( ! class_exists( 'FusionReduxFramework_image_select' ) ) {
 
 					$selected = ( checked( $this->value, $theValue, false ) != '' ) ? ' fusionredux-image-select-selected' : '';
 
+					$presets   = '';
+					$is_preset = false;
+
 					$this->field['class'] .= ' noUpdate ';
+					if ( isset( $this->field['presets'] ) && $this->field['presets'] !== false ) {
+						$this->field['class'] = trim($this->field['class']);
+						if ( ! isset( $v['presets'] ) ) {
+							$v['presets'] = array();
+						}
+
+						if ( ! is_array( $v['presets'] ) ) {
+							$v['presets'] = json_decode( $v['presets'], true );
+						}
+
+						// Only highlight the preset if it's the same
+						if ( $selected ) {
+							if ( empty( $v['presets'] ) ) {
+								$selected = false;
+							} else {
+								foreach ( $v['presets'] as $pk => $pv ) {
+									if ( isset( $v['merge'] ) && $v['merge'] !== false ) {
+										if( ( $v['merge'] === true || in_array( $pk, $v['merge'] ) ) && is_array( $this->parent->options[ $pk ] ) ) {
+											$pv = array_merge( $this->parent->options[ $pk ], $pv );
+										}
+									}
+
+									if ( empty( $pv ) && isset( $this->parent->options[ $pk ] ) && ! empty( $this->parent->options[ $pk ] ) ) {
+										$selected = false;
+									} else if ( ! empty( $pv ) && ! isset( $this->parent->options[ $pk ] ) ) {
+										$selected = false;
+									} else if ( isset( $this->parent->options[ $pk ] ) && $this->parent->options[ $pk ] != $pv ) {
+										$selected = false;
+									}
+
+									if ( ! $selected ) { // We're still not using the same preset. Let's unset that shall we?
+										$this->value = "";
+										break;
+									}
+								}
+							}
+						}
+
+						$v['presets']['fusionredux-backup'] = 1;
+
+						$presets   = ' data-presets="' . htmlspecialchars( json_encode( $v['presets'] ), ENT_QUOTES, 'UTF-8' ) . '"';
+						$is_preset = true;
+
+						$this->field['class'] = trim( $this->field['class'] ) . ' fusionredux-presets';
+					}
+
+					$is_preset_class = $is_preset ? '-preset-' : ' ';
 
 					$merge   = '';
 					if ( isset( $v['merge'] ) && $v['merge'] !== false ) {
@@ -126,13 +172,13 @@ if ( ! class_exists( 'FusionReduxFramework_image_select' ) ) {
 					}
 
 					echo '<li class="fusionredux-image-select">';
-					echo '<label class="' . $selected . ' fusionredux-image-select' . $this->field['id'] . '_' . $x . '" for="' . $this->field['id'] . '_' . ( array_search( $k, array_keys( $this->field['options'] ) ) + 1 ) . '">';
+					echo '<label class="' . $selected . ' fusionredux-image-select' . $is_preset_class . $this->field['id'] . '_' . $x . '" for="' . $this->field['id'] . '_' . ( array_search( $k, array_keys( $this->field['options'] ) ) + 1 ) . '">';
 
-					echo '<input type="radio" class="' . $this->field['class'] . '" id="' . $this->field['id'] . '_' . ( array_search( $k, array_keys( $this->field['options'] ) ) + 1 ) . '" name="' . $this->field['name'] . $this->field['name_suffix'] . '" value="' . $theValue . '" ' . checked( $this->value, $theValue, false ) . $merge . '/>';
+					echo '<input type="radio" class="' . $this->field['class'] . '" id="' . $this->field['id'] . '_' . ( array_search( $k, array_keys( $this->field['options'] ) ) + 1 ) . '" name="' . $this->field['name'] . $this->field['name_suffix'] . '" value="' . $theValue . '" ' . checked( $this->value, $theValue, false ) . $presets . $merge . '/>';
 					if ( ! empty( $this->field['tiles'] ) && $this->field['tiles'] == true ) {
 						echo '<span class="tiles ' . $v['class'] . '" style="background-image: url(' . $v['img'] . ');" rel="' . $v['img'] . '"">&nbsp;</span>';
 					} else {
-						echo '<img src="' . $v['img'] . '" alt="' . $v['alt'] . '" class="' . $v['class'] . '" style="' . $style . '"' . $merge . ' />';
+						echo '<img src="' . $v['img'] . '" alt="' . $v['alt'] . '" class="' . $v['class'] . '" style="' . $style . '"' . $presets . $merge . ' />';
 					}
 
 					if ( $v['title'] != '' ) {

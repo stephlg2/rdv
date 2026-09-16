@@ -18,14 +18,6 @@
  * for the full interface specification.
  */
 class WP_Importer_Logger {
-
-	/**
-	 * Messages array.
-	 * 
-	 * @var array
-	 */
-	public $messages = [];
-
 	/**
 	 * System is unusable.
 	 *

@@ -14,9 +14,8 @@
 		target        = '#fusion-builder-layouts-elements',
 		targetType    = FusionPageBuilderApp.getElementType( element_type ),
 		canSave       = canEdit = canRemove = canClone = canCopy = pasteSame = true,
-		canInvert     = false,
 		clipboard     = 'undefined' !== typeof data.type ? FusionPageBuilderApp.getElementType( data.type ) : false,
-		nestedEditing = jQuery( 'body' ).hasClass( 'nested-ui-active' ),
+		nestedEditing = jQuery( 'body' ).hasClass( 'nested-ui-active' ) || FusionPageBuilderApp.$el.hasClass( 'fusion-builder-nested-cols-dialog-open' ),
 		pasteChild,
 		pageType      = 'undefined' !== typeof FusionApp.data.fusion_element_type ? FusionApp.data.fusion_element_type : 'default';
 
@@ -29,7 +28,6 @@
 			// If clipboard has column, it can be added to container.
 			pasteChild = 'fusion_builder_column' === clipboard;
 			canRemove  = canSave = canClone = pasteSame = canCopy = canPaste = 'sections' !== pageType;
-			canInvert  = 'undefined' !== typeof params.background_color && -1 !== params.background_color.indexOf( 'var(--awb-' ) ? true : canInvert;
 
 			break;
 
@@ -53,10 +51,6 @@
 			// Theme builder components can't be copied or cloned.
 			if ( 'fusion_tb_woo_notices' !== element_type && -1 !== element_type.indexOf( 'fusion_tb_' ) ) {
 				canCopy = canClone = false;
-			}
-
-			if ( 'fusion_builder_next_page' === element_type || 'fusion_woo_checkout_form' === element_type ) {
-				canEdit = canSave = canClone = pasteSame = canCopy = canPaste = false;
 			}
 
 			break;
@@ -136,10 +130,6 @@
 		<# if ( pasteChild ) { #>
 			<li data-action="paste-start"><?php esc_html_e( 'Paste At Start', 'fusion-builder' ); ?></li>
 			<li data-action="paste-end"><?php esc_html_e( 'Paste At End', 'fusion-builder' ); ?></li>
-		<# } #>
-
-		<# if ( canInvert ) { #>
-			<li data-action="invert"><?php esc_html_e( 'Invert', 'fusion-builder' ); ?></li>
 		<# } #>
 	</ul>
 </script>

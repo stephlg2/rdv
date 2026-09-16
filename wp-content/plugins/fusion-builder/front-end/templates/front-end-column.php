@@ -30,15 +30,9 @@
 			<div class="fusion-builder-module-controls-inner fusion-builder-column-controls-inner">
 				<a href="#" class="fusion-builder-column-settings fusion-builder-module-control"><span class="fusiona-pen"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Column Options', 'fusion-builder' ); ?></span></span></a>
 				<a href="#" class="fusion-builder-insert-column fusion-builder-module-control"><span class="fusiona-add-columns"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Add Columns', 'fusion-builder' ); ?></span></span></a>
-				<# if ( 'custom' === layout ) { #>
-					<a href="#" class="fusion-builder-column-size fusion-builder-module-control"><span class="fusion-custom-column-size-label fusiona-column"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Custom Column Size', 'fusion-builder' ); ?></span></span></a>
-				<# } else { #>
-					<a href="#" class="fusion-builder-column-size fusion-builder-module-control"><span class="fusion-column-size-label">{{{ layout }}}</span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Column Size', 'fusion-builder' ); ?></span></span></a>
-				<# } #>
+				<a href="#" class="fusion-builder-column-size fusion-builder-module-control"><span class="fusion-column-size-label">{{{ layout }}}</span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Column Size', 'fusion-builder' ); ?></span></span></a>
 				<a href="#" class="fusion-builder-column-clone fusion-builder-module-control"><span class="fusiona-file-add"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Clone Column', 'fusion-builder' ); ?></span></span></a>
-				<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) : ?>
-					<a href="#" class="fusion-builder-column-save fusion-builder-module-control" data-focus="#fusion-builder-save-element-input" data-target="#fusion-builder-layouts-columns"><span class="fusiona-drive"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_attr_e( 'Save Column', 'fusion-builder' ); ?></span></span></a>
-				<?php endif; ?>
+				<a href="#" class="fusion-builder-column-save fusion-builder-module-control" data-focus="#fusion-builder-save-element-input" data-target="#fusion-builder-layouts-columns"><span class="fusiona-drive"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_attr_e( 'Save Column', 'fusion-builder' ); ?></span></span></a>
 				<a href="#" class="fusion-builder-column-remove fusion-builder-module-control"><span class="fusiona-trash-o"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Delete Column', 'fusion-builder' ); ?></span></span></a>
 				<a href="#" class="fusion-builder-column-drag fusion-builder-module-control"><span class="fusiona-icon-move"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text"><?php esc_html_e( 'Drag Column', 'fusion-builder' ); ?></span></span></a>
 			</div>
@@ -48,7 +42,13 @@
 		</div>
 	</div>
 
-	<{{{ column_tag }}} {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
+	<div class="fusion-builder-wireframe-utility-toolbar">
+		<# if ( 'undefined' !== typeof isGlobal && 'yes' === isGlobal ) { #>
+			<a href="#" class="fusion-builder-column-global fusion-builder-module-control fusion-builder-unglobal-tooltip" data-cid={{cid}}><span class="fusiona-globe"></span><span class="fusion-column-tooltip"><span class="fusion-tooltip-text">{{{ fusionBuilderText.global_column }}}</span></span></a>
+		<# } #>
+	</div>
+
+	<div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
 
 		<# if ( 'yes' === center_content && ! isFlex ) { #>
 			<div class="fusion-column-content-centered">
@@ -74,6 +74,10 @@
 		<# if ( 'yes' === center_content && ! isFlex  ) { #>
 				</div>
 			</div>
+		<# } #>
+
+		<# if ( ieExtra ) { #>
+			<div {{{ _.fusionGetAttributes( ieExtra ) }}}></div>
 		<# } #>
 
 		<div class="fusion-clearfix"></div>
@@ -122,7 +126,7 @@
 				</div>
 			</div>
 		</div>
-	</{{{ column_tag }}}>
+	</div>
 
 	<div class="fusion-column-margins">
 		<div class="fusion-column-margin-top fusion-element-spacing">
@@ -141,6 +145,11 @@
 		<span {{{ _.fusionGetAttributes( hoverWrapperAttr ) }}}>
 			<a {{{ _.fusionGetAttributes( anchorAttr ) }}}>
 				<span {{{ _.fusionGetAttributes( hoverInnerWrapperAttr ) }}}></span>
+
+			<# if ( ieSpanExtra ) { #>
+				<span {{{ _.fusionGetAttributes( ieSpanExtra ) }}}></span>
+			<# } #>
+
 			</a>
 		</span>
 	<# } #>
@@ -150,6 +159,7 @@
 	<div class="fusion-column-styles-holder">
 		<style type="text/css">{{{ styles }}}</style>
 		<style type="text/css" class="fusion-column-responsive-styles">{{{ responsiveStyles }}}</style>
+		{{{ filterStyle }}}
 	</div>
 
 	<div class="fusion-column-spacing">

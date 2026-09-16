@@ -2,7 +2,7 @@
 Contributors: travelmap, stephaneguigne
 Tags: travelmap, map, itinerary, points, lines
 Requires at least: 3.0.1
-Tested up to: 6.8
+Tested up to: 7.1
 Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html

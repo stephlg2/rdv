@@ -34,6 +34,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid    = this.model.get( 'cid' );
 				attributes.attr   = this.buildAttr( atts.values );
+				attributes.styles = this.buildStyleBlock();
 				attributes.output = this.buildOutput( atts );
 				attributes.layout = atts.values.products_layout;
 				attributes.titleElement  = 'yes' === atts.values.heading_enable ? _.buildTitleElement( atts.values, atts.extras, this.getSectionTitle() ) : '';
@@ -123,8 +124,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildCarouselNav: function() {
 				var output = '';
 
-				output += '<div class="awb-swiper-button awb-swiper-button-prev"><i class="awb-icon-angle-left"></i></div>';
-				output += '<div class="awb-swiper-button awb-swiper-button-next"><i class="awb-icon-angle-right"></i></div>';
+				output += '<div class="fusion-carousel-nav">';
+				output += '<span class="fusion-nav-prev"></span>';
+				output += '<span class="fusion-nav-next"></span>';
+				output += '</div>';
 
 				return output;
 			},
@@ -138,7 +141,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildCarouselAttrs: function( values ) {
 				var attr = {
-					class: 'awb-carousel awb-swiper awb-swiper-carousel'
+					class: 'fusion-carousel'
 				};
 
 				/**
@@ -172,10 +175,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					class: 'products products-' + values.products_columns
 				};
 
-				if ( 'carousel' === values.products_layout ) {
-					attr[ 'class' ] += ' swiper-wrapper';
-				}
-
 				return attr;
 			},
 
@@ -207,6 +206,34 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			getSectionTitle: function() {
 				return '';
+			},
+
+			/**
+			 * Builds styles.
+			 *
+			 * @since  3.2
+			 * @param  {Object} values - The values object.
+			 * @return {String}
+			 */
+			buildStyleBlock: function() {
+				var css, selectors;
+
+				this.baseSelector = '.' + this.shortcode_classname + '.' + this.shortcode_classname + '-' +  this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				if ( ! this.isDefault( 'products_layout' ) ) {
+					selectors = [
+						'body:not(.fusion-woocommerce-equal-heights):not(.fusion-woo-archive-page-columns-1) ' + this.baseSelector + ' .fusion-carousel .fusion-carousel-item .fusion-carousel-item-wrapper',
+						'.fusion-woocommerce-equal-heights:not(.fusion-woo-archive-page-columns-1) ' + this.baseSelector + ' .products .product'
+					];
+					this.addCssProperty( selectors, 'display', 'block' );
+					selectors = [ '.fusion-woocommerce-equal-heights:not(.fusion-woo-archive-page-columns-1) ' + this.baseSelector + ' .fusion-carousel .fusion-carousel-item .fusion-carousel-item-wrapper' ];
+					this.addCssProperty( selectors, 'vertical-align', 'top' );
+				}
+
+				css = this.parseCSS();
+				return ( css ) ? '<style>' + css + '</style>' : '';
+
 			}
 
 		} );

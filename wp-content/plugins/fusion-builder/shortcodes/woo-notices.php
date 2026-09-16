@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 		class FusionTB_Woo_Notices extends Fusion_Woo_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -46,7 +55,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 				add_filter( 'fusion_attr_fusion_tb_woo_notices-notice-icon', [ $this, 'notice_icon_attr' ] );
 				add_filter( 'fusion_attr_fusion_tb_woo_notices-success-icon', [ $this, 'success_icon_attr' ] );
 				add_filter( 'fusion_attr_fusion_tb_woo_notices-error-icon', [ $this, 'error_icon_attr' ] );
-				add_filter( 'fusion_attr_fusion_tb_woo_notices-cart-icon', [ $this, 'cart_icon_attr' ] );
 
 				// Ajax mechanism for query related part.
 				add_action( 'wp_ajax_get_fusion_tb_woo_notices', [ $this, 'ajax_render' ] );
@@ -73,7 +81,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'margin_bottom'              => '',
 					'margin_left'                => '',
@@ -85,9 +93,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 					'animation_type'             => '',
 					'animation_direction'        => 'down',
 					'animation_speed'            => '0.1',
-					'animation_delay'            => '',
 					'animation_offset'           => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'            => '',
 					'show_button'                => 'yes',
 					'padding_top'                => '',
 					'padding_right'              => '',
@@ -126,8 +132,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 					'error_text_color'           => '',
 					'error_link_color'           => '',
 					'error_link_hover_color'     => '',
-					'cart_icon_style'            => '',
-					'cart_icon'                  => 'awb-icon-shopping-cart',
 				];
 			}
 
@@ -220,21 +224,22 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 					wc_add_notice( __( 'This is a general notice example.', 'fusion-builder' ), 'notice' );
 				}
 
-				if ( is_cart() && is_object( WC()->cart ) && WC()->cart->is_empty() && ! fusion_is_preview_frame() ) {
+				if ( WC()->cart->is_empty() && ! fusion_is_preview_frame() && is_cart() ) {
 					ob_start();
 					wc_empty_cart_message();
 					$empty_msg = wp_strip_all_tags( ob_get_clean() );
 					wc_add_notice( $empty_msg, 'notice' );
 				}
 
-				if ( fusion_library()->woocommerce->is_checkout_layout() && ! WC()->checkout()->is_registration_enabled() && WC()->checkout()->is_registration_required() && ! is_user_logged_in() ) {
+				if ( fusion_library()->woocommerce->is_new_checkout() && ! WC()->checkout()->is_registration_enabled() && WC()->checkout()->is_registration_required() && ! is_user_logged_in() ) {
 					wc_add_notice( apply_filters( 'woocommerce_checkout_must_be_logged_in_message', __( 'You must be logged in to checkout.', 'woocommerce' ) ), 'error', [ 'class' => 'fusion-login-required' ] );
 				}
 
 				$content = '';
 				ob_start();
 				$this->print_notices();
-				$content = ob_get_clean();
+				$content  = ob_get_clean();
+				$content .= $this->get_styles();
 
 				return apply_filters( 'fusion_woo_component_content', $content, $this->shortcode_handle, $this->args );
 			}
@@ -249,7 +254,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 			public function attr() {
 				$attr = [
 					'class' => 'fusion-woo-notices-tb fusion-woo-notices-tb-' . $this->counter,
-					'style' => $this->get_style_variables(),
+					'style' => '',
 				];
 
 				$attr = fusion_builder_visibility_atts( $this->args['hide_on_mobile'], $attr );
@@ -344,22 +349,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 			}
 
 			/**
-			 * Builds the attributes array.
-			 *
-			 * @access public
-			 * @since 3.7
-			 * @return array
-			 */
-			public function cart_icon_attr() {
-				$attr = [
-					'class'       => fusion_font_awesome_name_handler( $this->args['cart_icon'] ),
-					'aria-hidden' => 'true',
-				];
-
-				return $attr;
-			}
-
-			/**
 			 * Check for icon exists.
 			 *
 			 * @access public
@@ -386,63 +375,54 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 			 * @access public
 			 * @since 3.2
 			 * @param bool $return should we return or not.
-			 * @return ( $return is true ? string : void )
+			 * @return string
 			 */
 			public function print_notices( $return = false ) {
-				$notices = '';
+				$all_notices  = WC()->session->get( 'wc_notices', [] );
+				$notice_types = apply_filters( 'woocommerce_notice_types', [ 'error', 'success', 'notice' ] );
 
-				if ( is_object( WC()->session ) && function_exists( 'wc_notice_count' ) ) {
-					$all_notices  = WC()->session->get( 'wc_notices', [] );
-					$notice_types = apply_filters( 'woocommerce_notice_types', [ 'error', 'success', 'notice' ] );
+				// Buffer output.
+				ob_start();
 
-					// Buffer output.
-					ob_start();
+				foreach ( $notice_types as $notice_type ) {
+					if ( wc_notice_count( $notice_type ) > 0 ) {
+						$messages = [];
 
-					foreach ( $notice_types as $notice_type ) {
-						if ( wc_notice_count( $notice_type ) > 0 ) {
-							$messages = [];
-
-							$notice_icon = '';
-							if ( $this->has_icon( $notice_type ) ) {
-								$notice_icon = '<i ' . FusionBuilder::attributes( 'fusion_tb_woo_notices-' . $notice_type . '-icon' ) . '></i>';
-							}
-
-							foreach ( $all_notices[ $notice_type ] as $key => $notice ) {
-								$messages[] = isset( $notice['notice'] ) ? $notice['notice'] : $notice;
-
-								if ( isset( $all_notices[ $notice_type ][ $key ]['notice'] ) ) {
-									$text_msg    = $all_notices[ $notice_type ][ $key ]['notice'];
-									$grab_button = '';
-
-									if ( preg_match( '/<a\s(.+?)>(.+?)<\/a>/i', $text_msg, $matches ) ) {
-										$grab_button = $matches[0];
-										$text_msg    = str_replace( $grab_button, '', $text_msg );
-
-										if ( 'success' === $notice_type && 'custom' === $this->args['cart_icon_style'] && '' !== $grab_button ) {
-											$icon_cart_content = '<i ' . FusionBuilder::attributes( 'fusion_tb_woo_notices-cart-icon' ) . '></i>';
-											$grab_button       = sprintf( '<a href="%s" tabindex="1" class="button wc-forward">%s %s</a>', esc_url( wc_get_cart_url() ), $icon_cart_content, esc_html__( 'View cart', 'fusion-builder' ) );
-										}
-									}
-									$text_msg = sprintf( '%s <span class="wc-notices-text">%s</span> %s', $notice_icon, $text_msg, $grab_button );
-
-									$all_notices[ $notice_type ][ $key ]['notice'] = $text_msg;
-								}
-							}
-
-							wc_get_template(
-								"notices/{$notice_type}.php",
-								[
-									'messages' => array_filter( $messages ), // @deprecated 3.9.0
-									'notices'  => array_filter( $all_notices[ $notice_type ] ),
-								]
-							);
+						$notice_icon = '';
+						if ( $this->has_icon( $notice_type ) ) {
+							$notice_icon = '<i ' . FusionBuilder::attributes( 'fusion_tb_woo_notices-' . $notice_type . '-icon' ) . '></i>';
 						}
+
+						foreach ( $all_notices[ $notice_type ] as $key => $notice ) {
+							$messages[] = isset( $notice['notice'] ) ? $notice['notice'] : $notice;
+
+							if ( isset( $all_notices[ $notice_type ][ $key ]['notice'] ) ) {
+								$text_msg    = $all_notices[ $notice_type ][ $key ]['notice'];
+								$grab_button = '';
+
+								if ( preg_match( '/<a\s(.+?)>(.+?)<\/a>/i', $text_msg, $matches ) ) {
+									$grab_button = $matches[0];
+									$text_msg    = str_replace( $grab_button, '', $text_msg );
+								}
+								$text_msg = sprintf( '%s <span class="wc-notices-text">%s</span> %s', $notice_icon, $text_msg, $grab_button );
+
+								$all_notices[ $notice_type ][ $key ]['notice'] = $text_msg;
+							}
+						}
+
+						wc_get_template(
+							"notices/{$notice_type}.php",
+							[
+								'messages' => array_filter( $messages ), // @deprecated 3.9.0
+								'notices'  => array_filter( $all_notices[ $notice_type ] ),
+							]
+						);
 					}
-
-					wc_clear_notices();
-
-					$notices = wc_kses_notice( ob_get_clean() );
 				}
+
+				wc_clear_notices();
+
+				$notices = wc_kses_notice( ob_get_clean() );
 
 				if ( $return ) {
 					return $notices;
@@ -452,60 +432,213 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.2
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars      = [];
-				$css_vars_options = [
-					'margin_top'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_top'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_right'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_bottom'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_left'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'font_size'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'font_color'                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_sizes_top'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_sizes_right'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_sizes_bottom'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_sizes_left'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_top_left'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_top_right'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_bottom_right' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_bottom_left'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_style',
-					'border_color'               => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'background_color'           => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'icon_size'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'icon_color'                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'link_color'                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'link_hover_color'           => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'success_border_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'success_background_color'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'success_text_color'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'success_icon_color'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'success_link_color'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'success_link_hover_color'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'error_border_color'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'error_background_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'error_text_color'           => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'error_icon_color'           => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'error_link_color'           => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'error_link_hover_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-notices-tb.fusion-woo-notices-tb-' . $this->counter;
+				$this->dynamic_css   = [];
+				$selector_messages   = [
+					$this->base_selector . ' .woocommerce-info',
+					$this->base_selector . ' .woocommerce-message',
 				];
+				$selector_error      = [
+					$this->base_selector . ' .woocommerce-error li',
+				];
+				$selector_notices    = array_merge( $selector_messages, $selector_error );
 
-				if ( ! $this->is_default( 'cart_icon_style' ) ) {
-					$custom_vars['cart_icon_content']      = '""';
-					$custom_vars['cart_icon_margin_right'] = '0';
+				// Margin styles.
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $selector_notices, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] ) );
+				}
+				if ( ! $this->is_default( 'margin_right' ) ) {
+					$this->add_css_property( $selector_notices, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_right'] ) );
+				}
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $selector_notices, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'margin_left' ) ) {
+					$this->add_css_property( $selector_notices, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_left'] ) );
 				}
 
-				return $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				// Padding styles.
+				if ( ! $this->is_default( 'padding_top' ) ) {
+					$this->add_css_property( $selector_notices, 'padding-top', fusion_library()->sanitize->get_value_with_unit( $this->args['padding_top'] ) );
+				}
+				if ( ! $this->is_default( 'padding_right' ) ) {
+					$this->add_css_property( $selector_notices, 'padding-right', fusion_library()->sanitize->get_value_with_unit( $this->args['padding_right'] ) );
+				}
+				if ( ! $this->is_default( 'padding_bottom' ) ) {
+					$this->add_css_property( $selector_notices, 'padding-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['padding_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'padding_left' ) ) {
+					$this->add_css_property( $selector_notices, 'padding-left', fusion_library()->sanitize->get_value_with_unit( $this->args['padding_left'] ) );
+				}
+
+				// Text Styles.
+				if ( ! $this->is_default( 'font_size' ) ) {
+					$this->add_css_property( $selector_notices, 'font-size', $this->args['font_size'] );
+				}
+				if ( ! $this->is_default( 'font_color' ) ) {
+					$this->add_css_property( $selector_notices, 'color', $this->args['font_color'] );
+				}
+
+				// Border size.
+				if ( ! $this->is_default( 'border_sizes_top' ) ) {
+					$this->add_css_property( $selector_notices, 'border-top-width', fusion_library()->sanitize->get_value_with_unit( $this->args['border_sizes_top'] ) );
+				}
+				if ( ! $this->is_default( 'border_sizes_right' ) ) {
+					$this->add_css_property( $selector_notices, 'border-right-width', fusion_library()->sanitize->get_value_with_unit( $this->args['border_sizes_right'] ) );
+				}
+				if ( ! $this->is_default( 'border_sizes_bottom' ) ) {
+					$this->add_css_property( $selector_notices, 'border-bottom-width', fusion_library()->sanitize->get_value_with_unit( $this->args['border_sizes_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'border_sizes_left' ) ) {
+					$this->add_css_property( $selector_notices, 'border-left-width', fusion_library()->sanitize->get_value_with_unit( $this->args['border_sizes_left'] ) );
+				}
+
+				// Border radius.
+				if ( ! $this->is_default( 'border_radius_top_left' ) ) {
+					$this->add_css_property( $selector_notices, 'border-top-left-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_top_left'] ) );
+				}
+				if ( ! $this->is_default( 'border_radius_top_right' ) ) {
+					$this->add_css_property( $selector_notices, 'border-top-right-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_top_right'] ) );
+				}
+				if ( ! $this->is_default( 'border_radius_bottom_right' ) ) {
+					$this->add_css_property( $selector_notices, 'border-bottom-right-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_bottom_right'] ) );
+				}
+				if ( ! $this->is_default( 'border_radius_bottom_left' ) ) {
+					$this->add_css_property( $selector_notices, 'border-bottom-left-radius', fusion_library()->sanitize->get_value_with_unit( $this->args['border_radius_bottom_left'] ) );
+				}
+
+				// Border style.
+				if ( ! $this->is_default( 'border_style' ) ) {
+					$this->add_css_property( $selector_notices, 'border-style', $this->args['border_style'] );
+				}
+
+				// Border color.
+				if ( ! $this->is_default( 'border_color' ) ) {
+					$this->add_css_property( $selector_notices, 'border-color', $this->args['border_color'] );
+				}
+
+				// Background color.
+				if ( ! $this->is_default( 'background_color' ) ) {
+					$this->add_css_property( $selector_notices, 'background-color', $this->args['background_color'] );
+				}
+
+				// Icon Styles.
+				$selectors = [
+					$this->base_selector . ' .woocommerce-info .fusion-woo-notices-tb-icon',
+					$this->base_selector . ' .woocommerce-message .fusion-woo-notices-tb-icon',
+					$this->base_selector . ' .woocommerce-error .fusion-woo-notices-tb-icon',
+				];
+				if ( ! $this->is_default( 'icon_size' ) ) {
+					$this->add_css_property( $selectors, 'font-size', $this->args['icon_size'] . 'px' );
+				}
+				if ( ! $this->is_default( 'icon_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['icon_color'] );
+				}
+
+				// Link & Hover Styles.
+				$selectors = [
+					$this->base_selector . ' .woocommerce-info .wc-forward',
+					$this->base_selector . ' .woocommerce-message .wc-forward',
+					$this->base_selector . ' .woocommerce-error .wc-forward',
+				];
+				if ( ! $this->is_default( 'link_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['link_color'] );
+				}
+				$selectors = [
+					$this->base_selector . ' .woocommerce-info .wc-forward:hover',
+					$this->base_selector . ' .woocommerce-message .wc-forward:hover',
+					$this->base_selector . ' .woocommerce-error .wc-forward:hover',
+				];
+				if ( ! $this->is_default( 'link_hover_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['link_hover_color'] );
+				}
+
+				// Success styles.
+				$selectors = [
+					$this->base_selector . ' .woocommerce-message',
+				];
+				if ( ! $this->is_default( 'success_border_color' ) ) {
+					$this->add_css_property( $selectors, 'border-color', $this->args['success_border_color'] );
+				}
+				if ( ! $this->is_default( 'success_background_color' ) ) {
+					$this->add_css_property( $selectors, 'background-color', $this->args['success_background_color'] );
+				}
+				if ( ! $this->is_default( 'success_text_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['success_text_color'] );
+				}
+				$selectors = [
+					$this->base_selector . ' .woocommerce-message .fusion-woo-notices-tb-icon',
+				];
+				if ( ! $this->is_default( 'success_icon_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['success_icon_color'] );
+				}
+
+				// Success Link & Hover Styles.
+				$selectors = [
+					$this->base_selector . ' .woocommerce-message .wc-forward',
+				];
+				if ( ! $this->is_default( 'success_link_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['success_link_color'] );
+				}
+				$selectors = [
+					$this->base_selector . ' .woocommerce-message .wc-forward:hover',
+				];
+				if ( ! $this->is_default( 'success_link_hover_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['success_link_hover_color'] );
+				}
+
+				// Error styles.
+				if ( ! $this->is_default( 'error_border_color' ) ) {
+					$this->add_css_property( $selector_error, 'border-color', $this->args['error_border_color'] );
+				}
+				if ( ! $this->is_default( 'error_background_color' ) ) {
+					$this->add_css_property( $selector_error, 'background-color', $this->args['error_background_color'] );
+				}
+				if ( ! $this->is_default( 'error_text_color' ) ) {
+					$this->add_css_property( $selector_error, 'color', $this->args['error_text_color'] );
+				}
+				$selectors = [
+					$this->base_selector . ' .woocommerce-error .fusion-woo-notices-tb-icon',
+				];
+				if ( ! $this->is_default( 'error_icon_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['error_icon_color'] );
+				}
+
+				// Error Link & Hover Styles.
+				$selectors = [
+					$this->base_selector . ' .woocommerce-error .wc-forward',
+				];
+				if ( ! $this->is_default( 'error_link_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['error_link_color'] );
+				}
+				$selectors = [
+					$this->base_selector . ' .woocommerce-error .wc-forward:hover',
+				];
+				if ( ! $this->is_default( 'error_link_hover_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['error_link_hover_color'] );
+				}
+
+				$css = $this->parse_css();
+
+				// Some responsive fix.
+				$this->dynamic_css = [];
+				$selectors         = [
+					$this->base_selector . '.alignment-text-left:not(.button-position-left) .woocommerce-info .fusion-woo-notices-tb-icon',
+					$this->base_selector . '.alignment-text-left:not(.button-position-left) .woocommerce-message .fusion-woo-notices-tb-icon',
+					$this->base_selector . '.alignment-text-left:not(.button-position-left) .woocommerce-error .fusion-woo-notices-tb-icon',
+				];
+				$this->add_css_property( $selectors, 'float', 'left' );
+				$this->add_css_property( $selectors, 'line-height', 'inherit' );
+				$css .= sprintf( '@media %s { %s }', Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-640' ), $this->parse_css() );
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -528,7 +661,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 						FusionBuilder::$js_folder_url . '/general/fusion-woo-notices.js',
 						FusionBuilder::$js_folder_path . '/general/fusion-woo-notices.js',
 						[ 'wc-checkout' ],
-						FUSION_BUILDER_VERSION,
+						'1',
 						true
 					);
 
@@ -561,15 +694,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
 			public function add_css_files() {
 				if ( class_exists( 'Avada' ) ) {
 					Fusion_Dynamic_CSS::enqueue_style( Avada::$template_dir_path . '/assets/css/dynamic/woocommerce/woo-notices.min.css', Avada::$template_dir_url . '/assets/css/dynamic/woocommerce/woo-notices.min.css' );
-
-					$version = Avada::get_theme_version();
-					Fusion_Media_Query_Scripts::$media_query_assets[] = [
-						'avada-woo-notices-sm',
-						FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/woo-notices-sm.min.css',
-						[],
-						$version,
-						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-small' ),
-					];
 				}
 				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/woo-notices.min.css' );
 			}
@@ -585,6 +709,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_notices' ) ) {
  * @since 3.2
  */
 function fusion_component_woo_notices() {
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -698,55 +824,6 @@ function fusion_component_woo_notices() {
 						'max'         => '250',
 						'step'        => '1',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Cart Icon Style', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the cart icon style of the notice.', 'fusion-builder' ),
-						'param_name'  => 'cart_icon_style',
-						'value'       => [
-							''       => esc_attr__( 'Default', 'fusion-builder' ),
-							'custom' => esc_attr__( 'Custom', 'fusion-builder' ),
-						],
-						'default'     => '',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_tb_woo_notices',
-							'ajax'     => true,
-						],
-						'dependency'  => [
-							[
-								'element'  => 'show_button',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'iconpicker',
-						'heading'     => esc_html__( 'Cart Icon', 'fusion-builder' ),
-						'param_name'  => 'cart_icon',
-						'value'       => '',
-						'description' => esc_html__( 'Select icon for cart message.', 'fusion-builder' ),
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_tb_woo_notices',
-							'ajax'     => true,
-						],
-						'dependency'  => [
-							[
-								'element'  => 'cart_icon_style',
-								'value'    => '',
-								'operator' => '!=',
-							],
-							[
-								'element'  => 'show_button',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
 					],
 					[
 						'type'        => 'radio_button_set',

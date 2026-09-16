@@ -1,7 +1,7 @@
-.fusion-form-builder-table .column-entries .counter {
+.fusion-form-builder-table .column-submissions .counter {
   padding-right: 5px;
 }
-.rtl .fusion-form-builder-table .column-entries .counter {
+.rtl .fusion-form-builder-table .column-submissions .counter {
   padding-right: 0;
   padding-left: 5px;
 }

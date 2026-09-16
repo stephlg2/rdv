@@ -19,6 +19,15 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 			class FusionTB_Woo_Archives extends Fusion_Woo_Component {
 
 				/**
+				 * An array of the shortcode arguments.
+				 *
+				 * @access protected
+				 * @since 3.3
+				 * @var array
+				 */
+				protected $args;
+
+				/**
 				 * Constructor.
 				 *
 				 * @access public
@@ -74,7 +83,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 					check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
 
 					if ( isset( $_POST['fusion_meta'] ) && isset( $_POST['post_id'] ) ) {
-						$meta = fusion_string_to_array( $_POST['fusion_meta'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+						$meta = fusion_string_to_array( wp_unslash( $_POST['fusion_meta'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 						$type = isset( $meta['_fusion']['dynamic_content_preview_type'] ) && in_array( $meta['_fusion']['dynamic_content_preview_type'], [ 'search', 'archives' ], true ) ? $meta['_fusion']['dynamic_content_preview_type'] : false;
 						if ( ! $type ) {
 							echo wp_json_encode( [] );
@@ -240,12 +249,6 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 								&& in_array( $this->shortcode_handle, $matches[2], true ) ) {
 								$search_atts  = shortcode_parse_atts( $matches[3][0] );
 								$number_posts = ( isset( $_GET['product_count'] ) ) ? (int) $_GET['product_count'] : (int) $search_atts['number_posts']; // phpcs:ignore WordPress.Security
-
-								// Use GO value.
-								if ( 0 === $number_posts ) {
-									$fusion_settings = awb_get_fusion_settings();
-									$number_posts    = (int) $fusion_settings->get( 'woo_items' );
-								}
 								$query->set( 'paged', ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1 );
 								$query->set( 'posts_per_page', $number_posts );
 							}
@@ -264,7 +267,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 	 * @since 3.3
 	 */
 	function fusion_component_woo_archives() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		$builder_status  = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
 		$default_orderby = apply_filters( 'woocommerce_default_catalog_orderby', get_option( 'woocommerce_default_catalog_orderby', 'menu_order' ) );
@@ -274,19 +277,20 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 			fusion_builder_frontend_data(
 				'FusionTB_Woo_Archives',
 				[
-					'name'      => esc_attr__( 'Woo Archives', 'fusion-builder' ),
-					'shortcode' => 'fusion_tb_woo_archives',
-					'icon'      => 'fusiona-woo-archive',
-					'component' => true,
-					'templates' => [ 'content' ],
-					'params'    => [
+					'name'                    => esc_attr__( 'Woo Archives', 'fusion-builder' ),
+					'shortcode'               => 'fusion_tb_woo_archives',
+					'icon'                    => 'fusiona-woo-archive',
+					'component'               => true,
+					'templates'               => [ 'content' ],
+					'components_per_template' => 1,
+					'params'                  => [
 						[
 							'type'        => 'range',
 							'heading'     => esc_attr__( 'Number of Products', 'fusion-builder' ),
 							'description' => esc_attr__( 'Select number of products per page.  Set to -1 to display all. Set to 0 to use number of products from Avada > Options > WooCommerce > General WooCommerce.', 'fusion-builder' ),
 							'param_name'  => 'number_posts',
 							'min'         => '-1',
-							'max'         => '50',
+							'max'         => '25',
 							'step'        => '1',
 							'value'       => $fusion_settings->get( 'woo_items' ),
 							'callback'    => [
@@ -452,7 +456,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 						[
 							'type'        => 'select',
 							'heading'     => esc_attr__( 'Grid Separator Style', 'fusion-builder' ),
-							'description' => __( 'Controls the line style of grid separators. <strong>NOTE:</strong> Separators will display, when buttons below the separators is displayed and Box Design mode set to Classic.', 'fusion-builder' ),
+							'description' => __( 'Controls the line style of grid separators. <strong>Note:</strong> Separators will display, when buttons below the separators is displayed and Box Design mode set to Classic.', 'fusion-builder' ),
 							'param_name'  => 'grid_separator_style_type',
 							'value'       => [
 								''              => esc_attr__( 'Default', 'fusion-builder' ),
@@ -483,7 +487,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 						[
 							'type'        => 'colorpickeralpha',
 							'heading'     => esc_attr__( 'Grid Separator Color', 'fusion-builder' ),
-							'description' => __( 'Controls the line style color of grid separators. <strong>NOTE:</strong> Only work when Box Design mode set to Classic.', 'fusion-builder' ),
+							'description' => __( 'Controls the line style color of grid separators. <strong>Note:</strong> Only work when Box Design mode set to Classic.', 'fusion-builder' ),
 							'param_name'  => 'grid_separator_color',
 							'value'       => '',
 							'default'     => $fusion_settings->get( 'grid_separator_color' ),
@@ -511,7 +515,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_product_grid' ) ) {
 							'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						],
 					],
-					'callback'  => [
+					'callback'                => [
 						'function' => 'fusion_ajax',
 						'action'   => 'get_fusion_tb_woo_archives',
 						'ajax'     => true,

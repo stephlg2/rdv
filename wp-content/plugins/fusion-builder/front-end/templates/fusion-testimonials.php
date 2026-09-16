@@ -9,15 +9,11 @@
 ?>
 <script type="text/html" id="tmpl-fusion_testimonials-shortcode">
 <div {{{ _.fusionGetAttributes( attr ) }}}>
+	<style type="text/css">{{{ styles }}}</style>
 	<div class="reviews fusion-child-element"></div>
 
 	<# if ( 'yes' === navigation ) { #>
-		<div {{{ _.fusionGetAttributes( paginationAttr ) }}}>
-			<# for ( var i = 0; i < children; i++ ) { #>
-				<# var activeClass = 0 === i ? ' class="activeSlide"' : ''; #>
-				<a href="#" aria-label="Testimonial Pagination" data-order="{{{ i + 1 }}}"{{{ activeClass }}}></a>
-			<# } #>
-		</div>
+	<div {{{ _.fusionGetAttributes( paginationAttr ) }}}></div>
 	<# } #>
 </div>
 </script>

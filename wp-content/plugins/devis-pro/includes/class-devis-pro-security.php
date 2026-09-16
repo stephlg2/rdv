@@ -13,7 +13,8 @@ class Devis_Pro_Security {
     private $settings;
     
     // Constantes de sécurité
-    const MAX_SUBMISSIONS_PER_HOUR = 20; // Augmenté pour les tests (remettre à 5 en production)
+    const MAX_SUBMISSIONS_PER_HOUR = 10;
+    const MIN_FORM_TIME_SECONDS = 1;
     const MAX_LOGIN_ATTEMPTS = 5;
     const LOCKOUT_DURATION = 900; // 15 minutes
     const TOKEN_EXPIRY = 86400; // 24 heures
@@ -33,12 +34,22 @@ class Devis_Pro_Security {
      */
     public static function render_honeypot() {
         $field_name = self::get_honeypot_field_name();
+        $trap_name  = 'rdv_extra_field_' . substr(md5(wp_salt('auth')), 0, 6);
         ?>
         <div style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;overflow:hidden;" aria-hidden="true">
             <label for="<?php echo esc_attr($field_name); ?>">Ne pas remplir ce champ</label>
-            <input type="text" name="<?php echo esc_attr($field_name); ?>" id="<?php echo esc_attr($field_name); ?>" value="" tabindex="-1" autocomplete="off">
+            <input type="text" name="<?php echo esc_attr($field_name); ?>" id="<?php echo esc_attr($field_name); ?>" value="" tabindex="-1" autocomplete="off" data-lpignore="true">
+            <input type="text" name="<?php echo esc_attr($trap_name); ?>" value="" tabindex="-1" autocomplete="new-password" data-lpignore="true">
         </div>
         <?php
+        self::render_timing_field();
+    }
+
+    /**
+     * Champ caché de timing anti-bot (soumission trop rapide = bot).
+     */
+    public static function render_timing_field() {
+        echo '<input type="hidden" name="rdv_form_ts" value="' . esc_attr(time()) . '">';
     }
     
     /**
@@ -54,17 +65,87 @@ class Devis_Pro_Security {
      */
     public static function check_honeypot($post_data) {
         $field_name = self::get_honeypot_field_name();
-        
-        // Si le champ honeypot est rempli, c'est un bot
+
         if (isset($post_data[$field_name]) && !empty($post_data[$field_name])) {
             self::log_security_event('honeypot_triggered', array(
                 'ip' => self::get_client_ip(),
                 'value' => $post_data[$field_name]
             ));
-            return false; // Bot détecté
+            return false;
         }
-        
-        return true; // OK
+
+        foreach ($post_data as $key => $value) {
+            if (strpos($key, 'rdv_extra_field_') === 0 && !empty($value)) {
+                self::log_security_event('honeypot_trap_triggered', array('ip' => self::get_client_ip()));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Vérifier le délai minimum de remplissage du formulaire.
+     */
+    public static function check_form_timing($post_data) {
+        $ts = isset($post_data['rdv_form_ts']) ? intval($post_data['rdv_form_ts']) : 0;
+        if ($ts <= 0) {
+            return false;
+        }
+
+        return (time() - $ts) >= self::MIN_FORM_TIME_SECONDS;
+    }
+
+    /**
+     * Détecter du contenu spam (URLs, mots-clés, etc.).
+     */
+    public static function is_spam_content($text) {
+        if (empty($text)) {
+            return false;
+        }
+
+        $patterns = array(
+            '/https?:\/\//i',
+            '/www\.\S+/i',
+            '/\b(?:EUR|USD|GBP)\s*(?:TRADE|INVEST)/i',
+            '/\b(?:bitcoin|casino|viagra|cialis|forex|crypto)\b/i',
+            '/\b(?:blogspot|wordpress\.com|wixsite)\b/i',
+        );
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Vérifier si un email est sur liste noire.
+     */
+    public static function is_blocked_email($email) {
+        $email = strtolower(trim($email));
+        if (empty($email) || !is_email($email)) {
+            return true;
+        }
+
+        $domain = substr($email, strpos($email, '@') + 1);
+        $dot_pos = strrpos($domain, '.');
+        $tld = ($dot_pos !== false) ? substr($domain, $dot_pos + 1) : '';
+
+        $blocked_domains = array(
+            'tempmail.com', 'throwaway.email', 'guerrillamail.com',
+            'mailinator.com', 'yopmail.com', '10minutemail.com',
+            'list.ru', 'mail.ru', 'bk.ru', 'inbox.ru',
+        );
+        $blocked_tlds = array('ru', 'su', 'cn', 'tk', 'top', 'xyz', 'click', 'link');
+
+        if (in_array($domain, $blocked_domains, true) || ($tld && in_array($tld, $blocked_tlds, true))) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -74,22 +155,22 @@ class Devis_Pro_Security {
      */
     
     /**
-     * Vérifier le rate limiting
+     * Vérifier le rate limiting (sans incrémenter).
+     * Les admins / éditeurs ne sont pas limités pour les tests.
      */
     public static function check_rate_limit($action = 'form_submit') {
-        // TEMPORAIREMENT DÉSACTIVÉ POUR LES TESTS
-        return true;
-        
-        /*
-        $ip = self::get_client_ip();
-        $transient_key = 'rdv_rate_' . $action . '_' . md5($ip);
-        
-        $attempts = get_transient($transient_key);
-        
-        if ($attempts === false) {
-            $attempts = 0;
+        if (is_user_logged_in() && current_user_can('edit_posts')) {
+            return true;
         }
-        
+
+        $ip = self::get_client_ip();
+        if ($ip === '0.0.0.0') {
+            return true;
+        }
+
+        $transient_key = 'rdv_rate_' . $action . '_' . md5($ip);
+        $attempts = (int) get_transient($transient_key);
+
         if ($attempts >= self::MAX_SUBMISSIONS_PER_HOUR) {
             self::log_security_event('rate_limit_exceeded', array(
                 'ip' => $ip,
@@ -98,12 +179,26 @@ class Devis_Pro_Security {
             ));
             return false;
         }
-        
-        // Incrémenter le compteur
-        set_transient($transient_key, $attempts + 1, HOUR_IN_SECONDS);
-        
+
         return true;
-        */
+    }
+
+    /**
+     * Enregistrer une soumission réussie dans le compteur rate limit.
+     */
+    public static function record_submission($action = 'form_submit') {
+        if (is_user_logged_in() && current_user_can('edit_posts')) {
+            return;
+        }
+
+        $ip = self::get_client_ip();
+        if ($ip === '0.0.0.0') {
+            return;
+        }
+
+        $transient_key = 'rdv_rate_' . $action . '_' . md5($ip);
+        $attempts = (int) get_transient($transient_key);
+        set_transient($transient_key, $attempts + 1, HOUR_IN_SECONDS);
     }
     
     /**
@@ -270,19 +365,25 @@ class Devis_Pro_Security {
      * Valider un nom/prénom (pas de caractères suspects)
      */
     public static function validate_name($name) {
-        // Supprimer les balises HTML
         $cleaned = wp_strip_all_tags($name);
-        
-        // Vérifier les caractères suspects (injection SQL, XSS)
+
         if (preg_match('/[<>{}|\[\]\\\\]/', $cleaned)) {
             return false;
         }
-        
-        // Longueur raisonnable
+
+        if (self::is_spam_content($cleaned)) {
+            return false;
+        }
+
         if (strlen($cleaned) < 2 || strlen($cleaned) > 50) {
             return false;
         }
-        
+
+        // Lettres (y compris accents), espaces, tirets, apostrophes, points
+        if (!preg_match("/^[a-zA-ZÀ-ÿ\s'\-\.]+$/u", $cleaned)) {
+            return false;
+        }
+
         return sanitize_text_field($cleaned);
     }
     
@@ -305,27 +406,17 @@ class Devis_Pro_Security {
      */
     public static function validate_email($email) {
         $email = sanitize_email($email);
-        
+
         if (!is_email($email)) {
             return false;
         }
-        
-        // Vérifier que le domaine existe (DNS MX)
-        $domain = substr($email, strpos($email, '@') + 1);
-        if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+
+        // Pas de checkdnsrr() : sous charge / vague de spam, les lookups DNS
+        // bloquent les workers PHP et provoquent des 503/504 sur tout le site.
+        if (self::is_blocked_email($email)) {
             return false;
         }
-        
-        // Liste noire de domaines jetables (optionnel)
-        $disposable_domains = array(
-            'tempmail.com', 'throwaway.email', 'guerrillamail.com',
-            'mailinator.com', 'yopmail.com', '10minutemail.com'
-        );
-        
-        if (in_array($domain, $disposable_domains)) {
-            return false;
-        }
-        
+
         return $email;
     }
     
@@ -333,17 +424,17 @@ class Devis_Pro_Security {
      * Nettoyer un message (anti-XSS)
      */
     public static function sanitize_message($message) {
-        // Supprimer les balises HTML
         $cleaned = wp_strip_all_tags($message);
-        
-        // Échapper les caractères spéciaux
         $cleaned = htmlspecialchars($cleaned, ENT_QUOTES, 'UTF-8');
-        
-        // Limiter la longueur
+
+        if (self::is_spam_content($cleaned)) {
+            return false;
+        }
+
         if (strlen($cleaned) > 5000) {
             $cleaned = substr($cleaned, 0, 5000);
         }
-        
+
         return $cleaned;
     }
 
@@ -369,14 +460,25 @@ class Devis_Pro_Security {
         
         // 2. Vérifier le honeypot
         if (!self::check_honeypot($post_data)) {
-            // Retourner un succès faux pour ne pas alerter le bot
             return array(
                 'valid' => false,
                 'error' => '',
                 'is_bot' => true
             );
         }
-        
+
+        // 2b. Vérifier le timing (soumission trop rapide)
+        if (!self::check_form_timing($post_data)) {
+            self::log_security_event('form_submitted_too_fast', array(
+                'ip' => self::get_client_ip()
+            ));
+
+            return array(
+                'valid' => false,
+                'error' => __('Soumission trop rapide. Veuillez patienter 1 seconde avant d\'envoyer le formulaire.', 'devis-pro')
+            );
+        }
+
         // 3. Vérifier le rate limiting
         if (!self::check_rate_limit('form_submit')) {
             return array(
@@ -424,6 +526,13 @@ class Devis_Pro_Security {
             }
         }
         
+        if (!empty($post_data['message'])) {
+            $message = self::sanitize_message($post_data['message']);
+            if ($message === false) {
+                $errors['message'] = __('Message invalide', 'devis-pro');
+            }
+        }
+
         if (!empty($errors)) {
             return array(
                 'valid' => false,
@@ -442,14 +551,35 @@ class Devis_Pro_Security {
      */
     
     /**
+     * Vérifier reCAPTCHA v3 (obligatoire si la clé secrète est configurée).
+     */
+    public static function verify_recaptcha_required($token, $secret_key) {
+        if (empty($secret_key)) {
+            return true;
+        }
+
+        if (empty($token)) {
+            self::log_security_event('recaptcha_missing_token', array('ip' => self::get_client_ip()));
+            return false;
+        }
+
+        return self::verify_recaptcha($token, $secret_key);
+    }
+
+    /**
      * Vérifier reCAPTCHA v3
      */
     public static function verify_recaptcha($token, $secret_key) {
         if (empty($secret_key)) {
-            return true; // reCAPTCHA non configuré
+            return true;
         }
-        
+
+        if (empty($token)) {
+            return false;
+        }
+
         $response = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', array(
+            'timeout' => 5,
             'body' => array(
                 'secret' => $secret_key,
                 'response' => $token,
@@ -458,7 +588,10 @@ class Devis_Pro_Security {
         ));
         
         if (is_wp_error($response)) {
-            return true; // En cas d'erreur, on laisse passer
+            self::log_security_event('recaptcha_api_error', array('ip' => self::get_client_ip()));
+            // En cas d'erreur API / timeout : on laisse passer pour ne pas
+            // bloquer le site ni les vrais clients (les autres couches filtrent).
+            return true;
         }
         
         $result = json_decode(wp_remote_retrieve_body($response), true);
@@ -545,5 +678,104 @@ class Devis_Pro_Security {
         // Referrer Policy
         header('Referrer-Policy: strict-origin-when-cross-origin');
     }
+
+    /**
+     * =============================================
+     * PROTECTION GLOBALE ANTI-SPAM (site entier)
+     * =============================================
+     */
+    public static function init_global_protection() {
+        // Hooks légers uniquement — aucun appel réseau au chargement des pages.
+        add_filter('pre_option_users_can_register', '__return_zero');
+        add_action('login_init', array(__CLASS__, 'block_register_page'));
+        add_filter('registration_errors', array(__CLASS__, 'block_public_registration'), 999, 3);
+        add_filter('rest_endpoints', array(__CLASS__, 'disable_rest_user_endpoints'));
+        add_filter('xmlrpc_enabled', '__return_false');
+        add_filter('tripzzy_filter_settings', array(__CLASS__, 'harden_tripzzy_settings'));
+        add_filter('tripzzy_filter_new_user_data', array(__CLASS__, 'filter_tripzzy_new_user_data'));
+        add_action('wp_ajax_nopriv_tripzzy_add_enquiry', array(__CLASS__, 'protect_tripzzy_enquiry'), 1);
+        add_action('wp_ajax_tripzzy_add_enquiry', array(__CLASS__, 'protect_tripzzy_enquiry'), 1);
+    }
+
+    public static function block_register_page() {
+        if (isset($_GET['action']) && $_GET['action'] === 'register') {
+            wp_safe_redirect(home_url('/'));
+            exit;
+        }
+    }
+
+    public static function block_public_registration($errors, $sanitized_user_login, $user_email) {
+        if (!is_admin()) {
+            $errors->add('registration_disabled', __('Les inscriptions publiques sont désactivées.', 'devis-pro'));
+        }
+        return $errors;
+    }
+
+    public static function disable_rest_user_endpoints($endpoints) {
+        if (is_user_logged_in() && current_user_can('create_users')) {
+            return $endpoints;
+        }
+
+        if (isset($endpoints['/wp/v2/users'])) {
+            unset($endpoints['/wp/v2/users']);
+        }
+
+        if (isset($endpoints['/wp/v2/users/(?P<id>[\d]+)'])) {
+            unset($endpoints['/wp/v2/users/(?P<id>[\d]+)']);
+        }
+
+        return $endpoints;
+    }
+
+    public static function harden_tripzzy_settings($settings) {
+        if (is_array($settings)) {
+            $settings['create_user_on_booking'] = false;
+        }
+
+        return $settings;
+    }
+
+    public static function filter_tripzzy_new_user_data($new_user_data) {
+        $email = isset($new_user_data['user_email']) ? $new_user_data['user_email'] : '';
+        $login = isset($new_user_data['user_login']) ? $new_user_data['user_login'] : '';
+
+        if (self::is_blocked_email($email) || self::is_spam_content($login)) {
+            self::log_security_event('tripzzy_new_user_blocked', array(
+                'email' => $email,
+                'login' => $login,
+            ));
+
+            $new_user_data['user_email'] = '';
+            $new_user_data['user_login'] = '';
+        }
+
+        return $new_user_data;
+    }
+
+    public static function protect_tripzzy_enquiry() {
+        if (!self::check_rate_limit('tripzzy_enquiry')) {
+            wp_send_json_success(array('message' => 'OK'));
+        }
+
+        $full_name = isset($_POST['full_name']) ? sanitize_text_field(wp_unslash($_POST['full_name'])) : '';
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+        $message = isset($_POST['message']) ? sanitize_textarea_field(wp_unslash($_POST['message'])) : '';
+
+        if (self::is_spam_content($full_name) || self::is_spam_content($message)) {
+            wp_send_json_success(array('message' => 'OK'));
+        }
+
+        if (self::is_blocked_email($email)) {
+            wp_send_json_error(__('Adresse email invalide.', 'devis-pro'));
+        }
+
+        if (!self::check_honeypot($_POST)) {
+            wp_send_json_success(array('message' => 'OK'));
+        }
+
+        self::record_submission('tripzzy_enquiry');
+    }
 }
+
+Devis_Pro_Security::init_global_protection();
 

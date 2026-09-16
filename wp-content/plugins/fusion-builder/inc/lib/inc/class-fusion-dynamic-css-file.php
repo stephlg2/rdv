@@ -32,7 +32,7 @@ class Fusion_Dynamic_CSS_File {
 	public function __construct( $dynamic_css ) {
 
 		$this->dynamic_css = $dynamic_css;
-		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_dynamic_css' ], ( PHP_INT_MAX - 1 ) );
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_dynamic_css' ], 11 );
 
 		// Make sure file mode dynamic CSS is not created in backend.
 		if ( is_admin() ) {
@@ -158,9 +158,11 @@ class Fusion_Dynamic_CSS_File {
 		$c_page_id = fusion_library()->get_page_id();
 		$page_id   = ( $c_page_id ) ? $c_page_id : 'global';
 
-		$option             = get_option( 'fusion_dynamic_css_posts', [] );
+		$option = get_option( 'fusion_dynamic_css_posts', [] );
+		// Update the 'fusion_dynamic_css_time' option.
 		$option[ $page_id ] = true;
 		update_option( 'fusion_dynamic_css_posts', $option );
+		$this->dynamic_css->update_saved_time();
 
 		// Clean-up transient.
 		delete_transient( 'fusion_dynamic_css_' . $page_id );

@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			private $map_id;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Whether the nonces script has already been added for the map.
 			 *
 			 * @static
@@ -56,14 +65,12 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				return [
 					'api_type'                 => ( '' !== $fusion_settings->get( 'google_map_api_type' ) ) ? $fusion_settings->get( 'google_map_api_type' ) : 'js',
 					'embed_address'            => '',
 					'embed_map_type'           => '',
-					'margin_top'               => '',
-					'margin_bottom'            => '',
 					'hide_on_mobile'           => fusion_builder_default_visibility( 'string' ),
 					'class'                    => '',
 					'id'                       => '',
@@ -113,7 +120,7 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'primary_color'    => $fusion_settings->get( 'primary_color' ),
 					'theme_icon'       => plugins_url( 'images/avada_map_marker.png', dirname( __FILE__ ) ),
@@ -149,15 +156,15 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				if ( ! $fusion_settings->get( 'status_gmap' ) ) {
 					return '';
 				}
 
-				$this->defaults = self::get_element_defaults();
-				$defaults       = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_map' );
-				$content        = apply_filters( 'fusion_shortcode_content', $content, 'fusion_map', $args );
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_map' );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_map', $args );
 
 				$defaults['width']  = FusionBuilder::validate_shortcode_attr_value( $defaults['width'], 'px' );
 				$defaults['height'] = FusionBuilder::validate_shortcode_attr_value( $defaults['height'], 'px' );
@@ -189,7 +196,7 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			 * @return string The needed map data.
 			 */
 			public function use_embed_api() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				$html          = '';
 				$api_key       = apply_filters( 'fusion_google_maps_api_key', $fusion_settings->get( 'gmap_api' ) );
@@ -197,8 +204,8 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 				$lang_code     = fusion_get_google_maps_language_code();
 
 				$html .= '<iframe width="' . $this->args['width'] . '" height="' . $this->args['height'] . '" frameborder="0" style="border:0" src="https://www.google.com/maps/embed/v1/place?key=' . $api_key . '&language=' . $lang_code . '&q=' . $embed_address . '&maptype=' . $this->args['embed_map_type'] . '&zoom=' . $this->args['zoom'] . '" allowfullscreen></iframe>';
-				$html  = fusion_library()->images->apply_global_selected_lazy_loading_to_iframe( $html );
-				$html  = '<div ' . FusionBuilder::attributes( 'google-map-shortcode' ) . '>' . $html . '</div>';
+
+				$html = '<div ' . FusionBuilder::attributes( 'google-map-shortcode' ) . '>' . $html . '</div>';
 
 				return $html;
 			}
@@ -211,7 +218,7 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			 * @return string The needed map data.
 			 */
 			public function use_static_api() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				$html = '';
 
@@ -268,7 +275,7 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 
 					$lang_code = fusion_get_google_maps_language_code();
 
-					$html .= '<img width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '" src="' . esc_url( 'https://maps.googleapis.com/maps/api/staticmap?key=' . $api_key . '&language=' . $lang_code . '&center=' . $addresses_array[0] . '&maptype=' . $this->args['type'] . '&zoom=' . $this->args['zoom'] . '&size=' . $width . 'x' . $height . '&markers=' . implode( '&markers=', $markers ) ) . $style . '&scale=2">';
+					$html .= '<img width="' . esc_attr( $width ) . '" height="' . esc_attr( $height ) . '" src="' . esc_url( 'https://maps.googleapis.com/maps/api/staticmap?key=' . $api_key . '&language=' . $lang_code . '&center=' . $addresses_array[0] . '&maptype=' . $this->args['type'] . '&zoom=' . $this->args['zoom'] . '&size=' . $width . 'x' . $height . '&markers=' . implode( '&markers=', $markers ) ) . $style . '&scale=2">';
 
 					$html = '<div ' . FusionBuilder::attributes( 'google-map-shortcode' ) . '>' . $html . '</div>';
 				}
@@ -285,16 +292,9 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			 * @return string The needed map data.
 			 */
 			public function use_js_api() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
-				$icon                     = $this->args['icon'];
-				$infobox_background_color = $this->args['infobox_background_color'];
-				$overlay_color            = $this->args['overlay_color'];
-				$infobox                  = $this->args['infobox'];
-				$address                  = $this->args['address'];
-				$infobox_content          = $this->args['infobox_content'];
-				$map_style                = $this->args['map_style'];
-				$animation                = $this->args['animation'];
+				extract( $this->args );
 
 				$html = '';
 
@@ -327,12 +327,12 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 						$infobox_background_color = 'rgba(' . $infobox_background_color[0] . ', ' . $infobox_background_color[1] . ', ' . $infobox_background_color[2] . ', 0.8)';
 						$brightness_level         = Fusion_Color::new_color( $overlay_color )->brightness;
 
-						$this->args['infobox_text_color'] = '#747474';
+						$infobox_text_color = '#747474';
 						if ( $brightness_level > 140 ) {
-							$this->args['infobox_text_color'] = '#fff';
+							$infobox_text_color = '#fff';
 						}
 					} elseif ( 'custom' === $map_style ) {
-						if ( Fusion_Color::new_color( $overlay_color )->is_color_transparent() ) {
+						if ( fusion_is_color_transparent( $overlay_color ) ) {
 							$overlay_color = '';
 						}
 					}
@@ -398,7 +398,7 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 							'infobox_content' => html_entity_decode( $this->args['infobox_content'][ $key ] ),
 						];
 
-						if ( array_key_exists( $key, $icon_array ) ) {
+						if ( isset( $icon_array ) && array_key_exists( $key, $icon_array ) ) {
 							$json_addresses[ $key ]['marker'] = $icon_array[ $key ];
 						}
 
@@ -455,18 +455,18 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 								animations: <?php echo ( 'yes' === $animation ) ? 'true' : 'false'; ?>,
 								infobox_background_color: '<?php echo $infobox_background_color; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
 								infobox_styling: '<?php echo $infobox; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
-								infobox_text_color: '<?php echo $this->args['infobox_text_color']; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
+								infobox_text_color: '<?php echo $infobox_text_color; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
 								map_style: '<?php echo $map_style; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
-								map_type: '<?php echo $this->args['type']; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
+								map_type: '<?php echo $type; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
 								marker_icon: '<?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
 								overlay_color: '<?php echo $overlay_color; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
 								overlay_color_hsl: <?php echo wp_json_encode( $overlay_color_hsl ); ?>,
-								pan_control: <?php echo ( 'yes' === $this->args['zoom_pancontrol'] ) ? 'true' : 'false'; ?>,
-								show_address: <?php echo ( 'yes' === $this->args['popup'] ) ? 'true' : 'false'; ?>,
-								scale_control: <?php echo ( 'yes' === $this->args['scale'] ) ? 'true' : 'false'; ?>,
-								scrollwheel: <?php echo ( 'yes' === $this->args['scrollwheel'] ) ? 'true' : 'false'; ?>,
-								zoom: <?php echo $this->args['zoom']; // phpcs:ignore WordPress.Security.EscapeOutput ?>,
-								zoom_control: <?php echo ( 'yes' === $this->args['zoom_pancontrol'] ) ? 'true' : 'false'; ?>,
+								pan_control: <?php echo ( 'yes' === $zoom_pancontrol ) ? 'true' : 'false'; ?>,
+								show_address: <?php echo ( 'yes' === $popup ) ? 'true' : 'false'; ?>,
+								scale_control: <?php echo ( 'yes' === $scale ) ? 'true' : 'false'; ?>,
+								scrollwheel: <?php echo ( 'yes' === $scrollwheel ) ? 'true' : 'false'; ?>,
+								zoom: <?php echo $zoom; // phpcs:ignore WordPress.Security.EscapeOutput ?>,
+								zoom_control: <?php echo ( 'yes' === $zoom_pancontrol ) ? 'true' : 'false'; ?>,
 							});
 						}
 
@@ -496,7 +496,6 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 					$this->args['hide_on_mobile'],
 					[
 						'class' => 'shortcode-map fusion-google-map',
-						'style' => $this->get_style_vars(),
 					]
 				);
 
@@ -512,26 +511,12 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 					$attr['id'] = $this->args['id'];
 				}
 
-				return $attr;
-			}
-
-			/**
-			 * Get style vars.
-			 *
-			 * @return string
-			 */
-			public function get_style_vars() {
-				$css_vars_options = [
-					'margin_top',
-					'margin_bottom',
-				];
-
 				if ( 'js' === $this->args['api_type'] ) {
-					$css_vars_options[] = 'height';
-					$css_vars_options[] = 'width';
+					$attr['style'] = 'height:' . $this->args['height'] . ';width:' . $this->args['width'] . ';';
 				}
 
-				return $this->get_css_vars_for_options( $css_vars_options );
+				return $attr;
+
 			}
 
 			/**
@@ -541,10 +526,11 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 			 * @since 1.0
 			 * @param string $address The address we want to geo-locate.
 			 * @param bool   $force_refresh Whether we want to force-refresh the geolocating or not.
-			 * @return string|array|null
+			 * @return string|array
 			 */
 			public function get_coordinates( $address, $force_refresh = false ) {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				$key          = $fusion_settings->get( 'google_console_api_key' );
 				$data         = '';
@@ -573,13 +559,13 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 					$response = wp_remote_get( $url );
 
 					if ( is_wp_error( $response ) ) {
-						return null;
+						return;
 					}
 
 					$data = wp_remote_retrieve_body( $response );
 
-					if ( '' === $data ) {
-						return null;
+					if ( is_wp_error( $data ) ) {
+						return;
 					}
 
 					if ( 200 === $response['response']['code'] || '200' === $response['response']['code'] ) {
@@ -686,7 +672,7 @@ if ( fusion_is_element_enabled( 'fusion_map' ) ) {
 					FUSION_LIBRARY_URL . '/assets/min/js/general/fusion-google-map.js',
 					FUSION_LIBRARY_PATH . '/assets/min/js/general/fusion-google-map.js',
 					[ 'jquery-fusion-maps' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 			}
@@ -723,7 +709,7 @@ function fusion_element_google_map() {
 				'icon'       => 'fusiona-map',
 				'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-google-map-preview.php',
 				'preview_id' => 'fusion-builder-block-module-google-map-preview-template',
-				'help_url'   => 'https://avada.com/documentation/google-map-element/',
+				'help_url'   => 'https://theme-fusion.com/documentation/fusion-builder/elements/google-map-element/',
 				'params'     => [
 					[
 						'type'        => 'radio_button_set',
@@ -740,13 +726,12 @@ function fusion_element_google_map() {
 						'default'     => '',
 					],
 					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Address', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Add the address of the location you wish to display. Address example: 775 New York Ave, Brooklyn, Kings, New York 11203. If the location is off, please try to use long/lat coordinates. ex: 12.381068,-1.492711.', 'fusion-builder' ),
-						'param_name'   => 'embed_address',
-						'dynamic_data' => true,
-						'value'        => '',
-						'dependency'   => [
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Address', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add the address of the location you wish to display. Address example: 775 New York Ave, Brooklyn, Kings, New York 11203. If the location is off, please try to use long/lat coordinates. ex: 12.381068,-1.492711.', 'fusion-builder' ),
+						'param_name'  => 'embed_address',
+						'value'       => '',
+						'dependency'  => [
 							[
 								'element'  => 'api_type',
 								'value'    => 'js',
@@ -1171,14 +1156,6 @@ function fusion_element_google_map() {
 								'value'    => 'embed',
 								'operator' => '!=',
 							],
-						],
-					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_bottom' => '',
 						],
 					],
 					[

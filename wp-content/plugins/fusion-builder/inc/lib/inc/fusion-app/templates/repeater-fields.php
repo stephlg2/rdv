@@ -46,12 +46,6 @@
 				'radio_button_set',
 				'multiple_select',
 				'ajax_select',
-				'iconpicker',
-				'repeater',
-				'mailchimp_map',
-				'hubspot_map',
-				'hubspot_consent_map',
-				'range',
 			];
 
 			// Redux on left, template on right.

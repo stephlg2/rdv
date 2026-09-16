@@ -14,7 +14,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @since 3.2
 			 * @return {Object}
 			 */
-			bgImageSeparators: [ 'grunge', 'music', 'waves_brush', 'paper', 'squares', 'circles', 'paint', 'grass', 'splash', 'custom' ],
+			bgImageSeparators: [ 'grunge', 'music', 'waves_brush', 'paper', 'squares', 'circles', 'paint', 'grass' ],
 
 			/**
 			 * Runs after view DOM is patched.
@@ -62,8 +62,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.attrButton       = this.buildButtonAtts( atts.values );
 				attributes.attrRoundedSplit = this.buildRoundedSplitAtts( atts.values );
 				attributes.values           = atts.values;
-				attributes.custom_svg       = atts.values.custom_svg ? this.getCustomSvg( atts.values ).svg : '';
-				attributes.spacerHeight		= this.spacerHeight( atts.values );
 
 				return attributes;
 			},
@@ -91,8 +89,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} else if ( 'waves_opacity' === values.divider_type ) {
 					values.yMin = 'top' === values.divider_candy ? '0' : '1';
 				}
-
-				values.add_boxed_markup = false;
 			},
 
 			/**
@@ -105,8 +101,24 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAtts: function( values ) {
 				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-section-separator section-separator ' + values.divider_type + ' fusion-section-separator-' + this.model.get( 'cid' ),
-						style: this.getStyleVars( values )
+						style: ''
 					} );
+
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + _.fusionGetValueWithUnit( values.margin_top ) + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + _.fusionGetValueWithUnit( values.margin_right ) + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + _.fusionGetValueWithUnit( values.margin_bottom ) + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + _.fusionGetValueWithUnit( values.margin_left ) + ';';
+				}
 
 				if ( 'rounded-split' === values.divider_type ) {
 					attr[ 'class' ] += ' rounded-split-separator';
@@ -120,244 +132,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr.id = values.id;
 				}
 
-				// If we are in studio, and color is global var.
-				if ( 'undefined' !== typeof window.awbOriginalPalette && values.backgroundcolor.includes( '--' ) ) {
-					attr[ 'data-var' ]     = values.backgroundcolor;
-					attr[ 'data-color' ]   = window.awbPalette.getRealColor( values.backgroundcolor ).replaceAll( ' ', '' );
-				}
-
 				return attr;
-			},
-
-			getStyleVars: function( values ) {
-				var cssVars             = [],
-					customCssVars       = {},
-					self                = this,
-					hundredPxSeparators = [ 'slant', 'bigtriangle', 'curved', 'big-half-circle', 'clouds' ];
-				this.values = values;
-
-				// Border.
-				if ( 'triangle' === values.divider_type ) {
-					if ( '' !== values.bordercolor ) {
-						if ( 'bottom' === values.divider_candy || 'top' === values.divider_candy ) {
-							customCssVars[ 'border_' + values.divider_candy ] = values.bordersize + ' solid ' + values.bordercolor + ';';
-						} else if ( -1 !== values.divider_candy.indexOf( 'top' ) && -1 !== values.divider_candy.indexOf( 'bottom' ) ) {
-							customCssVars.border = values.bordersize + ' solid ' + values.bordercolor + ';';
-						}
-					}
-				}
-
-				// Spacer height/padding-top.
-				if ( -1 !== jQuery.inArray( values.divider_type, hundredPxSeparators ) ) {
-					customCssVars[ 'spacer-height' ] = '99px';
-				} else if ( 'triangle' === values.divider_type ) {
-					if ( values.bordercolor ) {
-						if ( 'bottom' === values.divider_candy || 'top' === values.divider_candy ) {
-							customCssVars[ 'spacer-height' ] = values.bordersize;
-						} else if ( -1 !== values.divider_candy.indexOf( 'top' ) && -1 !== values.divider_candy.indexOf( 'bottom' ) ) {
-							customCssVars[ 'spacer-height' ] = 'calc( ' + values.bordersize + ' * 2 )';
-						}
-					}
-				} else if ( 'rounded-split' === values.divider_type ) {
-					customCssVars[ 'spacer-height' ] = '71px';
-				} else if ( 'hills_opacity' === values.divider_type ) {
-					customCssVars[ 'spacer-padding-top' ] = ( 182 / 1024 * 100 ) + '%';
-				} else if ( 'hills' === values.divider_type ) {
-					customCssVars[ 'spacer-padding-top' ] = ( 107 / 1024 * 100 ) + '%';
-				} else if ( 'horizon' === values.divider_type ) {
-					customCssVars[ 'spacer-padding-top' ] = ( 178 / 1024 * 100 ) + '%';
-				} else if ( 'waves_opacity' === values.divider_type ) {
-					customCssVars[ 'spacer-padding-top' ] = ( 216 / 1024 * 100 ) + '%';
-				} else if ( 'waves' === values.divider_type ) {
-					customCssVars[ 'spacer-padding-top' ] = ( 162 / 1024 * 100 ) + '%';
-				} else if ( -1 !== jQuery.inArray( values.divider_type, this.bgImageSeparators ) ) {
-					const defaultSepHeight = 'custom' === values.divider_type && values.custom_svg ? this.getCustomSvg( values ).height : this._getDefaultSepHeight()[ values.divider_type ];
-					const height = '' === values.divider_height && 1 < values.divider_repeat ? ( parseInt( defaultSepHeight ) / values.divider_repeat ) + 'px' : defaultSepHeight; // Aspect ratio height.
-					customCssVars[ 'spacer-height' ] = height;
-				}
-
-				// Hide spacer if 100% width template && 1/1 column.
-				const parentColumnView   = FusionPageBuilderApp.getParentColumn( this );
-				const parentColumnValues = 'undefined' !== typeof parentColumnView.values ? parentColumnView.values : {};
-				const extras             = jQuery.extend( true, {}, fusionAllElements.fusion_section_separator.extras );
-				if ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && 'undefined' !== typeof parentColumnValues.type && '1_1' === parentColumnValues.type && 'wide' !== extras.layout ) {
-					customCssVars[ 'spacer-display' ] = 'none';
-				}
-
-				const parentContainernView  = FusionPageBuilderApp.getParentContainer( this );
-				const parentContainerValues = 'undefined' !== typeof parentContainernView.values ? parentContainernView.values : {};
-				if ( _.isObject( parentColumnValues ) ) {
-					if ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && '1_1' === parentColumnValues.type ) {
-						if ( 'boxed' === extras.layout && _.isObject( parentContainerValues ) ) {
-							values.add_boxed_markup = true;
-							customCssVars[ 'section-separator-pos' ] = 'relative';
-
-							_.each( [ 'large', 'medium', 'small' ], function( size ) {
-								const varSize = ( 'large' === size ? '' : '_' + size );
-
-								if ( 'undefined' !== typeof parentContainerValues[ 'padding_left' + varSize ] && 'undefined' !== typeof parentContainerValues[ 'padding_right' + varSize ] && ! _.isEmpty( parentContainerValues[ 'padding_left' + varSize ] ) && ! _.isEmpty( parentContainerValues[ 'padding_right' + varSize ] ) && -1 !== parentContainerValues[ 'padding_left' + varSize ].indexOf( '%' ) && -1 !== parentContainerValues[ 'padding_right' + varSize ].indexOf( '%' ) ) {
-									const margin = parseFloat( parentContainerValues[ 'padding_left' + varSize ] ) + parseFloat( parentContainerValues[ 'padding_right' + varSize ] );
-									const scale  = ( 100 - margin ) / 100;
-
-									customCssVars[ 'svg-margin-left' + varSize ] = '-' + ( parseFloat( parentContainerValues[ 'padding_left' + varSize ] ) / scale ) + '%';
-									customCssVars[ 'svg-margin-right' + varSize ] = '-' + ( parseFloat( parentContainerValues[ 'padding_right' + varSize ] ) / scale ) + '%';
-								} else {
-									if ( 'undefined' !== typeof parentContainerValues[ 'padding_left' + varSize ] && ! _.isEmpty( parentContainerValues[ 'padding_left' + varSize ] ) ) {
-										customCssVars[ 'svg-margin-left' + varSize ] = '-' + parentContainerValues[ 'padding_left' + varSize ];
-									}
-
-									if ( 'undefined' !== typeof parentContainerValues[ 'padding_right' + varSize ] && ! _.isEmpty( parentContainerValues[ 'padding_right' + varSize ] ) ) {
-										customCssVars[ 'svg-margin-right' + varSize ] = '-' + parentContainerValues[ 'padding_right' + varSize ];
-									}
-
-								}
-							} );
-
-						}
-					}
-				}
-
-				if ( _.isObject( parentColumnValues ) ) {
-					if ( ! ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && 'boxed' === extras.layout ) ) {
-						if ( '1_1' !== parentColumnValues.type ) {
-							const columnOuterWidth      = jQuery( parentColumnView.$el ).width();
-							const columnWidth           = jQuery( parentColumnView.$el ).children( '.fusion-column-wrapper' ).width();
-							_.each( [ 'large', 'medium', 'small' ], function( size ) {
-								const varSize = ( 'large' === size ? '' : '_' + size );
-
-								if ( ! _.isEmpty( parentColumnValues[ 'padding_left' + varSize ] ) ) {
-									let paddingValueLeft = parentColumnValues[ 'padding_left' + varSize ];
-									let paddingValueRight = parentColumnValues[ 'padding_right' + varSize ];
-
-									if ( -1 !== paddingValueLeft.indexOf( '%' ) ) {
-										paddingValueLeft = ( parseFloat( paddingValueLeft.replace( '%', '' ) ) / ( columnWidth / columnOuterWidth ) ) + '%';
-									}
-
-									if ( -1 !== paddingValueRight.indexOf( '%' ) ) {
-										paddingValueRight = ( parseFloat( paddingValueRight.replace( '%', '' ) ) / ( columnWidth / columnOuterWidth ) ) + '%';
-									}
-
-									customCssVars[ 'svg-margin-right' + varSize ] = '-' + paddingValueLeft;
-									customCssVars[ 'svg-margin-left' + varSize ]  = '-' + paddingValueRight;
-								}
-							} );
-						}
-					}
-
-				}
-
-				const dividerHeightArr = [];
-				if ( _.isObject( parentColumnValues ) ) {
-
-					// Check for custom height.
-					_.each( [ 'large', 'medium', 'small' ], function( responsiveSize ) {
-						var varSize = ( 'large' === responsiveSize ? '' : '_' + responsiveSize );
-						var key = 'divider_height' + varSize;
-
-						// Skip for specific type.
-						if ( 'triangle' === values.divider_type || 'rounded-split' === values.divider_type ) {
-							return;
-						}
-
-						// Check for flex.
-						if ( ! self.flexDisplay() && 'large' !== responsiveSize ) {
-							return;
-						}
-
-						let dividerHeight = values[ key ];
-
-						if ( '' === dividerHeight && -1 !== jQuery.inArray( values.divider_type, hundredPxSeparators ) && 'large' === responsiveSize ) {
-							dividerHeight = '99px';
-						}
-
-						// Check for empty value.
-						if ( '' === dividerHeight ) {
-							return;
-						}
-
-						dividerHeightArr[ key ]                     = dividerHeight;
-						customCssVars[ key ]                        = dividerHeight;
-						customCssVars[ 'spacer-height' + varSize ]  = dividerHeight;
-						customCssVars[ 'spacer-padding-top' ] = 'inherit';
-					} );
-				}
-
-				if ( _.isObject( parentColumnValues ) ) {
-					// Background Repeat.
-					_.each( [ 'large', 'medium', 'small' ], function( responsiveSize ) {
-						var varSize = ( 'large' === responsiveSize ? '' : '_' + responsiveSize ),
-							key = 'divider_repeat' + varSize,
-							keyDividerH = 'divider_height' + varSize,
-							height;
-
-						// Only allow for SVG Background type.
-						if ( -1 === jQuery.inArray( values.divider_type, self.bgImageSeparators ) ) {
-							return;
-						}
-
-						// Check for flex.
-						if ( ! self.flexDisplay() && 'large' !== responsiveSize ) {
-							return;
-						}
-
-						// Check for empty value.
-						if ( '' === values[ key ] ) {
-							return;
-						}
-
-						self.dynamic_css  = {};
-
-
-						height = '' !== values[ keyDividerH ] ? values[ keyDividerH ] : self.getDividerHeightResponsive( keyDividerH, dividerHeightArr );
-						height = '' === values[ keyDividerH ] && 1 < values[ key ] ? ( parseInt( height ) / values[ key ] ) + 'px' : height; // Aspect ratio height.
-
-						if ( _.contains( height, '%' ) ) {
-							customCssVars[ 'bg-size' + varSize ] = parseFloat( 100 / values[ key ] ) + '% 100%';
-						} else {
-							height = 0 < parseInt( height ) ? height : '100%';
-							customCssVars[ 'bg-size' + varSize ] = parseFloat( 100 / values[ key ] ) + '% ' + height;
-						}
-					} );
-				}
-
-				// Margin.
-				cssVars.margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_left = { 'callback': _.fusionGetValueWithUnit };
-
-				if ( 'bigtriangle' === values.divider_type || 'slant' === values.divider_type || 'big-half-circle' === values.divider_type || 'clouds' === values.divider_type || 'curved' === values.divider_type ) {
-					customCssVars[ 'sep-padding' ] = '0';
-					customCssVars[ 'svg-padding' ] = '0';
-				} else if ( 'horizon' === values.divider_type || 'waves' === values.divider_type || 'waves_opacity' === values.divider_type || 'hills' === values.divider_type || 'hills_opacity' === values.divider_type ) {
-					customCssVars[ 'sep-font-size' ]   = '0';
-					customCssVars[ 'sep-line-height' ] = '0';
-				}
-
-				if ( 'slant' === values.divider_type && 'bottom' === values.divider_candy ) {
-					customCssVars[ 'svg-tag-margin-bottom' ]   = '-3px';
-					customCssVars[ 'sep-svg-display' ] = 'block';
-				}
-
-				if ( 'triangle' === values.divider_type ) {
-					if ( ! values.icon_color ) {
-						values.icon_color = values.bordercolor;
-					}
-
-					customCssVars.icon_color = values.icon_color;
-
-					if ( 1 < values.borderSizeWithoutUnits ) {
-						if ( 'bottom' === values.divider_candy ) {
-							customCssVars[ 'icon-top' ]    = 'auto';
-							customCssVars[ 'icon-bottom' ] = '-' + ( values.borderSizeWithoutUnits + 10 ) + 'px';
-						} else if ( 'top' === values.divider_candy ) {
-							customCssVars[ 'icon-top' ] = '-' + ( values.borderSizeWithoutUnits + 10 ) + 'px';
-						}
-					}
-				}
-
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCssVars );
 			},
 
 			/**
@@ -371,19 +146,218 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var attr = {
 						class: 'fusion-section-separator-svg'
 					},
+					parentContainernView  = FusionPageBuilderApp.getParentContainer( this ),
+					parentContainerValues = 'undefined' !== typeof parentContainernView.values ? parentContainernView.values : {},
 					parentColumnView      = FusionPageBuilderApp.getParentColumn( this ),
 					parentColumnValues    = 'undefined' !== typeof parentColumnView.values ? parentColumnView.values : {},
 					extras                = jQuery.extend( true, {}, fusionAllElements.fusion_section_separator.extras ),
-					parentContainernView  = FusionPageBuilderApp.getParentContainer( this ),
-					parentContainerValues = 'undefined' !== typeof parentContainernView.values ? parentContainernView.values : {};
+					self                  = this,
+					paddingValueLeft      = '',
+					paddingValueRight     = '',
+					columnOuterWidth      = jQuery( parentColumnView.$el ).width(),
+					columnWidth           = jQuery( parentColumnView.$el ).children( '.fusion-column-wrapper' ).width(),
+					dividerHeightArr      = [],
+					selectors;
 
-				values.additional_styles = '';
-
-				if ( _.isObject( parentColumnValues ) ) {
-					if ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && '1_1' === parentColumnValues.type && ( 'boxed' !== extras.layout || ! _.isObject( parentContainerValues ) ) ) {
-						attr[ 'class' ] += ' fusion-section-separator-fullwidth';
+					if ( 'triangle' === values.divider_type ) {
+						if ( '' !== values.bordercolor ) {
+							if ( 'bottom' === values.divider_candy ) {
+								attr.style = 'border-bottom:' + values.bordersize + ' solid ' + values.bordercolor + ';';
+							} else if ( 'top' === values.divider_candy ) {
+								attr.style = 'border-top:' + values.bordersize + ' solid ' + values.bordercolor + ';';
+							} else if ( -1 !== values.divider_candy.indexOf( 'top' ) && -1 !== values.divider_candy.indexOf( 'bottom' ) ) {
+								attr.style = 'border:' + values.bordersize + ' solid ' + values.bordercolor + ';';
+							}
+						}
+					} else if ( 'bigtriangle' === values.divider_type || 'slant' === values.divider_type || 'big-half-circle' === values.divider_type || 'clouds' === values.divider_type || 'curved' === values.divider_type ) {
+						attr.style = 'padding:0;';
+					} else if ( 'horizon' === values.divider_type || 'waves' === values.divider_type || 'waves_opacity' === values.divider_type || 'hills' === values.divider_type || 'hills_opacity' === values.divider_type ) {
+						attr.style = 'font-size:0;line-height:0;';
 					}
-				}
+
+					values.additional_styles = '';
+
+					if ( _.isObject( parentColumnValues ) ) {
+						if ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && '1_1' === parentColumnValues.type ) {
+							if ( 'boxed' === extras.layout && _.isObject( parentContainerValues ) ) {
+								_.each( [ 'large', 'medium', 'small' ], function( size ) {
+									if ( 'large' === size ) {
+										values.additional_styles += '.fusion-section-separator-' + self.model.get( 'cid' ) + ' .fusion-section-separator-svg {';
+										values.additional_styles += 'position: relative;';
+										values.additional_styles += 'margin-left:-' + parentContainerValues.padding_left + ';';
+										values.additional_styles += 'margin-right:-' + parentContainerValues.padding_right + ';';
+										values.additional_styles += '}';
+									} else if ( ( 'undefined' !== typeof parentContainerValues[ 'padding_left_' + size ] && ! _.isEmpty( parentContainerValues[ 'padding_left_' + size ] ) ) || ( 'undefined' !== typeof parentContainerValues[ 'padding_right_' + size ] && ! _.isEmpty( parentContainerValues[ 'padding_right_' + size ] ) ) ) {
+										// Medium and Small size screen styles.
+										values.additional_styles += '@media only screen and (max-width:' + extras[ 'visibility_' + size ] + 'px) {';
+										values.additional_styles += '.fusion-section-separator-' + self.model.get( 'cid' ) + ' .fusion-section-separator-svg {';
+										values.additional_styles += 'margin-left:-' + parentContainerValues[ 'padding_left_' + size ] + ';';
+										values.additional_styles += 'margin-right:-' + parentContainerValues[ 'padding_right_' + size ] + ';';
+										values.additional_styles += '}';
+										values.additional_styles += '}';
+									}
+								} );
+
+							} else {
+								attr[ 'class' ] += ' fusion-section-separator-fullwidth';
+							}
+						}
+						if ( ! ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && 'boxed' === extras.layout ) ) {
+							if ( '1_1' === parentColumnValues.type ) {
+								if ( 'undefined' !== typeof parentColumnValues.upsized_spacing_left && 'undefined' !== typeof parentColumnValues.upsized_spacing_left_medium && 'undefined' !== typeof parentColumnValues.upsized_spacing_left_small ) {
+									_.each( [ 'large', 'medium', 'small' ], function( size ) {
+										if ( 'large' === size ) {
+											if ( ! _.isEmpty( parentColumnValues.upsized_spacing_left ) ) {
+												values.additional_styles += '.fusion-section-separator-' + self.model.get( 'cid' ) + ' .fusion-section-separator-svg {';
+												values.additional_styles += 'margin-left:-' + parentColumnValues.upsized_spacing_left + ';';
+												values.additional_styles += 'margin-right:-' + parentColumnValues.upsized_spacing_right + ';';
+												values.additional_styles += '}';
+											}
+										} else if ( ! _.isEmpty( parentColumnValues[ 'upsized_spacing_left_' + size ] ) ) {
+											// Medium and Small size screen styles.
+											values.additional_styles += '@media only screen and (max-width:' + extras[ 'visibility_' + size ] + 'px) {';
+											values.additional_styles += '.fusion-section-separator-' + self.model.get( 'cid' ) + ' .fusion-section-separator-svg {';
+											values.additional_styles += 'margin-left:-' + parentColumnValues[ 'upsized_spacing_left_' + size ] + ' !important;';
+											values.additional_styles += 'margin-right:-' + parentColumnValues[ 'upsized_spacing_right_' + size ] +  ' !important;';
+											values.additional_styles += '}';
+											values.additional_styles += '}';
+										}
+									} );
+								}
+							} else {
+								_.each( [ 'large', 'medium', 'small' ], function( size ) {
+									if ( 'large' === size ) {
+										if ( ! _.isEmpty( parentColumnValues.padding_left ) ) {
+											paddingValueLeft = parentColumnValues.padding_left;
+											if ( -1 !== paddingValueLeft.indexOf( '%' ) ) {
+												paddingValueLeft = ( parseFloat( paddingValueLeft.replace( '%', '' ) ) / ( columnWidth / columnOuterWidth ) ) + '%';
+											}
+
+											paddingValueRight = parentColumnValues.padding_right;
+											if ( -1 !== paddingValueRight.indexOf( '%' ) ) {
+												paddingValueRight = ( parseFloat( paddingValueRight.replace( '%', '' ) ) / ( columnWidth / columnOuterWidth ) ) + '%';
+											}
+
+											values.additional_styles += '.fusion-section-separator-' + self.model.get( 'cid' ) + ' .fusion-section-separator-svg {';
+											values.additional_styles += 'margin-left:-' + paddingValueLeft + ';';
+											values.additional_styles += 'margin-right:-' + paddingValueRight + ';';
+											values.additional_styles += '}';
+										}
+									} else if ( ! _.isEmpty( parentColumnValues[ 'padding_left_' + size ] ) ) {
+										// Medium and Small size screen styles.
+
+										paddingValueLeft = parentColumnValues[ 'padding_left_' + size ];
+										if ( -1 !== paddingValueLeft.indexOf( '%' ) ) {
+											paddingValueLeft = ( parseFloat( paddingValueLeft.replace( '%', '' ) ) / ( columnWidth / columnOuterWidth ) ) + '%';
+										}
+
+										paddingValueRight = parentColumnValues[ 'padding_right_' + size ];
+										if ( -1 !== paddingValueRight.indexOf( '%' ) ) {
+											paddingValueRight = ( parseFloat( paddingValueRight.replace( '%', '' ) ) / ( columnWidth / columnOuterWidth ) ) + '%';
+										}
+
+										values.additional_styles += '@media only screen and (max-width:' + extras[ 'visibility_' + size ] + 'px) {';
+										values.additional_styles += '.fusion-section-separator-' + self.model.get( 'cid' ) + ' .fusion-section-separator-svg {';
+										values.additional_styles += 'margin-left:-' + paddingValueLeft + ' !important;';
+										values.additional_styles += 'margin-right:-' + paddingValueRight +  ' !important;';
+										values.additional_styles += '}';
+										values.additional_styles += '}';
+									}
+								} );
+							}
+						}
+
+						// Check for custom height.
+						this.baseSelector = '.fusion-section-separator.fusion-section-separator-' + this.model.get( 'cid' );
+						_.each( [ 'large', 'medium', 'small' ], function( responsiveSize ) {
+							var key = 'divider_height' + ( 'large' === responsiveSize ? '' : '_' + responsiveSize ),
+								media;
+
+							// Skip for specific type.
+							if ( 'triangle' === values.divider_type || 'rounded-split' === values.divider_type ) {
+								return;
+							}
+
+							// Check for flex.
+							if ( ! self.flexDisplay() && 'large' !== responsiveSize ) {
+								return;
+							}
+
+							// Check for empty value.
+							if ( '' === values[ key ] ) {
+								return;
+							}
+
+							dividerHeightArr[ key ] = values[ key ];
+							self.dynamic_css  = {};
+							media = 'large' === responsiveSize ? '' : '@media only screen and (max-width:' + extras[ 'visibility_' + responsiveSize ] + 'px)';
+
+							// Generate style rules.
+							selectors = [
+								self.baseSelector + ' .fusion-section-separator-svg svg',
+								self.baseSelector + ' .fusion-section-separator-svg-bg'
+							];
+							self.addCssProperty( selectors, 'height', values[ key ] );
+							selectors = [ self.baseSelector + ' .fusion-section-separator-spacer-height' ];
+							self.addCssProperty( selectors, 'height', values[ key ] + ' !important' );
+							self.addCssProperty( selectors, 'padding-top', 'inherit !important' );
+
+							if ( 'large' === responsiveSize ) {
+								values.additional_styles += self.parseCSS();
+							} else {
+								values.additional_styles += media + '{' + self.parseCSS() + '}';
+							}
+
+						} );
+
+						// Background Repeat.
+						_.each( [ 'large', 'medium', 'small' ], function( responsiveSize ) {
+							var key = 'divider_repeat' + ( 'large' === responsiveSize ? '' : '_' + responsiveSize ),
+								keyDividerH = 'divider_height' + ( 'large' === responsiveSize ? '' : '_' + responsiveSize ),
+								media,
+								height,
+								value;
+
+							// Only allow for SVG Background type.
+							if ( -1 === jQuery.inArray( values.divider_type, self.bgImageSeparators ) ) {
+								return;
+							}
+
+							// Check for flex.
+							if ( ! self.flexDisplay() && 'large' !== responsiveSize ) {
+								return;
+							}
+
+							// Check for empty value.
+							if ( '' === values[ key ] ) {
+								return;
+							}
+
+							self.dynamic_css  = {};
+							media = 'large' === responsiveSize ? '' : '@media only screen and (max-width:' + extras[ 'visibility_' + responsiveSize ] + 'px)';
+
+							height = '' !== values[ keyDividerH ] ? values[ keyDividerH ] : self.getDividerHeightResponsive( keyDividerH, dividerHeightArr );
+							height = '' === values[ keyDividerH ] && 1 < values[ key ] ? ( parseInt( height ) / values[ key ] ) + 'px' : height; // Aspect ratio height.
+
+							selectors = [ self.baseSelector + ' .fusion-section-separator-svg-bg' ];
+
+							if ( _.contains( height, '%' ) ) {
+								value = parseFloat( 100 / values[ key ] ) + '% 100%';
+							} else {
+								height = 0 < parseInt( height ) ? height : '100%';
+								value  = parseFloat( 100 / values[ key ] ) + '% ' + height;
+							}
+							self.addCssProperty( selectors, 'background-size', value );
+
+							if ( 'large' === responsiveSize ) {
+								values.additional_styles += self.parseCSS();
+							} else {
+								values.additional_styles += media + '{' + self.parseCSS() + '}';
+							}
+
+						} );
+
+					}
 
 				return attr;
 			},
@@ -404,8 +378,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					extras             = jQuery.extend( true, {}, fusionAllElements.fusion_section_separator.extras );
 
 				// 100% width template && 1/1 column.
-				if ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && 'undefined' !== typeof parentColumnValues.type && '1_1' === parentColumnValues.type && 'wide' === extras.layout ) {
-					attrSpacer[ 'class' ] += ' fusion-section-separator-fullwidth';
+				if ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && 'undefined' !== typeof parentColumnValues.type && '1_1' === parentColumnValues.type ) {
+					if ( 'wide' === extras.layout ) {
+						attrSpacer[ 'class' ] += ' fusion-section-separator-fullwidth';
+					} else {
+						attrSpacer.style = 'display: none;';
+					}
 				}
 
 				return attrSpacer;
@@ -416,27 +394,44 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds attributes.
 			 *
 			 * @since 3.0
-			 * @return {Object}
+			 * @param {Object} v//alues - The values.
+			 * @return {Object}//
 			 */
-			buildSpacerHeightAtts: function() {
+			buildSpacerHeightAtts: function( values ) {
 				var attrSpacerHeight = {
 						class: 'fusion-section-separator-spacer-height'
-					};
+					},
+					hundredPxSeparators = [ 'slant', 'bigtriangle', 'curved', 'big-half-circle', 'clouds' ],
+					height;
+
+				if ( -1 !== jQuery.inArray( values.divider_type, hundredPxSeparators ) ) {
+					attrSpacerHeight.style = 'height:99px;';
+				} else if ( 'triangle' === values.divider_type ) {
+					if ( values.bordercolor ) {
+						if ( 'bottom' === values.divider_candy || 'top' === values.divider_candy ) {
+							attrSpacerHeight.style = 'height:' + values.bordersize + ';';
+						} else if ( -1 !== values.divider_candy.indexOf( 'top' ) && -1 !== values.divider_candy.indexOf( 'bottom' ) ) {
+							attrSpacerHeight.style = 'height:calc( ' + values.bordersize + ' * 2 );';
+						}
+					}
+				} else if ( 'rounded-split' === values.divider_type ) {
+					attrSpacerHeight.style = 'height:71px;';
+				} else if ( 'hills_opacity' === values.divider_type ) {
+					attrSpacerHeight.style = 'padding-top:' + ( 182 / 1024 * 100 ) + '%;';
+				} else if ( 'hills' === values.divider_type ) {
+					attrSpacerHeight.style = 'padding-top:' + ( 107 / 1024 * 100 ) + '%;';
+				} else if ( 'horizon' === values.divider_type ) {
+					attrSpacerHeight.style = 'padding-top:' + ( 178 / 1024 * 100 ) + '%;';
+				} else if ( 'waves_opacity' === values.divider_type ) {
+					attrSpacerHeight.style = 'padding-top:' + ( 216 / 1024 * 100 ) + '%;';
+				} else if ( 'waves' === values.divider_type ) {
+					attrSpacerHeight.style = 'padding-top:' + ( 162 / 1024 * 100 ) + '%;';
+				} else if ( -1 !== jQuery.inArray( values.divider_type, this.bgImageSeparators ) ) {
+					height = '' === values.divider_height && 1 < values.divider_repeat ? ( parseInt( this._getDefaultSepHeight()[ values.divider_type ] ) / values.divider_repeat ) + 'px' : this._getDefaultSepHeight()[ values.divider_type ]; // Aspect ratio height.
+					attrSpacerHeight.style = 'height:' + height + ';';
+				}
 				return attrSpacerHeight;
-			},
 
-			/**
-			 * Spacer height.
-			 *
-			 * @since 3.6
-			 * @param {Object} values - The values.
-			 * @return {String} Spacer height.
-			 */
-			spacerHeight( values ) {
-				const defaultSepHeight = 'custom' === values.divider_type && values.custom_svg ? this.getCustomSvg( values ).height : this._getDefaultSepHeight()[ values.divider_type ];
-				const height = '' === values.divider_height && 1 < values.divider_repeat ? ( parseInt( defaultSepHeight ) / values.divider_repeat ) + 'px' : defaultSepHeight; // Aspect ratio height.
-
-				return height;
 			},
 
 			/**
@@ -511,7 +506,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					display: 'block'
 				};
 
-				attrSVG.fill = jQuery.AWB_Color( values.backgroundcolor ).toRgbaString();
+				if ( 'bigtriangle' === values.divider_type || 'slant' === values.divider_type || 'big-half-circle' === values.divider_type || 'clouds' === values.divider_type || 'curved' === values.divider_type ) {
+					attrSVG.style = 'fill:' + values.backgroundcolor + ';padding:0;';
+				}
+				if ( 'slant' === values.divider_type && 'bottom' === values.divider_candy ) {
+					attrSVG.style = 'fill:' + values.backgroundcolor + ';padding:0;margin-bottom:-3px;display:block';
+				}
+
+				if ( 'horizon' === values.divider_type || 'hills' === values.divider_type || 'hills_opacity' === values.divider_type || 'waves' === values.divider_type || 'waves_opacity' === values.divider_type ) {
+					attrSVG.style = 'fill:' + values.backgroundcolor;
+				}
 
 				return attrSVG;
 			},
@@ -528,8 +532,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( '' !== values.icon ) {
 					attrButton = {
-						class: 'section-separator-icon icon ' + _.fusionFontAwesome( values.icon )
+						class: 'section-separator-icon icon ' + _.fusionFontAwesome( values.icon ),
+						style: 'color:' + values.icon_color + ';'
 					};
+
+					if ( ! values.icon_color ) {
+						values.icon_color = values.bordercolor;
+					}
+
+					if ( 1 < values.borderSizeWithoutUnits ) {
+						if ( 'bottom' === values.divider_candy ) {
+							attrButton.style += 'bottom:-' + ( values.borderSizeWithoutUnits + 10 ) + 'px;top:auto;';
+						} else if ( 'top' === values.divider_candy ) {
+							attrButton.style += 'top:-' + ( values.borderSizeWithoutUnits + 10 ) + 'px;';
+						}
+					}
 				}
 
 				return attrButton;
@@ -612,55 +629,17 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					circles: '164px',
 					squares: '140px',
 					paint: '80px',
-					grass: '195px',
-					splash: '65px'
+					grass: '195px'
 				};
 			},
 
 			getDividerHeightResponsive: function( key, hash ) {
-				var keys = hash.keys(),
-					found_index = _.contains( keys, key );
+				var keys = hash.keys();
+				var found_index = _.contains( keys, key );
 				if ( false === found_index || 0 === found_index ) {
 					return '';
 				}
 				return keys[ found_index - 1 ];
-			},
-
-			/**
-			 * Get custom svg
-			 *
-			 * @since 7.6
-			 * @param {Object} values - The values.
-			 * @return {Object}
-			 */
-			getCustomSvg: function( values ) {
-				var svg = '';
-				const url = values.custom_svg;
-				if ( !url ) {
-					return {};
-				}
-
-				jQuery.ajax( {
-					url: url,
-					type: 'get',
-					dataType: 'html',
-					async: false,
-					success: function( data ) {
-						svg = data;
-					}
-				} );
-
-				svg = svg.replace( /fill="(.*?)"/ig, `fill="${jQuery.AWB_Color( values.backgroundcolor ).toRgbaString()}"` );
-
-				//get the default height
-				const rx = /viewBox="(.*?)"/g;
-				const matches = rx.exec( svg );
-
-				const height = matches ? matches[ 1 ].split( ' ' )[ 3 ] + 'px' : '65px';
-
-
-				return { svg, height };
-
 			}
 
 		} );

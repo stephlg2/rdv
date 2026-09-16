@@ -1,4 +1,3 @@
-/* global fusionAllElements, FusionApp, FusionPageBuilderApp */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -47,36 +46,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			afterPatch: function() {
 				jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).trigger( 'fusion-element-render-fusion_post_cards', this.model.attributes.cid );
-			},
-
-			/**
-			 * Runs just after render on cancel.
-			 *
-			 * @since 3.5
-			 * @return null
-			 */
-			beforeGenerateShortcode: function() {
-				var elementType = this.model.get( 'element_type' ),
-					options     = fusionAllElements[ elementType ].params,
-					values      = jQuery.extend( true, {}, fusionAllElements[ elementType ].defaults, _.fusionCleanParameters( this.model.get( 'params' ) ) );
-
-				if ( 'object' !== typeof options ) {
-					return;
-				}
-
-				// If images needs replaced lets check element to see if we have media being used to add to object.
-				if ( 'undefined' !== typeof FusionApp.data.replaceAssets && FusionApp.data.replaceAssets && ( 'undefined' !== typeof FusionApp.data.fusion_element_type || 'fusion_template' === FusionApp.getPost( 'post_type' ) ) ) {
-
-					this.mapStudioImages( options, values );
-
-					if ( '' !== values.post_card ) {
-						// If its not within object already, add it.
-						if ( 'undefined' === typeof FusionPageBuilderApp.mediaMap.post_cards[ values.post_card ] ) {
-							FusionPageBuilderApp.mediaMap.post_cards[ values.post_card ] = true;
-						}
-					}
-
-				}
 			}
 
 		} );

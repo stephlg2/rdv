@@ -3,21 +3,21 @@
 .pagination a.inactive,
 .page-links a,
 .woocommerce-pagination .page-numbers,
-#bbpress-forums .bbp-pagination .bbp-pagination-links a.inactive,
+.bbp-pagination .bbp-pagination-links a.inactive,
 .bbp-topic-pagination .page-numbers,
 .pagination .current,
 .page-links > .page-number,
 .woocommerce-pagination .current,
-#bbpress-forums .bbp-pagination .bbp-pagination-links .current,
+.bbp-pagination .bbp-pagination-links .current,
 .pagination .pagination-prev,
 .woocommerce-pagination .prev,
-#bbpress-forums .fusion-hide-pagination-text .woocommerce-pagination .prev,
-#bbpress-forums .bbp-pagination .bbp-pagination-links .pagination-prev,
+.fusion-hide-pagination-text .woocommerce-pagination .prev,
+.bbp-pagination .bbp-pagination-links .pagination-prev,
 .pagination .pagination-next,
 .woocommerce-pagination .next,
 .fusion-hide-pagination-text .woocommerce-pagination .next,
-#bbpress-forums .bbp-pagination .bbp-pagination-links .pagination-next,
-#bbpress-forums .bbp-pagination-links span.dots {
+.bbp-pagination .bbp-pagination-links .pagination-next,
+.bbp-pagination-links span.dots {
   padding: var(--pagination_box_padding-height) var(--pagination_box_padding-width) var(--pagination_box_padding-height) var(--pagination_box_padding-width);
 }
 .fusion-pagination-sizing .fusion-blog-pagination .pagination .current,
@@ -42,9 +42,9 @@
 .woocommerce-pagination .prev {
   font-size: var(--pagination_font_size);
 }
-#bbpress-forums .bbp-pagination .bbp-pagination-links,
-#bbpress-forums .bbp-pagination .bbp-pagination-links .pagination-prev,
-#bbpress-forums .bbp-pagination .bbp-pagination-links .pagination-next {
+.bbp-pagination .bbp-pagination-links,
+.bbp-pagination .bbp-pagination-links .pagination-prev,
+.bbp-pagination .bbp-pagination-links .pagination-next {
   font-size: var(--pagination_font_size);
 }
 .fusion-blog-pagination .pagination .current,

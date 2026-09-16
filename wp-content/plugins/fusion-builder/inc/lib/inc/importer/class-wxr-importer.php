@@ -1,14 +1,6 @@
 <?php
 
 class WXR_Importer extends WP_Importer {
-
-	/**
-	 * Options array.
-	 * 
-	 * @var array
-	 */
-	public $options = [];
-
 	/**
 	 * Maximum supported WXR version
 	 */
@@ -774,15 +766,6 @@ class WXR_Importer extends WP_Importer {
 				$data['post_title']
 			) );
 
-			$this->mapping['post'][ intval( $original_id ) ] = intval( $post_exists );
-			$this->requires_remapping['post'][ $original_id ] = true;
-
-			if ( 'attachment' === $data['post_type'] ) {
-				// Map this image URL later if we need to
-				$remote_url = ! empty( $data['attachment_url'] ) ? $data['attachment_url'] : $data['guid'];
-				$this->url_remap[ $remote_url ] = wp_get_attachment_url( intval( $post_exists ) );
-			}
-
 			/**
 			 * Post processing already imported.
 			 *
@@ -1013,7 +996,7 @@ class WXR_Importer extends WP_Importer {
 
 			default:
 				// associated object is missing or not imported yet, we'll retry later
-				$this->missing_menu_items[] = $post_id;
+				$this->missing_menu_items[] = $item;
 				$this->logger->debug( 'Unknown menu item type' );
 				break;
 		}
@@ -1077,7 +1060,7 @@ class WXR_Importer extends WP_Importer {
 		}
 
 		// as per wp-admin/includes/upload.php
-		$post_id = wp_insert_attachment( $post, $upload['file'], 0, true );
+		$post_id = wp_insert_attachment( $post, $upload['file'] );
 		if ( is_wp_error( $post_id ) ) {
 			return $post_id;
 		}
@@ -1324,7 +1307,7 @@ class WXR_Importer extends WP_Importer {
 					 */
 					do_action( 'wxr_importer.process_already_imported.comment', $comment );
 
-					$this->mapping['comment'][ $original_id ] = $existing;
+					$this->mapping['comment'][ $original_id ] = $exists;
 					continue;
 				}
 			}
@@ -1393,10 +1376,10 @@ class WXR_Importer extends WP_Importer {
 			/**
 			 * Post processing completed.
 			 *
-			 * @param int   $comment_id New post ID.
+			 * @param int $post_id New post ID.
 			 * @param array $comment Raw data imported for the comment.
 			 * @param array $meta Raw meta data, already processed by {@see process_post_meta}.
-			 * @param int   $post_id Parent post ID.
+			 * @param array $post_id Parent post ID.
 			 */
 			do_action( 'wxr_importer.processed.comment', $comment_id, $comment, $meta, $post_id );
 
@@ -2035,7 +2018,7 @@ class WXR_Importer extends WP_Importer {
 			}
 
 			// Run the update
-			$data['comment_ID'] = $comment_id;
+			$data['comment_ID'] = $comment_ID;
 			$result = wp_update_comment( wp_slash( $data ) );
 			if ( empty( $result ) ) {
 				$this->logger->warning( sprintf(

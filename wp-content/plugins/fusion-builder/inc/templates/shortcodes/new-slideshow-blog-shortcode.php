@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 global $post;
-$fusion_settings = awb_get_fusion_settings();
+$fusion_settings = fusion_get_fusion_settings();
 
 $featured_image_width  = fusion_get_page_option( 'fimg[width]', $post->ID );
 $featured_image_height = fusion_get_page_option( 'fimg[height]', $post->ID );
@@ -62,14 +62,13 @@ $permalink = isset( $this->permalink ) ? $this->permalink : get_permalink( $post
 
 $size = 'blog-large';
 if ( class_exists( 'Avada' ) ) {
-	$size = ( ! AWB_Widget_Framework()->has_sidebar() || fusion_get_option( 'blog_width_100' ) ) ? 'full' : 'blog-large';
+	$size = ( ! Avada()->template->has_sidebar() || fusion_get_option( 'blog_width_100' ) ) ? 'full' : 'blog-large';
 	$size = ( 'medium' === $atts['layout'] || 'medium-alternate' === $atts['layout'] ) ? 'blog-medium' : $size;
 	$size = ( $featured_image_height && $featured_image_width && 'auto' !== $featured_image_height && 'auto' !== $featured_image_width ) ? 'full' : $size;
 	$size = ( 'auto' === $featured_image_height || 'auto' === $featured_image_width ) ? 'full' : $size;
 	$size = ( 'grid' === $atts['layout'] || 'masonry' === $atts['layout'] || 'timeline' === $atts['layout'] ) ? 'full' : $size;
 }
-
-$post_video = apply_filters( 'privacy_iframe_embed', fusion_get_page_option( 'video', $post->ID ) );
+$post_video = fusion_get_page_option( 'video', $post->ID );
 ?>
 
 <?php if ( has_post_thumbnail() || $post_video ) : ?>

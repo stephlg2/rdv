@@ -44,7 +44,7 @@
 			}
 
 			// Get content
-			allElements = window.fusionBuilderGetContent( 'content', true, true );
+			allElements = fusionBuilderGetContent( 'content', true );
 
 			// Add editor data to Array
 			fusionCommands[ currStep ] = allElements;

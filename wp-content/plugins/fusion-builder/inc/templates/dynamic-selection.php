@@ -18,11 +18,8 @@
 					var label    = 'string' === typeof value.label ? value.label : id,
 						supports = 'object' === typeof value.options ? _.values( value.options ) : false,
 						support  = ! supports ? true : -1 !== _.indexOf( supports, option );
-						if ( 'undefined' !== typeof customOptions && customOptions ) {
-								support = customOptions.includes( id );
-						}
 				#>
-				<# if ( 'undefined' !== typeof support && support ) { #>
+				<# if ( support ) { #>
 					<option value="{{ id }}" >{{{ label }}}</option>
 				<# } #>
 			<# }); #>

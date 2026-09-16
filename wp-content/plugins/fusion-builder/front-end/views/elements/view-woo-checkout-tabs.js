@@ -203,18 +203,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.addCssProperty( this.baseSelector + ' .avada-checkout', 'font-size',  _.fusionGetValueWithUnit( this.values.text_font_size ) );
 				}
 
-				if ( !this.isDefault( 'text_line_height' ) ) {
-					this.addCssProperty( this.baseSelector, 'line-height', this.values.text_line_height );
-				}
-
-				if ( !this.isDefault( 'text_text_transform' ) ) {
-					this.addCssProperty( this.baseSelector, 'text-transform', this.values.text_text_transform );
-				}
-
-				if ( !this.isDefault( 'text_letter_spacing' ) ) {
-					this.addCssProperty( this.baseSelector, 'letter-spacing',  _.fusionGetValueWithUnit( this.values.text_letter_spacing ) );
-				}
-
 				text_styles = _.fusionGetFontStyle( 'text_font', this.values, 'object' );
 				for ( rule in text_styles ) { // eslint-disable-line guard-for-in
 					var value = text_styles[ rule ]; // eslint-disable-line
@@ -242,18 +230,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.addCssProperty( title_selectors, 'font-size',  _.fusionGetValueWithUnit( this.values.title_font_size ) );
 				}
 
-				if ( !this.isDefault( 'title_line_height' ) ) {
-					this.addCssProperty( title_selectors, 'line-height', this.values.title_line_height );
-				}
-
-				if ( !this.isDefault( 'title_text_transform' ) ) {
-					this.addCssProperty( title_selectors, 'text-transform', this.values.title_text_transform );
-				}
-
-				if ( !this.isDefault( 'title_letter_spacing' ) ) {
-					this.addCssProperty( title_selectors, 'letter-spacing',  _.fusionGetValueWithUnit( this.values.title_letter_spacing ) );
-				}
-
 				text_styles = _.fusionGetFontStyle( 'title_font', this.values, 'object' );
 				for ( rule in text_styles ) { // eslint-disable-line guard-for-in
 					var value = text_styles[ rule ]; // eslint-disable-line
@@ -271,7 +247,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( ! this.isDefault( 'field_text_color' ) ) {
-					placeholderColor = jQuery.AWB_Color( this.values.field_text_color ).alpha( 0.5 ).toVarOrRgbaString();
+					placeholderColor = jQuery.Color( this.values.field_text_color ).alpha( 0.5 ).toRgbaString();
 					this.addCssProperty( inputs, 'color',  this.values.field_text_color );
 
 					// Select 2.
@@ -291,7 +267,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( ! this.isDefault( 'field_border_focus_color' ) ) {
-					hoverColor = jQuery.AWB_Color( this.values.field_border_focus_color ).alpha( 0.5 ).toVarOrRgbaString();
+					hoverColor = jQuery.Color( this.values.field_border_focus_color ).alpha( 0.5 ).toRgbaString();
 					hoverInputs = [ this.baseSelector + ' input:hover', this.baseSelector + ' select:hover', this.baseSelector + ' textarea:hover' ];
 					this.addCssProperty( hoverInputs, 'border-color', hoverColor );
 					focusInputs = [ this.baseSelector + ' input:focus', this.baseSelector + ' select:focus', this.baseSelector + ' textarea:focus' ];

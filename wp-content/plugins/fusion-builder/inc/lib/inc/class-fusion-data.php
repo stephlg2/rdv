@@ -102,14 +102,6 @@ class Fusion_Data {
 				'label' => 'Spotify',
 				'color' => '#2ebd59',
 			],
-			'teams'      => [
-				'label' => 'Teams',
-				'color' => '#505AC9',
-			],
-			'telegram'   => [
-				'label' => 'Telegram',
-				'color' => '#0088cc',
-			],
 			'tiktok'     => [
 				'label' => 'Tiktok',
 				'color' => '#010101',
@@ -421,6 +413,486 @@ class Fusion_Data {
 		return [];
 	}
 
+	/**
+	 * Returns an array of colors to be used in color presets.
+	 *
+	 * @static
+	 * @access public
+	 * @since 1.0.0
+	 * @param string $context The preset we want.
+	 * @return array
+	 */
+	public static function color_theme( $context ) {
+		$options = get_option( Fusion_Settings::get_option_name(), [] );
+
+		$light                                    = [];
+		$light['header_bg_color']                 = '#ffffff';
+		$light['header_border_color']             = '#e5e5e5';
+		$light['content_bg_color']                = '#ffffff';
+		$light['slidingbar_bg_color']             = '#363839';
+		$light['header_sticky_bg_color']          = '#ffffff';
+		$light['footer_bg_color']                 = '#363839';
+		$light['footer_border_color']             = '#e9eaee';
+		$light['copyright_border_color']          = '#4B4C4D';
+		$light['testimonial_bg_color']            = '#f6f3f3';
+		$light['testimonial_text_color']          = '#747474';
+		$light['sep_color']                       = '#e0dede';
+		$light['slidingbar_divider_color']        = '#505152';
+		$light['footer_divider_color']            = '#505152';
+		$light['form_bg_color']                   = '#ffffff';
+		$light['form_text_color']                 = '#aaa9a9';
+		$light['form_border_color']               = '#d2d2d2';
+		$light['tagline_font_color']              = '#747474';
+		$light['page_title_color']                = '#333333';
+		$light['h1_typography']                   = isset( $options['h1_typography'] ) ? $options['h1_typography'] : [];
+		$light['h1_typography']['color']          = '#333333';
+		$light['h2_typography']                   = isset( $options['h2_typography'] ) ? $options['h2_typography'] : [];
+		$light['h2_typography']['color']          = '#333333';
+		$light['h3_typography']                   = isset( $options['h3_typography'] ) ? $options['h3_typography'] : [];
+		$light['h3_typography']['color']          = '#333333';
+		$light['h4_typography']                   = isset( $options['h4_typography'] ) ? $options['h4_typography'] : [];
+		$light['h4_typography']['color']          = '#333333';
+		$light['h5_typography']                   = isset( $options['h5_typography'] ) ? $options['h5_typography'] : [];
+		$light['h5_typography']['color']          = '#333333';
+		$light['h6_typography']                   = isset( $options['h6_typography'] ) ? $options['h6_typography'] : [];
+		$light['h6_typography']['color']          = '#333333';
+		$light['body_typography']                 = isset( $options['body_typography'] ) ? $options['body_typography'] : [];
+		$light['body_typography']['color']        = '#747474';
+		$light['link_color']                      = '#333333';
+		$light['menu_h45_bg_color']               = '#FFFFFF';
+		$light['nav_typography']                  = isset( $options['nav_typography'] ) ? $options['nav_typography'] : [];
+		$light['nav_typography']['color']         = '#333333';
+		$light['menu_sub_bg_color']               = '#f2efef';
+		$light['menu_sub_color']                  = '#333333';
+		$light['menu_bg_hover_color']             = '#f8f8f8';
+		$light['menu_sub_sep_color']              = '#dcdadb';
+		$light['snav_color']                      = '#ffffff';
+		$light['header_social_links_icon_color']  = '#ffffff';
+		$light['header_top_first_border_color']   = '#e5e5e5';
+		$light['header_top_sub_bg_color']         = '#ffffff';
+		$light['header_top_menu_sub_color']       = '#747474';
+		$light['header_top_menu_bg_hover_color']  = '#fafafa';
+		$light['header_top_menu_sub_hover_color'] = '#333333';
+		$light['header_top_menu_sub_sep_color']   = '#e5e5e5';
+		$light['sidebar_bg_color']                = '#ffffff';
+		$light['page_title_bg_color']             = '#F6F6F6';
+		$light['page_title_border_color']         = '#d2d3d4';
+		$light['breadcrumbs_text_color']          = '#333333';
+		$light['sidebar_heading_color']           = '#333333';
+		$light['accordian_inactive_color']        = '#333333';
+		$light['counter_filled_color']            = '#65bc7b';
+		$light['counter_unfilled_color']          = '#f6f6f6';
+		$light['dates_box_color']                 = '#eef0f2';
+		$light['carousel_nav_color']              = '#999999';
+		$light['carousel_hover_color']            = '#808080';
+		$light['content_box_bg_color']            = 'transparent';
+		$light['title_border_color']              = '#e0dede';
+		$light['icon_circle_color']               = '#333333';
+		$light['icon_border_color']               = '#333333';
+		$light['icon_color']                      = '#ffffff';
+		$light['imgframe_border_color']           = '#f6f6f6';
+		$light['imgframe_style_color']            = '#000000';
+		$light['before_after_border_color']       = '#f6f6f6';
+		$light['sep_pricing_box_heading_color']   = '#333333';
+		$light['full_boxed_pricing_box_heading_color'] = '#333333';
+		$light['pricing_bg_color']                     = '#ffffff';
+		$light['pricing_border_color']                 = '#f8f8f8';
+		$light['pricing_divider_color']                = '#ededed';
+		$light['social_bg_color']                      = '#f6f6f6';
+		$light['tabs_bg_color']                        = '#ffffff';
+		$light['tabs_inactive_color']                  = '#f1f2f2';
+		$light['tagline_bg']                           = '#f6f6f6';
+		$light['tagline_border_color']                 = '#f6f6f6';
+		$light['timeline_bg_color']                    = 'transparent';
+		$light['timeline_color']                       = '#ebeaea';
+		$light['woo_cart_bg_color']                    = '#fafafa';
+		$light['qty_bg_color']                         = '#fbfaf9';
+		$light['qty_bg_hover_color']                   = '#ffffff';
+		$light['bbp_forum_header_bg']                  = '#ebeaea';
+		$light['bbp_forum_border_color']               = '#ebeaea';
+		$light['checklist_icons_color']                = '#ffffff';
+		$light['flip_boxes_front_bg']                  = '#f6f6f6';
+		$light['flip_boxes_front_heading']             = '#333333';
+		$light['flip_boxes_front_text']                = '#747474';
+		$light['full_width_bg_color']                  = '#ffffff';
+		$light['full_width_border_color']              = '#eae9e9';
+		$light['modal_bg_color']                       = '#f6f6f6';
+		$light['modal_border_color']                   = '#ebebeb';
+		$light['person_border_color']                  = '#f6f6f6';
+		$light['popover_heading_bg_color']             = '#f6f6f6';
+		$light['popover_content_bg_color']             = '#ffffff';
+		$light['popover_border_color']                 = '#ebebeb';
+		$light['popover_text_color']                   = '#747474';
+		$light['progressbar_unfilled_color']           = '#f6f6f6';
+		$light['section_sep_bg']                       = '#f6f6f6';
+		$light['section_sep_border_color']             = '#f6f6f6';
+		$light['sharing_box_tagline_text_color']       = '#333333';
+		$light['header_social_links_icon_color']       = '#bebdbd';
+		$light['header_social_links_box_color']        = '#e8e8e8';
+		$light['bg_color']                             = '#d7d6d6';
+		$light['mobile_menu_background_color']         = '#f9f9f9';
+		$light['mobile_menu_border_color']             = '#dadada';
+		$light['mobile_menu_hover_color']              = '#f6f6f6';
+		$light['mobile_menu_typography']               = isset( $options['mobile_menu_typography'] ) ? $options['mobile_menu_typography'] : [];
+		$light['mobile_menu_typography']['color']      = '#333333';
+		$light['mobile_menu_font_hover_color']         = '#333333';
+		$light['social_links_icon_color']              = '#bebdbd';
+		$light['social_links_box_color']               = '#e8e8e8';
+		$light['sharing_social_links_icon_color']      = '#bebdbd';
+		$light['sharing_social_links_box_color']       = '#e8e8e8';
+		$light['load_more_posts_button_bg_color']      = '#ebeaea';
+		$light['ec_bar_bg_color']                      = '#efeded';
+		$light['flyout_menu_icon_color']               = '#333333';
+		$light['flyout_menu_background_color']         = 'rgba(255,255,255,0.95)';
+		$light['ec_sidebar_bg_color']                  = '#f6f6f6';
+		$light['ec_sidebar_link_color']                = '#333333';
+
+		$dark                                    = [];
+		$dark['header_bg_color']                 = '#29292a';
+		$dark['header_border_color']             = '#3e3e3e';
+		$dark['header_top_bg_color']             = '#29292a';
+		$dark['content_bg_color']                = '#29292a';
+		$dark['slidingbar_bg_color']             = '#363839';
+		$dark['header_sticky_bg_color']          = '#29292a';
+		$dark['slidingbar_border_color']         = '#484747';
+		$dark['footer_bg_color']                 = '#2d2d2d';
+		$dark['footer_border_color']             = '#403f3f';
+		$dark['copyright_border_color']          = '#4B4C4D';
+		$dark['testimonial_bg_color']            = '#3e3e3e';
+		$dark['testimonial_text_color']          = '#aaa9a9';
+		$dark['sep_color']                       = '#3e3e3e';
+		$dark['slidingbar_divider_color']        = '#505152';
+		$dark['footer_divider_color']            = '#505152';
+		$dark['form_bg_color']                   = '#3e3e3e';
+		$dark['form_text_color']                 = '#cccccc';
+		$dark['form_border_color']               = '#212122';
+		$dark['tagline_font_color']              = '#ffffff';
+		$dark['page_title_color']                = '#ffffff';
+		$dark['h1_typography']                   = isset( $options['h1_typography'] ) ? $options['h1_typography'] : [];
+		$dark['h1_typography']['color']          = '#ffffff';
+		$dark['h2_typography']                   = isset( $options['h2_typography'] ) ? $options['h2_typography'] : [];
+		$dark['h2_typography']['color']          = '#ffffff';
+		$dark['h3_typography']                   = isset( $options['h3_typography'] ) ? $options['h3_typography'] : [];
+		$dark['h3_typography']['color']          = '#ffffff';
+		$dark['h4_typography']                   = isset( $options['h4_typography'] ) ? $options['h4_typography'] : [];
+		$dark['h4_typography']['color']          = '#ffffff';
+		$dark['h5_typography']                   = isset( $options['h5_typography'] ) ? $options['h5_typography'] : [];
+		$dark['h5_typography']['color']          = '#ffffff';
+		$dark['h6_typography']                   = isset( $options['h6_typography'] ) ? $options['h6_typography'] : [];
+		$dark['h6_typography']['color']          = '#ffffff';
+		$dark['body_typography']                 = isset( $options['body_typography'] ) ? $options['body_typography'] : [];
+		$dark['body_typography']['color']        = '#aaa9a9';
+		$dark['link_color']                      = '#ffffff';
+		$dark['menu_h45_bg_color']               = '#29292A';
+		$dark['nav_typography']                  = isset( $options['nav_typography'] ) ? $options['nav_typography'] : [];
+		$dark['nav_typography']['color']         = '#ffffff';
+		$dark['menu_sub_bg_color']               = '#3e3e3e';
+		$dark['menu_sub_color']                  = '#d6d6d6';
+		$dark['menu_bg_hover_color']             = '#383838';
+		$dark['menu_sub_sep_color']              = '#313030';
+		$dark['snav_color']                      = '#747474';
+		$dark['header_social_links_icon_color']  = '#747474';
+		$dark['header_top_first_border_color']   = '#3e3e3e';
+		$dark['header_top_sub_bg_color']         = '#29292a';
+		$dark['header_top_menu_sub_color']       = '#d6d6d6';
+		$dark['header_top_menu_bg_hover_color']  = '#333333';
+		$dark['header_top_menu_sub_hover_color'] = '#d6d6d6';
+		$dark['header_top_menu_sub_sep_color']   = '#3e3e3e';
+		$dark['sidebar_bg_color']                = '#29292a';
+		$dark['page_title_bg_color']             = '#353535';
+		$dark['page_title_border_color']         = '#464646';
+		$dark['breadcrumbs_text_color']          = '#ffffff';
+		$dark['sidebar_heading_color']           = '#ffffff';
+		$dark['accordian_inactive_color']        = '#3e3e3e';
+		$dark['counter_filled_color']            = '#65bc7b';
+		$dark['counter_unfilled_color']          = '#3e3e3e';
+		$dark['dates_box_color']                 = '#3e3e3e';
+		$dark['carousel_nav_color']              = '#3a3a3a';
+		$dark['carousel_hover_color']            = '#333333';
+		$dark['content_box_bg_color']            = 'transparent';
+		$dark['title_border_color']              = '#3e3e3e';
+		$dark['icon_circle_color']               = '#3e3e3e';
+		$dark['icon_border_color']               = '#3e3e3e';
+		$dark['icon_color']                      = '#ffffff';
+		$dark['imgframe_border_color']           = '#494848';
+		$dark['before_after_border_color']       = '#494848';
+		$dark['imgframe_style_color']            = '#000000';
+		$dark['sep_pricing_box_heading_color']   = '#ffffff';
+		$dark['full_boxed_pricing_box_heading_color'] = '#AAA9A9';
+		$dark['pricing_bg_color']                     = '#3e3e3e';
+		$dark['pricing_border_color']                 = '#353535';
+		$dark['pricing_divider_color']                = '#29292a';
+		$dark['social_bg_color']                      = '#3e3e3e';
+		$dark['tabs_bg_color']                        = '#3e3e3e';
+		$dark['tabs_inactive_color']                  = '#313132';
+		$dark['tagline_bg']                           = '#3e3e3e';
+		$dark['tagline_border_color']                 = '#3e3e3e';
+		$dark['timeline_bg_color']                    = 'transparent';
+		$dark['timeline_color']                       = '#3e3e3e';
+		$dark['woo_cart_bg_color']                    = '#333333';
+		$dark['qty_bg_color']                         = '#29292a';
+		$dark['qty_bg_hover_color']                   = '#383838';
+		$dark['bbp_forum_header_bg']                  = '#383838';
+		$dark['bbp_forum_border_color']               = '#212121';
+		$dark['checklist_icons_color']                = '#ffffff';
+		$dark['flip_boxes_front_bg']                  = '#3e3e3e';
+		$dark['flip_boxes_front_heading']             = '#ffffff';
+		$dark['flip_boxes_front_text']                = '#aaa9a9';
+		$dark['full_width_bg_color']                  = '#242424';
+		$dark['full_width_border_color']              = '#3e3e3e';
+		$dark['modal_bg_color']                       = '#29292a';
+		$dark['modal_border_color']                   = '#242424';
+		$dark['person_border_color']                  = '#494848';
+		$dark['popover_heading_bg_color']             = '#29292a';
+		$dark['popover_content_bg_color']             = '#3e3e3e';
+		$dark['popover_border_color']                 = '#242424';
+		$dark['popover_text_color']                   = '#ffffff';
+		$dark['progressbar_unfilled_color']           = '#3e3e3e';
+		$dark['section_sep_bg']                       = '#3e3e3e';
+		$dark['section_sep_border_color']             = '#3e3e3e';
+		$dark['sharing_box_tagline_text_color']       = '#ffffff';
+		$dark['header_social_links_icon_color']       = '#545455';
+		$dark['header_social_links_box_color']        = '#383838';
+		$dark['bg_color']                             = '#1e1e1e';
+		$dark['mobile_menu_background_color']         = '#3e3e3e';
+		$dark['mobile_menu_border_color']             = '#212122';
+		$dark['mobile_menu_hover_color']              = '#383737';
+		$dark['mobile_menu_typography']               = isset( $options['mobile_menu_typography'] ) ? $options['mobile_menu_typography'] : [];
+		$dark['mobile_menu_typography']['color']      = '#ffffff';
+		$dark['mobile_menu_font_hover_color']         = '#ffffff';
+		$dark['social_links_icon_color']              = '#3e3e3e';
+		$dark['social_links_box_color']               = '#383838';
+		$dark['sharing_social_links_icon_color']      = '#919191';
+		$dark['sharing_social_links_box_color']       = '#4b4e4f';
+		$dark['load_more_posts_button_bg_color']      = '#3e3e3e';
+		$dark['ec_bar_bg_color']                      = '#353535';
+		$dark['flyout_menu_icon_color']               = '#ffffff';
+		$dark['flyout_menu_background_color']         = 'rgba(0,0,0,0.85)';
+		$dark['ec_sidebar_bg_color']                  = '#f6f6f6';
+		$dark['ec_sidebar_link_color']                = '#ffffff';
+
+		$colors = [
+			'green'     => [
+				'#92C563',
+				'#D1E990',
+				'#AAD75B',
+				'#D1E990',
+				'#AAD75B',
+				'#AAD75B',
+				'#D1E990',
+				'#6e9a1f',
+				'#638e1a',
+				'#6e9a1f',
+				'#638e1a',
+				'#54770f',
+				'#65bc7b',
+			],
+
+			'darkgreen' => [
+				'#9db668',
+				'#a5c462',
+				'#cce890',
+				'#afd65a',
+				'#cce890',
+				'#AAD75B',
+				'#AAD75B',
+				'#cce890',
+				'#577810',
+				'#cce890',
+				'#577810',
+				'#577810',
+				'#577810',
+			],
+
+			'orange'    => [
+				'#c4a362',
+				'#e8cb90',
+				'#d6ad5a',
+				'#e8cb90',
+				'#d6ad5a',
+				'#d6ad5a',
+				'#e8cb90',
+				'#785510',
+				'#785510',
+				'#785510',
+				'#785510',
+				'#785510',
+				'#e9a825',
+			],
+
+
+			'lightblue' => [
+				'#62a2c4',
+				'#90c9e8',
+				'#5aabd6',
+				'#90c9e8',
+				'#5aabd6',
+				'#5aabd6',
+				'#90c9e8',
+				'#105378',
+				'#105378',
+				'#105378',
+				'#105378',
+				'#105378',
+				'#67b7e1',
+			],
+
+			'lightred'  => [
+				'#c46262',
+				'#e89090',
+				'#d65a5a',
+				'#e89090',
+				'#d65a5a',
+				'#d65a5a',
+				'#e89090',
+				'#781010',
+				'#781010',
+				'#781010',
+				'#781010',
+				'#781010',
+				'#f05858',
+			],
+
+			'pink'      => [
+				'#c46299',
+				'#e890c2',
+				'#d65aa0',
+				'#e890c2',
+				'#d65aa0',
+				'#d65aa0',
+				'#e890c2',
+				'#78104b',
+				'#78104b',
+				'#78104b',
+				'#78104b',
+				'#78104b',
+				'#e67fb9',
+			],
+
+			'lightgrey' => [
+				'#c4c4c4',
+				'#e8e8e8',
+				'#d6d6d6',
+				'#e8e8e8',
+				'#d6d6d6',
+				'#d6d6d6',
+				'#e8e8e8',
+				'#787878',
+				'#787878',
+				'#787878',
+				'#787878',
+				'#787878',
+				'#9e9e9e',
+			],
+
+			'brown'     => [
+				'#e8c090',
+				'#d69e5a',
+				'#e8c090',
+				'#d69e5a',
+				'#d69e5a',
+				'#e8c090',
+				'#784910',
+				'#784910',
+				'#784910',
+				'#784910',
+				'#784910',
+				'#ab8b65',
+			],
+
+			'red'       => [
+				'#c40606',
+				'#e80707',
+				'#d60707',
+				'#e80707',
+				'#d60707',
+				'#d60707',
+				'#e80707',
+				'#780404',
+				'#780404',
+				'#780404',
+				'#780404',
+				'#780404',
+				'#e10707',
+			],
+
+			'blue'      => [
+				'#62a2c4',
+				'#90c9e8',
+				'#5aabd6',
+				'#90c9e8',
+				'#5aabd6',
+				'#5aabd6',
+				'#90c9e8',
+				'#105378',
+				'#105378',
+				'#105378',
+				'#105378',
+				'#105378',
+				'#1a80b6',
+			],
+		];
+
+		$options = [
+			'pricing_box_color',
+			'image_gradient_top_color',
+			'image_gradient_bottom_color',
+			'button_gradient_top_color',
+			'button_gradient_bottom_color',
+			'button_gradient_top_color_hover',
+			'button_gradient_bottom_color_hover',
+			'button_accent_color',
+			'button_accent_hover_color',
+			'button_border_color',
+			'button_border_hover_color',
+			'button_bevel_color',
+			'primary_color',
+			'checklist_circle_color',
+			'counter_box_color',
+			'countdown_background_color',
+			'dropcap_color',
+			'flip_boxes_back_bg',
+			'progressbar_filled_color',
+			'counter_filled_color',
+			'ec_sidebar_widget_bg_color',
+			'menu_hover_first_color',
+			'header_top_bg_color',
+			'content_box_hover_animation_accent_color',
+			'map_overlay_color',
+			'flyout_menu_icon_hover_color',
+			'menu_highlight_background',
+			'menu_icon_hover_color',
+			'logo_background_color',
+			'slidingbar_link_color_hover',
+			'footer_link_color_hover',
+			'copyright_link_color_hover',
+			'privacy_bar_link_hover_color',
+			'faq_accordian_active_color',
+			'accordian_active_color',
+			'header_top_menu_sub_hover_color',
+			'breadcrumbs_text_hover_color',
+			'form_focus_border_color',
+			'icon_circle_color_hover',
+			'icon_border_color_hover',
+		];
+
+		foreach ( $colors as $color => $values ) {
+			$$color = [];
+			foreach ( $options as $key => $option ) {
+				if ( isset( $values[ $key ] ) ) {
+					${$color}[ $option ] = $values[ $key ];
+				} else {
+					// If $key is not set, this value needs to fallback to the primary color which is the last item in the array.
+					${$color}[ $option ] = $values[ count( $values ) - 1 ];
+				}
+			}
+		}
+
+		if ( isset( $$context ) ) {
+			return $$context;
+		}
+		return [];
+	}
 }
 
 /* Omit closing PHP tag to avoid 'Headers already sent' issues. */

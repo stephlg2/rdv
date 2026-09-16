@@ -67,10 +67,6 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 				return apply_filters(
 					'fusion_fusionslider_default_parameter',
 					[
-						'margin_top'     => '',
-						'margin_right'   => '',
-						'margin_bottom'  => '',
-						'margin_left'    => '',
 						'hide_on_mobile' => fusion_builder_default_visibility( 'string' ),
 						'class'          => '',
 						'id'             => '',
@@ -95,9 +91,6 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_fusionslider' );
 
 				extract( $defaults );
-
-				$defaults['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_bottom'], 'px' );
-				$defaults['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_top'], 'px' );
 
 				self::$parent_args = $defaults;
 
@@ -325,51 +318,44 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 										$video_zindex        = 'z-index: -99;';
 									}
 
-									$heading_color = ! empty( $metadata['heading_color'] ) ? $metadata['heading_color'] : '';
+									$heading_color = '';
+
+									if ( isset( $metadata['heading_color'] ) && $metadata['heading_color'] ) {
+										$heading_color = 'color:' . $metadata['heading_color'] . ';';
+									}
 
 									$heading_bg = '';
 
 									if ( isset( $metadata['heading_bg'] ) && 'yes' === $metadata['heading_bg'] ) {
 										$heading_bg = 'background-color: rgba(0,0,0, 0.4);';
-										if ( isset( $metadata['heading_bg_color'] ) && '' !== $metadata['heading_bg_color'] && class_exists( 'Fusion_Color' ) ) {
-											$heading_bg_color_object = Fusion_Color::new_color( $metadata['heading_bg_color'] );
-
-											if ( 1 === intval( $heading_bg_color_object->alpha ) ) {
-												$heading_bg_color_object = $heading_bg_color_object->get_new( 'alpha', 0.4 );
-											}
-
-											$heading_bg = 'background-color:' . $heading_bg_color_object->to_css_var_or_rgba();
+										if ( isset( $metadata['heading_bg_color'] ) && '' !== $metadata['heading_bg_color'] ) {
+											$rgb        = fusion_hex2rgb( $metadata['heading_bg_color'] );
+											$heading_bg = 'background-color: rgba(' . $rgb[0] . ',' . $rgb[1] . ',' . $rgb[2] . ',0.4);';
 										}
 									}
 
-									$caption_color = ! empty( $metadata['caption_color'] ) ? $metadata['caption_color'] : '';
+									$caption_color = '';
+
+									if ( isset( $metadata['caption_color'] ) && $metadata['caption_color'] ) {
+										$caption_color = 'color:' . $metadata['caption_color'] . ';';
+									}
 
 									$caption_bg = '';
 
 									if ( isset( $metadata['caption_bg'] ) && 'yes' === $metadata['caption_bg'] ) {
 										$caption_bg = 'background-color: rgba(0, 0, 0, 0.4);';
 
-										if ( isset( $metadata['caption_bg_color'] ) && '' !== $metadata['caption_bg_color'] && class_exists( 'Fusion_Color' ) ) {
-											$caption_bg_color_object = Fusion_Color::new_color( $metadata['caption_bg_color'] );
-
-											if ( 1 === intval( $caption_bg_color_object->alpha ) ) {
-												$caption_bg_color_object = $caption_bg_color_object->get_new( 'alpha', 0.4 );
-											}
-
-											$caption_bg = 'background-color:' . $caption_bg_color_object->to_css_var_or_rgba();
+										if ( isset( $metadata['caption_bg_color'] ) && '' !== $metadata['caption_bg_color'] ) {
+											$rgb        = fusion_hex2rgb( $metadata['caption_bg_color'] );
+											$caption_bg = 'background-color: rgba(' . $rgb[0] . ',' . $rgb[1] . ',' . $rgb[2] . ',0.4);';
 										}
 									}
 
 									$video_bg_color = '';
 
-									if ( isset( $metadata['video_bg_color'] ) && $metadata['video_bg_color'] && class_exists( 'Fusion_Color' ) ) {
-										$video_bg_color_object = Fusion_Color::new_color( $metadata['video_bg_color'] );
-
-										if ( 1 === intval( $video_bg_color_object->alpha ) ) {
-											$video_bg_color_object = $video_bg_color_object->get_new( 'alpha', 0.4 );
-										}
-
-										$video_bg_color = 'background-color:' . $video_bg_color_object->to_css_var_or_rgba();
+									if ( isset( $metadata['video_bg_color'] ) && $metadata['video_bg_color'] ) {
+										$video_bg_color_hex = fusion_hex2rgb( $metadata['video_bg_color'] );
+										$video_bg_color     = 'background-color: rgba(' . $video_bg_color_hex[0] . ', ' . $video_bg_color_hex[1] . ', ' . $video_bg_color_hex[2] . ', 0.4);';
 									}
 
 									$video = false;
@@ -389,11 +375,10 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 										$heading_size = $metadata['heading_size'];
 									}
 
-									$heading_font_size   = '60px';
-									$heading_line_height = '80px';
+									$heading_font_size = 'font-size:60px;line-height:80px;';
 									if ( isset( $metadata['heading_font_size'] ) && $metadata['heading_font_size'] ) {
-										$heading_font_size   = str_replace( 'px', '', $metadata['heading_font_size'] ) . 'px';
-										$heading_line_height = (float) $heading_font_size * 1.2 . 'px';
+										$line_height       = $metadata['heading_font_size'] * 1.2;
+										$heading_font_size = 'font-size:' . $metadata['heading_font_size'] . 'px;line-height:' . $line_height . 'px;';
 									}
 
 									$caption_size = 3;
@@ -401,13 +386,14 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 										$caption_size = $metadata['caption_size'];
 									}
 
-									$caption_font_size   = '24px';
-									$caption_line_height = '38px';
+									$caption_font_size = 'font-size: 24px;line-height:38px;';
 									if ( isset( $metadata['caption_font_size'] ) && $metadata['caption_font_size'] ) {
-										$caption_font_size   = str_replace( 'px', '', $metadata['caption_font_size'] ) . 'px';
-										$caption_line_height = (float) $caption_font_size * 1.2 . 'px';
+										$line_height       = $metadata['caption_font_size'] * 1.2;
+										$caption_font_size = 'font-size:' . $metadata['caption_font_size'] . 'px;line-height:' . $line_height . 'px;';
 									}
 
+									$heading_styles                 = $heading_color . $heading_font_size;
+									$caption_styles                 = $caption_color . $caption_font_size;
 									$heading_title_sc_wrapper_class = '';
 									$caption_title_sc_wrapper_class = '';
 
@@ -440,14 +426,14 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 												<?php if ( isset( $metadata['heading'] ) && $metadata['heading'] ) : ?>
 													<div class="heading <?php echo ( $heading_bg ) ? 'with-bg' : ''; ?>">
 														<div class="fusion-title-sc-wrapper<?php echo esc_attr( $heading_title_sc_wrapper_class ); ?>" style="<?php echo esc_attr( $heading_bg ); ?>">
-															<?php echo do_shortcode( '[fusion_title size="' . $heading_size . '" font_size="' . $heading_font_size . '" line_height="' . $heading_line_height . '" text_color="' . $heading_color . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $heading_color . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['heading_separator'] . '"]' . do_shortcode( $metadata['heading'] ) . '[/fusion_title]' ); ?>
+															<?php echo do_shortcode( '[fusion_title size="' . $heading_size . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $metadata['heading_color'] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['heading_separator'] . '" style_tag="' . $heading_styles . '"]' . do_shortcode( $metadata['heading'] ) . '[/fusion_title]' ); ?>
 														</div>
 													</div>
 												<?php endif; ?>
 												<?php if ( isset( $metadata['caption'] ) && $metadata['caption'] ) : ?>
 													<div class="caption <?php echo ( $caption_bg ) ? 'with-bg' : ''; ?>">
 														<div class="fusion-title-sc-wrapper<?php echo esc_attr( $caption_title_sc_wrapper_class ); ?>" style="<?php echo esc_attr( $caption_bg ); ?>">
-															<?php echo do_shortcode( '[fusion_title size="' . $caption_size . '" font_size="' . $caption_font_size . '" line_height="' . $caption_line_height . '" text_color="' . $caption_color . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $caption_color . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['caption_separator'] . '"]' . do_shortcode( $metadata['caption'] ) . '[/fusion_title]' ); ?>
+															<?php echo do_shortcode( '[fusion_title size="' . $caption_size . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $metadata['caption_color'] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['caption_separator'] . '" style_tag="' . $caption_styles . '"]' . do_shortcode( $metadata['caption'] ) . '[/fusion_title]' ); ?>
 														</div>
 													</div>
 												<?php endif; ?>
@@ -534,7 +520,6 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 					self::$parent_args['hide_on_mobile'],
 					[
 						'class' => 'fusion-slider-container fusion-slider-sc-' . self::$parent_args['name'],
-						'style' => '',
 					]
 				);
 
@@ -561,13 +546,11 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 					$attr['class'] .= ' ' . self::$parent_args['class'];
 				}
 
-				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( self::$parent_args );
-
 				if ( self::$parent_args['id'] ) {
 					$attr['id'] = self::$parent_args['id'];
 				}
 
-				$attr['style'] .= 'height:' . self::$slider_settings['slider_height'] . '; max-width:' . self::$slider_settings['slider_width'] . ';';
+				$attr['style'] = 'height:' . self::$slider_settings['slider_height'] . '; max-width:' . self::$slider_settings['slider_width'] . ';';
 
 				return $attr;
 
@@ -682,7 +665,7 @@ function fusion_element_fusionslider() {
 				'preview'    => FUSION_CORE_PATH . '/shortcodes/previews/fusion-fusion-slider-preview.php',
 				'preview_id' => 'fusion-builder-block-module-fusion-slider-preview-template',
 				'front-end'  => FUSION_CORE_PATH . '/shortcodes/previews/front-end/fusion-fusionslider.php',
-				'help_url'   => 'https://avada.com/documentation/avada-slider-element/',
+				'help_url'   => 'https://theme-fusion.com/documentation/avada/elements/avada-slider-element/',
 				'params'     => [
 					[
 						'type'        => 'select',
@@ -727,14 +710,6 @@ function fusion_element_fusionslider() {
 							'ajax'     => true,
 						],
 					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-core' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_bottom' => '',
-						],
-					],
 					[
 						'type'        => 'checkbox_button_set',
 						'heading'     => esc_attr__( 'Element Visibility', 'fusion-core' ),
@@ -769,4 +744,4 @@ function fusion_element_fusionslider() {
 }
 
 // Priority 20 to make sure its loaded after setup_fusion_slider.
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_fusionslider', 20 );
+add_action( 'wp_loaded', 'fusion_element_fusionslider', 20 );

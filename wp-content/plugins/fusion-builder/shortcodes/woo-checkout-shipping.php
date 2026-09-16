@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -69,7 +78,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'margin_bottom'            => '',
 					'margin_left'              => '',
@@ -85,9 +94,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 					'animation_type'           => '',
 					'animation_direction'      => 'down',
 					'animation_speed'          => '0.1',
-					'animation_delay'          => '',
 					'animation_offset'         => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'          => '',
 				];
 			}
 
@@ -133,7 +140,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 				$this->defaults = self::get_element_defaults();
 				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_woo_checkout_shipping' );
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_checkout_shipping-shortcode' ) . '>' . $this->get_woo_checkout_shipping_content() . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_checkout_shipping-shortcode' ) . '>' . $this->get_woo_checkout_shipping_content() . '</div>';
 
 				$this->counter++;
 
@@ -154,7 +162,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 				$content  = '';
 				$checkout = WC()->checkout();
 
-				if ( ! is_object( WC()->cart ) || 0 === WC()->cart->get_cart_contents_count() ) {
+				if ( 0 === WC()->cart->get_cart_contents_count() ) {
 					return $content;
 				}
 
@@ -177,11 +185,10 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 			 * @return array
 			 */
 			public function attr() {
-				$attr       = [
+				$attr = [
 					'class' => 'fusion-woo-checkout-shipping-tb fusion-woo-checkout-shipping-tb-' . $this->counter,
 					'style' => '',
 				];
-				$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
 
 				$attr = fusion_builder_visibility_atts( $this->args['hide_on_mobile'], $attr );
 
@@ -189,11 +196,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				if ( $is_builder ) {
-					$attr['class'] .= ' awb-live';
-				}
-
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -207,48 +210,88 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.3
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-checkout-shipping-tb-' . $this->counter;
+				$this->dynamic_css   = [];
+				$is_builder          = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
+
+				$inputs = [
+					$this->base_selector . ' input',
+					$this->base_selector . ' select',
+					$this->base_selector . ' textarea',
+				];
+
+				if ( ! $this->is_default( 'field_bg_color' ) ) {
+					$this->add_css_property( $inputs, 'background', $this->args['field_bg_color'], $is_builder );
+
+					// Select 2.
+					if ( ! $is_builder ) {
+						$this->add_css_property( $this->base_selector . ' .select2-container--default .select2-selection--single', 'background-color', $this->args['field_bg_color'] );
+					} else {
+						$this->add_css_property( $this->base_selector . ' .avada-select-parent .select-arrow', 'background-color', 'transparent', true );
+					}
+				}
 
 				if ( ! $this->is_default( 'field_text_color' ) ) {
-					$custom_vars['placeholder_color'] = Fusion_Color::new_color( $this->args['field_text_color'] )->get_new( 'alpha', '0.5' )->to_css_var_or_rgba();
+					$this->add_css_property( $inputs, 'color', $this->args['field_text_color'], $is_builder );
+
+					// Select 2.
+					if ( ! $is_builder ) {
+						$this->add_css_property( $this->base_selector . ' .select2-container--default .select2-selection--single .select2-selection__rendered', 'color', $this->args['field_text_color'] );
+					} else {
+						$this->add_css_property( $this->base_selector . ' .avada-select-parent .select-arrow', 'color', $this->args['field_text_color'] );
+					}
+
+					$placeholder_color  = Fusion_Color::new_color( $this->args['field_text_color'] )->get_new( 'alpha', '0.5' )->to_css( 'rgba' );
+					$placeholder_inputs = [
+						$this->base_selector . ' input::placeholder',
+						$this->base_selector . ' textarea::placeholder',
+					];
+					$this->add_css_property( $placeholder_inputs, 'color', $placeholder_color );
+					$this->add_css_property( $this->base_selector . ' .select2-container--default .select2-selection--single .select2-selection__rendered .select2-selection__placeholder', 'color', $placeholder_color );
+				}
+
+				if ( ! $this->is_default( 'field_border_color' ) ) {
+					$this->add_css_property( $inputs, 'border-color', $this->args['field_border_color'], $is_builder );
+
+					// Select 2.
+					if ( ! $is_builder ) {
+						$inputs = [
+							$this->base_selector . ' .select2-container .select2-selection .select2-selection__arrow',
+							$this->base_selector . ' .select2-container--default .select2-selection--single',
+						];
+						$this->add_css_property( $inputs, 'border-color', $this->args['field_border_color'] );
+						$this->add_css_property( $this->base_selector . ' .select2-container--default .select2-selection--single .select2-selection__arrow b', 'border-top-color', $this->args['field_border_color'] );
+					} else {
+						$this->add_css_property( $this->base_selector . ' .avada-select-parent .select-arrow', 'border-color', $this->args['field_border_color'] );
+					}
 				}
 
 				if ( ! $this->is_default( 'field_border_focus_color' ) ) {
-					$custom_vars['hover_color'] = Fusion_Color::new_color( $this->args['field_border_focus_color'] )->get_new( 'alpha', '0.5' )->to_css_var_or_rgba();
+					$hover_color  = Fusion_Color::new_color( $this->args['field_border_focus_color'] )->get_new( 'alpha', '0.5' )->to_css( 'rgba' );
+					$hover_inputs = [
+						$this->base_selector . ' input:hover',
+						$this->base_selector . ' select:hover',
+						$this->base_selector . ' textarea:hover',
+					];
+					$this->add_css_property( $hover_inputs, 'border-color', $hover_color );
+
+					$focus_inputs = [
+						$this->base_selector . ' input:focus',
+						$this->base_selector . ' select:focus',
+						$this->base_selector . ' textarea:focus',
+					];
+					$this->add_css_property( $focus_inputs, 'border-color', $this->args['field_border_focus_color'] );
 				}
 
-				$css_vars_options = [
-					'field_bg_color'           => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'field_text_color'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'field_border_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'field_border_focus_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'margin_top'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
-			}
-
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/woo-checkout-shipping.min.css' );
+				$css = $this->parse_css();
+				return $css ? '<style type="text/css">' . $css . '</style>' : '';
 			}
 
 			/**
@@ -273,7 +316,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_shipping' ) ) {
  * @since 3.3
  */
 function fusion_component_woo_checkout_shipping() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(

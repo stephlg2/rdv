@@ -21,7 +21,7 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 			 * Element counter, used for CSS.
 			 *
 			 * @since 3.5.2
-			 * @var int
+			 * @var int $args
 			 */
 			private $privacy_counter = 0;
 
@@ -32,6 +32,16 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 			 * @var array
 			 */
 			private $data = false;
+
+			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @static
+			 * @access public
+			 * @since 3.5.2
+			 * @var array
+			 */
+			public static $args;
 
 			/**
 			 * Constructor.
@@ -60,15 +70,13 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 			 */
 			public static function get_element_defaults() {
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 
 				return [
 					'animation_direction' => 'left',
 					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
 					'animation_speed'     => '',
-					'animation_delay'     => '',
 					'animation_type'      => '',
-					'animation_color'     => '',
 					'class'               => '',
 					'form_field_layout'   => 'stacked',
 					'hide_on_mobile'      => fusion_builder_default_visibility( 'string' ),
@@ -117,7 +125,7 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 			 */
 			public function render( $args, $content = '' ) {
 
-				global $fusion_library;
+				global $fusion_settings, $fusion_library;
 
 				$defaults = apply_filters(
 					'fusion_privacy_default_parameter',
@@ -129,7 +137,7 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 				);
 
 				$content    = apply_filters( 'fusion_shortcode_content', $content, 'fusion_privacy', $args );
-				$this->args = $defaults;
+				self::$args = $defaults;
 
 				$this->privacy_counter++;
 
@@ -197,33 +205,33 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 			 */
 			public function attr() {
 
+				global $fusion_settings;
+
 				$attr = fusion_builder_visibility_atts(
-					$this->args['hide_on_mobile'],
+					self::$args['hide_on_mobile'],
 					[
 						'class' => 'fusion-privacy-element fusion-privacy-element-' . $this->privacy_counter,
-						'style' => '',
 					]
 				);
 
 				// Add custom class.
-				if ( $this->args['class'] ) {
-					$attr['class'] .= ' ' . $this->args['class'];
+				if ( self::$args['class'] ) {
+					$attr['class'] .= ' ' . self::$args['class'];
 				}
 
 				// Add custom id.
-				if ( $this->args['id'] ) {
-					$attr['id'] = $this->args['id'];
+				if ( self::$args['id'] ) {
+					$attr['id'] = self::$args['id'];
 				}
 
 				// Add animation classes.
-				if ( $this->args['animation_type'] ) {
+				if ( self::$args['animation_type'] ) {
 					$animations = FusionBuilder::animations(
 						[
-							'type'      => $this->args['animation_type'],
-							'direction' => $this->args['animation_direction'],
-							'speed'     => $this->args['animation_speed'],
-							'offset'    => $this->args['animation_offset'],
-							'delay'     => $this->args['animation_delay'],
+							'type'      => self::$args['animation_type'],
+							'direction' => self::$args['animation_direction'],
+							'speed'     => self::$args['animation_speed'],
+							'offset'    => self::$args['animation_offset'],
 						]
 					);
 
@@ -231,10 +239,6 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 
 					$attr['class'] .= ' ' . $attr['animation_class'];
 					unset( $attr['animation_class'] );
-
-					if ( isset( $this->args['animation_color'] ) && $this->args['animation_color'] ) {
-						$attr['style'] .= '--awb-animation-color:' . $this->args['animation_color'] . ';';
-					}
 				}
 
 				return $attr;
@@ -269,7 +273,7 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
 					'id'     => 'fusion-privacy-form-' . $this->privacy_counter,
 					'action' => '',
 					'method' => 'post',
-					'class'  => 'fusion-privacy-form fusion-privacy-form-' . $this->args['form_field_layout'],
+					'class'  => 'fusion-privacy-form fusion-privacy-form-' . self::$args['form_field_layout'],
 				];
 
 				return $attr;
@@ -345,9 +349,8 @@ if ( function_exists( 'fusion_is_element_enabled' ) && fusion_is_element_enabled
  */
 function fusion_element_privacy() {
 
-	global $pagenow;
-	$fusion_settings = awb_get_fusion_settings();
-	if ( class_exists( 'Avada_Privacy_Embeds' ) && $fusion_settings->get( 'privacy_embeds' ) && function_exists( 'fusion_builder_map' ) && function_exists( 'fusion_builder_frontend_data' ) ) {
+	global $fusion_settings, $pagenow;
+	if ( class_exists( 'Avada_Privacy_Embeds' ) && Avada()->settings->get( 'privacy_embeds' ) && function_exists( 'fusion_builder_map' ) && function_exists( 'fusion_builder_frontend_data' ) ) {
 		fusion_builder_map(
 			fusion_builder_frontend_data(
 				'FusionSC_Privacy',
@@ -411,4 +414,4 @@ function fusion_element_privacy() {
 		);
 	}
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_privacy' );
+add_action( 'wp_loaded', 'fusion_element_privacy' );

@@ -15,6 +15,15 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 	class FusionSC_ScrollProgress extends Fusion_Element {
 
 		/**
+		 * An array of the shortcode arguments.
+		 *
+		 * @access protected
+		 * @since 3.3
+		 * @var array
+		 */
+		protected $args;
+
+		/**
 		 * The internal element counter.
 		 *
 		 * @access private
@@ -46,16 +55,14 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 		 * @return array
 		 */
 		public static function get_element_defaults() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 			$border_radius   = Fusion_Builder_Border_Radius_Helper::get_border_radius_array_with_fallback_value( $fusion_settings->get( 'scroll_progress_border_radius' ) );
 
 			return [
 				'animation_direction'        => 'down',
 				'animation_offset'           => $fusion_settings->get( 'animation_offset' ),
 				'animation_speed'            => '',
-				'animation_delay'            => '',
 				'animation_type'             => '',
-				'animation_color'            => '',
 				'background_color'           => $fusion_settings->get( 'scroll_progress_background_color' ),
 				'border_size'                => $fusion_settings->get( 'scroll_progress_border_size' ),
 				'border_color'               => $fusion_settings->get( 'scroll_progress_border_color' ),
@@ -115,6 +122,8 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 
 			$html = '<progress ' . FusionBuilder::attributes( 'scroll-progress-shortcode' ) . '></progress>';
 
+			$html .= $this->get_styles(); // Get custom styles.
+
 			$this->element_counter++;
 
 			$this->on_render();
@@ -130,12 +139,12 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 		 * @return array
 		 */
 		public function attr() {
+			global $fusion_settings;
 
 			$attr = [
 				'class' => 'fusion-scroll-progress fusion-scroll-progress-' . $this->element_counter,
 				'max'   => '100',
 				'value' => '',
-				'style' => '',
 			];
 
 			if ( 'flow' !== $this->args['position'] ) {
@@ -150,8 +159,6 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 				$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 			}
 
-			$attr['style'] .= $this->get_style_variables();
-
 			if ( $this->args['class'] ) {
 				$attr['class'] .= ' ' . $this->args['class'];
 			}
@@ -163,27 +170,53 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 			return $attr;
 		}
 
-		/**
-		 * Get the style variables.
-		 *
-		 * @access protected
-		 * @since 3.9
-		 * @return string
-		 */
-		protected function get_style_variables() {
-			$css_vars_options = [
-				'height'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				'border_size'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				'background_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-				'progress_color'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-				'border_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-				'z_index',
-				'border_radius',
-			];
+			/**
+			 * Get the styles.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @return string
+			 */
+		protected function get_styles() {
+			$this->base_selector = '.fusion-scroll-progress-' . $this->element_counter;
 
-			$styles = $this->get_css_vars_for_options( $css_vars_options );
+			if ( $this->args['z_index'] && 'flow' !== $this->args['position'] ) {
+				$this->add_css_property( $this->base_selector, 'z-index', $this->args['z_index'], true );
+			}
 
-			return $styles;
+			if ( $this->args['height'] ) {
+				$this->add_css_property( $this->base_selector, 'height', $this->args['height'] );
+				$this->add_css_property( $this->base_selector . '::-moz-progress-bar', 'height', $this->args['height'] );
+				$this->add_css_property( $this->base_selector . '::-webkit-progress-bar', 'height', $this->args['height'] );
+				$this->add_css_property( $this->base_selector . '::-webkit-progress-value', 'height', $this->args['height'] );
+			}
+
+			if ( $this->args['background_color'] ) {
+				$this->add_css_property( $this->base_selector, 'background-color', $this->args['background_color'] );
+				$this->add_css_property( $this->base_selector . '::-webkit-progress-bar', 'background-color', $this->args['background_color'] );
+			}
+
+			if ( $this->args['progress_color'] ) {
+				$this->add_css_property( $this->base_selector . '::-moz-progress-bar', 'background-color', $this->args['progress_color'] );
+				$this->add_css_property( $this->base_selector . '::-webkit-progress-value', 'background-color', $this->args['progress_color'] );
+
+			}
+
+			if ( $this->args['border_size'] && $this->args['border_color'] ) {
+				$this->add_css_property( $this->base_selector . '::-webkit-progress-value', 'border', fusion_library()->sanitize->get_value_with_unit( $this->args['border_size'] ) . ' solid ' . $this->args['border_color'] );
+				$this->add_css_property( $this->base_selector . '::-moz-progress-bar', 'border', fusion_library()->sanitize->get_value_with_unit( $this->args['border_size'] ) . ' solid ' . $this->args['border_color'] );
+			}
+
+			if ( $this->args['border_radius'] ) {
+				$this->add_css_property( $this->base_selector, 'border-radius', $this->args['border_radius'] );
+				$this->add_css_property( $this->base_selector . '::-moz-progress-bar', 'border-radius', $this->args['border_radius'] );
+				$this->add_css_property( $this->base_selector . '::-webkit-progress-bar', 'border-radius', $this->args['border_radius'] );
+				$this->add_css_property( $this->base_selector . '::-webkit-progress-value', 'border-radius', $this->args['border_radius'] );
+			}
+
+			$css = $this->parse_css();
+
+			return $css ? '<style>' . $css . '</style>' : '';
 		}
 
 
@@ -200,7 +233,7 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 				FusionBuilder::$js_folder_url . '/general/fusion-scroll-progress.js',
 				FusionBuilder::$js_folder_path . '/general/fusion-scroll-progress.js',
 				[ 'jquery', 'fusion-animations' ],
-				FUSION_BUILDER_VERSION,
+				'1',
 				true
 			);
 		}
@@ -258,7 +291,7 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 							'label'       => esc_attr__( 'Background Color', 'fusion-builder' ),
 							'description' => esc_attr__( 'Controls the background color of the progress bar.', 'fusion-builder' ),
 							'id'          => 'scroll_progress_background_color',
-							'default'     => 'var(--awb-color2)',
+							'default'     => '#f2f3f5',
 							'type'        => 'color-alpha',
 							'transport'   => 'postMessage',
 						],
@@ -266,7 +299,7 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 							'label'       => esc_html__( 'Progress Color', 'fusion-builder' ),
 							'description' => esc_html__( 'Controls the color of the progress bar.', 'fusion-builder' ),
 							'id'          => 'scroll_progress_progress_color',
-							'default'     => 'var(--awb-color4)',
+							'default'     => '#65bc7b',
 							'type'        => 'color-alpha',
 							'transport'   => 'postMessage',
 						],
@@ -287,7 +320,7 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
 							'label'       => esc_html__( 'Progress Bar Border Color', 'fusion-builder' ),
 							'description' => esc_html__( 'Controls the border color of the progress bar.', 'fusion-builder' ),
 							'id'          => 'scroll_progress_border_color',
-							'default'     => 'var(--awb-color1)',
+							'default'     => '#ffffff',
 							'type'        => 'color-alpha',
 							'transport'   => 'postMessage',
 						],
@@ -327,7 +360,8 @@ if ( fusion_is_element_enabled( 'fusion_scroll_progress' ) && ! class_exists( 'F
  * @since 3.3
  */
 function fusion_element_scroll_progress() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -339,7 +373,7 @@ function fusion_element_scroll_progress() {
 				'allow_generator'          => false,
 				'inline_editor'            => false,
 				'inline_editor_shortcodes' => false,
-				'help_url'                 => 'https://avada.com/documentation/scroll-progress-element/',
+				'help_url'                 => 'https://theme-fusion.com/documentation/fusion-builder/elements/scroll-progress-element/',
 				'params'                   => [
 					[
 						'type'        => 'radio_button_set',

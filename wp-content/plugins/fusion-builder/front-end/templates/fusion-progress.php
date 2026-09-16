@@ -17,7 +17,7 @@ var value = '',
 text = '<span ' + _.fusionGetAttributes( attrEditor ) + '>' + FusionPageBuilderApp.renderContent( values.element_content, cid, false ) + '</span>';
 
 if ( 'yes' == values.show_percentage ) {
-	value = '<span ' + _.fusionGetAttributes( 'fusion-progressbar-value' ) + '>' + percentage + values.unit + '</span>';
+	value = '<span ' + _.fusionGetAttributes( 'fusion-progressbar-value' ) + '>' + values.percentage + values.unit + '</span>';
 }
 
 text_wrapper = '<span ' + _.fusionGetAttributes( attrSpan ) + '>' + text + ' ' + value + '</span>';

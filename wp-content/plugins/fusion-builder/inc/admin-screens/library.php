@@ -1,13 +1,13 @@
 <?php
 /**
- * Admin Screen markup (Library page).
+ * Admin Screen markup (Ligrary page).
  *
  * @package fusion-builder
  */
 
 ?>
 <?php Fusion_Builder_Admin::header( 'library' ); ?>
-<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_template', 'create_posts' ) || AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) ) : ?>
+
 	<div class="fusion-builder-important-notice fusion-template-builder avada-db-card avada-db-card-first">
 		<div class="intro-text">
 			<h1><?php esc_html_e( 'Avada Library', 'fusion-builder' ); ?></h1>
@@ -20,7 +20,7 @@
 					printf(
 						/* translators: %s: "Icons Documentation Link". */
 						esc_html__( 'Please see the %s.', 'fusion-builder' ),
-						'<a href="https://avada.com/documentation/category/library/" target="_blank">' . esc_attr__( 'Avada Library Documentation', 'fusion-builder' ) . '</a>'
+						'<a href="https://theme-fusion.com/documentation/fusion-builder/fusion-builder-library/" target="_blank">' . esc_attr__( 'Avada Library Documentation', 'fusion-builder' ) . '</a>'
 					);
 					?>
 				</p>
@@ -38,12 +38,7 @@
 					'columns'    => esc_html__( 'Column', 'fusion-builder' ),
 					'elements'   => esc_html__( 'Element', 'fusion-builder' ),
 					'post_cards' => esc_html__( 'Post Card', 'fusion-builder' ),
-					'mega_menus' => esc_html__( 'Mega Menu', 'fusion-builder' ),
 				];
-
-				if ( ! AWB_Access_Control::wp_user_can_for_post( 'fusion_template', 'create_posts' ) ) {
-					unset( $types['templates'] );
-				}
 				?>
 			<?php foreach ( $types as $type_name => $type_label ) : ?>
 				<option value="<?php echo esc_attr( $type_name ); ?>"><?php echo esc_html( $type_label ); ?></option>
@@ -53,19 +48,18 @@
 			<?php wp_nonce_field( 'fusion_library_new_element' ); ?>
 
 			<input class="library-element-name" type="text" placeholder="<?php esc_attr_e( 'Enter Element Name', 'fusion-builder' ); ?>" required id="fusion-library-name" name="name" />
-			<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) && apply_filters( 'awb_global_elements_access', true ) ) : ?>
-				<div id="fusion-global-field">
-					<label for="fusion-library-global"><?php esc_html_e( 'Global element', 'fusion-builder' ); ?></label>
-					<input type="checkbox" id="fusion-library-global" name="global" />
-				</div>
-			<?php endif; ?>
+
+			<div id="fusion-global-field">
+				<label for="fusion-library-global"><?php esc_html_e( 'Global element', 'fusion-builder' ); ?></label>
+				<input type="checkbox" id="fusion-library-global" name="global" />
+			</div>
 
 			<div>
 				<input type="submit" value="<?php esc_attr_e( 'Create Library Element', 'fusion-builder' ); ?>" class="button button-large button-primary avada-large-button" />
 			</div>
 		</form>
 	</div>
-<?php endif; ?>
+
 	<div class="fusion-library-data-items avada-db-table">
 		<?php
 			$fusion_library_table = new Fusion_Builder_Library_Table();

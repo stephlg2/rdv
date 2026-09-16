@@ -31,14 +31,6 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 	public $columns = [];
 
 	/**
-	 * Number of total table items.
-	 *
-	 * @since 3.6
-	 * @var int
-	 */
-	public $total_items = -1;
-
-	/**
 	 * Class constructor.
 	 *
 	 * @since 1.0
@@ -83,9 +75,11 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 		$hidden       = $this->get_hidden_columns();
 		$sortable     = $this->get_sortable_columns();
 
+		$total_items = count( $this->table_data() );
+
 		$this->set_pagination_args(
 			[
-				'total_items' => -1 !== $this->total_items ? $this->total_items : count( $this->table_data() ),
+				'total_items' => $total_items,
 				'per_page'    => $per_page,
 			]
 		);
@@ -208,9 +202,6 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 
 		// Check if there are items available.
 		if ( $library_query->have_posts() ) {
-
-			$this->total_items = $library_query->found_posts;
-
 			// The loop.
 			while ( $library_query->have_posts() ) :
 				$library_query->the_post();
@@ -275,24 +266,33 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 	 */
 	public function column_title( $item ) {
 		$wpnonce = wp_create_nonce( 'fusion-template-builder' );
-		$actions = [];
 
 		if ( isset( $_GET['status'] ) && 'trash' === $_GET['status'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$actions['restore'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Restore', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_restore_element', esc_attr( $item['id'] ) );
 			$actions['delete']  = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Delete Permanently', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_delete_element', esc_attr( $item['id'] ) );
 		} else {
-			$actions = awb_get_list_table_edit_links( $actions, $item );
+			$live_editor     = apply_filters( 'fusion_load_live_editor', true );
+			$actions['edit'] = sprintf( '<a href="post.php?post=%s&action=%s">' . esc_html__( 'Edit', 'fusion-builder' ) . '</a>', esc_attr( $item['id'] ), 'edit' );
 
 			if ( current_user_can( 'edit_others_posts' ) ) {
 				$actions['clone_section'] = '<a href="' . $this->get_section_clone_link( $item['id'] ) . '" title="' . esc_attr( __( 'Clone this layout section', 'fusion-builder' ) ) . '">' . __( 'Clone', 'fusion-builder' ) . '</a>';
 			}
 
-			if ( current_user_can( 'delete_post', $item['id'] ) ) {
-				$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
+			if ( $live_editor ) {
+				/* translators: The title. */
+				$actions['fusion_builder_live'] = '<a href="' . esc_url_raw( add_query_arg( 'fb-edit', '1', get_the_permalink( $item['id'] ) ) ) . '" aria-label="' . sprintf( esc_attr__( 'Edit %s with Avada Live', 'fusion-builder' ), '&#8220;' . get_the_title( $item['id'] ) . '&#8221;' ) . '">' . esc_html__( 'Avada Live', 'fusion-builder' ) . '</a>';
 			}
+			$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
 		}
 
-		return awb_get_list_table_title( $item ) . ' ' . $this->row_actions( $actions );
+		$status = '';
+		if ( 'draft' === $item['status'] ) {
+			$status = ' &mdash; <span class="post-state">' . ucwords( $item['status'] ) . '</span>';
+		}
+
+		$title = '<strong><a href="post.php?post=' . esc_attr( $item['id'] ) . '&action=edit">' . esc_html( $item['title'] ) . '</a>' . $status . '</strong>';
+
+		return $title . ' ' . $this->row_actions( $actions );
 	}
 
 	/**
@@ -365,11 +365,7 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_cb( $item ) {
-		if ( current_user_can( 'delete_post', $item['id'] ) || current_user_can( 'edit_post', $item['id'] ) ) {
-			return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
-		}
-
-		return '';
+		return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
 	}
 
 	/**
@@ -402,8 +398,7 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 		$count_templates = (array) $count_templates;
 		$template_types  = Fusion_Template_Builder()->get_template_terms();
 
-		$count_posts['trash']   = isset( $count_templates['trash'] ) ? $count_templates['trash'] : 0;
-		$count_posts['pending'] = isset( $count_templates['pending'] ) ? $count_templates['pending'] : 0;
+		$count_posts['trash'] = isset( $count_templates['trash'] ) ? $count_templates['trash'] : 0;
 
 		if ( isset( $count_templates['publish'] ) && $count_templates['publish'] ) {
 			$post_status['all'] = $count_templates['publish'];
@@ -418,10 +413,6 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 
 		if ( isset( $count_posts['trash'] ) && $count_posts['trash'] ) {
 			$post_status['trash'] = $count_posts['trash'];
-		}
-
-		if ( isset( $count_posts['pending'] ) && $count_posts['pending'] ) {
-			$post_status['pending'] = $count_posts['pending'];
 		}
 
 		$status_html = '<ul class="subsubsub">';
@@ -440,12 +431,12 @@ class Fusion_Template_Builder_Table extends WP_List_Table {
 			$current = ( $status === $current_type ) ? ' class="current" ' : '';
 
 			$status_attr = ( 'all' !== $status ) ? '&type=' . $status : '';
-			if ( 'trash' === $status || 'pending' === $status ) {
+			if ( 'trash' === $status ) {
 				$status_attr = '&status=' . $status;
 			}
 
 			$status_title = $status;
-			if ( 'trash' !== $status && 'all' !== $status && 'pending' !== $status ) {
+			if ( 'trash' !== $status && 'all' !== $status ) {
 				$status_title = $this->get_term_name( $status );
 			}
 

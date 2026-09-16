@@ -22,7 +22,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Runs before view DOM is patched.
+			 * Runs after view DOM is patched.
 			 *
 			 * @since 2.0
 			 * @return {void}
@@ -75,8 +75,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				atts.parentValues          = this.getParentValues( atts );
 				atts.output                = atts.values.element_content;
 
-				atts.usingDynamicParent = this.isParentHasDynamicContent( atts.parentValues );
-
 				return atts;
 			},
 
@@ -86,12 +84,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @since 2.0
 			 * @return {void}
 			 */
-			checkActive: function( activeTab ) {
+			checkActive: function() {
 				var parentView = window.FusionPageBuilderViewManager.getView( this.model.get( 'parent' ) );
-				activeTab = activeTab || parentView.model.get( 'activeTab' );
 
-				if ( 'undefined' !== typeof activeTab ) {
-					if ( activeTab === this.model.get( 'cid' ) ) {
+				if ( 'undefined' !== typeof parentView.model.get( 'activeTab' ) ) {
+					if ( parentView.model.get( 'activeTab' ) === this.model.get( 'cid' ) ) {
 						this.$el.addClass( 'active' );
 					} else {
 						this.$el.removeClass( 'active' );
@@ -135,23 +132,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						'aria-hidden': 'true'
 					};
 
-					tabsShortcodeIcon.style = '';
+				if ( parentValues.icon_size ) {
+					tabsShortcodeIcon.style = 'font-size: ' + parentValues.icon_size + 'px';
+				}
 
-					if ( parentValues.icon_size ) {
-						tabsShortcodeIcon.style += 'font-size: ' + parentValues.icon_size + 'px;';
-					}
-
-					const icon_color = values.icon_color ? values.icon_color : '';
-					if ( icon_color ) {
-						tabsShortcodeIcon.style += '--icon-color: ' + icon_color + ';';
-					}
-
-					const icon_active_color = values.icon_active_color ? values.icon_active_color : '';
-					if ( icon_active_color ) {
-						tabsShortcodeIcon.style += '--icon-active-color: ' + icon_active_color + ';';
-					}
-
-					return tabsShortcodeIcon;
+				return tabsShortcodeIcon;
 			},
 
 			/**

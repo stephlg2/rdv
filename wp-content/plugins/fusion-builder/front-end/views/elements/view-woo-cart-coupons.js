@@ -18,7 +18,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var attributes = {};
 
 				attributes.cid    = this.model.get( 'cid' );
-				this.values       = atts.values;
 				attributes.attr   = this.buildAttr( atts.values );
 
 				attributes.wooCartCouponsAttr = this.buildAttr( atts.values, attributes.cid );
@@ -26,6 +25,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( 'undefined' !== typeof atts.query_data  ) {
 					attributes.cart_coupons_content = atts.query_data;
 				}
+				attributes.styles = this.buildStyleBlock( atts.values );
 				return attributes;
 			},
 
@@ -40,22 +40,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// WooCartCoupons attributes.
 				var wooCartCoupons = {
-					class: 'coupon fusion-woo-cart_coupons fusion-woo-cart_coupons-' + cid,
-					style: ''
+					class: 'coupon fusion-woo-cart_coupons fusion-woo-cart_coupons-' + cid
 				};
-
-				wooCartCoupons = _.fusionVisibilityAtts( values.hide_on_mobile, wooCartCoupons );
 
 				if ( '' !== values[ 'class' ] ) {
 					wooCartCoupons[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( ! this.isDefault( 'buttons_layout' ) ) {
-					wooCartCoupons[ 'class' ] += '  buttons-layout-' + values.buttons_layout;
-				}
-
-				if ( 'yes' === values.button_span ) {
-					wooCartCoupons[ 'class' ] += '  buttons-span-yes';
 				}
 
 				if ( '' !== values.id ) {
@@ -64,48 +53,104 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				wooCartCoupons = _.fusionAnimations( values, wooCartCoupons );
 
-				wooCartCoupons.style += this.getStyleVariables( values );
-
 				return wooCartCoupons;
 			},
 
+
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
+			 * @since  3.3
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var inputs, hoverColor, placeholderColor, placeHolderInputs, hoverInputs, focusInputs, css, selector;
+				this.values = values;
+				// variables into current scope
+				this.baseSelector = '.fusion-woo-cart_coupons-' +  this.model.get( 'cid' );
+				this.dynamic_css = {};
 
-				if ( ! this.isDefault( 'field_border_focus_color' ) ) {
-					customVars.hover_color = jQuery.AWB_Color( values.field_border_focus_color ).alpha( 0.5 ).toVarOrRgbaString();
+
+				if ( !this.isDefault( 'margin_top' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-top',  this.values.margin_top, true );
+				}
+
+				if ( !this.isDefault( 'margin_bottom' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-bottom',  this.values.margin_bottom );
+				}
+
+				if ( !this.isDefault( 'margin_left' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-left',  this.values.margin_left );
+				}
+
+				if ( !this.isDefault( 'margin_right' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-right',  this.values.margin_right );
+				}
+
+				inputs = [ this.baseSelector + ' input', this.baseSelector + ' select', this.baseSelector + ' textarea' ];
+
+				if ( ! this.isDefault( 'field_bg_color' ) ) {
+					this.addCssProperty( inputs, 'background',  this.values.field_bg_color );
 				}
 
 				if ( ! this.isDefault( 'field_text_color' ) ) {
-					customVars.placeholder_color = jQuery.AWB_Color( values.field_text_color ).alpha( 0.5 ).toVarOrRgbaString();
+					placeholderColor = jQuery.Color( this.values.field_text_color ).alpha( 0.5 ).toRgbaString();
+					this.addCssProperty( inputs, 'color',  this.values.field_text_color );
+
+					placeHolderInputs = [ this.baseSelector + ' input::placeholder', this.baseSelector + ' textarea::placeholder' ];
+					this.addCssProperty( placeHolderInputs, 'color',  placeholderColor );
 				}
 
-				cssVarsOptions = [
-					'field_bg_color',
-					'field_text_color',
-					'field_border_color',
-					'field_border_focus_color',
-					'stacked_buttons_alignment'
-				];
+				if ( ! this.isDefault( 'field_border_color' ) ) {
+					this.addCssProperty( inputs, 'border-color',  this.values.field_border_color );
+				}
 
-				cssVarsOptions.margin_top           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_margin_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_margin_right  = { 'callback': _.fusionGetValueWithUnit };
+				if ( ! this.isDefault( 'field_border_focus_color' ) ) {
+					hoverColor = jQuery.Color( this.values.field_border_focus_color ).alpha( 0.5 ).toRgbaString();
+					hoverInputs = [ this.baseSelector + ' input:hover', this.baseSelector + ' select:hover', this.baseSelector + ' textarea:hover' ];
+					this.addCssProperty( hoverInputs, 'border-color', hoverColor );
+					focusInputs = [ this.baseSelector + ' input:focus', this.baseSelector + ' select:focus', this.baseSelector + ' textarea:focus' ];
+					this.addCssProperty( focusInputs, 'border-color',  this.values.field_border_focus_color );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				selector =  this.baseSelector + ' button.fusion-apply-coupon';
+				if ( !this.isDefault( 'button_margin_top' ) ) {
+				this.addCssProperty( selector, 'margin-top',  this.values.button_margin_top );
+				}
+
+				if ( !this.isDefault( 'button_margin_bottom' ) ) {
+				this.addCssProperty( selector, 'margin-bottom',  this.values.button_margin_bottom );
+				}
+
+				if ( !this.isDefault( 'button_margin_left' ) ) {
+				this.addCssProperty( selector, 'margin-left',  this.values.button_margin_left );
+				}
+
+				if ( !this.isDefault( 'button_margin_right' ) ) {
+				this.addCssProperty( selector, 'margin-right',  this.values.button_margin_right );
+				}
+
+				selector =  this.baseSelector + ' div.avada-coupon-fields';
+				if ( 'floated' ===  this.values.buttons_layout ) {
+				this.addCssProperty( selector, 'flex-direction', 'row' );
+				} else {
+				this.addCssProperty( selector, 'flex-direction', 'column', true );
+				this.addCssProperty( this.baseSelector + ' input#avada_coupon_code', 'flex', 'auto' );
+				this.addCssProperty( this.baseSelector + ' input#avada_coupon_code', 'margin-right', '0' );
+
+				if ( 'yes' ===  this.values.button_span ) {
+					this.addCssProperty( selector, 'align-items', 'stretch', true );
+					this.addCssProperty( this.baseSelector + ' input#avada_coupon_code', 'width', '100%' );
+				} else {
+					this.addCssProperty( selector, 'align-items',  this.values.stacked_buttons_alignment, true );
+				}
+
+				}
+				css = this.parseCSS();
+
+				return ( css ) ? '<style>' + css + '</style>' : '';
+
 			}
 
 		} );

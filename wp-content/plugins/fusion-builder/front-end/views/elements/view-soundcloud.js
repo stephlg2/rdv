@@ -62,14 +62,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				values.show_user    = ( 'yes' === values.show_user ) ? 'true' : 'false';
 
 				if ( values.color ) {
-					values.color = jQuery.AWB_Color( values.color ).toHexString();
+					values.color = jQuery.Color( values.color ).toHexString();
 					values.color = values.color.replace( '#', '' );
 				}
-
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -83,34 +78,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Attributes.
 				var attr = {
-					class: 'fusion-soundcloud',
-					style: ''
+					class: 'fusion-soundcloud'
 				};
-
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
 				}
-
 				if ( '' !== values.id ) {
 					attr.id = values.id;
 				}
-
-				if ( '' !== values.margin_top ) {
-					attr.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_right ) {
-					attr.style += 'margin-right:' + values.margin_right + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
-
-				if ( '' !== values.margin_left ) {
-					attr.style += 'margin-left:' + values.margin_left + ';';
-				}
-
 				attr = _.fusionVisibilityAtts( values.hide_on_mobile, attr );
 
 				return attr;

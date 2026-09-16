@@ -24,6 +24,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -39,7 +40,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function( values ) {
 				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-woo-notices-tb fusion-woo-notices-tb-' + this.model.get( 'cid' ),
-						style: this.getStyleVariables()
+						style: ''
 					} );
 
 				if ( '' !== values.alignment ) {
@@ -84,61 +85,183 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			 getStyleVariables: function() {
-				var customVars = [],
-					cssVarsOptions = [
-						'font_color',
-						'border_style',
-						'border_color',
-						'background_color',
-						'icon_color',
-						'link_color',
-						'link_hover_color',
-						'success_border_color',
-						'success_background_color',
-						'success_text_color',
-						'success_icon_color',
-						'success_link_color',
-						'success_link_hover_color',
-						'error_border_color',
-						'error_background_color',
-						'error_text_color',
-						'error_icon_color',
-						'error_link_color',
-						'error_link_hover_color'
-					];
+			buildStyleBlock: function( values ) {
+				var css, selectors, selectorMessage, selectorError, selectorNotices;
 
-				cssVarsOptions.margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.font_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_sizes_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_sizes_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_sizes_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_sizes_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_top_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_top_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_bottom_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.icon_size = { 'callback': _.fusionGetValueWithUnit };
+				this.baseSelector = '.fusion-woo-notices-tb.fusion-woo-notices-tb-' +  this.model.get( 'cid' );
+				this.dynamic_css  = {};
+				selectorMessage = [
+					this.baseSelector + ' .woocommerce-info',
+					this.baseSelector + ' .woocommerce-message'
+				];
+				selectorError = [ this.baseSelector + ' .woocommerce-error li' ];
+				selectorNotices = _.union( selectorMessage, selectorError );
 
-				if ( ! this.isDefault( 'cart_icon_style' ) ) {
-					customVars.cart_icon_content = '';
-					customVars.cart_icon_margin_right = '0';
+				// Margin styles.
+				if ( ! this.isDefault( 'margin_top' ) ) {
+				  this.addCssProperty( selectorNotices, 'margin-top',  _.fusionGetValueWithUnit( values.margin_top ) );
+				}
+				if ( ! this.isDefault( 'margin_right' ) ) {
+				  this.addCssProperty( selectorNotices, 'margin-right',  _.fusionGetValueWithUnit( values.margin_right ) );
+				}
+				if ( ! this.isDefault( 'margin_bottom' ) ) {
+				  this.addCssProperty( selectorNotices, 'margin-bottom',  _.fusionGetValueWithUnit( values.margin_bottom ) );
+				}
+				if ( ! this.isDefault( 'margin_left' ) ) {
+				  this.addCssProperty( selectorNotices, 'margin-left',  _.fusionGetValueWithUnit( values.margin_left ) );
 				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				// Padding styles.
+				if ( ! this.isDefault( 'padding_top' ) ) {
+				  this.addCssProperty( selectorNotices, 'padding-top',  _.fusionGetValueWithUnit( values.padding_top ) );
+				}
+				if ( ! this.isDefault( 'padding_right' ) ) {
+				  this.addCssProperty( selectorNotices, 'padding-right',  _.fusionGetValueWithUnit( values.padding_right ) );
+				}
+				if ( ! this.isDefault( 'padding_bottom' ) ) {
+				  this.addCssProperty( selectorNotices, 'padding-bottom',  _.fusionGetValueWithUnit( values.padding_bottom ) );
+				}
+				if ( ! this.isDefault( 'padding_left' ) ) {
+				  this.addCssProperty( selectorNotices, 'padding-left',  _.fusionGetValueWithUnit( values.padding_left ) );
+				}
+
+				if ( ! this.isDefault( 'font_size' ) ) {
+					this.addCssProperty( selectorNotices, 'font-size', values.font_size );
+				}
+
+				if ( ! this.isDefault( 'font_color' ) ) {
+					this.addCssProperty( selectorNotices, 'color', values.font_color );
+				}
+
+				// Border styles.
+				if ( ! this.isDefault( 'border_sizes_top' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-top-width',  _.fusionGetValueWithUnit( values.border_sizes_top ) );
+				}
+				if ( ! this.isDefault( 'border_sizes_right' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-right-width',  _.fusionGetValueWithUnit( values.border_sizes_right ) );
+				}
+				if ( ! this.isDefault( 'border_sizes_bottom' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-bottom-width',  _.fusionGetValueWithUnit( values.border_sizes_bottom ) );
+				}
+				if ( ! this.isDefault( 'border_sizes_left' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-left-width',  _.fusionGetValueWithUnit( values.border_sizes_left ) );
+				}
+				if ( ! this.isDefault( 'border_radius_top_left' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-top-left-radius',  _.fusionGetValueWithUnit( values.border_radius_top_left ) );
+				}
+				if ( ! this.isDefault( 'border_radius_top_right' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-top-right-radius',  _.fusionGetValueWithUnit( values.border_radius_top_right ) );
+				}
+				if ( ! this.isDefault( 'border_radius_bottom_right' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-bottom-right-radius',  _.fusionGetValueWithUnit( values.border_radius_bottom_right ) );
+				}
+				if ( ! this.isDefault( 'border_radius_bottom_left' ) ) {
+				  this.addCssProperty( selectorNotices, 'border-bottom-left-radius',  _.fusionGetValueWithUnit( values.border_radius_bottom_left ) );
+				}
+				if ( ! this.isDefault( 'border_style' ) ) {
+					this.addCssProperty( selectorNotices, 'border-style', values.border_style );
+				}
+				if ( ! this.isDefault( 'border_color' ) ) {
+					this.addCssProperty( selectorNotices, 'border-color', values.border_color );
+				}
+
+				if ( ! this.isDefault( 'background_color' ) ) {
+					this.addCssProperty( selectorNotices, 'background-color', values.background_color );
+				}
+
+				// Icon styles.
+				selectors = [
+					this.baseSelector + ' .woocommerce-info .fusion-woo-notices-tb-icon',
+					this.baseSelector + ' .woocommerce-message .fusion-woo-notices-tb-icon',
+					this.baseSelector + ' .woocommerce-error .fusion-woo-notices-tb-icon'
+				];
+				if ( ! this.isDefault( 'icon_size' ) ) {
+					this.addCssProperty( selectors, 'font-size', values.icon_size + 'px' );
+				}
+				if ( ! this.isDefault( 'icon_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.icon_color );
+				}
+
+				// Link & Hover styles.
+				selectors = [
+					this.baseSelector + ' .woocommerce-info .wc-forward',
+					this.baseSelector + ' .woocommerce-message .wc-forward',
+					this.baseSelector + ' .woocommerce-error .wc-forward'
+				];
+				if ( ! this.isDefault( 'link_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.link_color );
+				}
+				selectors = [
+					this.baseSelector + ' .woocommerce-info .wc-forward:hover',
+					this.baseSelector + ' .woocommerce-message .wc-forward:hover',
+					this.baseSelector + ' .woocommerce-error .wc-forward:hover'
+				];
+				if ( ! this.isDefault( 'link_hover_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.link_hover_color );
+				}
+
+				// Success styles.
+				selectors = [ this.baseSelector + ' .woocommerce-message' ];
+				if ( ! this.isDefault( 'success_border_color' ) ) {
+					this.addCssProperty( selectors, 'border-color', values.success_border_color );
+				}
+				if ( ! this.isDefault( 'success_background_color' ) ) {
+					this.addCssProperty( selectors, 'background-color', values.success_background_color );
+				}
+				if ( ! this.isDefault( 'success_text_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.success_text_color );
+				}
+				selectors = [ this.baseSelector + ' .woocommerce-message .fusion-woo-notices-tb-icon' ];
+				if ( ! this.isDefault( 'success_icon_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.success_icon_color );
+				}
+
+				// Success Link & Hover styles.
+				selectors = [ this.baseSelector + ' .woocommerce-message .wc-forward' ];
+				if ( ! this.isDefault( 'success_link_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.success_link_color );
+				}
+				selectors = [ this.baseSelector + ' .woocommerce-message .wc-forward:hover' ];
+				if ( ! this.isDefault( 'success_link_hover_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.success_link_hover_color );
+				}
+
+				// Error styles.
+				if ( ! this.isDefault( 'error_border_color' ) ) {
+					this.addCssProperty( selectorError, 'border-color', values.error_border_color );
+				}
+				if ( ! this.isDefault( 'error_background_color' ) ) {
+					this.addCssProperty( selectorError, 'background-color', values.error_background_color );
+				}
+				if ( ! this.isDefault( 'error_text_color' ) ) {
+					this.addCssProperty( selectorError, 'color', values.error_text_color );
+				}
+				selectors = [ this.baseSelector + ' .woocommerce-error .fusion-woo-notices-tb-icon' ];
+				if ( ! this.isDefault( 'error_icon_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.error_icon_color );
+				}
+
+				// Error Link & Hover styles.
+				selectors = [ this.baseSelector + ' .woocommerce-error .wc-forward' ];
+				if ( ! this.isDefault( 'error_link_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.error_link_color );
+				}
+				selectors = [ this.baseSelector + ' .woocommerce-error .wc-forward:hover' ];
+				if ( ! this.isDefault( 'error_link_hover_color' ) ) {
+					this.addCssProperty( selectors, 'color', values.error_link_hover_color );
+				}
+
+				css = this.parseCSS();
+				return ( css ) ? '<style>' + css + '</style>' : '';
+
 			}
+
 		} );
 	} );
 }( jQuery ) );

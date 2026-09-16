@@ -5,16 +5,18 @@
  * @package fusion-builder
  */
 
-$fusion_settings = awb_get_fusion_settings();
+$fusion_settings = fusion_get_fusion_settings();
 
+$size         = strtolower( $fusion_settings->get( 'button_size' ) );
 $type         = strtolower( $fusion_settings->get( 'button_type' ) );
 $gradient_top = $gradient_bottom = $accent_color = $border_color = $border_width = $border_radius = '';
 
-$gradient_top    = Fusion_Color::new_color( $fusion_settings->get( 'button_gradient_top_color' ) )->is_needs_adjustment() ? '#f8f8f8' : $fusion_settings->get( 'button_gradient_top_color' );
-$gradient_bottom = Fusion_Color::new_color( $fusion_settings->get( 'button_gradient_bottom_color' ) )->is_needs_adjustment() ? '#f8f8f8' : $fusion_settings->get( 'button_gradient_bottom_color' );
-$accent_color    = Fusion_Color::new_color( $fusion_settings->get( 'button_accent_color' ) )->is_needs_adjustment() ? '#f8f8f8' : $fusion_settings->get( 'button_accent_color' );
-$border_color    = Fusion_Color::new_color( $fusion_settings->get( 'button_border_color' ) )->is_needs_adjustment() ? '#f8f8f8' : $fusion_settings->get( 'button_border_color' );
-$border_width    = $fusion_settings->get( 'button_border_width', 'top' ) . ' ' . $fusion_settings->get( 'button_border_width', 'right' ) . ' ' . $fusion_settings->get( 'button_border_width', 'bottom' ) . ' ' . $fusion_settings->get( 'button_border_width', 'left' );
+$gradient_top    = fusion_color_needs_adjustment( $fusion_settings->get( 'button_gradient_top_color' ) ) ? '#f8f8f8' : $fusion_settings->get( 'button_gradient_top_color' );
+$gradient_bottom = fusion_color_needs_adjustment( $fusion_settings->get( 'button_gradient_bottom_color' ) ) ? '#f8f8f8' : $fusion_settings->get( 'button_gradient_bottom_color' );
+$accent_color    = fusion_color_needs_adjustment( $fusion_settings->get( 'button_accent_color' ) ) ? '#f8f8f8' : $fusion_settings->get( 'button_accent_color' );
+$border_color    = fusion_color_needs_adjustment( $fusion_settings->get( 'button_border_color' ) ) ? '#f8f8f8' : $fusion_settings->get( 'button_border_color' );
+$border_width    = $fusion_settings->get( 'button_border_width' );
+$border_radius   = $fusion_settings->get( 'button_border_radius' );
 $text_transform  = $fusion_settings->get( 'button_text_transform' );
 ?>
 
@@ -23,30 +25,11 @@ $text_transform  = $fusion_settings->get( 'button_text_transform' );
 	<#
 	var button_style  = '';
 	var button_icon   = '';
-	var border_radius, border_radius_top_left, border_radius_top_right, border_radius_bottom_right, border_radius_bottom_left;
+	var border_radius = '<?php echo esc_attr( $border_radius ); ?>';
 
-
-	if ( 'undefined' !== typeof params.border_radius_top_left && '' !== params.border_radius_top_left ) {
-		border_radius_top_left = params.border_radius_top_left;
-	} else {
-		border_radius_top_left = '<?php echo esc_attr( $fusion_settings->get( 'button_border_radius', 'top_left' ) ); ?>';
+	if ( '' !== params.border_radius ) {
+		border_radius = params.border_radius;
 	}
-	if ( 'undefined' !== typeof params.border_radius_top_right && '' !== params.border_radius_top_right ) {
-		border_radius_top_right = params.border_radius_top_right;
-	} else {
-		border_radius_top_right = '<?php echo esc_attr( $fusion_settings->get( 'button_border_radius', 'top_right' ) ); ?>';
-	}
-	if ( 'undefined' !== typeof params.border_radius_bottom_right && '' !== params.border_radius_bottom_right ) {
-		border_radius_bottom_right = params.border_radius_bottom_right;
-	} else {
-		border_radius_bottom_right = '<?php echo esc_attr( $fusion_settings->get( 'button_border_radius', 'bottom_right' ) ); ?>';
-	}
-	if ( 'undefined' !== typeof params.border_radius_bottom_left && '' !== params.border_radius_bottom_left ) {
-		border_radius_bottom_left = params.border_radius_bottom_left;
-	} else {
-		border_radius_bottom_left = '<?php echo esc_attr( $fusion_settings->get( 'button_border_radius', 'bottom_left' ) ); ?>';
-	}
-	border_radius = border_radius_top_left + ' ' + border_radius_top_right + ' ' + border_radius_bottom_right + ' ' + border_radius_bottom_left;
 
 	if ( '' === params.type ) {
 		var button_type = '<?php echo esc_attr( $type ); ?>';
@@ -55,7 +38,7 @@ $text_transform  = $fusion_settings->get( 'button_text_transform' );
 	}
 
 	if ( '' === params.size || ! params.size ) {
-		var button_size = 'large';
+		var button_size = '<?php echo esc_attr( $size ); ?>';
 	} else {
 		var button_size = params.size;
 	}
@@ -69,30 +52,12 @@ $text_transform  = $fusion_settings->get( 'button_text_transform' );
 	} else if ( 'custom' === params.color ) {
 		var accent_color = ( params.accent_color ) ? params.accent_color : '<?php echo esc_attr( $accent_color ); ?>';
 		var accent_color = ( params.border_color ) ? params.border_color : '<?php echo esc_attr( $border_color ); ?>';
-		var border_color = accent_color;
-		var border_width, border_top, border_right, border_bottom, border_left;
 
-		if ( 'undefined' !== typeof params.border_top && '' !== params.border_top ) {
-			border_top = params.border_top;
+		if ( params.border_width ) {
+			var border_width = ( -1 === params.border_width.indexOf( 'px' ) ) ? params.border_width + 'px' : params.border_width;
 		} else {
-			border_top = '<?php echo esc_attr( $fusion_settings->get( 'button_border_width', 'top' ) ); ?>';
+			var border_width = '<?php echo esc_attr( $border_width ); ?>';
 		}
-		if ( 'undefined' !== typeof params.border_right && '' !== params.border_right ) {
-			border_right = params.border_right;
-		} else {
-			border_right = '<?php echo esc_attr( $fusion_settings->get( 'button_border_width', 'right' ) ); ?>';
-		}
-		if ( 'undefined' !== typeof params.border_bottom && '' !== params.border_bottom ) {
-			border_bottom = params.border_bottom;
-		} else {
-			border_bottom = '<?php echo esc_attr( $fusion_settings->get( 'button_border_width', 'bottom' ) ); ?>';
-		}
-		if ( 'undefined' !== typeof params.border_left && '' !== params.border_left ) {
-			border_left = params.border_left;
-		} else {
-			border_left = '<?php echo esc_attr( $fusion_settings->get( 'button_border_width', 'left' ) ); ?>';
-		}
-		border_width = border_top + ' ' + border_right + ' ' + border_bottom + ' ' + border_left;
 
 		var gradient_top = ( params.button_gradient_top_color ) ? params.button_gradient_top_color : '<?php echo esc_attr( $gradient_top ); ?>';
 		var gradient_bottom = ( params.button_gradient_bottom_color ) ? params.button_gradient_bottom_color : '<?php echo esc_attr( $gradient_bottom ); ?>';
@@ -138,11 +103,11 @@ $text_transform  = $fusion_settings->get( 'button_text_transform' );
 
 	<# if ( 'custom' === params.color || 'default' === params.color ) { #>
 
-		<a class="fusion-button button-default button-{{ button_type }} button-{{ button_size }}" style="background: {{ button_background }}; border-radius: {{ border_radius }}; border-style: solid; border-width: {{ border_width }}; border-color: {{ border_color }}; color: {{ accent_color }}; text-transform: {{ text_transform }};"><span class="fusion-button-text">{{{ buttonContent }}}</span></a>
+		<a class="fusion-button button-default button-{{ button_type }} button-{{ button_size }}" style="background: {{ button_background }}; border-radius: {{ border_radius }}px; border: {{ border_width }} solid {{ border_color }}; color: {{ accent_color }}; text-transform: {{ text_transform }};"><span class="fusion-button-text">{{{ buttonContent }}}</span></a>
 
 	<# } else { #>
 
-		<a class="fusion-button button-default button-{{ button_type }} button-{{ button_size }} button-{{ button_color }}" style="border-radius: {{ border_radius }}; text-transform: {{ text_transform }};"><span class="fusion-button-text">{{{ buttonContent }}}</span></a>
+		<a class="fusion-button button-default button-{{ button_type }} button-{{ button_size }} button-{{ button_color }}" style="border-radius: {{ border_radius }}px; text-transform: {{ text_transform }};"><span class="fusion-button-text">{{{ buttonContent }}}</span></a>
 
 	<# }#>
 </script>

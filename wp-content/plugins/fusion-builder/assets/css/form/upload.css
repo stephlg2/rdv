@@ -30,7 +30,7 @@
   height: 100%;
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-upload-field-container:hover .fusion-form-upload-field {
-  border-color: var(--awb-form-focus-border-hover-color);
+  border-color: var(--form_focus_border_color-5a);
 }
 .fusion-form-form-wrapper .fusion-form-field.fusion-form-upload-field .fusion-form-input-with-icon i {
   left: 0 !important;
@@ -41,9 +41,6 @@
 .fusion-form-form-wrapper .fusion-form-field.fusion-form-upload-field .fusion-form-input-with-icon .fusion-form-upload-field {
   padding: 35px 0 0 0;
 }
-.fusion-form-form-wrapper .fusion-form-field.fusion-form-upload-field.dragged .fusion-form-upload-field {
-  border-color: var(--awb-form-focus-border-color);
-}
-.fusion-form-form-wrapper .fusion-form-field.fusion-form-upload-field.focused .fusion-form-upload-field {
-  border-color: var(--awb-form-focus-border-color);
+.fusion-form-form-wrapper .fusion-form-field.dragged.fusion-form-upload-field .fusion-form-upload-field {
+  border-color: var(--form_focus_border_color);
 }

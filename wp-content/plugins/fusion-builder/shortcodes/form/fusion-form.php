@@ -17,20 +17,13 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 		class FusionSC_FusionForm extends Fusion_Element {
 
 			/**
-			 * An array of rendered form's IDs.
+			 * An array of the shortcode arguments.
 			 *
 			 * @access protected
-			 * @since 3.7
+			 * @since 1.0
 			 * @var array
 			 */
-			protected $rendered_forms = [];
-
-			/**
-			 * The parameters.
-			 *
-			 * @var array
-			 */
-			private $params = [];
+			protected $args;
 
 			/**
 			 * Constructor.
@@ -41,7 +34,6 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 			public function __construct() {
 				parent::__construct();
 				add_filter( 'fusion_attr_fusion-form-wrapper', [ $this, 'wrapper_attr' ] );
-				add_filter( 'fusion_attr_awb-form-nav', [ $this, 'nav_attr' ] );
 				add_shortcode( 'fusion_form', [ $this, 'render' ] );
 			}
 
@@ -55,163 +47,19 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 			 */
 			public static function get_element_defaults() {
 				return [
-					'form_post_id'                  => '',
-					'class'                         => '',
-					'hide_on_mobile'                => fusion_builder_default_visibility( 'string' ),
-					'id'                            => '',
-
-					'margin_bottom'                 => '',
-					'margin_left'                   => '',
-					'margin_right'                  => '',
-					'margin_top'                    => '',
-
-					'steps_nav'                     => 'none',
-					'step_type'                     => 'above',
-
-					'steps_margin_top'              => '',
-					'steps_margin_right'            => '',
-					'steps_margin_bottom'           => '',
-					'steps_margin_left'             => '',
-
-					'steps_bg_color'                => '',
-					'steps_bg_color_active'         => '',
-					'steps_bg_color_completed'      => '',
-
-					'step_padding_top'              => '',
-					'step_padding_right'            => '',
-					'step_padding_bottom'           => '',
-					'step_padding_left'             => '',
-
-					'steps_bor_top_left'            => '',
-					'steps_bor_top_right'           => '',
-					'steps_bor_bottom_right'        => '',
-					'steps_bor_bottom_left'         => '',
-
-					'steps_bor_type'                => 'solid',
-					'steps_bor_width'               => '0',
-					'steps_bor_color'               => '',
-					'steps_bor_color_active'        => '',
-					'steps_bor_color_completed'     => '',
-
-					'steps_spacing'                 => 'around',
-					'between_steps_size'            => '3',
-					'steps_sep_type'                => 'dashed',
-					'steps_sep_type_completed'      => 'solid',
-					'steps_sep_width'               => '3',
-					'steps_sep_color'               => '',
-					'steps_sep_color_completed'     => '',
-					'step_sep_margin_left'          => '',
-					'step_sep_margin_right'         => '',
-
-					'steps_number_icon'             => 'icon',
-					'step_icon_color'               => '',
-					'step_icon_color_active'        => '',
-					'step_icon_color_completed'     => '',
-					'step_icon_size'                => '15',
-					'step_icon_bg'                  => 'no',
-					'step_icon_bg_color'            => '',
-					'step_icon_bg_color_active'     => '',
-					'step_icon_bg_color_completed'  => '',
-
-					'step_icon_padding'             => '1',
-
-					'step_icon_bor_top_left'        => '',
-					'step_icon_bor_top_right'       => '',
-					'step_icon_bor_bottom_right'    => '',
-					'step_icon_bor_bottom_left'     => '',
-
-					'step_icon_bor_type'            => 'solid',
-					'step_icon_bor_width'           => '0',
-					'step_icon_bor_color'           => '',
-					'step_icon_bor_color_active'    => '',
-					'step_icon_bor_color_completed' => '',
-
-					'steps_title'                   => 'yes',
-					'steps_title_position'          => 'after',
-					'step_icon_title_gap'           => '10px',
-
-					'step_typo-font-family'         => '',
-					'step_typo-font-style'          => '',
-					'step_typo-variant'             => '',
-					'step_typo-font-weight'         => '',
-					'step_typo-font-size'           => '',
-					'step_typo-line-height'         => '',
-					'step_typo-letter-spacing'      => '',
-					'step_typo-text-transform'      => '',
-
-					'steps_title_color'             => '',
-					'steps_title_color_active'      => '',
-					'steps_title_color_completed'   => '',
-
-					// Progress Bar Steps.
-					'step_pb_percentage'            => 'percentages',
-					'step_pb_alignment'             => '',
-
-					'step_pb_typo-font-family'      => '',
-					'step_pb_typo-font-style'       => '',
-					'step_pb_typo-variant'          => '',
-					'step_pb_typo-font-weight'      => '',
-					'step_pb_typo-font-size'        => '',
-					'step_pb_typo-line-height'      => '',
-					'step_pb_typo-letter-spacing'   => '',
-					'step_pb_typo-text-transform'   => '',
-					'step_pb_typo_color'            => '',
-
-					'step_pb_striped'               => 'no',
-					'step_pb_animated_stripes'      => 'no',
-					'step_pb_dimension'             => '',
-					'step_pb_filled_color'          => '',
-					'step_pb_unfilled_color'        => '',
-					'step_pb_bor_top_left'          => '',
-					'step_pb_bor_top_right'         => '',
-					'step_pb_bor_bottom_right'      => '',
-					'step_pb_bor_bottom_left'       => '',
-					'step_pb_filled_border_size'    => '',
-					'step_pb_filled_border_color'   => '',
+					'form_post_id'   => '',
+					'margin_bottom'  => '',
+					'margin_left'    => '',
+					'margin_right'   => '',
+					'margin_top'     => '',
+					'class'          => '',
+					'hide_on_mobile' => fusion_builder_default_visibility( 'string' ),
+					'id'             => '',
 				];
 			}
 
 			/**
-			 * Add The form step parameters to element arguments.
-			 *
-			 * @param array $form_params The form parameters.
-			 * @return void
-			 */
-			public function set_steps_args( $form_params ) {
-				$defaults = self::get_element_defaults();
-
-				// flatten meta array values.
-				foreach ( $form_params['form_meta'] as $key => $val ) {
-					if ( is_array( $form_params['form_meta'][ $key ] ) ) {
-						foreach ( $form_params['form_meta'][ $key ] as $inner_key => $inner_val ) {
-							if ( 'step_typo' === $key || 'step_pb_typo' === $key ) {
-								$form_params['form_meta'][ $key . '-' . $inner_key ] = $inner_val;
-							} else {
-								$form_params['form_meta'][ $inner_key ] = $inner_val;
-							}
-						}
-					}
-				}
-
-				// Filter step options from form options.
-				$step_params = [];
-				foreach ( $defaults as $key => $val ) {
-					if ( strpos( $key, 'step' ) === false && strpos( $key, 'icon' ) === false ) { // Add only keys from form steps.
-						continue;
-					}
-
-					if ( isset( $form_params['form_meta'][ $key ] ) ) {
-						$step_params[ $key ] = $form_params['form_meta'][ $key ];
-					} else {
-						$step_params[ $key ] = $val;
-					}
-				}
-
-				$this->args = array_merge( $this->args, $step_params );
-			}
-
-			/**
-			 * Render the shortcode.
+			 * Render the shortcode
 			 *
 			 * @access public
 			 * @since 1.0
@@ -236,8 +84,7 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 				// Set data.
 				$this->params = Fusion_Builder_Form_Helper::fusion_form_set_form_data( $args['form_post_id'] );
 				$this->args   = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_form' );
-				$this->set_steps_args( $this->params );
-				$form_data = Fusion_Builder_Form_Helper::fusion_get_form_post_content( $this->args['form_post_id'] );
+				$form_data    = Fusion_Builder_Form_Helper::fusion_get_form_post_content( $this->args['form_post_id'] );
 
 				// No form found.
 				if ( false === $form_data ) {
@@ -258,7 +105,7 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 				$this->params['is_upload'] = false !== strpos( $form_data['content'], 'fusion_form_upload' );
 
 				// Make forms translateable.
-				$this->args['form_post_id'] = apply_filters( 'wpml_object_id', $this->args['form_post_id'], 'fusion_form', true );
+				$this->args['form_post_id'] = apply_filters( 'wpml_object_id', $this->args['form_post_id'], 'fusion_form' );
 
 				$this->args['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_bottom'], 'px' );
 				$this->args['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_left'], 'px' );
@@ -286,66 +133,24 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 					}
 				}
 
-				// Add Off Canvas to stack, so it's markup is added to the page.
-				if ( class_exists( 'AWB_Off_Canvas' ) && false !== AWB_Off_Canvas::is_enabled() && in_array( 'off-canvas', $this->params['form_meta']['form_actions'], true ) && isset( $this->params['form_meta']['off_canvas'] ) ) {
-					AWB_Off_Canvas_Front_End::add_off_canvas_to_stack( $this->params['form_meta']['off_canvas'] );
-				}
-
-				$html = ! empty( $this->args['custom_css'] ) ? '<style>' . $this->args['custom_css'] . '</style>' : '';
-
-				$form  = $this->open_form();
-				$form .= do_shortcode( $content );
-
-				if ( 'yes' === $this->params['form_meta']['privacy_store_ip_ua'] && 'post' !== $this->params['form_meta']['form_type'] ) {
-					$form .= '<input type="hidden" name="fusion_privacy_store_ip_ua" value="' . ( 'yes' === $this->params['form_meta']['privacy_store_ip_ua'] ? 'true' : 'false' ) . '">';
-					$form .= '<input type="hidden" name="fusion_privacy_expiration_interval" value="' . absint( $this->params['form_meta']['privacy_expiration_interval'] ) . '">';
-					$form .= '<input type="hidden" name="privacy_expiration_action" value="' . esc_attr( $this->params['form_meta']['privacy_expiration_action'] ) . '">';
-				}
-
-				if ( isset( $this->params['form_meta']['nonce_method'] ) && 'localized' === $this->params['form_meta']['nonce_method'] ) {
-					$form .= wp_nonce_field( 'fusion_form_nonce', 'fusion-form-nonce-' . absint( $this->args['form_post_id'] ), false, false );
-				}
-
-				$form .= $this->close_form();
-
+				// Build the form markup.
+				$html  = $this->create_style_tag();
 				$html .= '<div ' . FusionBuilder::attributes( 'fusion-form-wrapper' ) . '>';
-
-				// Add step navigation if we have steps.
-				if ( ! empty( $this->params['steps'] ) && 'above' === $this->args['step_type'] ) {
-					$html .= $this->get_navigation();
-				}
-
-				$html .= $form;
-
-				if ( ! empty( $this->params['steps'] ) && 'below' === $this->args['step_type'] ) {
-					$html .= $this->get_navigation();
-				}
-
+				$html .= $this->open_form();
+				$html .= do_shortcode( $content );
+				$html .= '<input type="hidden" name="fusion_privacy_store_ip_ua" value="' . ( 'yes' === $this->params['form_meta']['privacy_store_ip_ua'] ? 'true' : 'false' ) . '">';
+				$html .= '<input type="hidden" name="fusion_privacy_expiration_interval" value="' . absint( $this->params['form_meta']['privacy_expiration_interval'] ) . '">';
+				$html .= '<input type="hidden" name="privacy_expiration_action" value="' . esc_attr( $this->params['form_meta']['privacy_expiration_action'] ) . '">';
+				$html .= $this->close_form();
 				$html .= '</div>';
+
+				// Localize the JS.
+				$html .= $this->localize_form_data();
 
 				$this->on_render();
 
 				return apply_filters( 'fusion_element_form_content', $html, $args );
 			}
-
-			/**
-			 * Fires on render.
-			 *
-			 * @access protected
-			 * @since 3.2
-			 */
-			protected function on_render() {
-				if ( ! $this->has_rendered ) {
-					$this->on_first_render();
-					$this->has_rendered = true;
-				}
-
-				if ( ! in_array( (int) $this->args['form_post_id'], $this->rendered_forms, true ) && isset( $this->params['form_meta']['nonce_method'] ) && ( 'none' === $this->params['form_meta']['nonce_method'] || 'localized' === $this->params['form_meta']['nonce_method'] ) ) {
-					Fusion_Form_Builder()->increase_view_count( $this->args['form_post_id'] );
-					$this->rendered_forms[] = (int) $this->args['form_post_id'];
-				}
-			}
-
 			/**
 			 * Check if a param is default.
 			 *
@@ -355,7 +160,7 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 			 * @param mixed  $subset Subset name.
 			 * @return string
 			 */
-			public function is_default_form_meta( $param, $subset = false ) {
+			public function is_default( $param, $subset = false ) {
 
 				// If we have a subset value.
 				if ( $subset ) {
@@ -375,121 +180,224 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Create styles for form render.
 			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
+			 * @access public
+			 * @since 3.1
+			 * @return string HTML output.
 			 */
-			public function get_style_variables() {
-				$custom_vars     = [];
-				$fusion_settings = awb_get_fusion_settings();
+			public function create_style_tag() {
+				$this->base_selector = '.fusion-form-' . $this->params['form_number'];
+				$inputs              = [
+					$this->base_selector . ' input:not([type="submit"])',
+					$this->base_selector . ' select',
+					$this->base_selector . ' textarea',
+				];
 
-				$custom_vars['tooltip_text_color']       = fusion_library()->sanitize->color( $this->params['form_meta']['tooltip_text_color'] );
-				$custom_vars['tooltip_background_color'] = fusion_library()->sanitize->color( $this->params['form_meta']['tooltip_background_color'] );
+				// Help tooltips.
+				$this->add_css_property( $this->base_selector . ' .fusion-form-tooltip .fusion-form-tooltip-content', 'color', $this->params['form_meta']['tooltip_text_color'], true );
+				$this->add_css_property( $this->base_selector . ' .fusion-form-tooltip .fusion-form-tooltip-content', 'background-color', $this->params['form_meta']['tooltip_background_color'], true );
+				$this->add_css_property( $this->base_selector . ' .fusion-form-tooltip .fusion-form-tooltip-content', 'border-color', $this->params['form_meta']['tooltip_background_color'], true );
 
-				if ( isset( $this->params['form_meta']['field_margin']['top'] ) && '' !== $this->params['form_meta']['field_margin']['top'] ) {
-					$custom_vars['field_margin_top'] = fusion_library()->sanitize->get_value_with_unit( $this->params['form_meta']['field_margin']['top'] );
+				// Field margin.
+				if ( '' !== $this->params['form_meta']['field_margin']['top'] ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-form-field', 'margin-top', $this->params['form_meta']['field_margin']['top'] );
+				}
+				if ( '' !== $this->params['form_meta']['field_margin']['bottom'] ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-form-field', 'margin-bottom', $this->params['form_meta']['field_margin']['bottom'] );
 				}
 
-				if ( isset( $this->params['form_meta']['field_margin']['bottom'] ) && '' !== $this->params['form_meta']['field_margin']['bottom'] ) {
-					$custom_vars['field_margin_bottom'] = fusion_library()->sanitize->get_value_with_unit( $this->params['form_meta']['field_margin']['bottom'] );
+				// Field height.
+				if ( ! $this->is_default( 'form_input_height' ) ) {
+					$height_inputs = [
+						$this->base_selector . ' input:not([type="submit"])',
+						$this->base_selector . ' select',
+					];
+					$this->add_css_property( $height_inputs, 'height', $this->params['form_meta']['form_input_height'] );
+					$this->add_css_property( $this->base_selector . ' .fusion-form-input-with-icon > i', 'line-height', $this->params['form_meta']['form_input_height'] );
 				}
 
-				if ( ! $this->is_default_form_meta( 'form_input_height' ) ) {
-					$custom_vars['form_input_height'] = fusion_library()->sanitize->get_value_with_unit( $this->params['form_meta']['form_input_height'] );
+				// Background color.
+				if ( ! $this->is_default( 'form_bg_color' ) ) {
+					$this->add_css_property( $inputs, 'background-color', $this->params['form_meta']['form_bg_color'] );
 				}
 
-				if ( ! $this->is_default_form_meta( 'form_bg_color' ) ) {
-					$custom_vars['form_bg_color'] = fusion_library()->sanitize->color( $this->params['form_meta']['form_bg_color'] );
-					$bg_color                     = Fusion_Color::new_color( $custom_vars['form_bg_color'] );
+				// Font Size.
+				if ( ! $this->is_default( 'form_font_size' ) ) {
+					$this->add_css_property( $inputs, 'font-size', $this->params['form_meta']['form_font_size'] );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-input-with-icon>i', 'font-size', $this->params['form_meta']['form_font_size'] );
+				}
 
-					// Special case, transparent input background, calculate likely best background for text.
-					if ( 0 === $bg_color->alpha ) {
-						if ( ! $this->is_default_form_meta( 'form_text_color' ) ) {
-							$text_color = Fusion_Color::new_color( fusion_library()->sanitize->color( $this->params['form_meta']['form_label_color'] ) );
-						} else {
-							$text_color = Fusion_Color::new_color( $fusion_settings->get( 'form_text_color' ) );
-						}
-						if ( 50 > $text_color->lightness ) {
-							$custom_vars['form_select_bg'] = 'var(--awb-color1)';
-						} else {
-							$custom_vars['form_select_bg'] = 'var(--awb-color8)';
-						}
+				// Text color.
+				if ( ! $this->is_default( 'form_text_color' ) ) {
+					$placeholders_color = Fusion_Color::new_color( $this->params['form_meta']['form_text_color'] )->get_new( 'alpha', '0.5' )->to_css( 'rgba' );
+
+					// Regular browser placeholders.
+					$selectors = [
+						$this->base_selector . ' input::placeholder',
+						$this->base_selector . ' textarea::placeholder',
+					];
+					$this->add_css_property( $selectors, 'color', $placeholders_color );
+
+					// Select field.
+					$this->add_css_property( $this->base_selector . ' select:invalid', 'color', $placeholders_color, true );
+					$this->add_css_property( $this->base_selector . ' option', 'color', $this->params['form_meta']['form_text_color'] );
+
+					// Upload field.
+					$this->add_css_property( $this->base_selector . ' input.fusion-form-upload-field::placeholder', 'color', $this->params['form_meta']['form_text_color'] );
+					$this->add_css_property( $this->base_selector . ' input.fusion-form-upload-field:-ms-input-placeholder', 'color', $this->params['form_meta']['form_text_color'] );
+
+					// IE selectors needs to be separate and after.
+					$selectors = [
+						$this->base_selector . ' input:-ms-input-placeholder',
+						$this->base_selector . ' textarea:-ms-input-placeholder',
+					];
+					$this->add_css_property( $selectors, 'color', $placeholders_color );
+
+					// Icon color.
+					$this->add_css_property( $this->base_selector . ' .fusion-form-input-with-icon > i', 'color', $this->params['form_meta']['form_text_color'], true );
+
+					// Input text color.
+					$this->add_css_property( $inputs, 'color', $this->params['form_meta']['form_text_color'] );
+
+					// Select stroke color.
+					$this->add_css_property( $this->base_selector . ' .fusion-select-wrapper .select-arrow path', 'stroke', $this->params['form_meta']['form_text_color'], true );
+				}
+
+				// Label color.
+				if ( ! $this->is_default( 'form_label_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' label, ' . $this->base_selector . ' .label', 'color', $this->params['form_meta']['form_label_color'] );
+				}
+
+				// Border size.
+				if ( ! $this->is_default( 'form_border_width', 'top' ) ) {
+					$this->add_css_property( $inputs, 'border-top-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['top'], 'px' ) );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select label', 'border-top-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['top'], 'px' ) );
+				}
+				if ( ! $this->is_default( 'form_border_width', 'bottom' ) ) {
+					$this->add_css_property( $inputs, 'border-bottom-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['bottom'], 'px' ) );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select label', 'border-bottom-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['bottom'], 'px' ) );
+				}
+				if ( ! $this->is_default( 'form_border_width', 'right' ) ) {
+					$this->add_css_property( $inputs, 'border-right-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['right'], 'px' ) );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select label', 'border-right-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['right'], 'px' ) );
+
+					if ( is_rtl() ) {
+						$this->add_css_property( $this->base_selector . ' .fusion-form-field .fusion-form-input-with-icon > i', 'right', 'calc( 1em + ' . FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['right'], 'px' ) . ')', true );
+					} else {
+						$this->add_css_property( $this->base_selector . ' .fusion-select-wrapper .select-arrow', 'right', 'calc( 1em + ' . FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['right'], 'px' ) . ')', true );
+					}
+				}
+				if ( ! $this->is_default( 'form_border_width', 'left' ) ) {
+					$this->add_css_property( $inputs, 'border-left-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['left'], 'px' ) );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select label', 'border-left-width', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['left'], 'px' ) );
+
+					if ( is_rtl() ) {
+						$this->add_css_property( $this->base_selector . ' .fusion-select-wrapper .select-arrow', 'left', 'calc( 1em + ' . FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['left'], 'px' ) . ')', true );
+					} else {
+						$this->add_css_property( $this->base_selector . ' .fusion-form-field .fusion-form-input-with-icon > i', 'left', 'calc( 1em + ' . FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['left'], 'px' ) . ')', true );
 					}
 				}
 
-				if ( ! $this->is_default_form_meta( 'label_font_size' ) ) {
-					$custom_vars['label_font_size'] = fusion_library()->sanitize->get_value_with_unit( $this->params['form_meta']['label_font_size'] );
+				// Vertical icon align.
+				if ( ! $this->is_default( 'form_border_width', 'bottom' ) || ! $this->is_default( 'form_border_width', 'top' ) ) {
+					$fusion_settings = fusion_get_fusion_settings();
+					$border_top      = $this->is_default( 'form_border_width', 'top' ) ? $fusion_settings->get( 'form_border_width', 'top' ) : FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['top'], 'px' );
+					$border_bottom   = $this->is_default( 'form_border_width', 'bottom' ) ? $fusion_settings->get( 'form_border_width', 'bottom' ) : FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['bottom'], 'px' );
+					$border_top      = empty( $border_top ) ? '1px' : $border_top;
+					$border_bottom   = empty( $border_bottom ) ? '1px' : $border_bottom;
+					$this->add_css_property( $this->base_selector . ' .fusion-form-field:not( .fusion-form-upload-field ) .fusion-form-input-with-icon > i', 'top', 'calc( 50% + (' . $border_top . ' - ' . $border_bottom . ' ) / 2 )', true );
 				}
 
-				if ( ! $this->is_default_form_meta( 'form_font_size' ) ) {
-					$custom_vars['form_font_size'] = fusion_library()->sanitize->get_value_with_unit( $this->params['form_meta']['form_font_size'] );
+				// Border color.
+				if ( ! $this->is_default( 'form_border_color' ) ) {
+					$selectors = [
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-radio label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select label',
+					];
+
+					$this->add_css_property( $inputs, 'border-color', $this->params['form_meta']['form_border_color'] );
+					$this->add_css_property( $selectors, 'border-color', $this->params['form_meta']['form_border_color'] );
+
+					$selectors = [
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-rating-icon',
+					];
+					$this->add_css_property( $selectors, 'color', $this->params['form_meta']['form_border_color'] );
+
+					// Range input type.
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field input[type=range]::-webkit-slider-runnable-track', 'background', $this->params['form_meta']['form_border_color'] );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field input[type=range]::-moz-range-track', 'background', $this->params['form_meta']['form_border_color'] );
 				}
 
-				if ( isset( $this->params['form_meta']['form_placeholder_color'] ) && '' !== $this->params['form_meta']['form_placeholder_color'] ) {
-					$custom_vars['form_placeholder_color'] = fusion_library()->sanitize->color( $this->params['form_meta']['form_placeholder_color'] );
-				} elseif ( ! $this->is_default_form_meta( 'form_text_color' ) ) {
-					$custom_vars['form_placeholder_color'] = Fusion_Color::new_color( fusion_library()->sanitize->color( $this->params['form_meta']['form_text_color'] ) )->get_new( 'alpha', '0.5' )->to_css_var_or_rgba();
+				// Border focus color.
+				if ( ! $this->is_default( 'form_focus_border_color' ) ) {
+					$hover_color = Fusion_Color::new_color( $this->params['form_meta']['form_focus_border_color'] )->get_new( 'alpha', '0.5' )->to_css( 'rgba' );
+
+					$selectors = [
+						$this->base_selector . ' input:not([type="submit"]):focus',
+						$this->base_selector . ' select:focus',
+						$this->base_selector . ' textarea:focus',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field.focused.fusion-form-upload-field .fusion-form-upload-field',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-radio input:checked + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-radio input:hover + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:checked + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:hover + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select .fusion-form-input:checked + label',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select .fusion-form-input:hover + label',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:focus + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-radio input:focus + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select .fusion-form-input:focus + label',
+					];
+					$this->add_css_property( $selectors, 'border-color', $this->params['form_meta']['form_focus_border_color'] );
+
+					$selectors = [
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-radio input:hover:not(:checked) + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:hover:not(:checked) + label:before',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select .fusion-form-input:hover:not(:checked) + label',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-upload-field-container:hover .fusion-form-upload-field',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-range-field-container .fusion-form-range-value:hover:not(:focus)',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-input:hover:not(:focus)',
+					];
+
+					$this->add_css_property( $selectors, 'border-color', $hover_color );
+
+					$selectors = [
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-input:checked ~ label i',
+					];
+					$this->add_css_property( $selectors, 'color', $this->params['form_meta']['form_focus_border_color'] );
+
+					$selectors = [
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-input:checked:hover ~ label i',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-rating-icon:hover i',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-rating-icon:hover ~ label i',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-input:hover ~ label i',
+					];
+
+					$this->add_css_property( $selectors, 'color', $hover_color );
+
+					$selectors = [
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:checked + label:after',
+						$this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-radio input:checked + label:after',
+					];
+					$this->add_css_property( $selectors, 'background', $this->params['form_meta']['form_focus_border_color'] );
+
+					// Range input.
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field input[type=range]::-ms-track', 'background', $this->params['form_meta']['form_focus_border_color'] );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field input[type=range]::-webkit-slider-thumb', 'background', $this->params['form_meta']['form_focus_border_color'] );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field input[type=range]::-moz-range-thumb', 'background', $this->params['form_meta']['form_focus_border_color'] );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field input[type=range]::-ms-thumb', 'background', $this->params['form_meta']['form_focus_border_color'] );
 				}
 
-				if ( ! $this->is_default_form_meta( 'form_text_color' ) ) {
-					$custom_vars['form_text_color'] = fusion_library()->sanitize->color( $this->params['form_meta']['form_text_color'] );
+				// Border radius.
+				if ( ! $this->is_default( 'form_border_radius' ) ) {
+					$this->add_css_property( $inputs, 'border-radius', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_radius'], 'px' ) );
+					$this->add_css_property( $this->base_selector . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-image-select label', 'border-radius', FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_radius'], 'px' ) );
 				}
 
-				if ( ! $this->is_default_form_meta( 'form_label_color' ) ) {
-					$custom_vars['form_label_color'] = fusion_library()->sanitize->color( $this->params['form_meta']['form_label_color'] );
-				}
+				$css = $this->parse_css() . $this->args['custom_css'];
 
-				if ( ! $this->is_default_form_meta( 'form_border_width', 'top' ) ) {
-					$custom_vars['form_border_width_top'] = FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['top'], 'px' );
-				}
-
-				if ( ! $this->is_default_form_meta( 'form_border_width', 'bottom' ) ) {
-					$custom_vars['form_border_width_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['bottom'], 'px' );
-				}
-
-				if ( ! $this->is_default_form_meta( 'form_border_width', 'right' ) ) {
-					$custom_vars['form_border_width_right'] = FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['right'], 'px' );
-				}
-
-				if ( ! $this->is_default_form_meta( 'form_border_width', 'left' ) ) {
-					$custom_vars['form_border_width_left'] = FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['left'], 'px' );
-				}
-
-				if ( ! $this->is_default_form_meta( 'form_border_color' ) ) {
-					$custom_vars['form_border_color'] = fusion_library()->sanitize->color( $this->params['form_meta']['form_border_color'] );
-				}
-
-				if ( ! $this->is_default_form_meta( 'form_focus_border_color' ) ) {
-					$custom_vars['form_focus_border_color']       = fusion_library()->sanitize->color( $this->params['form_meta']['form_focus_border_color'] );
-					$custom_vars['form_focus_border_hover_color'] = Fusion_Color::new_color( fusion_library()->sanitize->color( $this->params['form_meta']['form_focus_border_color'] ) )->get_new( 'alpha', '0.5' )->to_css_var_or_rgba();
-				}
-
-				if ( ! $this->is_default_form_meta( 'form_border_radius' ) ) {
-					$custom_vars['form_border_radius'] = FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_radius'], 'px' );
-				}
-
-				// Vertical icon alignment.
-				if ( ! $this->is_default_form_meta( 'form_border_width', 'bottom' ) || ! $this->is_default_form_meta( 'form_border_width', 'top' ) ) {
-					$border_top    = $this->is_default_form_meta( 'form_border_width', 'top' ) ? $fusion_settings->get( 'form_border_width', 'top' ) : FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['top'], 'px' );
-					$border_bottom = $this->is_default_form_meta( 'form_border_width', 'bottom' ) ? $fusion_settings->get( 'form_border_width', 'bottom' ) : FusionBuilder::validate_shortcode_attr_value( $this->params['form_meta']['form_border_width']['bottom'], 'px' );
-
-					$custom_vars['icon_alignment_top']       = empty( $border_top ) ? '1px' : $border_top;
-					$custom_vars['icon_alignment_bottom']    = empty( $border_bottom ) ? '1px' : $border_bottom;
-					$custom_vars['icon_alignment_font_size'] = $this->is_default_form_meta( 'form_font_size' ) ? '1em' : $this->params['form_meta']['form_font_size'];
-				}
-
-				$css_vars_options = [
-					'margin_top'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -524,11 +432,8 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 
 				$class .= ' fusion-form-' . $this->params['form_number'];
 
-				$action = get_permalink();
+				$action = isset( $this->params['form_meta']['action'] ) ? $this->params['form_meta']['action'] : get_permalink();
 
-				if ( 'post' === $this->params['form_meta']['form_type'] && ( isset( $this->params['form_meta']['post_method_url'] ) && '' !== $this->params['form_meta']['post_method_url'] ) ) {
-					$action = $this->params['form_meta']['post_method_url'];
-				}
 				$html .= '<form action="' . $action . '" method="' . $this->params['form_meta']['method'] . '"' . $data_attributes . ' class="' . $class . '"' . $id . $enctype . '>';
 
 				/**
@@ -564,365 +469,6 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 			}
 
 			/**
-			 * Get the navigation markup.
-			 *
-			 * @return string
-			 * @since 3.2
-			 */
-			protected function get_navigation() {
-				if ( 'none' === $this->args['steps_nav'] ) {
-					return '';
-				}
-
-				$html = '<section ' . FusionBuilder::attributes( 'awb-form-nav' ) . '>';
-
-				if ( 'timeline' === $this->args['steps_nav'] ) {
-					$html .= $this->timeline_navigator();
-				}
-				if ( 'progress_bar' === $this->args['steps_nav'] ) {
-					$html .= $this->progress_bar_navigator();
-				}
-
-				$html .= '</section>';
-
-				return $html;
-			}
-
-			/**
-			 * Create timeline navigation.
-			 *
-			 * @return string
-			 */
-			private function timeline_navigator() {
-				$html                  = '';
-				$keys                  = array_keys( $this->params['steps'] );
-				$is_first              = true;
-				$last_key              = end( $keys );
-				$display_first_spacer  = ( 'around' === $this->args['steps_spacing'] || 'right' === $this->args['steps_spacing'] );
-				$display_second_spacer = ( 'around' === $this->args['steps_spacing'] || 'left' === $this->args['steps_spacing'] );
-
-				foreach ( $this->params['steps'] as $step => $step_details ) {
-					$first_step_active_class = ( $is_first ? ' awb-form-nav__tl-step-wrapper--active' : '' );
-
-					/* translators: %s - The number of the step. */
-					$title = empty( $step_details['title'] ) ? sprintf( _n( 'Step %s', 'Step %s', $step, 'fusion-builder' ), $step ) : $step_details['title'];
-					$icon  = empty( $step_details['icon'] ) ? '' : ' ' . fusion_font_awesome_name_handler( $step_details['icon'] );
-
-					$is_last = ( $last_key === $step );
-
-					if ( $is_first && $display_first_spacer ) {
-						$html .= '<span class="awb-form-nav__tl-spacer"></span>';
-					}
-
-					$html .= '<div class="awb-form-nav__tl-step-wrapper' . $first_step_active_class . '" data-step="' . $step . '" role="listitem">';
-					$html .= '<div class="awb-form-nav__tl-step">';
-
-					if ( $is_first ) {
-						$html    .= '<span class="awb-form-nav__tl-aria-info screen-reader-text">' . esc_html( __( 'Current step:', 'fusion-builder' ) ) . '</span>';
-						$is_first = false;
-					} else {
-						$html .= '<span class="awb-form-nav__tl-aria-info screen-reader-text"></span>';
-					}
-
-					if ( 'number' === $this->args['steps_number_icon'] ) {
-						$additional_class = '';
-						if ( 'yes' === $this->args['step_icon_bg'] ) {
-							$additional_class = ' awb-form-nav__tl-number--with-background';
-						}
-						$html .= '<span class="awb-form-nav__tl-number' . $additional_class . '">' . esc_html( $step ) . '</span>';
-					}
-
-					if ( 'icon' === $this->args['steps_number_icon'] && $icon ) {
-						$html .= '<span class="awb-form-nav__tl-icon' . esc_attr( $icon ) . '"></span>';
-					}
-
-					if ( 'no' !== $this->args['steps_title'] ) {
-						$html .= '<span class="awb-form-nav__tl-title">' . esc_html( $title ) . '</span>';
-					} elseif ( ! empty( $this->args['steps_title'] ) ) {
-						$html .= '<span class="awb-form-nav__tl-aria-title screen-reader-text">' . esc_html( $title ) . '</span>';
-					}
-
-					$html .= '</div>';
-					$html .= '</div>';
-
-					if ( $is_last ) {
-						if ( $display_second_spacer ) {
-							$html .= '<span class="awb-form-nav__tl-spacer"></span>';
-						}
-					} else {
-						$html .= '<span class="awb-form-nav__tl-spacer awb-form-nav__tl-spacer--between"></span>';
-					}
-				}
-
-				return $html;
-			}
-
-			/**
-			 * Create progress bar navigation.
-			 *
-			 * @return string
-			 */
-			private function progress_bar_navigator() {
-				$html = '';
-
-				$text_align                 = '';
-				$striped                    = '';
-				$show_percentage            = '';
-				$animated_stripes           = '';
-				$height                     = '';
-				$filled_color               = '';
-				$unfilled_color             = '';
-				$border_radius_top_left     = '';
-				$border_radius_top_right    = '';
-				$border_radius_bottom_right = '';
-				$border_radius_bottom_left  = '';
-				$filled_border_size         = '';
-				$filled_border_color        = '';
-				$font_family                = '';
-				$font_variant               = '';
-				$font_size                  = '';
-				$line_height                = '';
-				$letter_spacing             = '';
-				$text_transform             = '';
-				$text_color                 = '';
-
-				$number_steps = count( $this->params['steps'] ) > 0 ? count( $this->params['steps'] ) : 1;
-				$percentage   = ' percentage="' . round( 100 / $number_steps ) . '"';
-
-				if ( ! empty( $this->args['step_pb_alignment'] ) ) {
-					$text_align  = ' text_align="' . $this->args['step_pb_alignment'] . '"';
-					$text_align .= ' force_text_align="true"';
-				}
-				if ( ! empty( $this->args['step_pb_striped'] ) ) {
-					$striped = ' striped="' . $this->args['step_pb_striped'] . '"';
-				}
-
-				$show_percentage = ' show_percentage="yes"';
-				if ( ! empty( $this->args['step_pb_percentage'] ) && 'none' === $this->args['step_pb_percentage'] ) {
-					$show_percentage = ' show_percentage="no"';
-				}
-				if ( ! empty( $this->args['step_pb_animated_stripes'] ) ) {
-					$animated_stripes = ' animated_stripes="' . $this->args['step_pb_animated_stripes'] . '"';
-				}
-				if ( ! empty( $this->args['step_pb_dimension'] ) ) {
-					$height = ' height="' . $this->args['step_pb_dimension'] . '"';
-				}
-				if ( ! empty( $this->args['step_pb_filled_color'] ) ) {
-					$filled_color = ' filledcolor="' . $this->args['step_pb_filled_color'] . '"';
-				}
-				if ( ! empty( $this->args['step_pb_unfilled_color'] ) ) {
-					$unfilled_color = ' unfilledcolor="' . $this->args['step_pb_unfilled_color'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_bor_top_left'] ) ) {
-					$border_radius_top_left = ' border_radius_top_left="' . $this->args['step_pb_bor_top_left'] . '"';
-				}
-				if ( ! empty( $this->args['step_pb_bor_top_right'] ) ) {
-					$border_radius_top_right = ' border_radius_top_right="' . $this->args['step_pb_bor_top_right'] . '"';
-				}
-				if ( ! empty( $this->args['step_pb_bor_bottom_right'] ) ) {
-					$border_radius_bottom_right = ' border_radius_bottom_right="' . $this->args['step_pb_bor_bottom_right'] . '"';
-				}
-				if ( ! empty( $this->args['step_pb_bor_bottom_left'] ) ) {
-					$border_radius_bottom_left = ' border_radius_bottom_left="' . $this->args['step_pb_bor_bottom_left'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_filled_border_size'] ) ) {
-					$filled_border_size = ' filledbordersize="' . $this->args['step_pb_filled_border_size'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_filled_border_color'] ) ) {
-					$filled_border_color = ' filledbordercolor="' . $this->args['step_pb_filled_border_color'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_typo-font-family'] ) ) {
-					$font_family = ' fusion_font_family_text_font="' . $this->args['step_pb_typo-font-family'] . '"';
-				}
-				if ( ! empty( $this->args['step_pb_typo-variant'] ) ) {
-					$font_variant = ' fusion_font_variant_text_font="' . $this->args['step_pb_typo-variant'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_typo-font-size'] ) ) {
-					$font_size = ' text_font_size="' . $this->args['step_pb_typo-font-size'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_typo-line-height'] ) ) {
-					$line_height = ' text_line_height="' . $this->args['step_pb_typo-line-height'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_typo-letter-spacing'] ) ) {
-					$letter_spacing = ' text_letter_spacing="' . $this->args['step_pb_typo-letter-spacing'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_typo-text-transform'] ) ) {
-					$text_transform = ' text_text_transform="' . $this->args['step_pb_typo-text-transform'] . '"';
-				}
-
-				if ( ! empty( $this->args['step_pb_typo_color'] ) ) {
-					$text_color = ' textcolor="' . $this->args['step_pb_typo_color'] . '"';
-				}
-
-				$progress_bar_shortcode = '[fusion_progress unit="%"' . $percentage . $text_align . $striped . $show_percentage . $animated_stripes . $height . $filled_color . $unfilled_color . $border_radius_top_left . $border_radius_top_right . $border_radius_bottom_right . $border_radius_bottom_left . $filled_border_size . $filled_border_color . $font_family . $font_variant . $font_size . $line_height . $letter_spacing . $text_transform . $text_color . ']';
-
-				$html .= do_shortcode( $progress_bar_shortcode );
-
-				return $html;
-			}
-
-			/**
-			 * Builds the attributes array.
-			 *
-			 * @access public
-			 * @since 1.5
-			 * @return array
-			 */
-			public function nav_attr() {
-
-				$attr = [
-					'class'      => 'awb-form-nav',
-					'data-steps' => count( $this->params['steps'] ),
-					/* translators: %s - number of steps. */
-					'aria-label' => esc_attr( sprintf( __( 'Multi-step form with %s steps.', 'fusion-builder' ), count( $this->params['steps'] ) ) ),
-					'style'      => '',
-				];
-
-				if ( 'timeline' === $this->args['steps_nav'] ) {
-					$attr['class']              .= ' awb-form-nav--timeline';
-					$attr['style']              .= $this->get_timeline_vars();
-					$attr['role']                = 'list';
-					$attr['data-aria-current']   = esc_attr( __( 'Current step:', 'fusion-builder' ) );
-					$attr['data-aria-completed'] = esc_attr( __( 'Completed step:', 'fusion-builder' ) );
-				} elseif ( 'progress_bar' === $this->args['steps_nav'] ) {
-					$attr['class'] .= ' awb-form-nav--progress';
-					$attr['style'] .= $this->get_progress_bar_vars();
-				}
-
-				if ( 'above' === $this->args['step_type'] ) {
-					$attr['class'] .= ' awb-form-nav--above';
-				} elseif ( 'below' === $this->args['step_type'] ) {
-					$attr['class'] .= ' awb-form-nav--below';
-				}
-
-				return $attr;
-			}
-
-			/**
-			 * Get the timeline CSS vars.
-			 *
-			 * @return string
-			 */
-			private function get_timeline_vars() {
-				$css_vars_options = [
-					'steps_margin_top'            => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_margin_right'          => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_margin_bottom'         => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_margin_left'           => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-
-					'steps_bg_color'              => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'steps_bg_color_active'       => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'steps_bg_color_completed'    => [ 'callback' => 'Fusion_Sanitize::color' ],
-
-					'step_padding_top'            => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'step_padding_right'          => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'step_padding_bottom'         => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'step_padding_left'           => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-
-					'steps_bor_top_left'          => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_bor_top_right'         => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_bor_bottom_right'      => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_bor_bottom_left'       => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-
-					'steps_bor_type',
-					'steps_bor_width'             => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_bor_color'             => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'steps_bor_color_active'      => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'steps_bor_color_completed'   => [ 'callback' => 'Fusion_Sanitize::color' ],
-
-					'steps_sep_width'             => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_sep_type',
-					'steps_sep_type_completed',
-					'steps_sep_color'             => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'steps_sep_color_completed'   => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'step_sep_margin_left'        => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'step_sep_margin_right'       => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-
-					'step_icon_color'             => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'step_icon_color_active'      => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'step_icon_color_completed'   => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'step_icon_size'              => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-
-					'step_icon_title_gap'         => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-
-					'step_typo-font-size'         => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'step_typo-line-height',
-					'step_typo-letter-spacing'    => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'step_typo-text-transform',
-
-					'steps_title_color'           => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'steps_title_color_active'    => [ 'callback' => 'Fusion_Sanitize::color' ],
-					'steps_title_color_completed' => [ 'callback' => 'Fusion_Sanitize::color' ],
-
-				];
-				$custom_vars = [];
-
-				if ( 'yes' === $this->args['step_icon_bg'] ) {
-					$css_vars_options['step_icon_bg_color']           = [ 'callback' => 'Fusion_Sanitize::color' ];
-					$css_vars_options['step_icon_bg_color_active']    = [ 'callback' => 'Fusion_Sanitize::color' ];
-					$css_vars_options['step_icon_bg_color_completed'] = [ 'callback' => 'Fusion_Sanitize::color' ];
-
-					$css_vars_options['step_icon_padding'] = [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ];
-
-					$css_vars_options['step_icon_bor_top_left']     = [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ];
-					$css_vars_options['step_icon_bor_top_right']    = [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ];
-					$css_vars_options['step_icon_bor_bottom_right'] = [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ];
-					$css_vars_options['step_icon_bor_bottom_left']  = [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ];
-
-					array_push( $css_vars_options, 'step_icon_bor_type' );
-					$css_vars_options['step_icon_bor_width']           = [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ];
-					$css_vars_options['step_icon_bor_color']           = [ 'callback' => 'Fusion_Sanitize::color' ];
-					$css_vars_options['step_icon_bor_color_active']    = [ 'callback' => 'Fusion_Sanitize::color' ];
-					$css_vars_options['step_icon_bor_color_completed'] = [ 'callback' => 'Fusion_Sanitize::color' ];
-				}
-
-				if ( in_array( $this->args['steps_spacing'], [ 'around', 'left', 'right' ], true ) ) { // Needed because if this setting is changed to between, then it would also take previous set value and change aspect.
-					$css_vars_options['between_steps_size'] = [ 'callback' => 'Fusion_Sanitize::number' ];
-				}
-
-				if ( 'none' !== $this->args['steps_number_icon'] && 'no' !== $this->args['steps_title'] ) {
-					if ( 'before' === $this->args['steps_title_position'] || 'above' === $this->args['steps_title_position'] ) {
-						$custom_vars['step-icon-order'] = '1';
-					}
-
-					if ( 'below' === $this->args['steps_title_position'] || 'above' === $this->args['steps_title_position'] ) {
-						$custom_vars['step-flex-flow'] = 'column';
-					}
-				}
-
-				// Need to add special key to make fonts work.
-				$this->args['fusion_font_family_step_typo']  = $this->args['step_typo-font-family'];
-				$this->args['fusion_font_variant_step_typo'] = $this->args['step_typo-variant'];
-
-				return $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars ) . $this->get_font_styling_vars( 'step_typo' );
-			}
-
-			/**
-			 * Get the progress bar CSS vars.
-			 *
-			 * @return string
-			 */
-			private function get_progress_bar_vars() {
-				$css_vars_options = [
-					'steps_margin_top'    => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_margin_right'  => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_margin_bottom' => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-					'steps_margin_left'   => [ 'callback' => 'Fusion_Sanitize::get_value_with_unit' ],
-				];
-				$custom_vars      = [];
-
-				return $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-			}
-
-			/**
 			 * Builds the attributes array.
 			 *
 			 * @access public
@@ -938,36 +484,15 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 
 				$attr['data-form-id'] = $this->args['form_post_id'];
 
-				$attr = fusion_builder_visibility_atts( $this->args['hide_on_mobile'], $attr );
+				$attr          = fusion_builder_visibility_atts( $this->args['hide_on_mobile'], $attr );
+				$attr['style'] = Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
 
-				if ( ! $this->is_default_form_meta( 'form_border_width', 'bottom' ) || ! $this->is_default_form_meta( 'form_border_width', 'top' ) ) {
-					$attr['class'] .= ' has-icon-alignment';
-				}
-
 				if ( $this->args['id'] ) {
 					$attr['id'] = $this->args['id'];
-				}
-
-				$attr['style'] .= $this->get_style_variables();
-
-				// Studio Preview.
-				if ( isset( $this->params['form_meta']['preview_width'] ) && isset( $_GET['awb-studio-form'] ) && ! isset( $_GET['fb-edit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$attr['style'] .= 'width: ' . $this->params['form_meta']['preview_width'] . '%;';
-				}
-				if ( isset( $this->params['form_meta']['preview_background_color'] ) && isset( $_GET['awb-studio-form'] ) && ! isset( $_GET['fb-edit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$attr['style'] .= 'background-color: ' . $this->params['form_meta']['preview_background_color'];
-				}
-
-				$attr['data-config'] = $this->localize_form_data();
-
-				// Add Off Canvas data attr.
-				if ( class_exists( 'AWB_Off_Canvas' ) && false !== AWB_Off_Canvas::is_enabled() && in_array( 'off-canvas', $this->params['form_meta']['form_actions'], true ) && isset( $this->params['form_meta']['off_canvas'] ) ) {
-					AWB_Off_Canvas_Front_End::add_off_canvas_to_stack( $this->params['form_meta']['off_canvas'] );
-					$attr['data-off-canvas'] = $this->params['form_meta']['off_canvas'];
 				}
 
 				return $attr;
@@ -1004,15 +529,13 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 					'formCreatorConfig',
 					[
 						'ajaxurl'             => admin_url( 'admin-ajax.php' ),
+						'post_id'             => get_the_ID(),
 						'invalid_email'       => esc_attr__( 'The supplied email address is invalid.', 'fusion-builder' ),
 						'max_value_error'     => esc_attr__( 'Max allowed value is: 2.', 'fusion-builder' ),
 						'min_value_error'     => esc_attr__( 'Min allowed value is: 1.', 'fusion-builder' ),
 						'max_min_value_error' => esc_attr__( 'Value out of bounds, limits are: 1-2.', 'fusion-builder' ),
 						'file_size_error'     => esc_attr__( 'Your file size exceeds max allowed limit of ', 'fusion-builder' ),
 						'file_ext_error'      => esc_attr__( 'This file extension is not allowed. Please upload file having these extensions: ', 'fusion-builder' ),
-
-						/* translators: Input label for field that must match. */
-						'must_match'          => esc_attr__( 'The value entered does not match the value for %s.', 'fusion-builder' ),
 					]
 				);
 			}
@@ -1036,11 +559,8 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
 					'redirect_url'      => isset( $this->params['form_meta']['redirect_url'] ) ? $this->params['form_meta']['redirect_url'] : '',
 					'field_labels'      => $fusion_form['field_labels'],
 					'field_logics'      => $fusion_form['field_logics'],
-					'field_types'       => $fusion_form['field_types'],
-					'nonce_method'      => isset( $this->params['form_meta']['nonce_method'] ) ? $this->params['form_meta']['nonce_method'] : 'ajax',
 				];
-
-				return wp_json_encode( $form_data );
+				return '<script>var formCreatorConfig_' . $this->params['form_number'] . ' = ' . wp_json_encode( $form_data ) . ';</script>';
 			}
 		}
 	}
@@ -1054,7 +574,7 @@ if ( fusion_is_element_enabled( 'fusion_form' ) ) {
  * @since 1.0
  */
 function fusion_element_form() {
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 	$forms_link      = '<a href="' . esc_url_raw( admin_url( 'admin.php?page=avada-forms' ) ) . '" target="_blank">' . esc_attr__( 'Forms Dashboard', 'fusion-builder' ) . '</a>';
 
 	fusion_builder_map(
@@ -1068,7 +588,7 @@ function fusion_element_form() {
 				'inline_editor'   => true,
 				'preview'         => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-form-preview.php',
 				'preview_id'      => 'fusion-builder-block-module-form-preview-template',
-				'help_url'        => 'https://avada.com/documentation/avada-form-element/',
+				'help_url'        => 'https://theme-fusion.com/documentation/avada/elements/avada-form-element/',
 				'params'          => [
 					[
 						'type'        => 'select',
@@ -1080,13 +600,9 @@ function fusion_element_form() {
 						),
 						'param_name'  => 'form_post_id',
 						'value'       => Fusion_Builder_Form_Helper::fusion_form_creator_form_list(),
-						'quick_edit'  => [
-							'label' => esc_html__( 'Edit Form', 'fusion-builder' ),
-							'type'  => 'form',
-							'items' => Fusion_Builder_Form_Helper::fusion_form_creator_form_list( 'permalinks' ),
-						],
 					],
 					'fusion_margin_placeholder' => [
+						'group'      => esc_attr__( 'General', 'fusion-builder' ),
 						'param_name' => 'margin',
 						'value'      => [
 							'margin_top'    => '',
@@ -1095,7 +611,6 @@ function fusion_element_form() {
 							'margin_left'   => '',
 						],
 					],
-
 					[
 						'type'        => 'checkbox_button_set',
 						'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),

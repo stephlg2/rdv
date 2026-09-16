@@ -52,54 +52,73 @@ jQuery(document).ready(function($) {
 		}
 	};
 
-	
-		$('.btn-connect-public').click(function(event) {
-			event.preventDefault();
-
-			let button = $(this);
-			let token = $('#ti-noreg-connect-token').val();
-
-			button.addClass('ti-btn-loading').blur();
-
-			let dontRemoveLoading = false;
-
-			// get url params
-			let params = new URLSearchParams({
-				type: 'Google',
-				referrer: 'public',
-				webhook_url: $('#ti-noreg-webhook-url').val(),
-				token: token,
-				version: $('#ti-noreg-version').val()
-			});
-
-			let tiWindow = window.open('https://admin.trustindex.io/source/edit2?' + params.toString(), 'trustindex', 'width=850,height=850,menubar=0' + popupCenter(850, 850));
-
-			window.addEventListener('message', function(event) {
-				if (event.origin.startsWith('https://admin.trustindex.io/'.replace(/\/$/,'')) && event.data.id) {
-					dontRemoveLoading = true;
-
-					tiWindow.close();
-					$('#ti-connect-info').removeClass('ti-d-none');
-
-					$('#ti-noreg-page-details').val(JSON.stringify(event.data));
-
-					button.closest('form').submit();
-				}
-			});
-
-			$('#ti-connect-info').removeClass('ti-d-none');
-			let timer = setInterval(function() {
-				if (tiWindow.closed) {
-					$('#ti-connect-info').addClass('ti-d-none');
-
-					if (!dontRemoveLoading) {
-						button.removeClass('ti-btn-loading');
-					}
-
-					clearInterval(timer);
-				}
-			}, 1000);
+	let checkCrossOriginError = function(button, style = "margin-top: 15px;margin-bottom: 0") {
+		fetch(window.location.href).then(function (response) {
+			if ('same-origin' === response.headers.get('Cross-Origin-Opener-Policy')) {
+				button
+					.addClass('ti-btn-disabled')
+					.after('<div class="ti-notice ti-notice-error" style="'+style+'"><p>Connect popup cannot work on this site. You have <code>Cross-Origin-Opener-Policy: same-origin</code> header.<br />Please change it to <code>same-origin-allow-popups</code> or remove it.</p></div>');
+			}
 		});
+	};
+
+	
+		let tiConnectButton = $('.btn-connect-public');
+		if (tiConnectButton.length) {
+			tiConnectButton.click(function(event) {
+				event.preventDefault();
+
+				let button = $(this);
+				let token = $('#ti-noreg-connect-token').val();
+
+				button.addClass('ti-btn-loading').blur();
+
+				let dontRemoveLoading = false;
+
+				// get url params
+				let params = new URLSearchParams({
+					type: 'Google',
+					referrer: 'public',
+					webhook_url: $('#ti-noreg-webhook-url').val(),
+					token: token,
+					version: $('#ti-noreg-version').val()
+				});
+
+				let tiWindow = window.open('https://admin.trustindex.io/source/edit2?' + params.toString(), 'trustindex', 'width=850,height=850,menubar=0' + popupCenter(850, 850));
+
+				window.addEventListener('message', function(event) {
+					if (event.origin.startsWith('https://admin.trustindex.io/'.replace(/\/$/,'')) && event.data.id) {
+						dontRemoveLoading = true;
+
+						tiWindow.close();
+						$('#ti-connect-info').removeClass('ti-d-none');
+
+						let jsonStr = JSON.stringify(event.data).replace(/[\u0080-\uffff]/g, c => {
+							return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4);
+						});
+
+						$('#ti-noreg-page-details').val(jsonStr);
+
+						button.closest('form').submit();
+					}
+				});
+
+				$('#ti-connect-info').removeClass('ti-d-none');
+				let timer = setInterval(function() {
+					if (tiWindow.closed) {
+						$('#ti-connect-info').addClass('ti-d-none');
+
+						if (!dontRemoveLoading) {
+							button.removeClass('ti-btn-loading');
+						}
+
+						clearInterval(timer);
+					}
+				}, 1000);
+			});
+
+			checkCrossOriginError(tiConnectButton);
+		}
 
 	
 		// try reply again
@@ -114,34 +133,39 @@ jQuery(document).ready(function($) {
 		});
 
 	// make async request on review download
-	$('.btn-download-reviews').on('click', function(event) {
-		event.preventDefault();
+	let tiDownloadReviewsButton = $('.btn-download-reviews:not(.ti-btn-disabled)');
+	if (tiDownloadReviewsButton.length) {
+		tiDownloadReviewsButton.on('click', function(event) {
+			event.preventDefault();
 
-		let btn = jQuery(this);
+			let btn = jQuery(this);
 
-		TrustindexConnect.asyncRequest(function(token, request_id, manual_download, place) {
-			if (place) {
-				$.ajax({
-					type: 'POST',
-					data: {
-						_wpnonce: btn.data('nonce'),
-						download_data: JSON.stringify(place)
-					}
-				}).always(() => location.reload());
-			}
-			else {
-				$.ajax({
-					type: 'POST',
-					data: {
-						_wpnonce: btn.data('nonce'),
-						review_download_request: token,
-						review_download_request_id: request_id,
-						manual_download: manual_download
-					}
-				}).always(() => location.reload());
-			}
-		}, btn);
-	});
+			TrustindexConnect.asyncRequest(function(token, request_id, manual_download, place) {
+				if (place) {
+					$.ajax({
+						type: 'POST',
+						data: {
+							_wpnonce: btn.data('nonce'),
+							download_data: JSON.stringify(place)
+						}
+					}).always(() => location.reload());
+				}
+				else {
+					$.ajax({
+						type: 'POST',
+						data: {
+							_wpnonce: btn.data('nonce'),
+							review_download_request: token,
+							review_download_request_id: request_id,
+							manual_download: manual_download
+						}
+					}).always(() => location.reload());
+				}
+			}, btn);
+		});
+
+		checkCrossOriginError(tiDownloadReviewsButton, "margin-top: 0; margin-bottom: 20px");
+	}
 
 	// manual download
 	$('#ti-review-manual-download').on('click', function(event) {

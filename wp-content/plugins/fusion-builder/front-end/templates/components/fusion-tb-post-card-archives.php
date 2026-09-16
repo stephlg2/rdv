@@ -8,36 +8,33 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_tb_post_card_archives-shortcode">
+	{{{styles}}}
 	<div {{{ _.fusionGetAttributes( attr ) }}}>
 	<#
 	// If Query Data is set, use it and continue. If not, echo HTML.
 	if ( 'undefined' !== typeof query_data && 'undefined' !== typeof query_data.loop_product && query_data.loop_product ) {
 	#>
-		<# if ( _.contains( [ 'slider', 'carousel' ], values.layout ) ) { #>
-			<div {{{ _.fusionGetAttributes( productsAttrs ) }}}>
-				{{{ productsLoop }}}
+		<# if ( 'carousel' === values.layout ) { #>
+			<div class="fusion-carousel-positioner">
+				<ul {{{ _.fusionGetAttributes( productsAttrs ) }}}>
+					{{{ productsLoop }}}
+				</ul>
+
+				<# if ( 'yes' === values.show_nav ) { #>
+					{{{ carouselNav }}}
+				<# } #>
 			</div>
-
-			<# if ( _.contains( [ 'dots', 'arrows_dots'], values.show_nav ) ) { #>
-				<div class="swiper-pagination"></div>
-			<# } #>
-
-			<# if ( _.contains( [ 'yes', 'arrows_dots' ], values.show_nav ) ) { #>
-				<div class="awb-swiper-button awb-swiper-button-prev"><i {{{ _.fusionGetAttributes( prevAttr ) }}}></i></div>
-				<div class="awb-swiper-button awb-swiper-button-next"><i {{{ _.fusionGetAttributes( nextAttr ) }}}></i></div>
-			<# } #>
-
 		<# } else { #>
 			<ul {{{ _.fusionGetAttributes( productsAttrs ) }}}>
 				{{{ productsLoop }}}
 			</ul>
 		<# } #>
 
-		<# if ( 'no' !== values.scrolling && 'terms' !== values.source && ( 'grid' === values.layout || 'masonry' === values.layout ) ) { #>
+		<# if ( 'no' !== values.scrolling && 'terms' !== values.source && 'grid' === values.layout ) { #>
 			{{{ pagination }}}
-		<# } #>
+		<# } #>	
 
-		<# if ( 'load_more_button' === values.scrolling && -1 !== values.number_posts && 'terms' !== values.source && ( 'grid' === values.layout || 'masonry' === values.layout ) ) { #>
+		<# if ( 'load_more_button' === values.scrolling && -1 !== values.number_posts && 'terms' !== values.source && 'grid' === values.layout ) { #>
 			<button class="fusion-load-more-button fusion-product-button fusion-clearfix">{{{ loadMoreText }}}</button>
 		<# } #>
 

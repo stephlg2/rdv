@@ -157,7 +157,7 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 			<?php if ( $display_post_title ) : ?>
 				<h4 class="fusion-rollover-title">
 					<a class="fusion-rollover-title-link" href="<?php echo esc_url_raw( $icon_permalink ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
-						<?php echo ( function_exists( 'FusionBuilder' ) && FusionBuilder()->post_card_data['is_rendering'] && is_tax() ) ? single_term_title( '', false ) : wp_kses_post( get_the_title( $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php echo is_tax() ? single_term_title() : wp_kses_post( get_the_title( $post_id ) ); ?>
 					</a>
 				</h4>
 			<?php endif; ?>
@@ -192,7 +192,7 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 		<?php endif; ?>
 
 		<?php if ( class_exists( 'WooCommerce' ) && WC()->cart && 'product' === get_post_type( $post_id ) ) : ?>
-			<?php $icon_class = ( $in_cart ) ? 'awb-icon-check-square-o' : 'awb-icon-spinner'; ?>
+			<?php $icon_class = ( $in_cart ) ? 'fusion-icon-check-square-o' : 'fusion-icon-spinner'; ?>
 			<div class="cart-loading">
 				<a href="<?php echo esc_url_raw( wc_get_cart_url() ); ?>">
 					<i class="<?php echo esc_attr( $icon_class ); ?>" aria-hidden="true"></i>

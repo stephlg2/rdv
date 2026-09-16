@@ -123,16 +123,15 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				this.values = atts.values;
-
 				// Create attribute objects
 				attributes.attrModal        = this.buildModalAttr( atts.values );
 				attributes.attrDialog       = this.buildDialogAttr( atts.values );
-				attributes.attrContent      = this.buildContentAttr();
+				attributes.attrContent      = this.buildContentAttr( atts.values );
 				attributes.attrButton       = this.buildButtonAttr( atts.values );
 				attributes.attrHeading      = this.buildHeadingAttr( atts.values );
 				attributes.attrFooterButton = this.buildHFooterButtonAttr( atts.values );
 				attributes.attrBody         = this.buildBodyAttr( atts.values );
+				attributes.borderColor      = atts.values.border_color;
 				attributes.title            = atts.values.title;
 				attributes.showFooter       = atts.values.show_footer;
 				attributes.closeText        = atts.extras.close_text;
@@ -162,18 +161,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					style: 'z-index: 9999999; background: rgba(0,0,0,0.5);',
 					'aria-labelledby': 'modal-heading-' + this.model.get( 'cid' ),
 					'aria-hidden': 'true'
-					},
-					colorObject;
-
+				};
 
 				if ( '' !== values.name ) {
 					attrModal[ 'class' ] += ' ' + values.name;
-				}
-
-				colorObject = jQuery.AWB_Color( values.background );
-
-				if ( 0.4 >= colorObject.lightness() ) {
-					attrModal[ 'class' ] += ' has-light-close';
 				}
 
 				if ( '' !== values[ 'class' ] ) {
@@ -184,24 +175,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attrModal.id = values.id;
 				}
 
-				attrModal.style += this.getStyleVariables();
-
 				return attrModal;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @return {String}
-			 */
-			getStyleVariables: function() {
-				var cssVarsOptions = [
-					'border_color',
-					'background'
-				];
-
-				return this.getCssVarsForOptions( cssVarsOptions );
 			},
 
 			/**
@@ -225,12 +199,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds attributes.
 			 *
 			 * @since 2.0
+			 * @param {Object} values - The values.
 			 * @return {Object}
 			 */
-			buildContentAttr: function() {
-				return {
+			buildContentAttr: function( values ) {
+				var attrContent = {
 					class: 'modal-content fusion-modal-content'
 				};
+				if ( '' !== values.background ) {
+					attrContent.style = 'background-color:' + values.background;
+				}
+
+				return attrContent;
 			},
 
 			/**

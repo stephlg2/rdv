@@ -15,10 +15,9 @@ var fieldId      = 'undefined' === typeof param.param_name ? param.id : param.pa
 	placeholder  = 'undefined' !== typeof param.placeholder ? param.placeholder : '',
 	optionValue  = typeof( option_value ) !== 'undefined' ? option_value : '',
 	skipDebounce = param.skip_debounce || false,
-	searchText   = fusionBuilderText.search,
-	ajaxSearch	 = param.ajax || '',
-	save_not_array = param.save_not_array || '',
-	repeaterId   = 'undefined' === typeof repeaterIndex ? '' : repeaterIndex + '-',
+	searchText   = fusionBuilderText.search;
+	ajaxSearch	 = param.ajax || '';
+	repeaterId   = 'undefined' === typeof repeaterIndex ? '' : repeaterIndex + '-';
 	ajaxParams   = param.ajax_params || [];
 
 	if ( 'string' === typeof fusionBuilderText.search_placeholder && 'string' === typeof param.placeholder ) {
@@ -53,7 +52,6 @@ var fieldId      = 'undefined' === typeof param.param_name ? param.id : param.pa
 		data-ajax={{ajaxSearch}}
 		data-repeater-id="{{ repeaterId }}"
 		data-max-input="{{max_input}}"
-		data-save-not-array="{{ save_not_array }}"
 		>
 		<input type="hidden" value="{{ initialValues }}" class="initial-values" name="values" />
 		<input type="hidden" value="{{ ajaxParams }}" class="params" name="values" />

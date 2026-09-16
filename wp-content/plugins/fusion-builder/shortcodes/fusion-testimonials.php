@@ -26,15 +26,6 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 			private $testimonials_counter = 1;
 
 			/**
-			 * The testimonials child counter.
-			 *
-			 * @access private
-			 * @since 3.4
-			 * @var int
-			 */
-			private $testimonials_child_counter = 1;
-
-			/**
 			 * Parent SC arguments.
 			 *
 			 * @access protected
@@ -86,13 +77,9 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults( $context = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$parent = [
-					'margin_top'      => '',
-					'margin_right'    => '',
-					'margin_bottom'   => '',
-					'margin_left'     => '',
 					'hide_on_mobile'  => fusion_builder_default_visibility( 'string' ),
 					'class'           => '',
 					'id'              => '',
@@ -150,8 +137,9 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 			 */
 			public function render_parent( $args, $content = '' ) {
 
-				$defaults   = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_testimonials' );
-				$this->args = $defaults;
+				global $fusion_settings;
+
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_testimonials' );
 
 				if ( 'yes' === $defaults['random'] || '1' === $defaults['random'] ) {
 					$defaults['random'] = 1;
@@ -169,39 +157,22 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 
 				$this->parent_args = $defaults;
 
+				$styles  = '<style type="text/css">';
+				$styles .= '#fusion-testimonials-' . $this->testimonials_counter . ' a{border-color:' . $textcolor . ';}';
+				$styles .= '#fusion-testimonials-' . $this->testimonials_counter . ' a:hover, #fusion-testimonials-' . $this->testimonials_counter . ' .activeSlide{background-color: ' . $textcolor . ';}';
+				$styles .= '.fusion-testimonials.' . $design . '.fusion-testimonials-' . $this->testimonials_counter . ' .author:after{border-top-color:' . $backgroundcolor . ' !important;}';
+				$styles .= '</style>';
+
 				$pagination = '';
 				if ( 'yes' === $this->parent_args['navigation'] ) {
-					preg_match_all( '/\[fusion_testimonial [^\/]*\/\]|\[fusion_testimonial .*\].*(.|\s|\S)*\/fusion_testimonial\]/U', $content, $single_testimonials );
-
-					if ( isset( $single_testimonials[0] ) ) {
-						$pagination = '<div ' . FusionBuilder::attributes( 'testimonials-shortcode-pagination' ) . '>';
-						$count      = count( $single_testimonials[0] );
-
-						if ( 1 < $count ) {
-							for ( $i = 0; $i < $count; $i++ ) {
-								$active_class = 0 === $i ? ' class="activeSlide"' : '';
-								$pagination  .= '<a href="#" aria-label="' . esc_attr__( 'Testimonial Pagination', 'fusion-builder' ) . '" ' . $active_class . '></a>';
-							}
-						}
-						$pagination .= '</div>';
-					}
-				}
-
-				if ( $this->parent_args['random'] ) {
-					if ( ! isset( $single_testimonials[0] ) ) {
-						preg_match_all( '/\[fusion_testimonial [^\/]*\/\]|\[fusion_testimonial .*\].*(.|\s|\S)*\/fusion_testimonial\]/U', $content, $single_testimonials );
-					}
-
-					if ( isset( $single_testimonials[0] ) ) {
-						shuffle( $single_testimonials[0] );
-						$content = implode( '', $single_testimonials[0] );
-					}
+					$pagination = sprintf( '<div %s></div>', FusionBuilder::attributes( 'testimonials-shortcode-pagination' ) );
 				}
 
 				fusion_element_rendering_elements( true );
 				$html = sprintf(
-					'<div %s><div %s>%s</div>%s</div>',
+					'<div %s>%s<div %s>%s</div>%s</div>',
 					FusionBuilder::attributes( 'testimonials-shortcode' ),
+					$styles,
 					FusionBuilder::attributes( 'testimonials-shortcode-testimonials' ),
 					do_shortcode( $content ),
 					$pagination
@@ -209,7 +180,6 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 				fusion_element_rendering_elements( false );
 
 				$this->testimonials_counter++;
-				$this->testimonials_child_counter = 1;
 
 				$this->on_render();
 
@@ -230,14 +200,11 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 					$this->parent_args['hide_on_mobile'],
 					[
 						'class' => 'fusion-testimonials ' . $this->parent_args['design'] . ' fusion-testimonials-' . $this->testimonials_counter,
-						'style' => '',
 					]
 				);
 
 				$attr['data-random'] = $this->parent_args['random'];
 				$attr['data-speed']  = $this->parent_args['speed'];
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->parent_args['class'] ) {
 					$attr['class'] .= ' ' . $this->parent_args['class'];
@@ -248,29 +215,7 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 				}
 
 				return $attr;
-			}
 
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-
-				$css_vars_options = [
-					'textcolor'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'backgroundcolor' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'margin_top'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options );
-
-				return $styles;
 			}
 
 			/**
@@ -320,8 +265,6 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 				} else {
 					$html = $this->render_child_classic( $content );
 				}
-
-				$this->testimonials_child_counter++;
 
 				return apply_filters( 'fusion_element_testimonials_child_content', $html, $args );
 
@@ -482,8 +425,8 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 			public function blockquote_attr() {
 				$attr = [];
 
-				if ( Fusion_Color::new_color( $this->parent_args['backgroundcolor'] )->is_color_transparent() && 'none' !== $this->child_args['avatar'] ) {
-					$attr['class'] = ' has-transparent-color';
+				if ( fusion_is_color_transparent( $this->parent_args['backgroundcolor'] ) ) {
+					$attr['style'] = 'margin: -25px;';
 				}
 
 				return $attr;
@@ -499,6 +442,7 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 			 */
 			public function quote_attr() {
 				return [
+					'style' => 'background-color:' . $this->parent_args['backgroundcolor'] . ';color:' . $this->parent_args['textcolor'] . ';',
 					'class' => 'fusion-clearfix',
 				];
 			}
@@ -515,10 +459,6 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 				$attr = [
 					'class' => 'review ',
 				];
-
-				if ( 1 === $this->testimonials_child_counter ) {
-					$attr['class'] .= 'active-testimonial ';
-				}
 
 				if ( 'none' === $this->child_args['avatar'] ) {
 					$attr['class'] .= 'no-avatar';
@@ -547,6 +487,7 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 
 				if ( 'image' !== $this->child_args['avatar'] ) {
 					$attr['class'] .= ' doe';
+					$attr['style']  = sprintf( 'color:%s;', $this->parent_args['textcolor'] );
 				}
 
 				return $attr;
@@ -567,13 +508,15 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 					'width'  => $this->child_args['image_width'],
 					'height' => $this->child_args['image_height'],
 					'alt'    => $this->child_args['image_alt'],
-					'style'  => '',
 				];
 
 				if ( $this->child_args['image_border_radius'] ) {
-					$custom_vars['border-radius'] = $this->child_args['image_border_radius'];
-
-					$attr['style'] .= $this->get_custom_css_vars( $custom_vars );
+					$attr['style'] = sprintf(
+						'-webkit-border-radius:%s;-moz-border-radius:%s;border-radius:%s;',
+						$this->child_args['image_border_radius'],
+						$this->child_args['image_border_radius'],
+						$this->child_args['image_border_radius']
+					);
 				}
 
 				$attr = fusion_library()->images->lazy_load_attributes( $attr, $this->child_args['image_id'] );
@@ -592,6 +535,7 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 			public function author_attr() {
 				return [
 					'class' => 'author',
+					'style' => 'color:' . $this->parent_args['textcolor'] . ';',
 				];
 			}
 
@@ -630,7 +574,7 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 								'label'       => esc_html__( 'Testimonial Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the testimonial background.', 'fusion-builder' ),
 								'id'          => 'testimonial_bg_color',
-								'default'     => 'var(--awb-color2)',
+								'default'     => '#f9f9fb',
 								'type'        => 'color-alpha',
 								'css_vars'    => [
 									[
@@ -643,7 +587,7 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 								'label'       => esc_html__( 'Testimonial Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the testimonial text.', 'fusion-builder' ),
 								'id'          => 'testimonial_text_color',
-								'default'     => 'var(--awb-color8)',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
 								'css_vars'    => [
 									[
@@ -684,14 +628,15 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
 			 * @return void
 			 */
 			public function on_first_render() {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				Fusion_Dynamic_JS::enqueue_script(
 					'fusion-testimonials',
 					FusionBuilder::$js_folder_url . '/general/fusion-testimonials.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-testimonials.js',
-					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
+					[ 'jquery', 'jquery-cycle' ],
+					'1',
 					true
 				);
 				Fusion_Dynamic_JS::localize_script(
@@ -726,7 +671,8 @@ if ( fusion_is_element_enabled( 'fusion_testimonials' ) ) {
  * @since 1.0
  */
 function fusion_element_testimonials() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -741,7 +687,7 @@ function fusion_element_testimonials() {
 				'preview_id'    => 'fusion-builder-block-module-testimonials-preview-template',
 				'child_ui'      => true,
 				'sortable'      => false,
-				'help_url'      => 'https://avada.com/documentation/testimonials-element/',
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/testimonials-element/',
 				'params'        => [
 					[
 						'type'        => 'tinymce',
@@ -809,16 +755,6 @@ function fusion_element_testimonials() {
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
 						],
 						'default'     => '',
-					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_right'  => '',
-							'margin_bottom' => '',
-							'margin_left'   => '',
-						],
 					],
 					[
 						'type'        => 'checkbox_button_set',
@@ -947,11 +883,11 @@ function fusion_element_testimonial() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window. <br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'target',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => '_self',
+							'_blank' => '_blank',
 						],
 						'default'     => '_self',
 						'dependency'  => [

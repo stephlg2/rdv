@@ -24,7 +24,7 @@ abstract class Fusion_Element {
 	 * @static
 	 * @access protected
 	 * @since 1.1.0
-	 * @var Fusion_Builder_Options|null
+	 * @var object Fusion_Builder_Options
 	 */
 	protected static $fb_options;
 
@@ -64,7 +64,7 @@ abstract class Fusion_Element {
 	 *
 	 * @access protected
 	 * @since 2.0
-	 * @var string|int
+	 * @var array
 	 */
 	protected $element_id;
 
@@ -82,23 +82,9 @@ abstract class Fusion_Element {
 	 *
 	 * @access protected
 	 * @since 3.0
-	 * @var bool
+	 * @var array
 	 */
 	protected $has_rendered = false;
-
-	/**
-	 * The element arguments.
-	 *
-	 * @var array
-	 */
-	protected $args = [];
-
-	/**
-	 * Dynamic CSS for creating style CSS.
-	 *
-	 * @var array
-	 */
-	public $dynamic_css = [];
 
 	/**
 	 * The class constructor
@@ -147,11 +133,8 @@ abstract class Fusion_Element {
 		self::$global_options = array_merge_recursive( self::$global_options, $element_options );
 		self::$fb_options->add_options( $element_options );
 
-		if ( ! is_admin() ) {
-			add_action( 'wp_loaded', [ $this, 'load_css' ], 30 );
-			add_action( 'wp_loaded', [ $this, 'add_css_files' ] );
-		}
-
+		add_action( 'wp_loaded', [ $this, 'load_css' ], 30 );
+		add_action( 'wp_loaded', [ $this, 'add_css_files' ] );
 		// Dynamic JS script.
 		$this->add_scripts();
 
@@ -293,9 +276,10 @@ abstract class Fusion_Element {
 	 * @access public
 	 * @since 3.0
 	 * @param string $param Param name.
-	 * @return bool
+	 * @return string
 	 */
 	public function is_default( $param ) {
+
 		// No arg, means we are using default.
 		if ( ! isset( $this->args[ $param ] ) ) {
 			return true;
@@ -329,7 +313,7 @@ abstract class Fusion_Element {
 		if ( is_array( $selectors ) ) {
 			foreach ( $selectors as $selector ) {
 				if ( ! isset( $this->dynamic_css[ $selector ][ $property ] ) || $important || false === strpos( $this->dynamic_css[ $selector ][ $property ], '!important' ) ) {
-					$this->dynamic_css[ $selector ][ $property ] = $value;
+						$this->dynamic_css[ $selector ][ $property ] = $value;
 				}
 			}
 			return;
@@ -338,225 +322,6 @@ abstract class Fusion_Element {
 		if ( ! isset( $this->dynamic_css[ $selectors ][ $property ] ) || $important || false === strpos( $this->dynamic_css[ $selectors ][ $property ], '!important' ) ) {
 			$this->dynamic_css[ $selectors ][ $property ] = $value;
 		}
-	}
-
-	/**
-	 * Get a string with each of the option as a CSS variable, if the option is not default.
-	 *
-	 * @since 3.9
-	 * @param array $options  The array with the options ids.
-	 * @return string
-	 */
-	protected function get_css_vars_for_options( $options ) {
-		$css = '';
-
-		foreach ( $options as $key => $value ) {
-			if ( is_array( $value ) ) { // If the value is an array, then the CSS var name is the key.
-				if ( ! $this->is_default( $key ) && '' !== $this->args[ $key ] ) {
-					$var_name      = '--awb-' . str_replace( '_', '-', $key );
-					$callback_args = isset( $value['args'] ) && is_array( $value['args'] ) ? $value['args'] : [ $this->args[ $key ] ];
-					$css          .= $var_name . ':' . call_user_func_array( $value['callback'], $callback_args ) . ';';
-				}
-			} else {
-				if ( ! $this->is_default( $value ) && '' !== $this->args[ $value ] ) {
-					$var_name = '--awb-' . str_replace( '_', '-', $value );
-					$css     .= $var_name . ':' . $this->args[ $value ] . ';';
-				}
-			}
-		}
-
-		return $css;
-	}
-
-	/**
-	 * Get a string with custom CSS variables, created from array key => value pairs.
-	 *
-	 * @since 3.9
-	 * @param array   $options The array with the custom css vars. The key
-	 *   represents the option name, while the value represents the custom value.
-	 * @param boolean $prefix Whether to alter the variable name or not.
-	 * @return string
-	 */
-	protected function get_custom_css_vars( $options, $prefix = true ) {
-		$css = '';
-
-		foreach ( $options as $option_name => $value ) {
-			$var_name = $prefix ? '--awb-' . str_replace( '_', '-', $option_name ) : '--' . $option_name;
-			$css     .= $var_name . ':' . $value . ';';
-		}
-
-		return $css;
-	}
-
-	/**
-	 * Get font styling vars, created from get_font_styling helper.
-	 *
-	 * @since 3.9
-	 * @param string $key Typography options key.
-	 * @return string
-	 */
-	protected function get_font_styling_vars( $key ) {
-		$css         = '';
-		$font_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, $key, 'array' );
-
-		foreach ( $font_styles as $name => $value ) {
-			$key      = str_replace( '_font', '', $key );
-			$var_name = '--awb-' . str_replace( '_', '-', $key . '-' . $name );
-			$css     .= $var_name . ':' . $value . ';';
-		}
-
-		return $css;
-	}
-
-	/**
-	 * Get declaration for typography vars with the given values.
-	 *
-	 * @since 3.9
-	 * @param string $title_tag An HTML tag, Ex: 'h2', 'h3', 'div'.. etc.
-	 * @param array  $name_value_map The key is a css property, the array value is the CSS value.
-	 * @return string
-	 */
-	protected function get_heading_font_vars( $title_tag, $name_value_map ) {
-		$var_prefix = '';
-		$style      = '';
-
-		if ( in_array( $title_tag, [ 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ], true ) ) {
-			$var_prefix = '--' . $title_tag . '_typography-';
-		} elseif ( 'div' === $title_tag || 'p' === $title_tag ) {
-			$var_prefix = '--body_typography-';
-		} else {
-			return $style;
-		}
-
-		foreach ( $name_value_map as $css_prop => $css_value ) {
-			if ( '' !== $css_value ) {
-				$style .= $var_prefix . $css_prop . ':' . $css_value . ';';
-			}
-		}
-
-		return $style;
-	}
-
-	/**
-	 * Get aspect ratio vars.
-	 *
-	 * @since 3.9
-	 * @return string
-	 */
-	protected function get_aspect_ratio_vars() {
-		if ( '' === $this->args['aspect_ratio'] ) {
-			return '';
-		}
-
-		$css = '';
-
-		// Calc Ratio.
-		if ( 'custom' === $this->args['aspect_ratio'] && '' !== $this->args['custom_aspect_ratio'] ) {
-			$css .= '--awb-aspect-ratio: 100 / ' . $this->args['custom_aspect_ratio'] . ';';
-		} else {
-			$aspect_ratio = explode( '-', $this->args['aspect_ratio'] );
-			$width        = isset( $aspect_ratio[0] ) ? $aspect_ratio[0] : '';
-			$height       = isset( $aspect_ratio[1] ) ? $aspect_ratio[1] : '';
-
-			$css .= '--awb-aspect-ratio:' . $width . ' / ' . $height . ';';
-
-		}
-
-		// Set Image Position.
-		if ( '' !== $this->args['aspect_ratio_position'] ) {
-			$css .= '--awb-object-position:' . $this->args['aspect_ratio_position'] . ';';
-		}
-
-		return $css;
-	}
-
-	/**
-	 * Get from ACF repeater for parent and child elements.
-	 *
-	 * @since 3.9
-	 * @param array  $dynamic_data The dynamic data.
-	 * @param array  $args The arguments.
-	 * @param string $content The content.
-	 * @param bool   $rendered Whether or not is rendered.
-	 * @return string
-	 */
-	public static function get_acf_repeater( $dynamic_data, $args, $content, $rendered = true ) {
-		if ( ! class_exists( 'ACF' ) ) {
-			if ( $rendered ) {
-				return do_shortcode( $content );
-			} else {
-				return $content;
-			}
-		}
-
-		$field = isset( $dynamic_data['field'] ) ? $dynamic_data['field'] : '';
-
-		$is_builder  = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
-		$target_post = ( $is_builder || isset( $_GET['awb-studio-content'] ) ) && function_exists( 'Fusion_Template_Builder' ) ? Fusion_Template_Builder()->get_dynamic_content_selection() : false; // phpcs:ignore WordPress.Security
-		$post_id     = $target_post ? $target_post->ID : get_the_ID();
-		$post_id     = isset( $_POST['post_id'] ) ? $_POST['post_id'] : $post_id; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing
-
-		ob_start();
-		if ( have_rows( $field, $post_id ) ) {
-			$count = 1;
-			while ( have_rows( $field, $post_id ) ) {
-				the_row();
-				if ( $rendered ) {
-					echo do_shortcode( $content );
-				} else {
-					// Get the dynamic data manually.
-					$pattern = get_shortcode_regex();
-					if ( preg_match_all( '/' . $pattern . '/s', $content, $matches ) ) {
-						$tag        = isset( $matches[2][0] ) ? $matches[2][0] : '';
-						$el_content = isset( $matches[5][0] ) ? $matches[5][0] : '';
-
-						foreach ( $matches[3] as $atts_string ) {
-							$atts = shortcode_parse_atts( $atts_string );
-						}
-					}
-
-					$el_dynamic_data  = isset( $atts['dynamic_params'] ) ? json_decode( fusion_decode_if_needed( $atts['dynamic_params'] ), true ) : '';
-					$new_dynamic_data = $el_dynamic_data;
-
-					foreach ( $el_dynamic_data as $key => $value ) {
-						if ( isset( $value['data'] ) && 'acf_repeater_sub' === $value['data'] ) {
-							if ( 'element_content' === $key ) {
-								$el_content = Fusion_Dynamic_Data_Callbacks::acf_get_repeater_sub_field( [ 'sub_field' => $value['sub_field'] ] );
-							} else {
-								$atts[ $key ] = Fusion_Dynamic_Data_Callbacks::acf_get_repeater_sub_field( [ 'sub_field' => $value['sub_field'] ] );
-							}
-							unset( $new_dynamic_data[ $key ] );
-						}
-					}
-
-					$new_content = '[' . $tag;
-
-					foreach ( $atts as $att_key => $att_value ) {
-						if ( 'dynamic_params' === $att_key ) {
-							$new_content .= ' ' . $att_key . '="' . base64_encode( wp_json_encode( $new_dynamic_data ) ) . '"';
-						} else {
-							$new_content .= ' ' . $att_key . '="' . $att_value . '"';
-						}
-					}
-
-					$new_content .= ']';
-					$new_content .= $el_content;
-					$new_content .= '[/' . $tag . ']';
-
-					echo $new_content; // phpcs:ignore WordPress.Security
-				}
-
-				$count++;
-				if ( isset( $args['limit'] ) && 0 < $args['limit'] && $count > $args['limit'] ) {
-					break;
-				}
-			}
-			reset_rows();
-		}
-
-		$output = ob_get_clean();
-
-		return $output;
 	}
 
 	/**
@@ -583,7 +348,7 @@ abstract class Fusion_Element {
 			foreach ( $result as $result_selector => $result_values ) {
 				if ( $result_values === $element ) {
 
-					// Make sure :: selectors are listed separately because of browser compatibility.
+					// Make sure :fcous-within selectors are listed separately because of IE11.
 					if ( false === strpos( $selector, ':focus-within' ) && false === strpos( $result_selector, ':focus-within' ) && false === strpos( $selector, '::' ) && false === strpos( $result_selector, '::' ) ) {
 						// And remove the old one.
 						unset( $result[ $result_selector ] );

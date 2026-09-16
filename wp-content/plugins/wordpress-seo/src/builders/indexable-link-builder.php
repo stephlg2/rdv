@@ -134,6 +134,9 @@ class Indexable_Link_Builder {
 			// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- To setup the post we need to do this explicitly.
 			$post = $this->post_helper->get_post( $indexable->object_id );
 			\setup_postdata( $post );
+
+			// The below hook primes the post and meta caches for all wp-image-<ID> images.
+			// So the image loop in create_links() hits warm caches — no additional priming is needed there.
 			$content = \apply_filters( 'the_content', $content );
 			\wp_reset_postdata();
 			// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- To setup the post we need to do this explicitly.
@@ -254,14 +257,14 @@ class Indexable_Link_Builder {
 			function ( $link ) use ( $home_url, $indexable ) {
 				return $this->create_internal_link( $link, $home_url, $indexable );
 			},
-			$links
+			$links,
 		);
 		// Filter out links to the same page with a fragment or query.
 		$links = \array_filter(
 			$links,
 			function ( $link ) use ( $current_url ) {
 				return $this->filter_link( $link, $current_url );
-			}
+			},
 		);
 
 		$image_links = [];
@@ -314,7 +317,7 @@ class Indexable_Link_Builder {
 				'type'         => $link_type,
 				'indexable_id' => $indexable->id,
 				'post_id'      => $indexable->object_id,
-			]
+			],
 		);
 
 		$model->parsed_url = $parsed_url;
@@ -503,7 +506,7 @@ class Indexable_Link_Builder {
 			$links_b,
 			static function ( SEO_Links $link_a, SEO_Links $link_b ) {
 				return \strcmp( $link_a->url, $link_b->url );
-			}
+			},
 		);
 	}
 

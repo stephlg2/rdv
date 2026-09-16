@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 			private $breadcrumbs_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since  2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -67,13 +76,12 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'prefix'              => $fusion_settings->get( 'breacrumb_prefix' ),
 					'separator'           => $fusion_settings->get( 'breadcrumb_separator' ),
 					'show_categories'     => $fusion_settings->get( 'breadcrumb_show_categories' ),
 					'post_type_archive'   => $fusion_settings->get( 'breadcrumb_show_post_type_archive' ),
-					'show_leaf'           => $fusion_settings->get( 'breadcrumb_show_leaf' ),
 					'alignment'           => '',
 					'font_size'           => $fusion_settings->get( 'breadcrumbs_font_size' ),
 					'text_color'          => $fusion_settings->get( 'breadcrumbs_text_color' ),
@@ -88,9 +96,7 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 					'animation_direction' => 'left',
 					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
 					'animation_speed'     => '',
-					'animation_delay'     => '',
 					'animation_type'      => '',
-					'animation_color'     => '',
 					'sticky_display'      => '',
 				];
 			}
@@ -112,7 +118,6 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 					'breadcrumbs_text_hover_color'      => 'text_hover_color',
 					'breadcrumb_show_categories'        => 'show_categories',
 					'breadcrumb_show_post_type_archive' => 'post_type_archive',
-					'breadcrumb_show_leaf'              => 'show_leaf',
 				];
 			}
 
@@ -128,6 +133,7 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 			public function ajax_render( $defaults ) {
 				check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
 
+				global $fusion_settings;
 				$live_request = false;
 
 				// From Ajax Request.
@@ -149,7 +155,6 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 						'separator'              => $defaults['separator'],
 						'show_post_type_archive' => ( '1' === $defaults['post_type_archive'] || 'yes' === $defaults['post_type_archive'] ? true : false ),
 						'show_terms'             => ( '1' === $defaults['show_categories'] || 'yes' === $defaults['show_categories'] ? true : false ),
-						'show_leaf'              => ( '1' === $defaults['show_leaf'] || 'yes' === $defaults['show_leaf'] ? true : false ),
 					];
 
 					$breadcrumbs                = new Fusion_Breadcrumbs( $args );
@@ -170,28 +175,47 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_breadcrumbs' );
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_breadcrumbs' );
+
+				extract( $defaults );
+
+				$this->args = $defaults;
 
 				$args = [
-					'home_prefix'            => $this->args['prefix'],
-					'separator'              => $this->args['separator'],
-					'show_post_type_archive' => ( '1' === $this->args['post_type_archive'] || 'yes' === $this->args['post_type_archive'] ? true : false ),
-					'show_terms'             => ( '1' === $this->args['show_categories'] || 'yes' === $this->args['show_categories'] ? true : false ),
-					'show_leaf'              => ( '1' === $this->args['show_leaf'] || 'yes' === $this->args['show_leaf'] ? true : false ),
+					'home_prefix'            => $prefix,
+					'separator'              => $separator,
+					'show_post_type_archive' => ( '1' === $post_type_archive || 'yes' === $post_type_archive ? true : false ),
+					'show_terms'             => ( '1' === $show_categories || 'yes' === $show_categories ? true : false ),
 				];
 
 				$breadcrumbs = new Fusion_Breadcrumbs( $args );
 
-				$html  = '<nav ' . FusionBuilder::attributes( 'breadcrumbs-shortcode' ) . '>';
+				$styles = '<style type="text/css">';
+
+				if ( $font_size ) {
+					$styles .= ".fusion-breadcrumbs.fusion-breadcrumbs-{$this->breadcrumbs_counter}{font-size:{$font_size};}";
+				}
+
+				if ( $text_hover_color ) {
+					$styles .= ".fusion-breadcrumbs.fusion-breadcrumbs-{$this->breadcrumbs_counter} span a:hover{color:{$text_hover_color} !important;}";
+				}
+
+				if ( $text_color ) {
+					$styles .= ".fusion-breadcrumbs.fusion-breadcrumbs-{$this->breadcrumbs_counter}{color:{$text_color};}";
+					$styles .= ".fusion-breadcrumbs.fusion-breadcrumbs-{$this->breadcrumbs_counter} a{color:{$text_color};}";
+				}
+
+				$styles .= '</style>';
+
+				$html  = '<div ' . FusionBuilder::attributes( 'breadcrumbs-shortcode' ) . '>';
 				$html .= $breadcrumbs->get_element_breadcrumbs();
-				$html .= '</nav>';
+				$html .= '</div>';
 
 				$this->breadcrumbs_counter++;
 
 				$this->on_render();
 
-				return apply_filters( 'fusion_element_breadcrumbs_content', $html, $args );
+				return apply_filters( 'fusion_element_breadcrumbs_content', $styles . $html, $args );
 			}
 
 			/**
@@ -202,36 +226,17 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 			 * @return array
 			 */
 			public function attr() {
-				$css_vars = [
-					'margin_top',
-					'margin_right',
-					'margin_bottom',
-					'margin_left',
-					'alignment',
-					'font_size',
-					'text_hover_color',
-					'text_color',
-				];
-
 				$attr = fusion_builder_visibility_atts(
 					$this->args['hide_on_mobile'],
 					[
-						'class' => 'fusion-breadcrumbs',
-						'style' => $this->get_css_vars_for_options( $css_vars ),
+						'class' => 'fusion-breadcrumbs fusion-breadcrumbs-' . $this->breadcrumbs_counter,
+						'style' => '',
 					]
 				);
 
-				$this->args['separator'] = '\\' === $this->args['separator'] ? '\\\\' : $this->args['separator'];
-				$attr['style']          .= '--awb-breadcrumb-sep:\'' . $this->args['separator'] . '\';';
-
-				$attr['class'] = function_exists( 'yoast_breadcrumb' ) ? $attr['class'] . ' awb-yoast-breadcrumbs' : $attr['class'];
-				$attr['class'] = ( 'fusion-breadcrumbs' !== $attr['class'] && function_exists( 'rank_math_get_breadcrumbs' ) ) ? $attr['class'] . ' awb-rankmath-breadcrumbs' : $attr['class'];
-
-				$attr['class'] .= ' fusion-breadcrumbs-' . $this->breadcrumbs_counter;
-
 				$attr['class'] .= Fusion_Builder_Sticky_Visibility_Helper::get_sticky_class( $this->args['sticky_display'] );
 
-				$attr['aria-label'] = esc_attr__( 'Breadcrumb', 'fusion-buider' );
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['animation_type'] ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
@@ -252,17 +257,6 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
 				return $attr;
 
 			}
-
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.0
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/breadcrumbs.min.css' );
-			}
 		}
 	}
 
@@ -276,7 +270,7 @@ if ( fusion_is_element_enabled( 'fusion_breadcrumbs' ) ) {
  * @since 2.2
  */
 function fusion_element_breadcrumbs() {
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -286,7 +280,7 @@ function fusion_element_breadcrumbs() {
 				'shortcode'   => 'fusion_breadcrumbs',
 				'icon'        => 'fusiona-breadcrumb',
 				'escape_html' => true,
-				'help_url'    => 'https://avada.com/documentation/breadcrumbs-element/',
+				'help_url'    => 'https://theme-fusion.com/documentation/avada/elements/breadcrumbs-element/',
 				'params'      => [
 					[
 						'type'        => 'textfield',
@@ -345,18 +339,15 @@ function fusion_element_breadcrumbs() {
 						'value'       => '',
 						'default'     => $fusion_settings->get( 'breadcrumbs_text_color' ),
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'param_name' => 'text_hover_color',
-								'default'    => $fusion_settings->get( 'breadcrumbs_text_hover_color' ),
-								'preview'    => [
-									'selector' => '.fusion-breadcrumbs span a',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Text Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text hover color of the breadcrumbs font.', 'fusion-builder' ),
+						'param_name'  => 'text_hover_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'breadcrumbs_text_hover_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
 						'type'             => 'dimension',
@@ -374,8 +365,8 @@ function fusion_element_breadcrumbs() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Show Post Categories/Terms', 'fusion-builder' ),
-						'description' => esc_attr__( 'Turn on to display the post categories/terms in the breadcrumbs path.', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'Show Post Categories', 'fusion-builder' ),
+						'description' => esc_attr__( 'Turn on to display the post categories in the breadcrumbs path.', 'fusion-builder' ),
 						'param_name'  => 'show_categories',
 						'default'     => '',
 						'value'       => [
@@ -394,23 +385,6 @@ function fusion_element_breadcrumbs() {
 						'heading'     => esc_attr__( 'Show Post Type Archives', 'fusion-builder' ),
 						'description' => esc_attr__( 'Turn on to display post type archives in the breadcrumbs path.', 'fusion-builder' ),
 						'param_name'  => 'post_type_archive',
-						'default'     => '',
-						'value'       => [
-							''    => esc_attr__( 'Default', 'fusion-builder' ),
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_breadcrumbs',
-							'ajax'     => true,
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Show Post Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Turn on to display the post name in the breadcrumbs path.', 'fusion-builder' ),
-						'param_name'  => 'show_leaf',
 						'default'     => '',
 						'value'       => [
 							''    => esc_attr__( 'Default', 'fusion-builder' ),

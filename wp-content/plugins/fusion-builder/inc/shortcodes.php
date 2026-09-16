@@ -40,14 +40,13 @@ function fusion_builder_map( $module ) {
 	}
 
 	global $fusion_builder_elements, $fusion_builder_enabled_elements, $fusion_builder_multi_elements, $all_fusion_builder_elements, $fusion_settings, $pagenow;
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 
 	$module          = apply_filters( 'fusion_builder_map', $module );
 	$shortcode       = $module['shortcode'];
 	$ignored_atts    = [];
 	$responsive_atts = [];
 	$params          = [];
-	$states_atts     = [];
 
 	if ( ( is_admin() && isset( $pagenow ) && ( 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'avada-builder-options' === $_GET['page'] ) || ( 'post.php' === $pagenow ) || ( 'post-new.php' === $pagenow ) ) || $builder_status ) { // phpcs:ignore WordPress.Security.NonceVerification
 
@@ -83,20 +82,6 @@ function fusion_builder_map( $module ) {
 					];
 				}
 
-				// State options.
-				if ( isset( $param['states'] ) && is_array( $param['states'] ) ) { // phpcs:ignore WordPress.PHP.StrictComparisons
-					$states = [
-						'name'        => $param['param_name'],
-						'description' => $param['description'],
-						'states'      => $param['states'],
-					];
-
-					if ( isset( $param['responsive'] ) ) {
-						$states['responsive'] = $param['responsive'];
-					}
-					$states_atts[] = $states;
-				}
-
 				// Allow filtering of description.
 				if ( isset( $param['description'] ) ) {
 					$builder_map         = fusion_builder_map_descriptions( $shortcode, $param['param_name'] );
@@ -105,7 +90,7 @@ function fusion_builder_map( $module ) {
 						$setting             = ( isset( $builder_map['theme-option'] ) && '' !== $builder_map['theme-option'] ) ? $builder_map['theme-option'] : '';
 						$subset              = ( isset( $builder_map['subset'] ) && '' !== $builder_map['subset'] ) ? $builder_map['subset'] : '';
 						$type                = ( isset( $builder_map['type'] ) && '' !== $builder_map['type'] ) ? $builder_map['type'] : '';
-						$reset               = ( ( isset( $builder_map['reset'] ) || 'range' === $type ) && ( isset( $param['default'] ) && '' !== $param['default'] ) ) ? $param['param_name'] : '';
+						$reset               = ( ( isset( $builder_map['reset'] ) || 'range' === $type ) && '' !== $param['default'] ) ? $param['param_name'] : '';
 						$check_page          = isset( $builder_map['check_page'] ) ? $builder_map['check_page'] : false;
 						$dynamic_description = $fusion_settings->get_default_description( $setting, $subset, $type, $reset, $param, $check_page );
 						$dynamic_description = apply_filters( 'fusion_builder_option_dynamic_description', $dynamic_description, $shortcode, $param['param_name'] );
@@ -114,11 +99,11 @@ function fusion_builder_map( $module ) {
 						$param['default_subset'] = $subset;
 						$param['option_map']     = $type;
 					}
-					$options_label = apply_filters( 'fusion_options_label', esc_html__( 'Global Options', 'fusion-builder' ) );
+					$options_label = apply_filters( 'fusion_options_label', esc_html__( 'Element Options', 'fusion-builder' ) );
 					if ( 'hide_on_mobile' === $param['param_name'] ) {
 						$link = '<a href="' . $fusion_settings->get_setting_link( 'visibility_small' ) . '" target="_blank" rel="noopener noreferrer">' . $options_label . '</a>';
 						/* translators: Link with the "Element Options" text. */
-						$param['description'] = $param['description'] . sprintf( __( '  Each of the 3 sizes has a custom width setting on the Responsive tab in the %s.', 'fusion-builder' ), $link );
+						$param['description'] = $param['description'] . sprintf( __( '  Each of the 3 sizes has a custom width setting on the Avada Builder Elements tab in the %s.', 'fusion-builder' ), $link );
 					}
 
 					if ( 'element_content' === $param['param_name'] && ( 'fusion_syntax_highlighter' === $shortcode || 'fusion_code' === $shortcode ) ) {
@@ -176,11 +161,6 @@ function fusion_builder_map( $module ) {
 			if ( 0 < count( $responsive_atts ) ) {
 				$params                   = apply_filters( 'fusion_builder_responsive_params', $responsive_atts, $params, $shortcode );
 				$module['has_responsive'] = true;
-			}
-
-			if ( 0 < count( $states_atts ) ) {
-				$params               = apply_filters( 'fusion_builder_states_params', $states_atts, $params, $shortcode );
-				$module['has_states'] = true;
 			}
 
 			$module['params']           = $params;
@@ -263,7 +243,6 @@ function fusion_builder_filter_available_elements() {
 		$fusion_builder_enabled_elements[] = 'fusion_builder_blank_page';
 		$fusion_builder_enabled_elements[] = 'fusion_builder_next_page';
 		$fusion_builder_enabled_elements[] = 'fusion_builder_inline';
-		$fusion_builder_enabled_elements[] = 'fusion_builder_form_step';
 
 		if ( class_exists( 'WooCommerce' ) ) {
 			$fusion_builder_enabled_elements[] = 'fusion_woo_checkout_form';

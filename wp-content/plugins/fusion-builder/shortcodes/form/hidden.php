@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_hidden' ) ) {
 		class FusionForm_Hidden extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -35,7 +53,7 @@ if ( fusion_is_element_enabled( 'fusion_form_hidden' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'name'        => '',
 					'field_value' => '',
@@ -74,6 +92,8 @@ if ( fusion_is_element_enabled( 'fusion_form_hidden' ) ) {
  */
 function fusion_form_hidden() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_Password',
@@ -96,7 +116,7 @@ function fusion_form_hidden() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_html__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_html__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_html__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => esc_html__( 'hidden_field', 'fusion-builder' ),
 						'placeholder' => true,

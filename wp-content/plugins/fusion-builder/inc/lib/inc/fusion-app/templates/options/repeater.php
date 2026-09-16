@@ -10,7 +10,7 @@
 <#
 fieldId  = 'undefined' === typeof param.param_name ? param.id : param.param_name;
 if ( 'undefined' === typeof param.row_add ) {
-	itemLabel = "<?php esc_html_e( 'Add Another Item', 'fusion-builder' ); ?>";
+	itemLabel = "<?php esc_html_e( 'Add another item', 'fusion-builder' ); ?>";
 } else {
 	itemLabel = param.row_add
 }

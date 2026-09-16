@@ -108,7 +108,7 @@ class Fusion_Dynamic_CSS {
 	 * @since 2.2
 	 * @var array
 	 */
-	public static $preserve_vars = [
+	protected $preserve_vars = [
 		'--minFontSize',
 		'--minViewportSize',
 		'--multiplier',
@@ -153,9 +153,7 @@ class Fusion_Dynamic_CSS {
 	protected function __construct() {
 		self::$helpers = $this->get_helpers();
 
-		add_action( 'wp_enqueue_scripts', [ $this, 'init' ], 110 );
-
-		add_filter( 'awb_should_generate_dynamic_css', [ $this, 'prevent_dynamic_css_genration' ] );
+		add_action( 'wp', [ $this, 'init' ], 999 );
 
 		// When a post is saved, reset its caches to force-regenerate the CSS.
 		add_action( 'save_post', [ $this, 'reset_post_transient' ] );
@@ -165,8 +163,11 @@ class Fusion_Dynamic_CSS {
 		add_filter( 'fusion_dynamic_css', [ $this, 'add_extra_files' ] );
 		add_filter( 'fusion_dynamic_css', [ $this, 'icomoon_css' ] );
 		add_filter( 'fusion_dynamic_css_array', [ $this, 'add_css_vars_to_css' ], PHP_INT_MAX );
+		add_filter( 'fusion_dynamic_css_final', [ $this, 'maybe_replace_css_vars_in_styles' ], PHP_INT_MAX );
 
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_extra_files' ], 11 );
+
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_css_vars_polyfill' ] );
 	}
 
 	/**
@@ -192,7 +193,8 @@ class Fusion_Dynamic_CSS {
 	 */
 	public function init() {
 
-		if ( ! apply_filters( 'awb_should_generate_dynamic_css', true ) ) {
+		// If builder frame or AJAX request, no need to run.
+		if ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() || fusion_doing_ajax() ) {
 			return;
 		}
 
@@ -213,29 +215,6 @@ class Fusion_Dynamic_CSS {
 			return;
 		}
 		$this->inline = new Fusion_Dynamic_CSS_Inline( $this );
-	}
-
-	/**
-	 * Make sure dynamic CSS is not generated in some scenarios.
-	 *
-	 * @access public
-	 * @since 1.0
-	 * @param bool $should_generate Should generate dynamic CSS or not.
-	 * @return bool
-	 */
-	public function prevent_dynamic_css_genration( $should_generate ) {
-
-		// If builder frame or AJAX request, no need to run.
-		if ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() || fusion_doing_ajax() ) {
-			return false;
-		}
-
-		// Do not generate on generation pages of WooCommerce PDF Product Vouchers plugin.
-		if ( 'wc_voucher' === get_post_type( get_the_ID() ) && isset( $_GET['voucher_key'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			return false;
-		}
-
-		return $should_generate;
 	}
 
 	/**
@@ -268,6 +247,18 @@ class Fusion_Dynamic_CSS {
 		if ( 'file' === fusion_library()->get_option( 'css_cache_method' ) ) {
 			$this->mode = 'file';
 		}
+
+		// Additional checks for file mode.
+		if ( 'file' === $this->mode && self::$needs_update ) {
+
+			// Only allow processing 1 file every 5 seconds.
+			$current_time = (int) time();
+			$last_time    = (int) get_option( 'fusion_dynamic_css_time' );
+			if ( 5 > ( $current_time - $last_time ) ) {
+				$this->mode = 'inline';
+				return;
+			}
+		}
 	}
 
 	/**
@@ -299,8 +290,6 @@ class Fusion_Dynamic_CSS {
 		if ( self::$final_css ) {
 			return self::$final_css;
 		}
-
-		do_action( 'awb_generating_css' );
 
 		$helpers         = self::$helpers;
 		self::$final_css = $helpers->get_dynamic_css();
@@ -335,6 +324,7 @@ class Fusion_Dynamic_CSS {
 
 		// Strip protocols. This helps avoid any issues with https sites.
 		self::$final_css = str_replace( [ 'https://', 'http://' ], '//', self::$final_css );
+		self::$final_css = $this->maybe_replace_css_vars_in_styles( self::$final_css );
 
 		self::$final_css = apply_filters( 'fusion_dynamic_css_final', self::$final_css );
 
@@ -342,8 +332,8 @@ class Fusion_Dynamic_CSS {
 		// The warning is then followed by the actual CSS content.
 		self::$final_css = '/********* Compiled CSS - Do not edit *********/ ' . self::$final_css;
 
-		// Security: strips style and script tags.
-		self::$final_css = preg_replace( '@<(script|style)[^>]*?>.*?@si', '', self::$final_css );
+		// Security: strips all tags to avoid closing the <style> tag and opening a <script> when using inline CSS.
+		self::$final_css = wp_strip_all_tags( self::$final_css );
 
 		return self::$final_css;
 	}
@@ -395,6 +385,8 @@ class Fusion_Dynamic_CSS {
 		// The 'fusion_dynamic_css_posts' option will hold an array of posts that have had their css generated.
 		// We can use that to keep track of which pages need their CSS to be recreated and which don't.
 		add_option( 'fusion_dynamic_css_posts', [], '', 'yes' );
+		// The 'fusion_dynamic_css_time' option holds the time the file writer was last used.
+		add_option( 'fusion_dynamic_css_time', time(), '', 'yes' );
 	}
 
 	/**
@@ -478,6 +470,18 @@ class Fusion_Dynamic_CSS {
 		}
 
 		return self::$disable_cache;
+	}
+
+	/**
+	 * Update the 'fusion_dynamic_css_time' option.
+	 * This will save in the db the last time that the compiler has run.
+	 *
+	 * @access public
+	 * @since 1.0
+	 * @return void
+	 */
+	public function update_saved_time() {
+		update_option( 'fusion_dynamic_css_time', time() );
 	}
 
 	/**
@@ -619,11 +623,12 @@ class Fusion_Dynamic_CSS {
 		$font_face_display = ( 'swap-all' === $font_face_display ) ? 'swap' : 'block';
 
 		$css .= '@font-face {';
-		$css .= 'font-family: "awb-icons";';
-		$css .= 'src:';
-		$css .= "url('{$font_url}/awb-icons.woff') format('woff'),";
-		$css .= "url('{$font_url}/awb-icons.ttf') format('truetype'),";
-		$css .= "url('{$font_url}/awb-icons.svg#awb-icons') format('svg');";
+		$css .= 'font-family: "icomoon";';
+		$css .= "src:url('{$font_url}/icomoon.eot');";
+		$css .= "src:url('{$font_url}/icomoon.eot?#iefix') format('embedded-opentype'),";
+		$css .= "url('{$font_url}/icomoon.woff') format('woff'),";
+		$css .= "url('{$font_url}/icomoon.ttf') format('truetype'),";
+		$css .= "url('{$font_url}/icomoon.svg#icomoon') format('svg');";
 		$css .= 'font-weight: normal;';
 		$css .= 'font-style: normal;';
 		$css .= 'font-display: ' . $font_face_display . ';';
@@ -643,15 +648,6 @@ class Fusion_Dynamic_CSS {
 	 * @return void
 	 */
 	public static function add_css_var( $args ) {
-
-		// Don't add var if it's value is empty.
-		if ( isset( $args['value'] ) && '' === $args['value'] ) {
-			return;
-		}
-
-		if ( isset( $args['preserve'] ) && $args['preserve'] && isset( $args['name'] ) ) {
-			self::$preserve_vars[] = $args['name'];
-		}
 		self::$css_vars[ $args['name'] ] = $args;
 	}
 
@@ -697,13 +693,123 @@ class Fusion_Dynamic_CSS {
 	 */
 	public function add_css_vars_to_css( $css ) {
 		$vars_styles = '';
+		$polyfill    = $this->uses_css_vars_polyfill();
 
 		foreach ( self::$css_vars as $key => $args ) {
 			if ( is_string( $key ) && ! is_array( $args['value'] ) ) {
-				$css['global'][ $args['element'] ][ $key ] = $args['value'];
+				$element = ( $polyfill ) ? ':root' : $args['element'];
+
+				$css['global'][ $element ][ $key ] = $args['value'];
 			}
 		}
 		return $css;
+	}
+
+	/**
+	 * Replaces all CSS-Variables in the CSS string with their values.
+	 *
+	 * @access public
+	 * @since 2.0
+	 * @param string $css The CSS.
+	 * @return string
+	 */
+	public function maybe_replace_css_vars_in_styles( $css ) {
+		$replace_vars = apply_filters( 'fusion_replace_css_var_values', true );
+
+		if ( $replace_vars ) {
+
+			$keys = array_map( 'strlen', array_keys( self::$css_vars ) );
+			array_multisort( $keys, SORT_DESC, self::$css_vars );
+
+			foreach ( self::$css_vars as $key => $args ) {
+				if ( is_string( $key ) && ! is_array( $args['value'] ) ) {
+					$css = $this->replace_css_var_in_styles( $key, $args['value'], $css );
+				}
+			}
+		}
+		return $css;
+	}
+
+	/**
+	 * Replaces a single CSS-Variable in the CSS string with their values.
+	 *
+	 * @access private
+	 * @since 2.0
+	 * @param string $var_name The variable's name.
+	 * @param string $value    The variable's value.
+	 * @param string $css      The CSS.
+	 * @return string          The modified CSS.
+	 */
+	private function replace_css_var_in_styles( $var_name, $value, $css ) {
+
+		// Early exit if this css-variable should not be processed.
+		if ( in_array( $var_name, $this->preserve_vars, true ) ) {
+			return $css;
+		}
+
+		$css = str_replace( "var($var_name)", $value, $css );
+
+		// Check if we have var(--foo,fallback) and replace them accordingly.
+		$match_counter = preg_match_all( "/var\($var_name.*\)/U", $css, $matches );
+
+		// Make sure we have matches.
+		if ( $match_counter ) {
+
+			// Make sure to only go through different fallback values.
+			$matches = array_unique( $matches[0] );
+
+			// Loop through all different fallback value instances.
+			foreach ( $matches as $match ) {
+				$replacement = $value;
+
+				// When fallbacks are vars themselves we need to add a closing ) because of the regex.
+				if ( 1 < substr_count( $match, 'var(' ) ) {
+					$match .= ')';
+				}
+
+				// If value is empty, extract the fallback.
+				if ( '' === $value ) {
+					$fallback = explode( "var($var_name,", $match );
+
+					// Remove the last trailing ) that is there because of the regex.
+					$fallback = substr( $fallback[1], 0, -1 );
+
+					$replacement = $fallback;
+				}
+
+				$css = str_replace( $match, $replacement, $css );
+			}
+		}
+
+		return $css;
+	}
+
+	/**
+	 * Determines if we're using a polyfill or not.
+	 *
+	 * @access protected
+	 * @since 2.0
+	 * @return bool
+	 */
+	protected function uses_css_vars_polyfill() {
+		$async = fusion_get_option( 'media_queries_async' );
+		$vars  = fusion_get_option( 'css_vars' );
+
+		return ( $async && ! $vars );
+	}
+
+	/**
+	 * Enqueue the CSS-Variables polyfill.
+	 *
+	 * @access public
+	 * @since 2.0
+	 * @return void
+	 */
+	public function enqueue_css_vars_polyfill() {
+		if ( $this->uses_css_vars_polyfill() ) {
+			$scripts = fusion_library()->scripts;
+			wp_enqueue_script( 'css-vars-ponyfill', $scripts::$js_folder_url . '/library/ie11CustomProperties.js', [], '1.1.0', true );
+		}
 	}
 }
 

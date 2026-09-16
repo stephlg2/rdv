@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_woo_cart_table-shortcode">
+	{{{styles}}}
 	<table {{{ _.fusionGetAttributes( wooCartTable ) }}} cellspacing="0">
 	{{{ cart_table }}}
 	</table>

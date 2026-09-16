@@ -89,45 +89,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			validateValues: function( values ) {
+				values.chart_padding = {
+					top: 'undefined' !== typeof values.padding_top && '' !== values.padding_top ? values.padding_top : 0,
+					right: 'undefined' !== typeof values.padding_right && '' !== values.padding_right ? values.padding_right : 0,
+					bottom: 'undefined' !== typeof values.padding_bottom && '' !== values.padding_bottom ? values.padding_bottom : 0,
+					left: 'undefined' !== typeof values.padding_left && '' !== values.padding_left ? values.padding_left : 0
+				};
+
 				if ( '' === values.chart_type ) {
 					values.chart_type = 'bar';
 				}
-
-				// validate bg_colors.
-				if ( values.bg_colors ) {
-					values.bg_colors = this.validateGlobalColors( values.bg_colors );
-				}
-
-				// validate border_colors.
-				if ( values.border_colors ) {
-					values.border_colors = this.validateGlobalColors( values.border_colors );
-				}
-
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
-			},
-
-			/**
-			 * Validate global color variable.
-			 *
-			 * @since 3.6
-			 * @param {String} value - The value.
-			 * @return {Object|String}
-			 */
-			validateGlobalColors: function( value ) {
-				var colors    = value.split( '|' ),
-					newColors = [];
-
-				if ( colors ) {
-					_.each( colors, function( v ) {
-						var newValue = '' !== v ? jQuery.AWB_Color( v ).toRgbaString() : '';
-						newColors.push( newValue );
-					} );
-					return newColors.join( '|' );
-				}
-				return value;
 			},
 
 			/**
@@ -141,8 +112,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var chartShortcode = _.fusionVisibilityAtts(
 					values.hide_on_mobile, {
 						id: 'fusion-chart-cid' + this.model.get( 'cid' ),
-						class: 'fusion-chart fusion-child-element',
-						style: this.getStyleVars( values )
+						class: 'fusion-chart fusion-child-element'
 					}
 				);
 
@@ -207,19 +177,19 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( '' !== values.chart_point_bg_color ) {
-					chartShortcode[ 'data-chart_point_bg_color' ] = jQuery.AWB_Color( values.chart_point_bg_color ).toRgbaString();
+					chartShortcode[ 'data-chart_point_bg_color' ] = values.chart_point_bg_color;
 				}
 
 				if ( '' !== values.chart_point_border_color ) {
-					chartShortcode[ 'data-chart_point_border_color' ] = jQuery.AWB_Color( values.chart_point_border_color ).toRgbaString();
+					chartShortcode[ 'data-chart_point_border_color' ] = values.chart_point_border_color;
 				}
 
 				if ( '' !== values.chart_axis_text_color ) {
-					chartShortcode[ 'data-chart_axis_text_color' ] = jQuery.AWB_Color( values.chart_axis_text_color ).toRgbaString();
+					chartShortcode[ 'data-chart_axis_text_color' ] = values.chart_axis_text_color;
 				}
 
 				if ( '' !== values.chart_gridline_color ) {
-					chartShortcode[ 'data-chart_gridline_color' ] = jQuery.AWB_Color( values.chart_gridline_color ).toRgbaString();
+					chartShortcode[ 'data-chart_gridline_color' ] = values.chart_gridline_color;
 				}
 
 				if ( '' !== values[ 'class' ] ) {
@@ -231,24 +201,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return chartShortcode;
-			},
-
-			getStyleVars: function( values ) {
-				var cssVars   = [
-					'chart_bg_color',
-					'margin_top',
-					'margin_right',
-					'margin_bottom',
-					'margin_left',
-					'padding_top',
-					'padding_right',
-					'padding_bottom',
-					'padding_left'
-				];
-
-				this.values = values;
-
-				return this.getCssVarsForOptions( cssVars );
 			},
 
 			/**
@@ -269,6 +221,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					chartDatasetElement,
 					chartDatasetAtts;
 
+				if ( '' !== values.chart_bg_color ) {
+					styles += '#fusion-chart-cid' + cid + '{background-color: ' + values.chart_bg_color + ';}';
+				}
+
+				if ( values.chart_padding && 'object' === typeof values.chart_padding ) {
+					styles += '#fusion-chart-cid' + cid + '{padding: ' + values.chart_padding.top + ' ' + values.chart_padding.right + ' ' + values.chart_padding.bottom + ' ' + values.chart_padding.left + ';}';
+				}
+
 				if ( 'undefined' !== typeof this.model && 'undefined' !== typeof this.model.children ) {
 					childrenCount = this.model.children.length;
 
@@ -279,6 +239,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					} else if ( 'undefined' !== typeof this.model.attributes.params.element_content ) {
 
 						// Render on page load, children are not generated yet.
+
 						_.each( this.chartDatasets, function( chartDataset ) {
 							chartDatasetElement = chartDataset.match( FusionPageBuilderApp.regExpShortcode( 'fusion_chart_dataset' ) );
 							chartDatasetAtts    = '' !== chartDatasetElement[ 3 ] ? window.wp.shortcode.attrs( chartDatasetElement[ 3 ] ) : '';

@@ -1,4 +1,4 @@
-/* global FusionApp, FusionPageBuilderApp, FusionPageBuilderViewManager, fusionAllElements, fusionBuilderText, FusionEvents, FusionPageBuilderElements */
+/* global FusionApp, cssua, FusionPageBuilderApp, FusionPageBuilderViewManager, fusionAllElements, fusionBuilderText, FusionEvents, FusionPageBuilderElements */
 /* jshint -W020 */
 /* eslint no-shadow: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
@@ -23,10 +23,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					classes += ' fusion-builder-flex-container';
 				}
 
-				if ( values.status && 'draft' === values.status ) {
-					classes += ' fusion-builder-container-status-draft';
-				}
-
 				// Absolute container.
 				if ( 'undefined' !== typeof values.absolute && 'on' === values.absolute ) {
 					classes += ' fusion-builder-absolute-container-wrapper';
@@ -40,6 +36,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				'click .fusion-builder-container-clone': 'cloneContainer',
 				'click .fusion-builder-container-add': 'addContainer',
 				'click .fusion-builder-container-save': 'openLibrary',
+				'paste .fusion-builder-section-name': 'renameContainer',
+				'keydown .fusion-builder-section-name': 'renameContainer',
+				'click .fusion-builder-toggle': 'toggleContainer',
 				'click .fusion-builder-publish-tooltip': 'publish',
 				'click .fusion-builder-unglobal-tooltip': 'unglobalize',
 				'click .fusion-builder-container-drag': 'preventDefault'
@@ -73,11 +72,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.model.children = new FusionPageBuilder.Collection();
 				this.listenTo( this.model.children, 'add', this.addChildView );
 
+				this.listenTo( FusionEvents, 'fusion-wireframe-toggle', this.wireFrameToggled );
+
 				this.renderedYet          = FusionPageBuilderApp.loaded;
 				this._refreshJs           = _.debounce( _.bind( this.refreshJs, this ), 300 );
 				this._triggerScrollUpdate = _.debounce( _.bind( this.triggerScrollUpdate, this ), 300 );
 				this._reInitSticky        = _.debounce( _.bind( this.reInitSticky, this ), 300 );
 				this._updateInnerStyles	  = _.debounce( _.bind( this.updateInnerStyles, this ), 500 );
+
+				this.typingTimer; // jshint ignore:line
+				this.doneTypingInterval = 800;
 
 				this.scrollingSections = false;
 
@@ -175,6 +179,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).trigger( 'fusion-option-change-equal_height_columns', this.model.attributes.cid );
 				}
 
+				if ( 'undefined' !== typeof this.model.attributes.params.admin_toggled && 'yes' === this.model.attributes.params.admin_toggled ) {
+					this.$el.addClass( 'fusion-builder-section-folded' );
+					this.$el.find( '.fusion-builder-toggle > span' ).toggleClass( 'fusiona-caret-up' ).toggleClass( 'fusiona-caret-down' );
+				}
+
 				this.onRender();
 
 				this.renderedYet = true;
@@ -195,8 +204,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			droppableContainer: function() {
+
 				var $el   = this.$el,
-					self  = this,
 					cid   = this.model.get( 'cid' ),
 					$body = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' );
 
@@ -241,26 +250,81 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				$el.find( '.fusion-container-target' ).droppable( {
 					tolerance: 'touch',
 					hoverClass: 'ui-droppable-active',
-					accept: '.fusion-builder-container, .fusion-builder-next-page, .fusion-checkout-form, .fusion-builder-form-step',
+					accept: '.fusion-builder-container, .fusion-builder-next-page, .fusion-checkout-form',
 					drop: function( event, ui ) {
-						self.handleDropContainer( ui.draggable, $el, jQuery( event.target ) );
+
+						// Move the actual html.
+						if ( jQuery( event.target ).hasClass( 'target-after' ) ) {
+							$el.after( ui.draggable );
+						} else {
+							$el.before( ui.draggable );
+						}
+
+						FusionEvents.trigger( 'fusion-content-changed' );
+
+						FusionPageBuilderApp.scrollingContainers();
+
+						FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.full_width_section + ' order changed' );
 					}
 				} );
+
+				// If we are in wireframe mode, then disable.
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableContainer();
+				}
 			},
 
-			handleDropContainer( $column, $targetEl, $dropTarget ) {
-				// Move the actual html.
-				if ( jQuery( $dropTarget ).hasClass( 'target-after' ) ) {
-					$targetEl.after( $column );
+			/**
+			 * Enable the droppable and draggable.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			enableDroppableContainer: function() {
+				var $el = this.$el;
+
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) && 'undefined' !== typeof $el.find( '.fusion-container-target' ).droppable( 'instance' ) ) {
+					$el.draggable( 'enable' );
+					$el.find( '.fusion-container-target' ).droppable( 'enable' );
 				} else {
-					$targetEl.before( $column );
+
+					// No sign of init, then need to call it.
+					this.droppableContainer();
+				}
+			},
+
+			/**
+			 * Destroy or disable the droppable and draggable.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			disableDroppableContainer: function() {
+				var $el = this.$el;
+
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) ) {
+					$el.draggable( 'disable' );
 				}
 
-				FusionEvents.trigger( 'fusion-content-changed' );
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.find( '.fusion-container-target' ).droppable( 'instance' ) ) {
+					$el.find( '.fusion-container-target' ).droppable( 'disable' );
+				}
+			},
 
-				FusionPageBuilderApp.scrollingContainers();
-
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.full_width_section + ' Order Changed' );
+			/**
+			 * Fired when wireframe mode is toggled.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			wireFrameToggled: function() {
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableContainer();
+				} else {
+					this.enableDroppableContainer();
+				}
 			},
 
 			/**
@@ -292,7 +356,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// If no blend mode is defined, check if we should set to overlay.
 				if ( 'undefined' === typeof params.background_blend_mode && '' !== values.background_color  ) {
-					alphaBackgroundColor = jQuery.AWB_Color( values.background_color ).alpha();
+					alphaBackgroundColor = jQuery.Color( values.background_color ).alpha();
 					if ( 1 > alphaBackgroundColor && 0 !== alphaBackgroundColor && ( '' !== params.background_image || '' !== params.video_bg ) ) {
 						params.background_blend_mode = 'overlay';
 					}
@@ -376,8 +440,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					defaults 	= fusionAllElements.fusion_builder_container.defaults,
 					params		= jQuery.extend( true, {}, this.model.get( 'params' ) ),
 					extras		= {},
-					values		= {},
-					borderRadius;
+					values		= {};
 
 				extras = jQuery.extend( true, {}, fusionAllElements.fusion_builder_container.extras );
 
@@ -416,15 +479,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.values.background_parallax = 'none';
 					this.values.fade                = 'no';
 				}
-
-				this.values.border_radius_top_left     = this.values.border_radius_top_left ? _.fusionGetValueWithUnit( this.values.border_radius_top_left ) : '0px';
-				this.values.border_radius_top_right    = this.values.border_radius_top_right ? _.fusionGetValueWithUnit( this.values.border_radius_top_right ) : '0px';
-				this.values.border_radius_bottom_left  = this.values.border_radius_bottom_left ? _.fusionGetValueWithUnit( this.values.border_radius_bottom_left ) : '0px';
-				this.values.border_radius_bottom_right = this.values.border_radius_bottom_right ? _.fusionGetValueWithUnit( this.values.border_radius_bottom_right ) : '0px';
-				borderRadius                           = this.values.border_radius_top_left + ' ' + this.values.border_radius_top_right + ' ' + this.values.border_radius_bottom_right + ' ' + this.values.border_radius_bottom_left;
-				if ( '0px 0px 0px 0px' !== borderRadius && '' === this.values.overflow ) {
-					this.values.overflow = 'hidden';
-				}
 			},
 
 			/**
@@ -434,7 +488,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			setExtraValues: function() {
-				this.values.alpha_background_color = jQuery.AWB_Color( this.values.background_color ).alpha();
+				this.values.alpha_background_color = jQuery.Color( this.values.background_color ).alpha();
 			},
 
 			contentStyle: function() {
@@ -481,7 +535,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			parallaxAttr: function() {
 				var attr 			= {},
-					bgColorAlpha 	= jQuery.AWB_Color( this.values.background_color ).alpha();
+					bgColorAlpha 	= jQuery.Color( this.values.background_color ).alpha();
 
 				attr[ 'class' ] = 'fusion-bg-parallax';
 
@@ -526,9 +580,85 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			attr: function() {
 				var attr = {
 					'class': 'fusion-fullwidth fullwidth-box fusion-builder-row-live-' + this.model.get( 'cid' ),
-					'style': this.getInlineStyle(),
+					'style': '',
 					'id': ''
-				};
+				},
+					self = this;
+
+				// Background.
+				if ( '' !== this.values.background_color && ! ( 'yes' === this.values.fade && '' !== this.values.background_image && false === this.values.video_bg ) ) {
+					attr.style += 'background-color: ' + this.values.background_color + ';';
+				}
+
+				if ( '' !== this.values.background_image && 'yes' !== this.values.fade ) {
+					attr.style += 'background-image: url(\'' + this.values.background_image + '\');';
+				}
+
+				if ( '' !== _.getGradientString( this.values, 'main_bg' ) ) {
+					attr.style += 'background-image: ' + _.getGradientString( this.values, 'main_bg' ) + ';';
+				}
+
+				if ( '' !== this.values.background_position ) {
+					attr.style += 'background-position: ' + this.values.background_position + ';';
+				}
+
+				if ( '' !== this.values.background_repeat ) {
+					attr.style += 'background-repeat: ' + this.values.background_repeat + ';';
+				}
+
+				if ( 'none' !== this.values.background_blend_mode ) {
+					attr.style += 'background-blend-mode: ' + this.values.background_blend_mode + ';';
+				}
+
+				// Add box-shadow styles.
+				if ( 'yes' === this.values.box_shadow ) {
+					attr.style += 'box-shadow:' + _.fusionGetBoxShadowStyle( this.values ).replace( ';', '' ) + ' !important;';
+				}
+
+				if ( ! this.isFlex() ) {
+					// Get correct container padding.
+					jQuery.each( [ 'top', 'right', 'bottom', 'left' ], function( index, padding ) {
+						var paddingName = 'padding_' + padding;
+
+						// Add padding to style.
+						if ( '' !== self.values[ paddingName ] ) {
+							attr.style += 'padding-' + padding + ':' + _.fusionGetValueWithUnit( self.values[ paddingName ] ) + ';';
+						}
+					} );
+
+					// Margin; for separator conversion only.
+					if ( '' !== this.values.margin_bottom ) {
+						attr.style += 'margin-bottom: ' + _.fusionGetValueWithUnit( this.values.margin_bottom ) + ';';
+					}
+
+					if ( '' !== this.values.margin_top ) {
+						attr.style += 'margin-top: ' + _.fusionGetValueWithUnit( this.values.margin_top ) + ';';
+					}
+				}
+
+				// Border.
+				if ( 'undefined' === typeof this.values.border_sizes_top || '' === this.values.border_sizes_top ) {
+					this.values.border_sizes_top = 0;
+				}
+				if ( 'undefined' === typeof this.values.border_sizes_bottom || '' === this.values.border_sizes_bottom ) {
+					this.values.border_sizes_bottom = 0;
+				}
+				if ( 'undefined' === typeof this.values.border_sizes_left || '' === this.values.border_sizes_left ) {
+					this.values.border_sizes_left = 0;
+				}
+				if ( 'undefined' === typeof this.values.border_sizes_right || '' === this.values.border_sizes_right ) {
+					this.values.border_sizes_right = 0;
+				}
+				attr.style += 'border-top:' + _.fusionGetValueWithUnit( this.values.border_sizes_top ) + ' ' + this.values.border_style + ' ' + this.values.border_color + ';';
+				attr.style += 'border-bottom:' + _.fusionGetValueWithUnit( this.values.border_sizes_bottom ) + ' ' + this.values.border_style + ' ' + this.values.border_color + ';';
+				attr.style += 'border-left:' + _.fusionGetValueWithUnit( this.values.border_sizes_left ) + ' ' + this.values.border_style + ' ' + this.values.border_color + ';';
+				attr.style += 'border-right:' + _.fusionGetValueWithUnit( this.values.border_sizes_right ) + ' ' + this.values.border_style + ' ' + this.values.border_color + ';';
+
+				if ( '' !== this.values.background_image && false === this.values.video_bg ) {
+					if ( 'no-repeat' === this.values.background_repeat ) {
+						attr.style += '-webkit-background-size:cover;-moz-background-size:cover;-o-background-size:cover;background-size:cover;';
+					}
+				}
 
 				if ( this.isFlex() ) {
 					attr[ 'class' ] += ' fusion-flex-container';
@@ -539,6 +669,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( this.values.video_bg ) {
 					attr[ 'class' ] += ' video-background';
+				}
+
+				if ( ( cssua.ua.ie || cssua.ua.edge ) && 1 > this.values.alpha_background_color ) {
+					attr[ 'class' ] += ' fusion-ie-mode';
 				}
 
 				// Fading Background.
@@ -555,6 +689,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					if  ( 'fixed' === this.values.background_parallax ) {
 						attr.style += 'background-attachment:' + this.values.background_parallax + ';';
 					}
+				}
+
+				// Minimum height.
+				if ( 'min' === this.values.hundred_percent_height && '' !== this.values.min_height ) {
+
+					if ( -1 !== this.values.min_height.indexOf( '%' ) ) {
+						this.values.min_height = this.values.min_height.replace( '%', 'vh' );
+					}
+
+					attr.style += 'min-height:' + _.fusionGetValueWithUnit( this.values.min_height ) + ';';
 				}
 
 				// Custom CSS class+
@@ -580,63 +724,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				// Visibility classes.
-				let visibilityValue = this.values.hide_on_mobile;
-
-				// Get Render logics Array.
-				const renderLogicsDevices = this.getRenderLogicsDevices();
-
-				if ( renderLogicsDevices.length ) {
-					const rlDevicesEqual = [];
-					const rlDevicesNotEqual = [];
-
-					renderLogicsDevices.forEach( ( r ) => {
-						switch ( r.value ) {
-							case 'desktop':
-								if ( 'equal' === r.comparison ) {
-									rlDevicesEqual.push( 'large-visibility' );
-								} else {
-									rlDevicesNotEqual.push( 'large-visibility' );
-								}
-								break;
-
-							case 'tablet':
-								if ( 'equal' === r.comparison ) {
-									rlDevicesEqual.push( 'medium-visibility' );
-								} else {
-									rlDevicesNotEqual.push( 'medium-visibility' );
-								}
-								break;
-
-							case 'mobile':
-								if ( 'equal' === r.comparison ) {
-									rlDevicesEqual.push( 'small-visibility' );
-								} else {
-									rlDevicesNotEqual.push( 'small-visibility' );
-								}
-								break;
-
-							case 'mobile_tablet':
-								if ( 'equal' === r.comparison ) {
-									rlDevicesEqual.push( 'medium-visibility' );
-									rlDevicesEqual.push( 'small-visibility' );
-								} else {
-									rlDevicesNotEqual.push( 'medium-visibility' );
-									rlDevicesNotEqual.push( 'small-visibility' );
-								}
-								break;
-						}
-					} );
-
-					if ( rlDevicesEqual.length ) {
-						attr[ 'class' ] = _.fusionVisibilityAtts( rlDevicesEqual.join( ',' ), attr[ 'class' ] );
-					}
-
-					if ( rlDevicesNotEqual.length ) {
-						visibilityValue = visibilityValue.split( ',' ).filter( ( v ) => !rlDevicesNotEqual.includes( v ) );
-					}
-				}
-
-				attr[ 'class' ] = _.fusionVisibilityAtts( visibilityValue, attr[ 'class' ] );
+				attr[ 'class' ] = _.fusionVisibilityAtts( this.values.hide_on_mobile, attr[ 'class' ] );
 
 				// Animations.
 				attr = _.fusionAnimations( this.values, attr );
@@ -690,266 +778,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 			}
 
-			if ( this.values.pattern_bg ) {
-				attr[ 'class' ] += ' has-pattern-background';
-			}
-
-			if ( this.values.mask_bg ) {
-				attr[ 'class' ] += ' has-mask-background';
-			}
-
-
 				return attr;
-			},
-
-			getInlineStyle: function() {
-				var customVars = {},
-					cssVars,
-					boxShadow;
-
-				cssVars = [
-					'background_position',
-					'background_position_medium',
-					'background_position_small',
-					'background_repeat',
-					'background_repeat_medium',
-					'background_repeat_small',
-					'background_blend_mode',
-					'background_blend_mode_medium',
-					'background_blend_mode_small',
-
-					'border_sizes_top',
-					'border_sizes_bottom',
-					'border_sizes_left',
-					'border_sizes_right',
-					'border_color',
-					'border_style',
-					'border_radius_top_left',
-					'border_radius_top_right',
-					'border_radius_bottom_right',
-					'border_radius_bottom_left',
-
-					'overflow',
-					'z_index'
-				];
-
-				// Background.
-				if ( '' !== this.values.background_color && ! ( 'yes' === this.values.fade && '' !== this.values.background_image && false === this.values.video_bg ) ) {
-					customVars.background_color = this.values.background_color;
-				}
-
-				if ( '' !== this.values.background_color_medium ) {
-					customVars.background_color_medium = this.values.background_color_medium;
-				}
-
-				if ( '' !== this.values.background_color_small ) {
-					customVars.background_color_small = this.values.background_color_small;
-				}
-
-				if ( '' !== this.values.background_image && 'yes' !== this.values.fade ) {
-					customVars.background_image = 'url(\'' + this.values.background_image + '\')';
-				}
-
-				if ( '' !== this.values.background_image_medium ) {
-					customVars.background_image_medium = 'url(\'' + this.values.background_image_medium + '\')';
-				}
-
-				if ( '' !== this.values.background_image_small ) {
-					customVars.background_image_small = 'url(\'' + this.values.background_image_small + '\')';
-				}
-
-				if ( '' !== _.getGradientString( this.values, 'main_bg' ) ) {
-					customVars.background_image = _.getGradientString( this.values, 'main_bg' );
-
-					if ( '' !== this.values.background_image_medium ) {
-						customVars.background_image_medium = _.getGradientString( this.values, 'column', 'medium' );
-					}
-
-					if ( '' !== this.values.background_image_small ) {
-						customVars.background_image_small = _.getGradientString( this.values, 'column', 'small' );
-					}
-				}
-
-				if ( 'on' === this.values.sticky ) {
-					if ( '' !== this.values.sticky_background_color ) {
-						customVars.sticky_background_color = this.values.sticky_background_color + ' !important';
-					}
-
-					if ( '' !== this.values.sticky_height ) {
-						customVars.sticky_height = this.values.sticky_height + ' !important';
-					}
-				}
-				if ( undefined !== this.values.flex_wrap && '' !== this.values.flex_wrap ) {
-					customVars.flex_wrap = this.values.flex_wrap;
-				}
-				if ( undefined !== this.values.flex_wrap_medium && '' !== this.values.flex_wrap_medium ) {
-					customVars.flex_wrap_medium = this.values.flex_wrap_medium;
-				}
-				if ( undefined !== this.values.flex_wrap_small && '' !== this.values.flex_wrap_small ) {
-					customVars.flex_wrap_small = this.values.flex_wrap_small;
-				}
-
-				if ( ! this.isFlex() ) {
-					cssVars.padding_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_left   = { 'callback': _.fusionGetValueWithUnit };
-
-					cssVars.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				} else {
-					cssVars.padding_top    = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_right  = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_left   = { 'callback': _.fusionGetValueWithUnit };
-
-					cssVars.padding_top_medium    = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_right_medium  = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_bottom_medium = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_left_medium   = { 'callback': _.fusionGetValueWithUnit };
-
-					cssVars.padding_top_small    = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_right_small  = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_bottom_small = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.padding_left_small   = { 'callback': _.fusionGetValueWithUnit };
-
-					cssVars.margin_top           = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.margin_bottom        = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.margin_top_medium    = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.margin_bottom_medium = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.margin_top_small     = { 'callback': _.fusionGetValueWithUnit };
-					cssVars.margin_bottom_small  = { 'callback': _.fusionGetValueWithUnit };
-
-					// Minimum height.
-					if ( 'min' === this.values.hundred_percent_height ) {
-						cssVars.min_height        = { 'callback': this.sanitizeMinHeightArg };
-						cssVars.min_height_medium = { 'callback': this.sanitizeMinHeightArg };
-						cssVars.min_height_small  = { 'callback': this.sanitizeMinHeightArg };
-					}
-				}
-
-				boxShadow = _.awbGetBoxShadowCssVar( '--awb-box-shadow', this.values );
-				if ( boxShadow ) {
-					boxShadow += 'box-shadow: var(--awb-box-shadow) !important';
-				}
-
-				// background size.
-				if ( '' !== this.values.background_image && false === this.values.video_bg ) {
-					if ( 'no-repeat' === this.values.background_repeat ) {
-						customVars.background_size = 'cover';
-					}
-				}
-
-				if ( '' !== this.values.background_size ) {
-					const backgroundSize = 'custom' === this.values.background_size ? this.values.background_custom_size : this.values.background_size;
-					customVars.background_size = backgroundSize;
-				}
-
-				if ( '' !== this.values.background_size_medium ) {
-					const backgroundSizeMedium = 'custom' === this.values.background_size_medium ? this.values.background_custom_size_medium : this.values.background_size_medium;
-					customVars.background_size_medium = backgroundSizeMedium;
-				}
-
-				if ( '' !== this.values.background_size_small ) {
-					const backgroundSizeSmall = 'custom' === this.values.background_size_small ? this.values.background_custom_size_small : this.values.background_size_small;
-					customVars.background_size_small = backgroundSizeSmall;
-				}
-
-				return this.getLinkColorStyles( this.values ) + this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customVars ) + boxShadow + _.getFilterVars( this.values );
-			},
-
-			getLinkColorStyles: function( values ) {
-				let styles = '';
-				if ( '' !== values.link_hover_color ) {
-					styles += '--link_hover_color: ' + values.link_hover_color + ';';
-				}
-
-				if ( '' !== values.link_color ) {
-					styles += '--link_color: ' + values.link_color + ';';
-				}
-
-				return styles;
-			},
-
-			getFadingBgVars: function() {
-				var customVars = {},
-					cssVars;
-
-				// Fading Background.
-				if ( 'yes' === this.values.fade && '' !== this.values.background_image && false === this.values.video_bg ) {
-					cssVars = [
-						'background_color',
-						'background_position',
-						'background_position_medium',
-						'background_position_small',
-						'background_repeat',
-						'background_repeat_medium',
-						'background_repeat_small',
-						'background_blend_mode',
-						'background_blend_mode_medium',
-						'background_blend_mode_small'
-					];
-
-					if (  this.values.background_parallax ) {
-						cssVars.push( 'background_parallax' );
-					}
-
-					if ( this.values.background_image ) {
-						customVars.background_image = 'url(' + this.values.background_image + ')';
-					}
-
-					if ( this.values.background_image_medium ) {
-						customVars.background_image_medium = 'url(' + this.values.background_image_medium + ')';
-					}
-
-					if ( this.values.background_image_small ) {
-						customVars.background_image_small = 'url(' + this.values.background_image_small + ')';
-					}
-
-					if ( '' !== _.getGradientString( this.values, 'fade' ) ) {
-						customVars.background_image = _.getGradientString( this.values, 'fade' );
-
-						if ( this.values.background_image_medium ) {
-							customVars.background_image_medium = _.getGradientString( this.values, 'fade', 'medium' );
-						}
-
-						if ( this.values.background_image_small ) {
-							customVars.background_image_small = _.getGradientString( this.values, 'fade', 'small' );
-						}
-					}
-
-					if ( 'no-repeat' === this.values.background_repeat ) {
-						customVars.background_size = 'cover';
-					}
-
-					if ( '' !== this.values.background_size ) {
-						const backgroundSize = 'custom' === this.values.background_size ? this.values.background_custom_size : this.values.background_size;
-						customVars.background_size = backgroundSize;
-					}
-
-					if ( '' !== this.values.background_size ) {
-						const backgroundSizeMedium = 'custom' === this.values.background_size_medium ? this.values.background_custom_size_medium : this.values.background_size_medium;
-						customVars.background_size_medium = backgroundSizeMedium;
-					}
-
-					if ( '' !== this.values.background_size ) {
-						const backgroundSizeSmall = 'custom' === this.values.background_size_small ? this.values.background_custom_size_small : this.values.background_size_small;
-						customVars.background_size_small = backgroundSizeSmall;
-					}
-				}
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customVars );
-			},
-
-			sanitizeMinHeightArg: function( value ) {
-				if ( '' !== value ) {
-					if ( -1 !== value.indexOf( '%' ) ) {
-						value = value.replace( '%', 'vh' );
-					}
-					value = _.fusionGetValueWithUnit( value );
-				}
-
-				return value;
 			},
 
 			createVideoBackground: function() {
@@ -1008,7 +837,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					overlayStyle += 'background-image:' + _.getGradientString( this.values ) + ';';
 				}
 
-				if ( '' !== this.values.background_color && 1 > jQuery.AWB_Color( this.values.background_color ).alpha() ) {
+				if ( '' !== this.values.background_color && 1 > jQuery.Color( this.values.background_color ).alpha() ) {
 					overlayStyle += 'background-color:' + this.values.background_color + ';';
 				}
 
@@ -1021,11 +850,95 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			fadingBackgroundAttr: function() {
 				var attr = {
-					class: 'fullwidth-faded',
-					style: this.getFadingBgVars()
+					class: 'fullwidth-faded'
 				};
 
+				// Fading Background.
+				if ( 'yes' === this.values.fade && '' !== this.values.background_image && false === this.values.video_bg ) {
+
+					if ( this.values.background_parallax ) {
+						attr.style += 'background-attachment:' + this.values.background_parallax + ';';
+					}
+
+					if ( this.values.background_color ) {
+						attr.style += 'background-color:' + this.values.background_color + ';';
+					}
+
+					if ( this.values.background_image ) {
+						attr.style += 'background-image: url(' + this.values.background_image + ');';
+					}
+
+					if ( '' !== _.getGradientString( this.values, 'fade' ) ) {
+						attr.style += 'background-image: ' + _.getGradientString( this.values, 'fade' ) + ';';
+					}
+
+					if ( this.values.background_position ) {
+						attr.style += 'background-position:' + this.values.background_position + ';';
+					}
+
+					if ( this.values.background_repeat ) {
+						attr.style += 'background-repeat:' + this.values.background_repeat + ';';
+					}
+
+					if ( 'none' !== this.values.background_blend_mode ) {
+						attr.style += 'background-blend-mode: ' + this.values.background_blend_mode + ';';
+					}
+
+					if ( 'no-repeat' === this.values.background_repeat ) {
+						attr.style += '-webkit-background-size:cover;-moz-background-size:cover;-o-background-size:cover;background-size:cover;';
+					}
+				}
 				return attr;
+			},
+
+			styleBlock: function() {
+				var styleBlock 				= '',
+					cid						= this.model.get( 'cid' ),
+					stylePrefix				= '.fusion-fullwidth.fusion-builder-row-live-' + cid + ' .fusion-builder-element-content',
+					linkExclusionSelectors 	= ' a:not(.fusion-button):not(.fusion-builder-module-control):not(.fusion-social-network-icon):not(.fb-icon-element):not(.fusion-countdown-link):not(.fusion-rollover-link):not(.fusion-rollover-gallery):not(.add_to_cart_button):not(.show_details_button):not(.product_type_external):not(.fusion-quick-view):not(.fusion-rollover-title-link):not(.fusion-breadcrumb-link)';
+
+				if ( 'undefined' !== typeof this.params.link_color && '' !== this.params.link_color ) {
+					styleBlock += stylePrefix + linkExclusionSelectors + ', ';
+					styleBlock += stylePrefix + linkExclusionSelectors + ':before, ';
+					styleBlock += stylePrefix + linkExclusionSelectors + ':after ';
+					styleBlock += '{color: ' + this.params.link_color + ';}';
+				}
+
+				if ( 'undefined' !== typeof this.params.link_hover_color && '' !== this.params.link_hover_color ) {
+					styleBlock += stylePrefix + linkExclusionSelectors + ':hover, ' + stylePrefix + linkExclusionSelectors + ':hover:before, ' + stylePrefix + linkExclusionSelectors + ':hover:after {color: ' + this.params.link_hover_color + ';}';
+					styleBlock += stylePrefix + ' .pagination a.inactive:hover, ' + stylePrefix + ' .fusion-filters .fusion-filter.fusion-active a {border-color: ' + this.params.link_hover_color + ';}';
+					styleBlock += stylePrefix + ' .pagination .current {border-color: ' + this.params.link_hover_color + '; background-color: ' + this.params.link_hover_color + ';}';
+					styleBlock += stylePrefix + ' .fusion-filters .fusion-filter.fusion-active a, ' + stylePrefix + ' .fusion-date-and-formats .fusion-format-box, ' + stylePrefix + ' .fusion-popover, ' + stylePrefix + ' .tooltip-shortcode {color: ' + this.params.link_hover_color + ';}';
+					styleBlock += '#wrapper ' + stylePrefix + ' .fusion-widget-area .fusion-vertical-menu-widget .menu li.current_page_ancestor > a, #wrapper ' + stylePrefix + ' .fusion-widget-area .fusion-vertical-menu-widget .menu li.current_page_ancestor > a:before, #wrapper ' + stylePrefix + ' .fusion-widget-area .fusion-vertical-menu-widget .current-menu-item > a, #wrapper ' + stylePrefix + ' .fusion-widget-area .fusion-vertical-menu-widget .current-menu-item > a:before, #wrapper ' + stylePrefix + ' .fusion-widget-area .fusion-vertical-menu-widget .current_page_item > a, #wrapper ' + stylePrefix + ' .fusion-widget-area .fusion-vertical-menu-widget .current_page_item > a:before {color: ' + this.params.link_hover_color + ';}';
+					styleBlock += '#wrapper ' + stylePrefix + ' .fusion-widget-area .widget_nav_menu .menu li.current_page_ancestor > a, #wrapper ' + stylePrefix + ' .fusion-widget-area .widget_nav_menu .menu li.current_page_ancestor > a:before, #wrapper ' + stylePrefix + ' .fusion-widget-area .widget_nav_menu .current-menu-item > a, #wrapper ' + stylePrefix + ' .fusion-widget-area .widget_nav_menu .current-menu-item > a:before, #wrapper ' + stylePrefix + ' .fusion-widget-area .widget_nav_menu .current_page_item > a, #wrapper ' + stylePrefix + ' .fusion-widget-area .widget_nav_menu .current_page_item > a:before {color: ' + this.params.link_hover_color + ';}';
+					styleBlock += '#wrapper ' + stylePrefix + ' .fusion-vertical-menu-widget .menu li.current_page_item > a { border-right-color:' + this.params.link_hover_color + ';border-left-color:' + this.params.link_hover_color + ';}';
+					styleBlock += '#wrapper ' + stylePrefix + ' .fusion-widget-area .tagcloud a:hover { color: #fff; background-color: ' + this.params.link_hover_color + ';border-color: ' + this.params.link_hover_color + ';}';
+					styleBlock += '#main ' + stylePrefix + ' .post .blog-shortcode-post-title a:hover {color: ' + this.params.link_hover_color + ';}';
+				}
+
+				if ( 'undefined' !== typeof this.values.z_index && '' !== this.values.z_index ) {
+					styleBlock += '.fusion-fullwidth.fusion-builder-row-live-' + cid + ' {z-index: ' + parseInt( this.values.z_index ) + ' !important; }';
+				}
+
+				if ( 'undefined' !== typeof this.values.overflow && '' !== this.values.overflow ) {
+					styleBlock += '.fusion-fullwidth.fusion-builder-row-live-' + cid + ' {overflow: ' + this.values.overflow + ' }';
+				}
+
+				if ( 'on' === this.values.sticky ) {
+					if ( '' !== this.values.sticky_background_color ) {
+						styleBlock += '.fusion-fullwidth.fusion-builder-row-live-' + cid + '.fusion-sticky-transition { background-color:' + this.values.sticky_background_color + ' !important; }';
+					}
+					if ( '' !== this.values.sticky_height ) {
+						styleBlock += '.fusion-fullwidth.fusion-builder-row-live-' + cid + '.fusion-sticky-transition { min-height:' + this.values.sticky_height + ' !important; }';
+					}
+				}
+
+
+				if ( '' !== styleBlock ) {
+					styleBlock = '<style type="text/css">' + styleBlock + '</style>';
+				}
+
+				return styleBlock + _.fusionGetFilterStyleElem( this.values, '.fusion-builder-row-live-' + cid, cid  );
 			},
 
 			/**
@@ -1040,6 +953,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.setValues();
 				this.setExtraValues();
 				this.setContainerVideoData();
+				if ( this.isFlex() ) {
+					this.setResponsiveContainerStyles();
+				}
 
 				// Remove old parallax bg.
 				if ( this.$el.find( '.fusion-bg-parallax' ).length ) {
@@ -1056,18 +972,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				templateAttributes.parallax 		     = this.parallaxAttr();
 				templateAttributes.createVideoBackground = _.bind( this.createVideoBackground, this );
 				templateAttributes.fadingBackground	     = this.fadingBackgroundAttr();
+				templateAttributes.styleBlock		     = this.styleBlock();
 				templateAttributes.admin_label 			 = ( '' !== this.values.admin_label ) ? _.unescape( this.values.admin_label ) : fusionBuilderText.full_width_section;
 				templateAttributes.topOverlap            = ( 20 > parseInt( this.values.padding_top, 10 ) && ( '0%' === this.values.padding_top || -1 === this.values.padding_top.indexOf( '%' ) ) ) ? 'fusion-overlap' : '';
-				templateAttributes.bottomOverlap         = ( 20 > parseInt( this.values.padding_bottom, 10 ) && ( '0%' === this.values.padding_bottom || -1 === this.values.padding_bottom.indexOf( '%' ) ) ) ? 'fusion-overlap' : '';
+				templateAttributes.bottomOverlap         = ( 20 > parseInt( this.values.margin_bottom, 10 ) && ( '0%' === this.values.margin_bottom || -1 === this.values.margin_bottom.indexOf( '%' ) ) ) ? 'fusion-overlap' : '';
 				templateAttributes.isFlex				 = this.isFlex();
 				templateAttributes.isGlobal              = ( 'undefined' !== typeof this.values.fusion_global ) ? 'yes' : 'no';
 				templateAttributes.cid                   = this.model.get( 'cid' );
 				templateAttributes.status                = this.values.status;
 				templateAttributes.container_tag         = this.values.container_tag;
+				templateAttributes.responsiveStyles      = this.responsiveStyles || '';
 				templateAttributes.scrollPosition 		 = ( 'right' === FusionApp.settings.header_position || jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).hasClass( 'rtl' ) ) ? 'scroll-navigation-left' : 'scroll-navigation-right';
 				templateAttributes.contentStyle 		 = this.contentStyle();
-				templateAttributes.patternBg 		 	 = _.fusionGetPatternElement( this.values );
-				templateAttributes.maskBg 		 	 = _.fusionGetMaskElement( this.values );
 
 
 				return templateAttributes;
@@ -1215,10 +1131,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @since 2.0.0
 			 * @param {Object}         event - The event.
 			 * @param {boolean|undefined} skip - Should we skip this?
-			 * @param {bool} forceManually - Force manually, even if it's not an event, to update history and trigger content changes.
 			 * @return {void}
 			 */
-			removeContainer: function( event, skip, forceManually ) {
+			removeContainer: function( event, skip ) {
+
 				var rows;
 
 				if ( event ) {
@@ -1247,8 +1163,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					FusionPageBuilderApp.clearBuilderLayout( true );
 				}
 
-				// If the column is deleted manually.
-				if ( event || forceManually ) {
+				if ( event ) {
 
 					FusionPageBuilderApp.scrollingContainers();
 
@@ -1261,10 +1176,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Clones a container.
 			 *
 			 * @since 2.0.0
-			 * @param {Object} event - The event.
+			 * @param {Object} event - The evemt.
 			 * @return {void}
 			 */
 			cloneContainer: function( event ) {
+
 				var containerAttributes,
 					$thisContainer;
 
@@ -1537,12 +1453,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							this.$el.removeClass( 'fusion-builder-absolute-container-wrapper' );
 						}
 						break;
-
-					case 'render_logics':
-						if ( this.getRenderLogicsDevices( paramValue ).length ) {
-							this.reRender();
-						}
-					break;
 				}
 			},
 
@@ -1658,7 +1568,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				_.each( directions, function( handle, direction )  {
 					var optionKey 		= FusionApp.getResponsiveOptionKey( 'margin_' + direction, self.isFlex() ),
-						actualDimension = self.values[ optionKey ] || self.values[ 'margin_' + direction ] || 0,
+						actualDimension = self.values[ optionKey ] || self.values[ 'margin_' + direction ],
 						percentSpacing 	= false;
 
 					percentSpacing  = actualDimension && actualDimension.includes( '%' );
@@ -1765,29 +1675,30 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					self        = this,
 					directions  = { top: 's', right: 'w', bottom: 's', left: 'e' },
 					parentWidth = $el.closest( '.fusion-row, .fusion-builder-live-editor' ).width(),
-					defaults;
+					defaults,
+					extras;
 
 				if ( this.$el.hasClass( 'active' ) ) {
 					return;
 				}
 
-				defaults = this.defaults;
+				defaults = fusionAllElements.fusion_builder_container.defaults;
+				extras   = jQuery.extend( true, {}, fusionAllElements.fusion_builder_container.extras );
+
+				// If 100 page template.
+				if ( FusionPageBuilderApp.$el.find( '#main' ).hasClass( 'width-100' ) && 'undefined' !== typeof extras.container_padding_100 ) {
+					defaults.padding_right = extras.container_padding_100.right;
+					defaults.padding_left  = extras.container_padding_100.left;
+				}
 
 				_.each( directions, function( handle, direction )  {
-					var actualDimension,
-					previewSize = FusionApp.getPreviewWindowSize(),
+					var optionKey 		= FusionApp.getResponsiveOptionKey( 'padding_' + direction, self.isFlex() ),
+					actualDimension = self.values[ optionKey ] || self.values[ 'padding_' + direction ],
 					percentSpacing 	= false;
 
-					if ( 'small' === previewSize ) {
-						actualDimension = self.values[ 'padding_' + direction + '_small' ];
-					}
-					if ( ! actualDimension && [ 'small', 'medium' ].includes( previewSize ) ) {
-						actualDimension = self.values[ 'padding_' + direction + '_medium' ];
-					}
 					if ( ! actualDimension ) {
-						actualDimension = self.values[ 'padding_' + direction ];
+						actualDimension = defaults[ optionKey ] || 0;
 					}
-					actualDimension = actualDimension || defaults[ 'padding_' + direction ] || 0;
 
 					// Check if using a percentage.
 					percentSpacing  = actualDimension && actualDimension.includes( '%' );
@@ -1857,7 +1768,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							}
 
 							// Set values and width.
-							$el.children( '.fusion-fullwidth' ).css( '--awb-' + optionKey.replaceAll( '_', '-' ), value );
+							$el.find( '.fusion-fullwidth' ).css( 'padding-' + direction, value );
 
 							jQuery( ui.element ).find( '.fusion-spacing-tooltip, .fusion-column-spacing' ).addClass( 'active' );
 							jQuery( ui.element ).find( '.fusion-spacing-tooltip' ).text( value );
@@ -1961,6 +1872,90 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return filteredDiff;
 			},
 
+			/**
+			 * Handle container name edit in wireframe mode.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			renameContainer: function( event ) {
+
+				// Detect "enter" key
+				var code,
+					model,
+					input,
+					fusionHistoryState;
+
+				code = event.keyCode || event.which;
+
+				if ( 13 == code ) { // jshint ignore:line
+					event.preventDefault();
+					this.$el.find( '.fusion-builder-section-name' ).blur();
+
+					return false;
+				}
+
+				fusionHistoryState = fusionBuilderText.edited + ' ' + fusionAllElements[ this.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element;
+
+				model = this.model;
+				input = this.$el.find( '.fusion-builder-section-name' );
+				clearTimeout( this.typingTimer );
+
+				this.typingTimer = setTimeout( function() {
+
+					model.attributes.params.admin_label = input.val().replace( /[[\]]+/g, '' );
+					FusionEvents.trigger( 'fusion-content-changed' );
+					FusionEvents.trigger( 'fusion-history-save-step', fusionHistoryState );
+
+				}, this.doneTypingInterval );
+			},
+
+			/**
+			 * Handle container toggle in wireframe mode.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			toggleContainer: function( event ) {
+
+				var thisEl = jQuery( event.currentTarget ),
+					fusionHistoryState;
+
+				if ( event ) {
+					event.preventDefault();
+				}
+
+				this.$el.toggleClass( 'fusion-builder-section-folded' );
+				thisEl.find( 'span' ).toggleClass( 'fusiona-caret-up' ).toggleClass( 'fusiona-caret-down' );
+
+				if ( this.$el.hasClass( 'fusion-builder-section-folded' ) ) {
+					this.model.attributes.params.admin_toggled = 'yes';
+				} else {
+					this.model.attributes.params.admin_toggled = 'no';
+				}
+
+				fusionHistoryState = fusionBuilderText.edited + ' ' + fusionAllElements[ this.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element;
+
+				FusionEvents.trigger( 'fusion-content-changed' );
+				FusionEvents.trigger( 'fusion-history-save-step', fusionHistoryState );
+			},
+
+			scrollHighlight: function() {
+				var $trigger = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( '.fusion-one-page-text-link' ),
+					$el      = this.$el;
+
+				setTimeout( function() {
+					if ( $trigger.length && 'function' === typeof $trigger.fusion_scroll_to_anchor_target ) {
+						$trigger.attr( 'href', '#fusion-container-' + this.model.get( 'cid' ) ).fusion_scroll_to_anchor_target( 15 );
+					}
+
+					$el.find( '> .fusion-column-wrapper' ).addClass( 'fusion-active-highlight' );
+					setTimeout( function() {
+						$el.find( '> .fusion-column-wrapper' ).removeClass( 'fusion-active-highlight' );
+					}, 6000 );
+				}, 10 );
+			},
+
 			publish: function( event ) {
 				var cid    = jQuery( event.currentTarget ).data( 'cid' ),
 					view   = FusionPageBuilderViewManager.getView( cid ),
@@ -2053,7 +2048,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			onPreviewResize: function() {
-
 				if ( ! this.isFlex() ) {
 					return;
 				}
@@ -2062,6 +2056,56 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.updateDragHandles();
 				}
 
+			},
+
+			setResponsiveContainerStyles: function() {
+				var self   = this,
+					extras = jQuery.extend( true, {}, fusionAllElements.fusion_builder_column.extras );
+
+				this.responsiveStyles = '';
+
+				_.each( [ 'large', 'medium', 'small' ], function( size ) {
+					var containerStyles = '',
+						paddingKey,
+						spacingKey;
+
+					_.each( [ 'top', 'right', 'bottom', 'left' ], function( direction ) {
+
+						// Padding.
+						paddingKey = 'padding_' + direction + ( 'large' === size ? '' : '_' + size );
+						if ( '' !== self.values[ paddingKey ] ) {
+							containerStyles += 'padding-' + direction + ' : ' + _.fusionGetValueWithUnit( self.values[ paddingKey ] ) + ' !important;';
+						}
+
+						if (  'left' === direction || 'right' === direction ) {
+							return;
+						}
+
+						// Margin.
+						spacingKey = 'margin_' + direction + ( 'large' === size ? '' : '_' + size );
+						if ( '' !== self.values[ spacingKey ] ) {
+							containerStyles += 'margin-' + direction + ' : ' + _.fusionGetValueWithUnit( self.values[ spacingKey ] ) + ';';
+						}
+
+					} );
+
+					if ( '' === containerStyles ) {
+						return;
+					}
+
+					// Wrap CSS selectors
+					if ( '' !== containerStyles ) {
+						containerStyles = '.fusion-body:not(.fusion-builder-ui-wireframe) #fusion-container-' + self.model.get( 'cid' ) + ' > .fusion-fullwidth {' + containerStyles + '}';
+					}
+
+					// Large styles, no wrapping needed.
+					if ( 'large' === size ) {
+						self.responsiveStyles += containerStyles;
+					} else {
+						// Medium and Small size screen styles.
+						self.responsiveStyles += '@media only screen and (max-width:' + extras[ 'visibility_' + size ] + 'px) {' + containerStyles + '}';
+					}
+				} );
 			},
 
 			/**
@@ -2074,68 +2118,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.destroyResizable();
 				this.marginDrag();
 				this.paddingDrag();
-			},
-
-			/**
-			 * Runs just after render on cancel.
-			 *
-			 * @since 3.5
-			 * @return null
-			 */
-			beforeGenerateShortcode: function() {
-				var elementType = this.model.get( 'element_type' ),
-					options     = fusionAllElements[ elementType ].params,
-					values      = jQuery.extend( true, {}, fusionAllElements[ elementType ].defaults, _.fusionCleanParameters( this.model.get( 'params' ) ) );
-
-				if ( 'object' !== typeof options ) {
-					return;
-				}
-
-				// If images needs replaced lets check element to see if we have media being used to add to object.
-				if ( 'undefined' !== typeof FusionApp.data.replaceAssets && FusionApp.data.replaceAssets && ( 'undefined' !== typeof FusionApp.data.fusion_element_type || 'fusion_template' === FusionApp.getPost( 'post_type' ) ) ) {
-
-					this.mapStudioImages( options, values );
-
-					if ( '' !== values.video_mp4 ) {
-						// If its not within object already, add it.
-						if ( 'undefined' === typeof FusionPageBuilderApp.mediaMap.videos[ values.video_mp4 ] ) {
-							FusionPageBuilderApp.mediaMap.videos[ values.video_mp4 ] = true;
-						}
-					}
-				}
-			},
-
-			/**
-			 * check if String is JSON string.
-			 *
-			 * @since 3.7
-			 * @return boolean
-			 */
-			IsJsonString: function( str ) {
-				try {
-					const json = JSON.parse( str );
-					return ( 'object' === typeof json );
-				} catch ( e ) {
-					return false;
-				}
-			},
-
-			/**
-			 * Get render logics devices.
-			 *
-			 * @since 3.7
-			 * @return boolean
-			 */
-			getRenderLogicsDevices: function( value ) {
-				value = value || this.values.render_logics;
-				let renderLogics = value && this.IsJsonString( atob( value ) ) ? JSON.parse( atob( value ) ) : [];
-
-				// Get device Render logics only.
-				renderLogics = renderLogics.filter( ( r ) => 'device_type' === r.field );
-
-				return renderLogics;
 			}
-
 		} );
 	} );
 }( jQuery ) );

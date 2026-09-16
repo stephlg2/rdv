@@ -21,11 +21,8 @@
 						fusion_entry_nonce: fusionBuilderConfig.fusion_entry_nonce,
 						entry: jQuery( this ).data( 'key' )
 					},
-					complete: function( response ) {
-
-						if ( 'object' === typeof response.responseJSON && 'undefined' !== response.responseJSON.success && response.responseJSON.success ) {
-							jQuery( self ).closest( 'tr' ).remove();
-						}
+					complete: function() {
+						jQuery( self ).closest( 'tr' ).remove();
 
 						setTimeout( function() {
 							if ( ! jQuery( '.avada_page_avada-form-entries .row-actions' ).length ) {

@@ -23,7 +23,7 @@
 				if ( 'object' !== typeof params ) {
 					return false;
 				}
-				return element.get( 'element_type' ).includes( 'fusion_form' ) && 'fusion_form_submit' !== element.get( 'element_type' ) && 'fusion_form_image_select_input' !== element.get( 'element_type' ) && ( 'string' === typeof params.label || 'undefined' === typeof params.label ) && 'string' === typeof params.name;
+				return element.get( 'element_type' ).includes( 'fusion_form' ) && 'fusion_form_submit' !== element.get( 'element_type' ) && 'fusion_form_image_select_input' !== element.get( 'element_type' ) && 'string' === typeof params.label && 'string' === typeof params.name;
 			} );
 
 			_.each( formElements, function( formElement ) {
@@ -48,7 +48,7 @@
 #>
 <div class="fusion-builder-option-logics fusion-option-{{ fieldId }}">
 	<# if ( choices.length ) { #>
-		<a href="#" class="fusion-builder-add-sortable-child"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.add_new_logic }}</span></a>
+		<a href="#" class="fusion-builder-add-sortable-child"><span class="fusiona-plus"></span> {{ fusionBuilderText.add_new_logic }}</a>
 		<div class="options-grid">
 			<ul class="fusion-logics">
 				<# _.each( options, function( option ) {
@@ -64,8 +64,6 @@
 						if ( 'undefined' === typeof currentChoice ) {
 							return;
 						}
-
-						const description = currentChoice.description || '';
 				#>
 					<li class="fusion-logic {{hasOr}}" aria-label-or="{{fusionBuilderText.logic_separator_text}}">
 						<div class="fusion-logic-controller-head">
@@ -82,9 +80,6 @@
 							</div>
 						</div>
 						<div class="fusion-logic-controller-content">
-							<# if ( description ) { #> 
-								<div class="logic-description description">{{{ description }}}</div>
-							<# } #> 
 						<div class="logic-field">
 							<div class="logic-field-wrapper">
 								<# if ( 'undefined' !== typeof FusionApp ) { #>
@@ -200,7 +195,7 @@
 						</div>
 						</div>
 					</li>
-				<# } ); #>
+				<# }); #>
 			</ul>
 			<input class="logic-values skip-update" type="hidden" id="{{ param.param_name }}" name="{{ param.param_name }}" value="{{ option_value }}">
 		</div>

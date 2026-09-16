@@ -1,5 +1,4 @@
 /* eslint no-mixed-spaces-and-tabs: 0 */
-/* global fusionAllElements, FusionApp, FusionPageBuilderApp */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -34,17 +33,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid           = this.model.get( 'cid' );
 				attributes.attr          = this.buildAttr( atts.values );
+				attributes.styles        = this.buildStyleBlock( atts );
 				attributes.productsLoop  = this.buildOutput( atts );
-				attributes.filters       = this.buildFilters( atts );
 				attributes.productsAttrs = this.buildProductsAttrs( atts.values );
 				attributes.query_data    = atts.query_data;
 				attributes.values        = atts.values;
 				attributes.loadMoreText  = _.has( atts.extras, 'load_more_text_' + atts.values.post_type ) ? atts.extras[ 'load_more_text_' + atts.values.post_type ] : atts.extras.load_more_text;
 
-				// carousel & slider.
-				if ( _.contains( [ 'slider', 'carousel' ], atts.values.layout ) ) {
-					attributes.prevAttr = this.buildNavIconAttr( atts.values.prev_icon );
-					attributes.nextAttr = this.buildNavIconAttr( atts.values.next_icon );
+				// carousel.
+				if ( 'carousel' === atts.values.layout ) {
+					attributes.carouselNav = this.buildCarouselNav();
 				}
 
 				if ( 'undefined' !== typeof atts.query_data && 'undefined' !== typeof atts.query_data.max_num_pages ) {
@@ -80,44 +78,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					values.margin_left = _.fusionGetValueWithUnit( values.margin_left );
 				}
 
-				if ( 'undefined' !== typeof values.filters_font_size && '' !== values.filters_font_size ) {
-					values.filters_font_size = _.fusionGetValueWithUnit( values.filters_font_size );
+				if ( 'undefined' !== typeof values.nav_margin_top && '' !== values.nav_margin_top ) {
+					values.nav_margin_top = _.fusionGetValueWithUnit( this.getReverseNum( values.nav_margin_top ) );
 				}
 
-				if ( 'undefined' !== typeof values.filters_letter_spacing && '' !== values.filters_letter_spacing ) {
-					values.filters_letter_spacing = _.fusionGetValueWithUnit( values.filters_letter_spacing );
-				}
-
-				if ( 'undefined' !== typeof values.active_filter_border_size && '' !== values.active_filter_border_size ) {
-					values.active_filter_border_size = _.fusionGetValueWithUnit( values.active_filter_border_size );
-				}
-
-				if ( 'undefined' !== typeof values.filters_border_bottom && '' !== values.filters_border_bottom ) {
-					values.filters_border_bottom = _.fusionGetValueWithUnit( values.filters_border_bottom );
-				}
-
-				if ( 'undefined' !== typeof values.filters_border_top && '' !== values.filters_border_top ) {
-					values.filters_border_top = _.fusionGetValueWithUnit( values.filters_border_top );
-				}
-
-				if ( 'undefined' !== typeof values.filters_border_left && '' !== values.filters_border_left ) {
-					values.filters_border_left = _.fusionGetValueWithUnit( values.filters_border_left );
-				}
-
-				if ( 'undefined' !== typeof values.filters_height && '' !== values.filters_height ) {
-					values.filters_height = _.fusionGetValueWithUnit( values.filters_height );
-				}
-
-				if ( 'undefined' !== typeof values.filters_border_right && '' !== values.filters_border_right ) {
-					values.filters_border_right = _.fusionGetValueWithUnit( values.filters_border_right );
-				}
-
-				if ( 1 === parseInt( values.columns ) && ( 'grid' === values.layout || 'masonry' === values.layout ) ) {
-					values.column_spacing = '0';
-				}
-
-				if ( 0 === parseInt( values.columns ) ) {
-					values.columns = 4;
+				if ( 1 === parseInt( values.columns ) && 'grid' === values.layout ) {
+					values.column_spacing = '0px';
 				}
 
 				// No delay offering for carousels and sliders.
@@ -134,40 +100,35 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			buildAttr: function( values ) {
-				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-post-cards fusion-post-cards-' + this.model.get( 'cid' ),
-						style: this.getInlineStyle( values )
-					} ),
-					animationValues;
+				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
+						class: 'fusion-post-cards fusion-post-cards-' + this.model.get( 'cid' )
+					} );
 
 
 				if ( '' !== values.animation_type ) {
 
 					// Grid and has delay, set parent args here, otherwise it will be on children.
 					if ( 'grid' === values.layout && 0 !== parseInt( values.animation_delay ) ) {
-						// Post cards has another animation delay implemented, not on whole element, but between each post cards.
-						animationValues = JSON.parse( JSON.stringify( values ) );
-						animationValues.animation_delay = '';
-
-						attr = _.fusionAnimations( animationValues, attr, false );
-
+						attr = _.fusionAnimations( values, attr, false );
 						attr[ 'data-animation-delay' ] = values.animation_delay;
 						attr[ 'class' ]               += ' fusion-delayed-animation';
 					} else {
-						// Post cards has another animation delay implemented, not on whole element, but between each post cards.
-						animationValues = JSON.parse( JSON.stringify( values ) );
-						animationValues.animation_delay = '';
 
 						// Not grid always no delay, add to parent.
-						attr = _.fusionAnimations( animationValues, attr );
+						attr = _.fusionAnimations( values, attr );
 					}
 				}
 
-				if ( -1 !== jQuery.inArray( values.layout, [ 'slider', 'carousel' ] ) ) {
-					attr[ 'class' ] += ' awb-carousel awb-swiper awb-swiper-' + values.layout + ' awb-swiper-dots-position-' + values.dots_position;
+				if ( 'slider' === values.layout ) {
+					attr[ 'class' ] += ' fusion-slider-sc fusion-flexslider-loading flexslider';
+
+					attr[ 'data-slideshow_autoplay' ]  = 'no' === values.autoplay ? false : true;
+					attr[ 'data-slideshow_animation' ] = values.slider_animation;
+					attr[ 'data-slideshow_control_nav' ]  = 'no' === values.show_nav ? false : true;
+				} else if ( 'carousel' === values.layout ) {
+					attr[ 'class' ] += ' fusion-carousel fusion-carousel-responsive';
 
 					attr[ 'data-autoplay' ]      = values.autoplay;
-					attr[ 'data-loop' ]          = values.loop;
 					attr[ 'data-columns' ]       = values.columns;
 					attr[ 'data-columnsmedium' ] = values.columns_medium;
 					attr[ 'data-columnssmall' ]  = values.columns_small;
@@ -176,36 +137,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr[ 'data-touchscroll' ]   = values.mouse_scroll;
 					attr[ 'data-imagesize' ]     = 'auto';
 					attr[ 'data-scrollitems' ]   = values.scroll_items;
-					attr[ 'data-mousepointer' ]  = values.mouse_pointer;
-					attr[ 'data-layout' ]        = values.layout;
-
-					if ( 'yes' === values.mouse_scroll && 'custom' === values.mouse_pointer ) {
-						attr[ 'data-scrollitems' ] = 1;
-					}
-
-					if ( 'slider' === values.layout ) {
-						attr[ 'data-slide-effect' ] = values.slider_animation;
-					}
-
-					if ( 'custom' === values.mouse_pointer ) {
-						attr[ 'data-cursor-color-mode' ] = values.cursor_color_mode;
-
-						if ( 'custom' === values.cursor_color_mode ) {
-							attr[ 'data-cursor-color' ] = values.cursor_color;
-						}
-					}
-
-				} else if ( ( 'grid' === values.layout || 'masonry' === values.layout ) && 'terms' !== values.source ) {
+				} else if ( 'grid' === values.layout && 'terms' !== values.source ) {
 					attr[ 'class' ] += ' fusion-grid-archive';
-					attr[ 'class' ] += 'masonry' === values.layout ? ' fusion-post-cards-masonry' : '';
-				}
-
-				if ( 'grid' === values.layout ) {
-					attr[ 'class' ] += ' fusion-grid-columns-' + this.values.columns;
-				}
-
-				if ( 'grid' === values.layout &&  1 == this.values.columns && 'no' === this.values.scrolling ) {
-					attr[ 'class' ] += ' fusion-grid-flex-grow';
 				}
 
 				if ( '' !== values[ 'class' ] ) {
@@ -216,23 +149,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr.id = values.id;
 				}
 
+				attr = _.fusionAnimations( values, attr );
+
 				return attr;
 			},
 
 			/**
-			 * Builds nav icon attributes.
+			 * Builds carousel nav.
 			 *
-			 * @since 3.9
-			 * @param {String} value - The value.
-			 * @return {Object}
+			 * @since 3.3
+			 * @return {string}
 			 */
-			 buildNavIconAttr: function( value ) {
-				var icon = {
-					class: _.fusionFontAwesome( value ),
-					'aria-hidden': 'true'
-				};
+			buildCarouselNav: function() {
+				var output = '';
 
-				return icon;
+				output += '<div class="fusion-carousel-nav">';
+				output += '<span class="fusion-nav-prev"></span>';
+				output += '<span class="fusion-nav-next"></span>';
+				output += '</div>';
+
+				return output;
 			},
 
 			/**
@@ -247,14 +183,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					class: ''
 				};
 
-				if ( 'grid' === values.layout || 'masonry' === values.layout ) {
-					attr[ 'class' ] += 'fusion-grid fusion-grid-' + values.columns + ' fusion-flex-align-items-' + values.flex_align_items + ' fusion-' + values.layout + '-posts-cards';
-				} else if ( -1 !== jQuery.inArray( values.layout, [ 'slider', 'carousel' ] ) ) {
-					attr[ 'class' ] += 'swiper-wrapper';
-
-					if ( 'carousel' === values.layout ) {
-						attr[ 'class' ] += ' fusion-flex-align-items-' + values.flex_align_items;
-					}
+				if ( 'grid' === values.layout ) {
+					attr[ 'class' ] += 'fusion-grid fusion-grid-' + values.columns + ' fusion-flex-align-items-' + values.flex_align_items;
+				} else if ( 'slider' === values.layout ) {
+					attr[ 'class' ] += 'slides';
+				} else if ( 'carousel' === values.layout ) {
+					attr[ 'class' ] += 'fusion-carousel-holder';
 				}
 
 				if ( this.isLoadMore() ) {
@@ -277,10 +211,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildColumnClasses: function( atts ) {
 				var classes = '';
 
-				if ( 'grid' === atts.values.layout || 'masonry' === atts.values.layout ) {
+				if ( 'grid' === atts.values.layout ) {
 					classes += 'fusion-grid-column fusion-post-cards-grid-column';
-				} else if ( _.contains( [ 'slider', 'carousel' ], atts.values.layout ) ) {
-					classes += 'swiper-slide';
+				} else if ( 'carousel' === atts.values.layout ) {
+					classes += 'fusion-carousel-item';
 				}
 
 				if ( 'product' === atts.values.post_type && 'posts' === atts.values.source ) {
@@ -377,9 +311,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildOutput: function( atts ) {
 				var output = '',
-					tag = 'ul',
-					childTag = 'li',
-					loopOutput = '',
 					_self = this,
 					lists;
 
@@ -387,22 +318,15 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					output = jQuery( jQuery.parseHTML( atts.markup.output ) ).html();
 					output = ( 'undefined' === typeof output ) ? atts.markup.output : output;
 				} else if ( 'undefined' !== typeof atts.query_data && 'undefined' !== typeof atts.query_data.loop_product ) {
-					if ( _.contains( [ 'slider', 'carousel' ], this.values.layout ) ) {
-						loopOutput = atts.query_data.loop_product.replaceAll( '<li', '<div' ).replaceAll( '/li>', '/div>' );
-						childTag = 'div';
-					} else {
-						loopOutput = atts.query_data.loop_product;
-					}
-					tag = -1 !== jQuery.inArray( this.values.scrolling, [ 'slider', 'carousel' ] ) ? 'div' : tag;
-					lists = jQuery( `<${tag}>${loopOutput}</${tag}>` );
-					lists.find( childTag ).each( function() {
-						jQuery( this ).removeClass( 'fusion-grid-column fusion-post-cards-grid-column swiper-slide product' )
+					lists = jQuery( '<ul>' + atts.query_data.loop_product + '</ul>' );
+					lists.find( 'li' ).each( function() {
+						jQuery( this ).removeClass( 'fusion-grid-column fusion-post-cards-grid-column fusion-carousel-item product' )
 						.addClass( _self.buildColumnClasses( atts ) )
 						.find( '.fusion-column-wrapper' ).removeClass( 'fusion-carousel-item-wrapper' )
 						.addClass( _self.buildColumnWrapper( atts ) );
 
 						// Separators are always added into data, just remove if not valid.
-						if ( 'grid' !== _self.values.layout || 1 !== parseInt( _self.values.columns ) ) {
+						if ( 'grid' !== _self.values.layout || 1 < parseInt( _self.values.columns ) ) {
 							jQuery( this ).find( '.fusion-absolute-separator' ).remove();
 						} else {
 							jQuery( this ).find( '.fusion-absolute-separator' ).css( { display: 'block' } );
@@ -413,151 +337,109 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return output;
 			},
 
-			buildFilters: function( atts ) {
-				var output = '';
-				if ( 'undefined' !== typeof atts.markup && 'undefined' !== typeof atts.markup.output && 'undefined' === typeof atts.query_data ) {
-					output = jQuery( jQuery.parseHTML( atts.markup.output ) );
-					output = ( 'undefined' === typeof output ) ? '' : '<div role="menubar">' + output.find( 'div[role="menubar"]' ).html() + '</div>';
-				} else if ( 'undefined' !== typeof atts.query_data && 'undefined' !== typeof atts.query_data.filters ) {
-					output = atts.query_data.filters;
-				}
-
-				return output;
-			},
-
 			/**
-			 * Get inline style.
+			 * Builds styles.
 			 *
-			 * @since 3.9
-			 * @param {object} values
-			 * @param {object} extras
-			 * @return string
+			 * @since  3.3
+			 * @param  {Object} values - The values object.
+			 * @return {String}
 			 */
-			 getInlineStyle: function( values ) {
-				var cssVarsOptions,
-					customVars = [];
-				this.values = values;
+			buildStyleBlock: function( atts ) {
+				var css, selectors, media, column_spacing, row_spacing,
+					self             = this,
+					values           = atts.values,
+					responsive_style = '',
+					nestedCSS        = 'undefined' !== typeof atts.query_data && 'undefined' !== typeof atts.query_data.nested_css ? atts.query_data.nested_css : null;
 
-				cssVarsOptions = [
-					'arrow_bgcolor',
-					'arrow_color',
-					'arrow_hover_bgcolor',
-					'arrow_hover_color',
-					'arrow_border_color',
-					'arrow_border_hover_color',
-					'dots_color',
-					'dots_active_color',
-					'arrow_border_style',
-					'dots_align',
-					'columns',
-					'filters_line_height',
-					'filters_text_transform',
-					'filters_alignment',
-					'column_spacing',
-					'row_spacing',
-					'filters_color',
-					'filters_hover_color',
-					'filters_active_color',
-					'active_filter_border_color',
-					'filters_border_color',
-					'load_more_btn_color',
-					'load_more_btn_bg_color',
-					'load_more_btn_hover_color',
-					'load_more_btn_hover_bg_color'
-				];
+				this.baseSelector = '.fusion-post-cards.fusion-post-cards-' +  this.model.get( 'cid' );
+				this.dynamic_css  = {};
 
-				cssVarsOptions.arrow_position_vertical = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_position_horizontal = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_box_width = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_box_height = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_sizes_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_sizes_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_sizes_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_sizes_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_radius_top_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_radius_top_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.arrow_border_radius_bottom_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.dots_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.dots_active_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.dots_margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.dots_margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.dots_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.column_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.row_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.filters_font_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.filters_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.active_filter_border_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.filters_border_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.filters_border_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.filters_border_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.filters_border_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.filters_height = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left = { 'callback': _.fusionGetValueWithUnit };
-
-				if ( ! this.isDefault( 'arrow_position_vertical' ) ) {
-					customVars.arrow_position_vertical_transform = 'none';
+				selectors = [ this.baseSelector + ' .infinite-scroll-hide' ];
+				if ( this.isLoadMore() ) {
+					this.addCssProperty( selectors, 'display', 'none' );
 				}
-				if ( ! this.isDefault( 'filters_border_left' ) ) {
-					customVars.filters_border_left_style = 'solid';
-				}
-				if ( ! this.isDefault( 'filters_border_right' ) ) {
-					customVars.filters_border_right_style = 'solid';
+				if ( 1 < parseInt( values.columns ) ) {
+					selectors = [ this.baseSelector + ' ul.fusion-grid' ];
+					column_spacing = _.fusionGetValueWithUnit( this.values.column_spacing );
+					  this.addCssProperty( selectors, 'margin-right', 'calc((' + column_spacing + ')/ -2)' );
+					  this.addCssProperty( selectors, 'margin-left', 'calc((' + column_spacing + ')/ -2)' );
+					  selectors = [ this.baseSelector + ' ul.fusion-grid > .fusion-grid-column' ];
+					  this.addCssProperty( selectors, 'padding-left', 'calc((' + column_spacing + ')/ 2)' );
+					  this.addCssProperty( selectors, 'padding-right', 'calc((' + column_spacing + ')/ 2)' );
+					  selectors = [ this.baseSelector + ' ul.fusion-grid > .fusion-grid-column .fusion-column-inner-bg' ];
+					  this.addCssProperty( selectors, 'margin-left', 'calc((' + column_spacing + ')/ 2)' );
+					  this.addCssProperty( selectors, 'margin-right', 'calc((' + column_spacing + ')/ 2)' );
 				}
 
-				// Responsive Columns.
-				if ( 'grid' === values.layout || 'masonry' === values.layout ) {
+				if ( 'grid' === this.values.layout ) {
+				  row_spacing =  _.fusionGetValueWithUnit( this.values.row_spacing );
+				  selectors = [ this.baseSelector + ' ul.fusion-grid' ];
+				  this.addCssProperty( selectors, 'margin-top', 'calc((' + row_spacing + ')/ -2)' );
+				  selectors = [ this.baseSelector + ' ul.fusion-grid > .fusion-grid-column' ];
+				  this.addCssProperty( selectors, 'padding-top', 'calc((' + row_spacing + ')/ 2)' );
+				  this.addCssProperty( selectors, 'padding-bottom', 'calc((' + row_spacing + ')/ 2)' );
+				  selectors = [ this.baseSelector + ' ul.fusion-grid > .fusion-grid-column > .fusion-column-inner-bg' ];
+				  this.addCssProperty( selectors, 'margin-top', 'calc((' + row_spacing + ')/ 2)' );
+				  this.addCssProperty( selectors, 'margin-bottom', 'calc((' + row_spacing + ')/ 2)' );
+				}
+
+				selectors = [ this.baseSelector ];
+				// Margin styles.
+				if ( ! this.isDefault( 'margin_top' ) ) {
+				  this.addCssProperty( selectors, 'margin-top', values.margin_top );
+				}
+				if ( ! this.isDefault( 'margin_right' ) ) {
+				  this.addCssProperty( selectors, 'margin-right', values.margin_right );
+				}
+				if ( ! this.isDefault( 'margin_bottom' ) ) {
+				  this.addCssProperty( selectors, 'margin-bottom', values.margin_bottom );
+				}
+				if ( ! this.isDefault( 'margin_left' ) ) {
+				  this.addCssProperty( selectors, 'margin-left', values.margin_left );
+				}
+
+				selectors = [ this.baseSelector + ' .flex-control-nav' ];
+				if ( 'slider' === values.layout ) {
+					this.addCssProperty( selectors, 'bottom', values.nav_margin_top );
+				}
+
+				// Process children css if it's there.
+				if ( Array.isArray( nestedCSS ) ) {
+					jQuery.each( nestedCSS, function( index, rules ) {
+
+						if ( Array.isArray( rules ) ) {
+							jQuery.each( rules, function( key, rule ) {
+								var important = 'undefined' !== typeof rule.important ? rule.important : false;
+								self.addCssProperty( self.baseSelector + ' ' + rule.selector, rule.rule, rule.value, important );
+							} );
+						}
+
+					} );
+				}
+
+				css = this.parseCSS();
+
+				if ( 'grid' === values.layout ) {
 					_.each( [ 'medium', 'small' ], function( size ) {
 						var key = 'columns_' + size;
-						if ( ! this.isDefault( key ) ) {
-							customVars[ key ] = this.getGridWidthVal( values[ key ] );
+
+						// Check for default value.
+						if ( this.isDefault( key ) ) {
+							return;
 						}
+
+						this.dynamic_css  = {};
+
+						// Build responsive styles.
+						selectors = [ this.baseSelector + ' .fusion-grid .fusion-grid-column' ];
+						this.addCssProperty( selectors, 'width', this.getGridWidthVal( values[ key ] ) + '!important' );
+
+						media            = '@media only screen and (max-width:' + this.extras[ 'visibility_' + size ] + 'px)';
+						responsive_style += media + '{' + this.parseCSS() + '}';
 					}, this );
+					css += responsive_style;
 				}
-
-				// Responsive Filters Alignment.
-				if ( 'no' !== values.filters && ( 'grid' === values.layout || 'masonry' === values.layout ) && 'posts' === values.source ) {
-					_.each( [ 'medium', 'small' ], function( size ) {
-						var key = 'filters_alignment_' + size;
-						customVars[ key ] = this.values[ key ];
-					}, this );
-				}
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getFontStylingVars( 'filters_font', values ) + this.getCustomCssVars( customVars );
-			},
-
-			/**
-			 * Runs just after render on cancel.
-			 *
-			 * @since 3.5
-			 * @return null
-			 */
-			 beforeGenerateShortcode: function() {
-				var elementType = this.model.get( 'element_type' ),
-					options     = fusionAllElements[ elementType ].params,
-					values      = jQuery.extend( true, {}, fusionAllElements[ elementType ].defaults, _.fusionCleanParameters( this.model.get( 'params' ) ) );
-
-				if ( 'object' !== typeof options ) {
-					return;
-				}
-
-				// If images needs replaced lets check element to see if we have media being used to add to object.
-				if ( 'undefined' !== typeof FusionApp.data.replaceAssets && FusionApp.data.replaceAssets && ( 'undefined' !== typeof FusionApp.data.fusion_element_type || 'fusion_template' === FusionApp.getPost( 'post_type' ) ) ) {
-
-					this.mapStudioImages( options, values );
-
-					if ( '' !== values.post_card ) {
-						// If its not within object already, add it.
-						if ( 'undefined' === typeof FusionPageBuilderApp.mediaMap.post_cards[ values.post_card ] ) {
-							FusionPageBuilderApp.mediaMap.post_cards[ values.post_card ] = true;
-						}
-					}
-
-				}
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

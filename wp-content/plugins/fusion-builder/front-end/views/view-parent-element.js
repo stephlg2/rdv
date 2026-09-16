@@ -80,6 +80,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.renderedYet = FusionPageBuilderApp.reRenderElements;
 				this._refreshJs  = _.debounce( _.bind( this.refreshJs, this ), 300 );
 
+				this.listenTo( FusionEvents, 'fusion-wireframe-toggle', this.wireFrameToggled );
+
 				this.model.set( 'sortable', 'undefined' === typeof fusionAllElements[ this.model.get( 'element_type' ) ].sortable ? true : fusionAllElements[ this.model.get( 'element_type' ) ].sortable );
 
 				this.onInit();
@@ -274,9 +276,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			renderContent: function() {
+
 				if ( 'undefined' !== typeof this.elementTemplate ) {
 					this.$el.find( '.fusion-builder-element-content' ).html( this.getTemplate() );
 				}
+
+				// Render wireframe template
+				this.renderWireframePreview();
 			},
 
 			/**
@@ -304,10 +310,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 *
 			 * @since 2.0.0
 			 * @param {Object} event - The event.
-			 * @param {bool} forceManually - Force manually, even if it's not an event, to update history and trigger content changes.
 			 * @return {void}
 			 */
-			removeElement: function( event, isAutomated, forceManually ) {
+			removeElement: function( event, isAutomated ) {
 				var parentCid   = this.model.get( 'parent' ),
 					parentModel = FusionPageBuilderElements.find( function( model ) {
 						return model.get( 'cid' ) == parentCid; // jshint ignore: line
@@ -315,10 +320,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					MultiGlobalArgs,
 					colView;
 
-				if ( event || forceManually ) {
-					if ( event ) {
-						event.preventDefault();
-					}
+				if ( event ) {
+					event.preventDefault();
 
 					colView = FusionPageBuilderViewManager.getView( parentCid );
 					colView.$el.find( '.fusion-builder-module-controls-container a' ).trigger( 'mouseleave' );
@@ -341,7 +344,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.remove();
 
 				// If element is removed manually
-				if ( event || forceManually ) {
+				if ( event ) {
 					FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.deleted + ' ' + fusionAllElements[ this.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element );
 				}
 
@@ -362,10 +365,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 *
 			 * @since 2.0.0
 			 * @param {Object} event - The event.
-			 * @param {bool} forceManually - Force manually, even if it's not an event, to update history and trigger content changes.
 			 * @return {void}
 			 */
-			cloneElement: function( event, forceManually ) {
+			cloneElement: function( event ) {
 				var elementAttributes,
 					currentModel,
 					MultiGlobalArgs;
@@ -383,8 +385,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				elementAttributes.created = 'manually';
 				elementAttributes.cid = FusionPageBuilderViewManager.generateCid();
 				elementAttributes.targetElement = this.$el;
-				elementAttributes.at_index = FusionPageBuilderApp.getCollectionIndex( this.$el );
-
 				if ( 'undefined' !== elementAttributes.from ) {
 					delete elementAttributes.from;
 				}
@@ -404,7 +404,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				};
 				fusionGlobalManager.handleMultiGlobal( MultiGlobalArgs );
 
-				if ( event || forceManually ) {
+				if ( event ) {
 					FusionEvents.trigger( 'fusion-content-changed' );
 				}
 			},
@@ -578,7 +578,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @param {Object} event - The event.
 			 * @return {void}
 			 */
-			addChildElement: function( event, predefinedParams, customParams ) {
+			addChildElement: function( event ) {
 
 				var params = {},
 					defaultParams,
@@ -596,7 +596,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				childElement = fusionMultiElements[ this.model.get( 'element_type' ) ];
 
-				defaultParams = predefinedParams ? predefinedParams : fusionAllElements[ childElement ].params;
+				defaultParams = fusionAllElements[ childElement ].params;
 
 				allowGenerator = ( 'undefined' !== typeof fusionAllElements[ childElement ].allow_generator ) ? fusionAllElements[ childElement ].allow_generator : '';
 
@@ -608,10 +608,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( 'undefined' !== typeof fusionAllElements[ childElement ].tag_name ) {
 					tagName = fusionAllElements[ childElement ].tag_name;
-				}
-
-				if ( customParams ) {
-					params = { ...params, ...customParams };
 				}
 
 				moduleSettings = {
@@ -635,7 +631,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					moduleSettings.selectors = jQuery.extend( true, {}, fusionAllElements[ childElement ].selectors );
 				}
 
-				if ( 'undefined' !== typeof event && null !== event && jQuery( event.currentTarget ).closest( '.fusion-builder-live-child-element' ).length ) {
+				if ( 'undefined' !== typeof event && jQuery( event.currentTarget ).closest( '.fusion-builder-live-child-element' ).length && ! FusionPageBuilderApp.wireframeActive ) {
 					moduleSettings.targetElement = jQuery( event.currentTarget ).closest( '.fusion-builder-live-child-element' );
 				}
 
@@ -828,7 +824,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.delegateChildEvents();
 			}
-
 		} );
 	} );
 }( jQuery ) );

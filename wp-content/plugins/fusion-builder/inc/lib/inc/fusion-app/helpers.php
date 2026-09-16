@@ -15,17 +15,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 2.0
  * @param string $string The string we want to convert.
- * @param bool   $strip_slashes Decides if slashes should be stripped.
  * @return array
  */
-function fusion_string_to_array( $string, $strip_slashes = true ) {
+function fusion_string_to_array( $string ) {
 
 	// If already an array, return early.
 	if ( is_array( $string ) ) {
-		return wp_unslash( $string );
+		return $string;
 	}
 
-	$string = $strip_slashes ? stripslashes( $string ) : $string;
+	$string = stripslashes( $string );
 
 	if ( empty( $string ) ) {
 		return false;
@@ -196,7 +195,10 @@ function is_preview_only() {
  */
 function fusion_app_textdomain_strings() {
 
-	$fusion_settings = awb_get_fusion_settings();
+	global $fusion_settings;
+	if ( ! $fusion_settings ) {
+		$fusion_settings = Fusion_Settings::get_instance();
+	}
 
 	$text_strings = [
 
@@ -214,6 +216,7 @@ function fusion_app_textdomain_strings() {
 		'delete_item'                                 => esc_html__( 'Delete item', 'fusion-builder' ),
 		'clone_item'                                  => esc_html__( 'Clone item', 'fusion-builder' ),
 		'edit_item'                                   => esc_html__( 'Edit item', 'fusion-builder' ),
+		'element_settings'                            => esc_html__( 'Element Options', 'fusion-builder' ),
 		/* translators: Element settings. */
 		'custom_element_settings'                     => esc_html__( '%s Options', 'fusion-builder' ),
 		'full_width_section'                          => esc_html__( 'Container', 'fusion-builder' ),
@@ -233,6 +236,7 @@ function fusion_app_textdomain_strings() {
 		'resize_column'                               => esc_html__( 'Resize column', 'fusion-builder' ),
 		'resized_column'                              => esc_html__( 'Resized Column to', 'fusion-builder' ),
 		'column_library'                              => esc_html__( 'Column Options', 'fusion-builder' ),
+		'clone_column'                                => esc_html__( 'Clone column', 'fusion-builder' ),
 		'save_column'                                 => esc_html__( 'Save column', 'fusion-builder' ),
 		'delete_column'                               => esc_html__( 'Delete column', 'fusion-builder' ),
 		'delete_row'                                  => esc_html__( 'Delete row', 'fusion-builder' ),
@@ -269,6 +273,7 @@ function fusion_app_textdomain_strings() {
 		'save_custom_element_info'                    => esc_html__( 'Custom elements will be stored and managed on the Library tab', 'fusion-builder' ),
 		'add_edit_items'                              => esc_html__( 'Add / Edit Items', 'fusion-builder' ),
 		'sortable_items_info'                         => esc_html__( 'Add or edit new items for this element.  Drag and drop them into the desired order.', 'fusion-builder' ),
+		'delete_inner_columns'                        => esc_html__( 'Delete inner columns', 'fusion-builder' ),
 		'clone_inner_columns'                         => esc_html__( 'Clone inner columns', 'fusion-builder' ),
 		'save_inner_columns'                          => esc_html__( 'Save inner columns', 'fusion-builder' ),
 		'delete_inner_columns'                        => esc_html__( 'Delete inner columns', 'fusion-builder' ),
@@ -292,17 +297,19 @@ function fusion_app_textdomain_strings() {
 		'upload_image'                                => esc_html__( 'Upload Image', 'fusion-builder' ),
 		'upload_audio'                                => esc_html__( 'Upload Audio', 'fusion-builder' ),
 		'edit'                                        => esc_html__( 'Edit', 'fusion-builder' ),
+		'remove'                                      => esc_html__( 'Remove', 'fusion-builder' ),
 		'attach_images'                               => esc_html__( 'Attach Images to Gallery', 'fusion-builder' ),
 		'insert'                                      => esc_html__( 'Insert', 'fusion-builder' ),
-		'avada_studio'                                => esc_html__( 'Avada Studio', 'fusion-builder' ),
+		'pre_built_page'                              => esc_html__( 'Prebuilt Page', 'fusion-builder' ),
+		'pre_built_form'                              => esc_html__( 'Prebuilt Form', 'fusion-builder' ),
+		'pre_built_header'                            => esc_html__( 'Prebuilt Header', 'fusion-builder' ),
+		'pre_built_content'                           => esc_html__( 'Prebuilt Content', 'fusion-builder' ),
 		'to_get_started'                              => esc_html__( 'To get started, add a Container, or add a prebuilt page.', 'fusion-builder' ),
 		'to_get_started_header'                       => esc_html__( 'To get started, add a Container, or add a prebuilt header.', 'fusion-builder' ),
 		'to_get_started_content'                      => esc_html__( 'To get started, add a Container, or add prebuilt content.', 'fusion-builder' ),
 		'to_get_started_ptb'                          => esc_html__( 'To get started building your Page Title Bar, add a container.', 'fusion-builder' ),
 		'to_get_started_footer'                       => esc_html__( 'To get started building your Footer, add a container.', 'fusion-builder' ),
 		'to_get_started_form'                         => esc_html__( 'To get started building your Form, add a container.', 'fusion-builder' ),
-		'to_get_started_off_canvas'                   => esc_html__( 'To get started building your Off Canvas, add a container.', 'fusion-builder' ),
-		'to_get_started_mega_menus'                   => esc_html__( 'To get started, add a Container, or add a prebuilt mega menu.', 'fusion-builder' ),
 		'to_get_started_sub'                          => esc_html__( 'The building process always starts with a container, then columns, then elements.', 'fusion-builder' ),
 		'watch_the_video'                             => esc_html__( 'Watch The Video!', 'fusion-builder' ),
 		'edit_settings'                               => esc_html__( 'Edit Settings', 'fusion-builder' ),
@@ -312,7 +319,7 @@ function fusion_app_textdomain_strings() {
 		'save_custom_content'                         => esc_html__( 'Save Custom Content', 'fusion-builder' ),
 		'delete_content'                              => esc_html__( 'Delete Content', 'fusion-builder' ),
 		'add_content'                                 => esc_html__( 'Add Content', 'fusion-builder' ),
-		'additional_docs'                             => esc_html__( 'Click the ? icon to access Avada documentation', 'fusion-builder' ),
+		'additional_docs'                             => esc_html__( 'Click the ? icon to view additional documentation', 'fusion-builder' ),
 		'getting_started_video'                       => esc_html__( 'Getting Started Video', 'fusion-builder' ),
 		'icon_control_description'                    => esc_html__( 'Icon Control Descriptions:', 'fusion-builder' ),
 		'history'                                     => esc_html__( 'History', 'fusion-builder' ),
@@ -324,16 +331,13 @@ function fusion_app_textdomain_strings() {
 		'added_custom_column'                         => esc_html__( 'Added Custom Column: ', 'fusion-builder' ),
 		'added_columns'                               => esc_html__( 'Added Columns', 'fusion-builder' ),
 		'added_custom_section'                        => esc_html__( 'Added Custom Container: ', 'fusion-builder' ),
-		'added_studio_element'                        => esc_html__( 'Added Studio Element: ', 'fusion-builder' ),
-		'added_studio_column'                         => esc_html__( 'Added Studio Column: ', 'fusion-builder' ),
-		'added_studio_section'                        => esc_html__( 'Added Studio Container: ', 'fusion-builder' ),
 		'added_special_item'                          => esc_html__( 'Added Special Item: ', 'fusion-builder' ),
 		'deleted'                                     => esc_html__( 'Deleted', 'fusion-builder' ),
 		'cloned'                                      => esc_html__( 'Cloned', 'fusion-builder' ),
 		'pasted'                                      => esc_html__( 'Pasted', 'fusion-builder' ),
+		'pasted'                                      => esc_html__( 'Pasted', 'fusion-builder' ),
 		'moved'                                       => esc_html__( 'Moved', 'fusion-builder' ),
 		'edited'                                      => esc_html__( 'Edited', 'fusion-builder' ),
-		'invert'                                      => esc_html__( 'Invert', 'fusion-builder' ),
 		'reset_to_default'                            => esc_html__( 'Reset to Default', 'fusion-builder' ),
 		'added_nested_columns'                        => esc_html__( 'Added Nested Columns', 'fusion-builder' ),
 		'edited_nested_columns'                       => esc_html__( 'Edited Nested Columns', 'fusion-builder' ),
@@ -364,6 +368,7 @@ function fusion_app_textdomain_strings() {
 		'image'                                       => esc_html__( 'Image', 'fusion-builder' ),
 		'audio'                                       => esc_html__( 'Audio', 'fusion-builder' ),
 		'select_image'                                => esc_html__( 'Select Image', 'fusion-builder' ),
+		'select_audio'                                => esc_html__( 'Select Image', 'fusion-builder' ),
 		'select_images'                               => esc_html__( 'Select Images', 'fusion-builder' ),
 		'select_video'                                => esc_html__( 'Select Video', 'fusion-builder' ),
 		'select_audio'                                => esc_html__( 'Select Audio', 'fusion-builder' ),
@@ -386,15 +391,18 @@ function fusion_app_textdomain_strings() {
 		'bulk_add_instructions'                       => esc_html__( 'Select a predefined list or paste your own list bulk add choices.', 'fusion-builder' ),
 		'bulk_add'                                    => esc_html__( 'Bulk Add', 'fusion-builder' ),
 		'bulk_add_predefined'                         => esc_html__( 'Predefined Choices', 'fusion-builder' ),
-		'bulk_add_insert_choices'                     => esc_html__( 'Insert Choices', 'fusion-builder' ),
 		/* translators: Child element name. */
 		'empty_parent'                                => esc_html__( 'Empty %s element, please add child elements here.', 'fusion-builder' ),
-		'post_views_counter_disabled'                 => esc_html__( 'The views counter option is disabled. Enable it in the global options to use this element.', 'fusion-builder' ),
 		'to_add_images'                               => esc_html__( 'To add images to this post or page for attachments layout, navigate to "Upload Files" tab in media manager and upload new images.', 'fusion-builder' ),
 		'importing_single_page'                       => esc_html__( 'WARNING: Importing a single prebuilt page will remove all other page content, Avada Page Options and page template. Avada Global Options and images are not imported. Click OK to continue or cancel to stop.', 'fusion-builder' ),
+		'importing_demo_layout'                       => esc_html__( 'WARNING: Importing a prebuilt layout will remove all other page content. Avada Global Options and images are not imported. Click OK to continue or cancel to stop.', 'fusion-builder' ),
+		'importing_post_card'                         => esc_html__( 'WARNING: Importing a post card will remove all current page content. Only the individual post card will be imported. Click OK to continue or cancel to stop.', 'fusion-builder' ),
+		'importing_post_card_title'                   => esc_html__( 'Import Post Card', 'fusion-builder' ),
+		'importing_demo_form_title'                   => esc_html__( 'Import Prebuilt Form', 'fusion-builder' ),
+		'importing_demo_form'                         => esc_html__( 'WARNING: Importing a prebuilt form will remove all other form content and Form Options. Avada Global Options are not imported. Click OK to continue or cancel to stop.', 'fusion-builder' ),
 		'content_error_title'                         => esc_html__( 'Content Error', 'fusion-builder' ),
 		/* translators: Link URL. */
-		'content_error_description'                   => sprintf( __( 'Your page content could not be displayed as an Avada Builder layout. Most likely that means, there is some invalid markup or shortcode in it. Please check the contents in the text editor. <a href="%s" target="_blank">See here for more information</a>.', 'fusion-builder' ), 'https://avada.com/documentation/how-to-fix-page-content-not-parsable-avada-builder/' ),
+		'content_error_description'                   => sprintf( __( 'Your page content could not be displayed as an Avada Builder layout. Most likely that means, there is some invalid markup or shortcode in it. Please check the contents in the text editor. <a href="%s" target="_blank">See here for more information</a>.', 'fusion-builder' ), 'https://theme-fusion.com/documentation/fusion-builder/technical/page-content-not-parsable-fusion-builder/' ),
 		'unknown_error_title'                         => esc_html__( 'Unknown Error Occurred', 'fusion-builder' ),
 		/* translators: Link URL. */
 		'unknown_error_link'                          => sprintf( __( '<a href="%s" target="_blank">Click here to learn more.</a>', 'fusion-builder' ), '#' ),
@@ -411,17 +419,8 @@ function fusion_app_textdomain_strings() {
 		'added_nextpage'                              => esc_html__( 'Added Next Page Divider', 'fusion-builder' ),
 		'nextpage'                                    => esc_html__( 'Next Page', 'fusion-builder' ),
 		'checkout_form'                               => esc_html__( 'Checkout Form', 'fusion-builder' ),
-		'form_step'                                   => esc_html__( 'Form Step', 'fusion-builder' ),
-		'deleted_form_step'                           => esc_html__( 'Deleted Form Step', 'fusion-builder' ),
-		'delete_form_step'                            => esc_html__( 'Delete Form Step', 'fusion-builder' ),
-		'added_form_step'                             => esc_html__( 'Added Form Step', 'fusion-builder' ),
-		/* translators: %s - The number of the step. */
-		'singular_form_step'                          => esc_html( _n( 'Step %s', 'Step %s', 1, 'fusion-builder' ) ),
-		/* translators: %s - The number of the step. */
-		'plural_form_step'                            => esc_html( _n( 'Step %s', 'Step %s', 2, 'fusion-builder' ) ),
 		'library_misc'                                => esc_html__( 'Special', 'fusion-builder' ),
 		'special_title'                               => esc_html__( 'Special Items', 'fusion-builder' ),
-		'form_step_description'                       => esc_html__( 'The form step item allows you to break your form into several steps. Simply insert it onto the form, and form steps will show on the frontend.', 'fusion-builder' ),
 		'next_page_description'                       => esc_html__( 'The next page item allows you to break your page into several pages. Simply insert it onto the page, and automatic pagination will show on the frontend.', 'fusion-builder' ),
 		'checkout_form_description'                   => esc_html__( 'The checkout form items allows you to add opening and closing WooCommerce checkout form tags.', 'fusion-builder' ),
 		'select_link'                                 => esc_html__( 'Select Link', 'fusion-builder' ),
@@ -429,6 +428,7 @@ function fusion_app_textdomain_strings() {
 		'background_color'                            => esc_html__( 'Background Color', 'fusion-builder' ),
 		'border_color'                                => esc_html__( 'Border Color', 'fusion-builder' ),
 		'legend_text_color'                           => esc_html__( 'Legend Value Text Color', 'fusion-builder' ),
+		'enter_value'                                 => esc_html__( 'Enter Value', 'fusion-builder' ),
 		'legend_label'                                => esc_html__( 'Legend Label', 'fusion-builder' ),
 		'x_axis_label'                                => esc_html__( 'X Axis Label', 'fusion-builder' ),
 		/* translators: Toggle column width option. */
@@ -479,8 +479,6 @@ function fusion_app_textdomain_strings() {
 		'fusion_builder_docs_description'             => esc_html__( 'Videos not for you? That\'s ok! We have you covered.', 'fusion-builder' ),
 		'fusion_panel_desciption_toggle'              => esc_html__( 'Toggle Description', 'fusion-builder' ),
 		'fusion_panel_responsive_toggle'              => esc_html__( 'Toggle Responsive Options', 'fusion-builder' ),
-		'fusion_panel_state_toggle'                   => esc_html__( 'Toggle State Options', 'fusion-builder' ),
-		'fusion_panel_default_state'                  => esc_html__( 'Default State', 'fusion-builder' ),
 		'fusion_dimension_top_label'                  => esc_html__( 'Top', 'fusion-builder' ),
 		'fusion_dimension_bottom_label'               => esc_html__( 'Bottom', 'fusion-builder' ),
 		'fusion_dimension_left_label'                 => esc_html__( 'Left', 'fusion-builder' ),
@@ -492,8 +490,6 @@ function fusion_app_textdomain_strings() {
 		'fusion_dimension_bottom_left_label'          => esc_html__( 'Bot/Left', 'fusion-builder' ),
 		'fusion_dimension_bottom_right_label'         => esc_html__( 'Bot/Right', 'fusion-builder' ),
 		'fusion_dimension_all_label'                  => esc_html__( 'All', 'fusion-builder' ),
-		'fusion_dimension_horizontal'                 => esc_html__( 'Horizontal', 'fusion-builder' ),
-		'fusion_dimension_vertical'                   => esc_html__( 'Vertical', 'fusion-builder' ),
 		'confirm'                                     => esc_html__( 'Confirm', 'fusion-builder' ),
 		'unsaved_changes'                             => esc_html__( 'Unsaved Changes', 'fusion-builder' ),
 		'changes_will_be_lost'                        => esc_html__( 'Your changes will be lost, do you want to save changes before leaving?', 'fusion-builder' ),
@@ -593,23 +589,6 @@ function fusion_app_textdomain_strings() {
 		'background'                                  => esc_html__( 'Background', 'fusion-builder' ),
 		'logo'                                        => esc_html__( 'Logo', 'fusion-builder' ),
 		'phone_pattern_text'                          => esc_html__( 'Only numbers and phone characters are accepted', 'fusion-builder' ),
-		'all'                                         => esc_html__( 'All', 'fusion-builder' ),
-		'studio_importing_content'                    => esc_html__( 'Importing Studio Content', 'fusion-builder' ),
-		'studio_importing_content_failed'             => esc_html__( 'Importing Studio Content Failed', 'fusion-builder' ),
-		'studio_importing_media'                      => esc_html__( 'Importing Studio Media:', 'fusion-builder' ),
-		'api_error_text'                              => esc_html__( 'Failed to retrieve data from API', 'fusion-builder' ),
-		'demo_importing_content'                      => esc_html__( 'Importing Prebuilt Page Content', 'fusion-builder' ),
-		'demo_importing_content_failed'               => esc_html__( 'Importing Prebuilt Page Content Failed', 'fusion-builder' ),
-		'demo_importing_media'                        => esc_html__( 'Importing Prebuilt Page Media:', 'fusion-builder' ),
-		'setup_plugin_error_title'                    => esc_html__( 'Plugin Installation Failed', 'fusion-builder' ),
-		'setup_prebuilt_error_title'                  => esc_html__( 'Importing Prebuilt Website Failed', 'fusion-builder' ),
-		'setup_prebuilt_error_restart'                => esc_html__( 'Continue', 'fusion-builder' ),
-		'setup_general_error_title'                   => esc_html__( 'Something Went Wrong', 'fusion-builder' ),
-		'setup_general_error_message'                 => esc_html__( 'An error occured and the process could not be completed. Please check your error log for details.', 'fusion-builder' ),
-		'error_php_limits'                            => esc_html__( 'The import process has timed out, but already imported steps have been saved. Click "continue", and the importer will attempt to complete the remaining steps of the import process.', 'fusion-builder' ),
-		'content'                                     => esc_html__( 'Content', 'fusion-builder' ),
-		'gallery_loading_message'                     => esc_html__( 'Loading the next set of gallery items...', 'fusion-builder' ),
-		'toc_element_title_placeholder'               => esc_html__( 'Dummy Title Placeholder', 'fusion-builder' ),
 	];
 
 	return $text_strings;
@@ -673,27 +652,23 @@ function fusion_set_live_data() {
  * @return strint HTML content.
  */
 function fusion_render_title( $size, $heading_content ) {
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 
 	// Set vars.
 	$content_align = is_rtl() ? 'right' : 'left';
 	$size_array    = [
-		'h1'  => 'one',
-		'h2'  => 'two',
-		'h3'  => 'three',
-		'h4'  => 'four',
-		'h5'  => 'five',
-		'h6'  => 'six',
-		'div' => 'div',
-		'p'   => 'paragraph',
+		'1' => 'one',
+		'2' => 'two',
+		'3' => 'three',
+		'4' => 'four',
+		'5' => 'five',
+		'6' => 'six',
 	];
-	$size          = 'div' === $size || 'p' === $size ? $size : 'h' . $size;
 
-	$margin_top            = $fusion_settings->get( 'title_margin', 'top' );
-	$margin_bottom         = $fusion_settings->get( 'title_margin', 'bottom' );
-	$sep_color             = $fusion_settings->get( 'title_border_color' );
-	$style_type            = $fusion_settings->get( 'title_style_type' );
-	$responsive_typography = $fusion_settings->get( 'typography_sensitivity' );
+	$margin_top    = $fusion_settings->get( 'title_margin', 'top' );
+	$margin_bottom = $fusion_settings->get( 'title_margin', 'bottom' );
+	$sep_color     = $fusion_settings->get( 'title_border_color' );
+	$style_type    = $fusion_settings->get( 'title_style_type' );
 
 	$underline_or_none = false !== strpos( $style_type, 'underline' ) || false !== strpos( $style_type, 'none' );
 
@@ -738,19 +713,9 @@ function fusion_render_title( $size, $heading_content ) {
 		$output .= '</div>';
 	}
 
-	$responsive_class = '';
-	if ( $responsive_typography ) {
-		$font_size        = $fusion_settings->get( $size . '_typography', 'font-size' );
-		$line_height      = $fusion_settings->get( $size . '_typography', 'line-height' );
-		$data             = awb_get_responsive_type_data( $size, $font_size, $line_height );
-		$responsive_class = ' ' . $data['class'];
-		$heading_styles  .= $data['font_size'];
-		$heading_styles  .= $data['line_height'];
-	}
-
-	$output .= '<' . $size . ' class="title-heading-' . esc_attr( $content_align ) . esc_attr( $responsive_class ) . '" style="' . esc_attr( $heading_styles ) . '">';
+	$output .= '<h' . $size . ' class="title-heading-' . esc_attr( $content_align ) . '" style="' . esc_attr( $heading_styles ) . '">';
 	$output .= $heading_content;
-	$output .= '</' . $size . '>';
+	$output .= '</h' . $size . '>';
 
 	if ( false === $underline_or_none && 'left' === $content_align ) {
 		$output .= '<div class="title-sep-container">';

@@ -8,5 +8,6 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_form_rating-shortcode">
+{{{ styles }}}
 {{{ html }}}
 </script>

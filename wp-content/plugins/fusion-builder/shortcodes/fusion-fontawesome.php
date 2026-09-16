@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 			private $icon_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -47,49 +56,41 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
-				$border_radius   = Fusion_Builder_Border_Radius_Helper::get_border_radius_array_with_fallback_value( $fusion_settings->get( 'icon_border_radius' ) );
+
+				global $fusion_settings;
 
 				return [
-					'hide_on_mobile'             => fusion_builder_default_visibility( 'string' ),
-					'sticky_display'             => '',
-					'class'                      => '',
-					'id'                         => '',
-					'alignment'                  => '',
-					'alignment_medium'           => '',
-					'alignment_small'            => '',
-					'circle'                     => $fusion_settings->get( 'icon_circle' ),
-					'bg_size'                    => '-1',
-					'circlebordersize'           => $fusion_settings->get( 'icon_border_size' ),
-					'circlecolor'                => $fusion_settings->get( 'icon_circle_color' ),
-					'circlecolor_hover'          => $fusion_settings->get( 'icon_circle_color_hover' ),
-					'circlebordercolor'          => $fusion_settings->get( 'icon_border_color' ),
-					'circlebordercolor_hover'    => $fusion_settings->get( 'icon_border_color_hover' ),
-					'border_radius_top_left'     => $border_radius['top_left'],
-					'border_radius_top_right'    => $border_radius['top_right'],
-					'border_radius_bottom_right' => $border_radius['bottom_right'],
-					'border_radius_bottom_left'  => $border_radius['bottom_left'],
-					'flip'                       => '',
-					'icon'                       => '',
-					'icon_hover_type'            => $fusion_settings->get( 'icon_hover_type' ),
-					'iconcolor'                  => $fusion_settings->get( 'icon_color' ),
-					'iconcolor_hover'            => $fusion_settings->get( 'icon_color_hover' ),
-					'link'                       => '',
-					'linktarget'                 => '_self',
-					'link_attributes'            => '',
-					'margin_bottom'              => '',
-					'margin_left'                => '',
-					'margin_right'               => '',
-					'margin_top'                 => '',
-					'rotate'                     => '',
-					'size'                       => $fusion_settings->get( 'icon_size' ),
-					'spin'                       => 'no',
-					'animation_type'             => '',
-					'animation_direction'        => 'down',
-					'animation_speed'            => '0.1',
-					'animation_delay'            => '',
-					'animation_offset'           => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'            => '',
+					'hide_on_mobile'          => fusion_builder_default_visibility( 'string' ),
+					'sticky_display'          => '',
+					'class'                   => '',
+					'id'                      => '',
+					'alignment'               => '',
+					'circle'                  => $fusion_settings->get( 'icon_circle' ),
+					'bg_size'                 => '-1',
+					'circlebordersize'        => $fusion_settings->get( 'icon_border_size' ),
+					'circlecolor'             => $fusion_settings->get( 'icon_circle_color' ),
+					'circlecolor_hover'       => $fusion_settings->get( 'icon_circle_color_hover' ),
+					'circlebordercolor'       => $fusion_settings->get( 'icon_border_color' ),
+					'circlebordercolor_hover' => $fusion_settings->get( 'icon_border_color_hover' ),
+					'flip'                    => '',
+					'icon'                    => '',
+					'icon_hover_type'         => $fusion_settings->get( 'icon_hover_type' ),
+					'iconcolor'               => $fusion_settings->get( 'icon_color' ),
+					'iconcolor_hover'         => $fusion_settings->get( 'icon_color_hover' ),
+					'link'                    => '',
+					'linktarget'              => '_self',
+					'link_attributes'         => '',
+					'margin_bottom'           => '',
+					'margin_left'             => '',
+					'margin_right'            => '',
+					'margin_top'              => '',
+					'rotate'                  => '',
+					'size'                    => $fusion_settings->get( 'icon_size' ),
+					'spin'                    => 'no',
+					'animation_type'          => '',
+					'animation_direction'     => 'down',
+					'animation_speed'         => '0.1',
+					'animation_offset'        => $fusion_settings->get( 'animation_offset' ),
 				];
 			}
 
@@ -103,21 +104,17 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 			 */
 			public static function settings_to_params() {
 				return [
-					'icon_border_size'                 => 'circlebordersize',
-					'icon_size'                        => 'size',
-					'icon_circle'                      => 'circle',
-					'icon_circle_color'                => 'circlecolor',
-					'icon_circle_color_hover'          => 'circlecolor_hover',
-					'icon_border_color'                => 'circlebordercolor',
-					'icon_border_color_hover'          => 'circlebordercolor_hover',
-					'icon_color'                       => 'iconcolor',
-					'icon_color_hover'                 => 'iconcolor_hover',
-					'icon_hover_type'                  => 'icon_hover_type',
-					'animation_offset'                 => 'animation_offset',
-					'icon_border_radius[top_left]'     => 'border_radius_top_left',
-					'icon_border_radius[top_right]'    => 'border_radius_top_right',
-					'icon_border_radius[bottom_right]' => 'border_radius_bottom_right',
-					'icon_border_radius[bottom_left]'  => 'border_radius_bottom_left',
+					'icon_border_size'        => 'circlebordersize',
+					'icon_size'               => 'size',
+					'icon_circle'             => 'circle',
+					'icon_circle_color'       => 'circlecolor',
+					'icon_circle_color_hover' => 'circlecolor_hover',
+					'icon_border_color'       => 'circlebordercolor',
+					'icon_border_color_hover' => 'circlebordercolor_hover',
+					'icon_color'              => 'iconcolor',
+					'icon_color_hover'        => 'iconcolor_hover',
+					'icon_hover_type'         => 'icon_hover_type',
+					'animation_offset'        => 'animation_offset',
 				];
 			}
 
@@ -131,39 +128,48 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
+
+				global $fusion_settings;
+
 				$this->set_element_id( $this->icon_counter );
 
-				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_fontawesome' );
-				$this->args     = $this->backwards_compatibility( $this->args, $args );
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_fontawesome' );
+				$defaults = $this->backwards_compatibility( $defaults, $args );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_fontawesome', $args );
 
-				$content = apply_filters( 'fusion_shortcode_content', $content, 'fusion_fontawesome', $args );
+				extract( $defaults );
 
-				// Determine line-height and margin from font size.
-				$this->args['font_size']            = FusionBuilder::validate_shortcode_attr_value( $this->convert_deprecated_sizes( $this->args['size'] ), '' );
-				$this->args['circle_yes_font_size'] = isset( $this->args['bg_size'] ) && '-1' != $this->args['bg_size'] ? $this->args['font_size'] : $this->args['font_size'] * 0.88; // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-				$this->args['height']               = isset( $this->args['bg_size'] ) && '-1' != $this->args['bg_size'] ? (int) $this->args['bg_size'] : $this->args['font_size'] * 1.76; // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-				$this->args['line_height']          = $this->args['height'] - ( 2 * (int) $this->args['circlebordersize'] );
+				// Dertmine line-height and margin from font size.
+				$defaults['font_size']            = FusionBuilder::validate_shortcode_attr_value( $this->convert_deprecated_sizes( $defaults['size'] ), '' );
+				$defaults['circle_yes_font_size'] = isset( $defaults['bg_size'] ) && '-1' != $defaults['bg_size'] ? $defaults['font_size'] : $defaults['font_size'] * 0.88; // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+				$defaults['height']               = isset( $defaults['bg_size'] ) && '-1' != $defaults['bg_size'] ? (int) $defaults['bg_size'] : $defaults['font_size'] * 1.76; // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+				$defaults['line_height']          = $defaults['height'] - ( 2 * (int) $defaults['circlebordersize'] );
 
 				// Get border size is desired format.
-				$this->args['circlebordersize'] = FusionBuilder::validate_shortcode_attr_value( $this->args['circlebordersize'], 'px' );
+				$defaults['circlebordersize'] = FusionBuilder::validate_shortcode_attr_value( $defaults['circlebordersize'], 'px' );
 
 				// Check if an old icon shortcode is used, where no margin option is present, or if all margins were left empty.
-				$this->args['legacy_icon'] = false;
-				if ( '' === $this->args['margin_top'] && '' === $this->args['margin_right'] && '' === $this->args['margin_bottom'] && '' === $this->args['margin_left'] ) {
-					$this->args['legacy_icon'] = true;
+				$defaults['legacy_icon'] = false;
+				if ( '' === $margin_top && '' === $margin_right && '' === $margin_bottom && '' === $margin_left ) {
+					$defaults['legacy_icon'] = true;
 				}
+
+				$this->args = $defaults;
 
 				$tag  = $this->args['link'] ? 'a' : 'i';
 				$html = '<' . $tag . ' ' . FusionBuilder::attributes( 'fontawesome-shortcode' ) . '>' . do_shortcode( $content ) . '</' . $tag . '>';
 
-				if ( $this->args['alignment'] && ! fusion_element_rendering_is_flex() ) {
-					$html = '<div class="fusion-fa-align-' . $this->args['alignment'] . '">' . $html . '</div>';
+				if ( $alignment && ! fusion_element_rendering_is_flex() ) {
+					$html = '<div class="fusion-fa-align-' . $alignment . '">' . $html . '</div>';
 				}
+				$html .= $this->get_style_block();
 
 				$this->icon_counter++;
+
 				$this->on_render();
+
 				return apply_filters( 'fusion_element_fontawesome_content', $html, $args );
+
 			}
 
 			/**
@@ -184,17 +190,56 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 
 				$attr['class'] .= Fusion_Builder_Sticky_Visibility_Helper::get_sticky_class( $this->args['sticky_display'] );
 
+				$attr['style'] = '';
+
+				if ( 'yes' === $this->args['circle'] ) {
+
+					$attr['style'] .= 'font-size:' . $this->args['circle_yes_font_size'] . 'px;';
+
+					$attr['style'] .= 'line-height:' . $this->args['line_height'] . 'px;height:' . $this->args['height'] . 'px;width:' . $this->args['height'] . 'px;';
+
+					$attr['style'] .= 'border-width:' . $this->args['circlebordersize'] . ';';
+				} else {
+					$attr['style'] .= 'font-size:' . $this->args['font_size'] . 'px;';
+				}
+
 				if ( '' === $this->args['alignment'] ) {
 					$attr['class'] .= ' fusion-text-flow';
 				} elseif ( fusion_element_rendering_is_flex() ) {
-					// Fallback to correct margin on flex containers.
-					$this->args['margin_top']    = $this->args['margin_top'] ? $this->args['margin_top'] : '0px';
-					$this->args['margin_right']  = $this->args['margin_right'] ? $this->args['margin_right'] : '0px';
-					$this->args['margin_bottom'] = $this->args['margin_bottom'] ? $this->args['margin_bottom'] : '0px';
-					$this->args['margin_left']   = $this->args['margin_left'] ? $this->args['margin_left'] : '0px';
+					// RTL adjust.
+					if ( is_rtl() && 'center' !== $this->args['alignment'] ) {
+						$this->args['alignment'] = 'left' === $this->args['alignment'] ? 'right' : 'left';
+					}
+
+					if ( 'left' === $this->args['alignment'] ) {
+						$attr['style'] .= 'align-self:flex-start;';
+					} elseif ( 'right' === $this->args['alignment'] ) {
+						$attr['style'] .= 'align-self:flex-end;';
+					} else {
+						$attr['style'] .= 'align-self:center;';
+					}
 				}
 
-				$attr['style'] = $this->get_style_vars();
+				// Legacy icon, where no margin option was present: use the old default ,argin calcs.
+				if ( $this->args['legacy_icon'] ) {
+					$icon_margin = $this->args['font_size'] * 0.5;
+
+					if ( 'left' === $this->args['alignment'] ) {
+						$icon_margin_position = 'right';
+					} elseif ( 'right' === $this->args['alignment'] ) {
+						$icon_margin_position = 'left';
+					} else {
+						$icon_margin_position = ( is_rtl() ) ? 'left' : 'right';
+					}
+
+					if ( 'center' !== $this->args['alignment'] ) {
+						$attr['style'] .= 'margin-' . $icon_margin_position . ':' . $icon_margin . 'px;';
+					}
+				} else {
+
+					// New icon with dedicated margin option.
+					$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
+				}
 
 				if ( $this->args['rotate'] ) {
 					$attr['class'] .= ' fa-rotate-' . $this->args['rotate'];
@@ -244,113 +289,46 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 			}
 
 			/**
-			 * Get style variables.
+			 * Builds style block.
 			 *
-			 * @since 3.9
-			 * @return string
+			 * @access public
+			 * @since 2.2
+			 * @return array
 			 */
-			public function get_style_vars() {
-				$css_vars        = [
-					'iconcolor',
-					'iconcolor_hover',
-				];
-				$custom_css_vars = [];
-
+			public function get_style_block() {
+				$background_color = $border_color = $background_hover = $border_hover = $tag = '';
 				if ( 'yes' === $this->args['circle'] ) {
-					array_push( $css_vars, 'circlecolor' );
-					array_push( $css_vars, 'circlecolor_hover' );
-					array_push( $css_vars, 'circlebordercolor' );
-					array_push( $css_vars, 'circlebordercolor_hover' );
-				} else {
-					array_push( $css_vars, 'circlecolor' );
-				}
-
-				if ( 'yes' === $this->args['circle'] ) {
-					$custom_css_vars['font_size'] = $this->args['circle_yes_font_size'] . 'px';
-					$custom_css_vars['width']     = $this->args['height'] . 'px';
-					$custom_css_vars['height']    = $this->args['height'] . 'px';
-
-					$custom_css_vars['line_height'] = $this->args['line_height'] . 'px';
-					array_push( $css_vars, 'circlebordersize' );
-
-					if ( ! $this->is_default( 'border_radius_top_left' ) ) {
-						$custom_css_vars['border_radius_top_l'] = $this->args['border_radius_top_left'];
+					if ( $this->args['circlecolor'] ) {
+						$background_color = ' background-color: ' . $this->args['circlecolor'] . ';';
 					}
-					if ( ! $this->is_default( 'border_radius_top_right' ) ) {
-						$custom_css_vars['border_radius_top_r'] = $this->args['border_radius_top_right'];
+					if ( $this->args['circlecolor_hover'] ) {
+						$background_hover = ' background-color: ' . $this->args['circlecolor_hover'] . ';';
 					}
-					if ( ! $this->is_default( 'border_radius_bottom_right' ) ) {
-						$custom_css_vars['border_radius_bot_r'] = $this->args['border_radius_bottom_right'];
+					if ( $this->args['circlebordercolor'] ) {
+						$border_color = ' border-color: ' . $this->args['circlebordercolor'] . ';';
 					}
-					if ( ! $this->is_default( 'border_radius_bottom_left' ) ) {
-						$custom_css_vars['border_radius_bot_l'] = $this->args['border_radius_bottom_left'];
-					}
-				} else {
-					$custom_css_vars['font_size'] = $this->args['font_size'] . 'px';
-				}
-
-				$margin = '';
-				// Legacy icon, where no margin option was present: use the old default margin calcs.
-				if ( $this->args['legacy_icon'] ) {
-					$icon_margin = $this->args['font_size'] * 0.5;
-
-					if ( 'left' === $this->args['alignment'] ) {
-						$icon_margin_position = 'right';
-					} elseif ( 'right' === $this->args['alignment'] ) {
-						$icon_margin_position = 'left';
-					} else {
-						$icon_margin_position = ( is_rtl() ) ? 'left' : 'right';
-					}
-
-					// Fallback to correct margin on flex containers.
-					if ( '' !== $this->args['alignment'] && fusion_element_rendering_is_flex() ) {
-						$custom_css_vars['margin_top']    = 0;
-						$custom_css_vars['margin_right']  = 0;
-						$custom_css_vars['margin_bottom'] = 0;
-						$custom_css_vars['margin_left']   = 0;
-					}
-
-					if ( 'center' !== $this->args['alignment'] ) {
-						$custom_css_vars[ 'margin_' . $icon_margin_position ] = $icon_margin . 'px';
-					}
-				} else {
-					$margin = Fusion_Builder_Margin_Helper::get_margin_vars( $this->args );
-				}
-
-				// Responsive Alignment.
-				if ( fusion_element_rendering_is_flex() ) {
-					foreach ( [ 'large', 'medium', 'small' ] as $size ) {
-						$align_styles = '';
-						$align_key    = 'large' === $size ? 'alignment' : 'alignment_' . $size;
-						if ( '' !== $this->args[ $align_key ] ) {
-							// RTL adjust.
-							if ( is_rtl() && 'center' !== $this->args[ $align_key ] ) {
-								$this->args[ $align_key ] = 'left' === $this->args[ $align_key ] ? 'right' : 'left';
-							}
-							if ( 'left' === $this->args[ $align_key ] ) {
-								$align_styles = 'flex-start';
-							} elseif ( 'right' === $this->args[ $align_key ] ) {
-								$align_styles = 'flex-end';
-							} else {
-								$align_styles = 'center';
-							}
-						}
-
-						if ( '' === $align_styles ) {
-							continue;
-						}
-
-						if ( 'large' === $size ) {
-							$custom_css_vars['align-self'] = $align_styles;
-						} elseif ( 'medium' === $size ) {
-							$custom_css_vars['md-align-self'] = $align_styles;
-						} elseif ( 'small' === $size ) {
-							$custom_css_vars['sm-align-self'] = $align_styles;
-						}
+					if ( $this->args['circlebordercolor_hover'] ) {
+						$border_hover = ' border-color: ' . $this->args['circlebordercolor_hover'] . ';';
 					}
 				}
 
-				return $this->get_css_vars_for_options( $css_vars ) . $this->get_custom_css_vars( $custom_css_vars ) . $margin;
+				$tag = $this->args['link'] ? 'a' : 'i';
+
+				$html  = '<style>';
+				$html .= $tag . '.fb-icon-element.fontawesome-icon.fb-icon-element-' . $this->element_id . '{ color: ' . $this->args['iconcolor'] . ';' . $background_color . $border_color . '}';
+				$html .= $tag . '.fb-icon-element.fontawesome-icon.fb-icon-element-' . $this->element_id . ':hover { color: ' . $this->args['iconcolor_hover'] . ';' . $background_hover . $border_hover . '}';
+
+				// Pulsate effect color for outershadow.
+				if ( 'pulsate' === $this->args['icon_hover_type'] ) {
+					$html .= $tag . '.fontawesome-icon.fb-icon-element-' . $this->element_id . '.icon-hover-animation-pulsate:after {';
+					$html .= '-webkit-box-shadow:0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' . $this->args['circlecolor_hover'] . ', 0 0 0 10px rgba(255,255,255,0.5);';
+					$html .= '-moz-box-shadow:0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' . $this->args['circlecolor_hover'] . ', 0 0 0 10px rgba(255,255,255,0.5);';
+					$html .= 'box-shadow: 0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' . $this->args['circlecolor_hover'] . ', 0 0 0 10px rgba(255,255,255,0.5);';
+					$html .= '}';
+				}
+
+				$html .= '</style>';
+				return $html;
 			}
 
 			/**
@@ -435,7 +413,7 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 								'label'       => esc_html__( 'Icon Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the icon.', 'fusion-builder' ),
 								'id'          => 'icon_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -449,7 +427,7 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 								'label'       => esc_html__( 'Icon Hover Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the icon on hover.', 'fusion-builder' ),
 								'id'          => 'icon_color_hover',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -467,15 +445,15 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 								'type'        => 'radio-buttonset',
 								'transport'   => 'postMessage',
 								'choices'     => [
-									'yes' => esc_html__( 'Yes', 'fusion-builder' ),
-									'no'  => esc_html__( 'No', 'fusion-builder' ),
+									'yes' => esc_html__( 'On', 'fusion-builder' ),
+									'no'  => esc_html__( 'Off', 'fusion-builder' ),
 								],
 							],
 							'icon_circle_color'       => [
 								'label'       => esc_html__( 'Icon Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the background.', 'fusion-builder' ),
 								'id'          => 'icon_circle_color',
-								'default'     => 'var(--awb-color5)',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -489,7 +467,7 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 								'label'       => esc_html__( 'Icon Hover Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the background on hover.', 'fusion-builder' ),
 								'id'          => 'icon_circle_color_hover',
-								'default'     => 'var(--awb-color4)',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -521,7 +499,7 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 								'label'       => esc_html__( 'Icon Background Border Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the border color of the background.', 'fusion-builder' ),
 								'id'          => 'icon_border_color',
-								'default'     => 'var(--awb-color8)',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -535,51 +513,13 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 								'label'       => esc_html__( 'Icon Hover Background Border Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the border color of the background on hover.', 'fusion-builder' ),
 								'id'          => 'icon_border_color_hover',
-								'default'     => 'var(--awb-color4)',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
 									[
 										'name'     => '--icon_border_color_hover',
 										'callback' => [ 'sanitize_color' ],
-									],
-								],
-							],
-							'icon_border_radius'      => [
-								'label'       => esc_attr__( 'Border Radius', 'fusion-builder' ),
-								'description' => esc_html__( 'Set the border radius.', 'fusion-builder' ),
-								'id'          => 'icon_border_radius',
-								'choices'     => [
-									'top_left'     => true,
-									'top_right'    => true,
-									'bottom_right' => true,
-									'bottom_left'  => true,
-									'units'        => [ 'px', '%', 'em' ],
-								],
-								'default'     => [
-									'top_left'     => '50%',
-									'top_right'    => '50%',
-									'bottom_right' => '50%',
-									'bottom_left'  => '50%',
-								],
-								'type'        => 'border_radius',
-								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'   => '--icon_border_top_l_rad',
-										'choice' => 'top_left',
-									],
-									[
-										'name'   => '--icon_border_top_r_rad',
-										'choice' => 'top_right',
-									],
-									[
-										'name'   => '--icon_border_bot_r_rad',
-										'choice' => 'bottom_right',
-									],
-									[
-										'name'   => '--icon_border_bot_l_rad',
-										'choice' => 'bottom_left',
 									],
 								],
 							],
@@ -622,21 +562,6 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
 			 */
 			public function add_css_files() {
 				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/icon.min.css' );
-
-				Fusion_Media_Query_Scripts::$media_query_assets[] = [
-					'avada-icon-md',
-					FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/icon-md.min.css',
-					[],
-					FUSION_BUILDER_VERSION,
-					Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-medium' ),
-				];
-				Fusion_Media_Query_Scripts::$media_query_assets[] = [
-					'avada-icon-sm',
-					FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/icon-sm.min.css',
-					[],
-					FUSION_BUILDER_VERSION,
-					Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-small' ),
-				];
 			}
 		}
 	}
@@ -651,7 +576,8 @@ if ( fusion_is_element_enabled( 'fusion_fontawesome' ) ) {
  * @since 1.0
  */
 function fusion_element_font_awesome() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -662,15 +588,14 @@ function fusion_element_font_awesome() {
 				'icon'       => 'fusiona-flag',
 				'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-font-awesome-preview.php',
 				'preview_id' => 'fusion-builder-block-module-font-awesome-preview-template',
-				'help_url'   => 'https://avada.com/documentation/icon-element/',
+				'help_url'   => 'https://theme-fusion.com/documentation/fusion-builder/elements/font-awesome-icon-element/',
 				'params'     => [
 					[
-						'type'         => 'iconpicker',
-						'heading'      => esc_attr__( 'Select Icon', 'fusion-builder' ),
-						'param_name'   => 'icon',
-						'value'        => 'fa-flag fas',
-						'description'  => esc_attr__( 'Click an icon to select, click again to deselect.', 'fusion-builder' ),
-						'dynamic_data' => true,
+						'type'        => 'iconpicker',
+						'heading'     => esc_attr__( 'Select Icon', 'fusion-builder' ),
+						'param_name'  => 'icon',
+						'value'       => 'fa-flag fas',
+						'description' => esc_attr__( 'Click an icon to select, click again to deselect.', 'fusion-builder' ),
 					],
 					[
 						'type'        => 'range',
@@ -730,11 +655,11 @@ function fusion_element_font_awesome() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window <br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'linktarget',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => '_self',
 					],
@@ -742,7 +667,7 @@ function fusion_element_font_awesome() {
 						'type'             => 'dimension',
 						'remove_from_atts' => true,
 						'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
-						'description'      => __( 'Spacing around the icon. In px, em or %, e.g. 10px. <strong>NOTE:</strong> Leave empty for automatic margin calculation, based on alignment and icon size.', 'fusion-builder' ),
+						'description'      => __( 'Spacing around the icon. In px, em or %, e.g. 10px. <strong>Note:</strong> Leave empty for automatic margin calculation, based on alignment and icon size.', 'fusion-builder' ),
 						'param_name'       => 'margin',
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'value'            => [
@@ -753,26 +678,27 @@ function fusion_element_font_awesome() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Icon Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the color of the icon. ', 'fusion-builder' ),
-						'param_name'    => 'iconcolor',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'icon_color' ),
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'icon_color_hover' ),
-								'preview' => [
-									'selector' => '.fontawesome-icon',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the icon. ', 'fusion-builder' ),
+						'param_name'  => 'iconcolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'icon_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the icon on hover. ', 'fusion-builder' ),
+						'param_name'  => 'iconcolor_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'icon_color_hover' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'preview'     => [
+							'selector' => '.fontawesome-icon',
+							'type'     => 'class',
+							'toggle'   => 'hover',
 						],
-						'connect-state' => [ 'circlecolor', 'circlebordercolor' ],
-
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -806,32 +732,41 @@ function fusion_element_font_awesome() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Icon Background Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the color of the icon background. ', 'fusion-builder' ),
-						'param_name'    => 'circlecolor',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'icon_circle_color' ),
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the icon background. ', 'fusion-builder' ),
+						'param_name'  => 'circlecolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'icon_circle_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
 							[
 								'element'  => 'circle',
 								'value'    => 'no',
 								'operator' => '!=',
 							],
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'icon_circle_color_hover' ),
-								'preview' => [
-									'selector' => '.fontawesome-icon',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Hover Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the icon background on hover. ', 'fusion-builder' ),
+						'param_name'  => 'circlecolor_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'icon_circle_color_hover' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'preview'     => [
+							'selector' => '.fontawesome-icon',
+							'type'     => 'class',
+							'toggle'   => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'circle',
+								'value'    => 'no',
+								'operator' => '!=',
 							],
 						],
-						'connect-state' => [ 'iconcolor', 'circlebordercolor' ],
 					],
 					[
 						'type'        => 'range',
@@ -853,14 +788,14 @@ function fusion_element_font_awesome() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Icon Background Border Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the color of the background border. ', 'fusion-builder' ),
-						'param_name'    => 'circlebordercolor',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'icon_border_color' ),
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the background border. ', 'fusion-builder' ),
+						'param_name'  => 'circlebordercolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'icon_border_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
 							[
 								'element'  => 'circle',
 								'value'    => 'no',
@@ -872,24 +807,29 @@ function fusion_element_font_awesome() {
 								'operator' => '!=',
 							],
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'icon_border_color_hover' ),
-								'preview' => [
-									'selector' => '.fontawesome-icon',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'iconcolor', 'circlecolor' ],
 					],
-					'fusion_border_radius_placeholder'     => [
-						'dependency' => [
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Hover Background Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the background border on hover. ', 'fusion-builder' ),
+						'param_name'  => 'circlebordercolor_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'icon_border_color_hover' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'preview'     => [
+							'selector' => '.fontawesome-icon',
+							'type'     => 'class',
+							'toggle'   => 'hover',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'circle',
 								'value'    => 'no',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'circlebordersize',
+								'value'    => '0',
 								'operator' => '!=',
 							],
 						],
@@ -925,9 +865,6 @@ function fusion_element_font_awesome() {
 							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
 						],
 						'default'     => '',
-						'responsive'  => [
-							'state' => 'large',
-						],
 					],
 					[
 						'type'        => 'checkbox_button_set',

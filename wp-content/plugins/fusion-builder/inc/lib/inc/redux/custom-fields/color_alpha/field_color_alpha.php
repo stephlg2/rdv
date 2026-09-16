@@ -48,12 +48,11 @@ if ( ! class_exists( 'FusionReduxFramework_color_alpha' ) ) {
 			$input .= 'data-id="' . $this->field['id'] . '" ';
 			$input .= 'name="' . $this->field['name'] . $this->field['name_suffix'] . '" ';
 			$input .= 'id="' . $this->field['id'] . '-color" ';
-			$input .= 'class="color-picker ' . $this->field['class'] . '"  ';
+			$input .= 'class="color-picker fusionredux-color fusionredux-color-init ' . $this->field['class'] . '"  ';
 			$input .= 'type="text" value="' . $this->value . '" ';
 			$input .= 'data-oldcolor="" ';
 			$input .= 'data-alpha="true" ';
 			$input .= 'data-default-color="' . ( isset( $this->field['default'] ) ? $this->field['default'] : '' ) . '" ';
-			$input .= ( isset( $this->field['allow_globals'] ) && false === $this->field['allow_globals'] ? 'data-globals="false" ' : '' );
 			$input .= '/>';
 			echo $input;
 			echo '<input type="hidden" class="fusionredux-saved-color" id="' . $this->field['id'] . '-saved-color' . '" value="">';
@@ -79,11 +78,22 @@ if ( ! class_exists( 'FusionReduxFramework_color_alpha' ) ) {
 		 * @return        void
 		 */
 		public function enqueue() {
+			if ($this->parent->args['dev_mode']) {
+				wp_enqueue_style( 'fusionredux-color-picker-css' );
+			}
 
+			wp_enqueue_style( 'wp-color-picker' );
+
+			wp_enqueue_script(
+				'wp-color-picker-alpha',
+				trailingslashit( FUSION_LIBRARY_URL ) . 'inc/redux/custom-fields/color_alpha/wp-color-picker-alpha.js',
+				array( 'wp-color-picker' ),
+				'1.2'
+			);
 			wp_enqueue_script(
 				'fusionredux-field-color-js',
 				trailingslashit( FUSION_LIBRARY_URL ) . 'inc/redux/custom-fields/color_alpha/field_color_alpha.js',
-				array( 'jquery', 'awb-color-picker', 'fusionredux-js' ),
+				array( 'jquery', 'wp-color-picker-alpha', 'fusionredux-js' ),
 				time(),
 				true
 			);

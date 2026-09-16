@@ -2,7 +2,7 @@
 /* stylelint-enable length-zero-no-unit */
 .tooltip {
   position: absolute;
-  z-index: 2030;
+  z-index: 1030;
   display: block;
   visibility: visible;
   font-size: 12px;

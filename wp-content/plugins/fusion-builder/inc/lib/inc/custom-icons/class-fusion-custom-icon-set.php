@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Fusion-Library
  * @since      2.2
  */
@@ -91,8 +91,8 @@ class Fusion_Custom_Icon_Set {
 		// Register custom post type.
 		add_action( 'init', [ $this, 'register_post_type' ] );
 
-		// Front end styles.
-		add_filter( 'fusion_dynamic_css_final', [ $this, 'combine_stylesheets' ] );
+		// Front end scripts.
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
 
 		// Live Builders scripts.
 		add_action( 'fusion_enqueue_live_scripts', [ $this, 'enqueue_scripts' ] );
@@ -181,7 +181,7 @@ class Fusion_Custom_Icon_Set {
 			'supports'            => [ 'title' ],
 		];
 
-		register_post_type( $this->post_type, apply_filters( 'fusion_custom_icons_args', $args ) ); // phpcs:ignore WPThemeReview.PluginTerritory.ForbiddenFunctions.plugin_territory_register_post_type
+		register_post_type( $this->post_type, $args ); // phpcs:ignore WPThemeReview.PluginTerritory.ForbiddenFunctions.plugin_territory_register_post_type
 	}
 
 	/**
@@ -205,40 +205,9 @@ class Fusion_Custom_Icon_Set {
 	}
 
 	/**
-	 * Adds assets to the compiled CSS.
+	 * Enqueue front end scripts.
 	 *
-	 * @access public
-	 * @since 3.4
-	 * @param string $original_styles The compiled styles.
-	 * @return string The compiled styles with any additional CSS appended.
-	 */
-	public function combine_stylesheets( $original_styles ) {
-
-		$icon_style  = '';
-		$icon_styles = '';
-		$icon_sets   = fusion_get_custom_icons_array();
-
-		foreach ( $icon_sets as $key => $icon_set ) {
-			if ( isset( $icon_set['icon_set_dir_name'] ) && '' !== $icon_set['icon_set_dir_name'] ) {
-				$icon_style_path = FUSION_ICONS_BASE_DIR . $icon_set['icon_set_dir_name'] . '/style.css';
-				if ( file_exists( $icon_style_path ) ) {
-					$icon_style   = fusion_file_get_contents( $icon_style_path );
-					$icon_style   = str_replace( 'fonts/', FUSION_ICONS_BASE_URL . $icon_set['icon_set_dir_name'] . '/fonts/', $icon_style );
-					$icon_styles .= $icon_style;
-				}
-			}
-		}
-
-		if ( 'swap-all' === fusion_library()->get_option( 'font_face_display' ) ) {
-			$icon_styles = str_replace( 'font-display: block', 'font-display: swap', $icon_styles );
-		}
-		return $icon_styles . $original_styles;
-	}
-
-	/**
-	 * Enqueue front end scripts, used in Live Editor.
-	 *
-	 * @since 2.2.0
+	 * @since 6.2
 	 * @return void
 	 */
 	public function enqueue_scripts() {
@@ -256,7 +225,7 @@ class Fusion_Custom_Icon_Set {
 	/**
 	 * Enqueue admin scripts.
 	 *
-	 * @since 2.2.0
+	 * @since 6.2
 	 * @param string $hook_suffix The current admin page.
 	 * @return void
 	 */
@@ -264,13 +233,12 @@ class Fusion_Custom_Icon_Set {
 		global $fusion_library_latest_version, $typenow, $post;
 
 		$current_screen_id = null;
-		$allowed_screens   = [ 'nav-menus', 'appearance_page_avada_options' ];
 		if ( function_exists( 'get_current_screen' ) ) {
 			$current_screen    = get_current_screen();
 			$current_screen_id = $current_screen->id;
 		}
 
-		if ( 'post-new.php' !== $hook_suffix && 'post.php' !== $hook_suffix && ! in_array( $current_screen_id, $allowed_screens, true ) ) {
+		if ( 'post-new.php' !== $hook_suffix && 'post.php' !== $hook_suffix && 'nav-menus' !== $current_screen_id ) {
 			return;
 		}
 
@@ -303,7 +271,7 @@ class Fusion_Custom_Icon_Set {
 		}
 
 		// Enqueue custom icon's styles.
-		if ( isset( $typenow ) && class_exists( 'FusionBuilder' ) && in_array( $typenow, FusionBuilder::allowed_post_types(), true ) || in_array( $current_screen_id, $allowed_screens, true ) ) {
+		if ( isset( $typenow ) && class_exists( 'FusionBuilder' ) && in_array( $typenow, FusionBuilder::allowed_post_types(), true ) || 'nav-menus' === $current_screen_id ) {
 
 			$icon_sets = fusion_get_custom_icons_array();
 
@@ -387,8 +355,10 @@ class Fusion_Custom_Icon_Set {
 			} else {
 				$response['status'] = 'success';
 
-				$response['attachment']       = [];
-				$response['attachment']['id'] = $id;
+				$src                           = wp_get_attachment_image_src( $id, 'thumbnail' );
+				$response['attachment']        = [];
+				$response['attachment']['id']  = $id;
+				$response['attachment']['src'] = $src[0];
 			}
 		}
 
@@ -509,8 +479,8 @@ class Fusion_Custom_Icon_Set {
 									),
 									'<a href="https://icomoon.io/app/" target="_blank" rel="noreferrer">Icomoon</a>',
 									'<br>',
-									'<strong>' . esc_html__( 'NOTE:', 'fusion-builder' ) . '</strong>',
-									'<a href="https://avada.com/documentation/how-to-upload-and-use-custom-icons-in-avada/" target="_blank" rel="noreferrer">Custom Icon documentation</a>'
+									'<strong>' . esc_html__( 'Note:', 'fusion-builder' ) . '</strong>',
+									'<a href="https://theme-fusion.com/documentation/fusion-builder/settings-tools/how-to-upload-and-use-custom-icons-in-avada/" target="_blank" rel="noreferrer">Custom Icon documentation</a>'
 								);
 								?>
 							</p>
@@ -532,14 +502,6 @@ class Fusion_Custom_Icon_Set {
 						<i class="fusiona-file-upload-solid" aria-hidden="true"></i>
 						<?php echo esc_html( $buton_label ); ?>
 					</a>
-					<?php
-					$json_exists = method_exists( $this->wp_filesystem, 'exists' ) && $this->wp_filesystem->exists( FUSION_ICONS_BASE_DIR . $icon_set['icon_set_dir_name'] . '/selection.json' );
-					if ( $json_exists ) :
-						?>
-					<a href="<?php echo FUSION_ICONS_BASE_URL . $icon_set['icon_set_dir_name'] . '/selection.json'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>" id="fusion-custom-icons-json" target="_blank" data-title="<?php echo esc_attr( __( 'JSON', 'fusion-builder' ) ); ?>">
-						<?php echo esc_html( __( 'Download', 'fusion-builder' ) ); ?>
-					</a>
-					<?php endif; ?>
 
 					<div class="fusion-custom-icons-info">
 						<span>
@@ -653,28 +615,19 @@ class Fusion_Custom_Icon_Set {
 			$icon_set_dir_name = $this->get_unique_dir_name( pathinfo( $package_path, PATHINFO_FILENAME ), FUSION_ICONS_BASE_DIR );
 			$icon_set_path     = FUSION_ICONS_BASE_DIR . $icon_set_dir_name;
 
+			// Create icon set directory.
+			wp_mkdir_p( $icon_set_path );
+
 			// Attempt to manually extract the zip file first. Required for fptext method.
 			if ( class_exists( 'ZipArchive' ) ) {
-				$zip        = new ZipArchive();
-				$to_extract = [];
-
+				$zip = new ZipArchive();
 				if ( true === $zip->open( $package_path ) ) {
-
-					// Check if icomoon file extensions are allowed.
-					for ( $i = 0; $i < $zip->numFiles; $i++ ) {
-						$filename = $zip->getNameIndex( $i );
-
-						if ( preg_match( '/(\.json$|\.js$|\.css$|\.txt$|\.ttf$|\.woff$|\.woff2$|\.otf$|\.eot$|\.scss$|\.less$|\.styl$|\/$)/', $filename ) ) {
-							$to_extract[] = $filename;
-						}
-					}
-
-					if ( ! empty( $to_extract ) ) {
-						wp_mkdir_p( $icon_set_path ); // Create icon set directory.
-						$status = $zip->extractTo( $icon_set_path, $to_extract );
-					}
+					$zip->extractTo( $icon_set_path );
 					$zip->close();
+					$status = true;
 				}
+			} else {
+				$status = unzip_file( $package_path, $icon_set_path );
 			}
 		}
 
@@ -703,7 +656,7 @@ class Fusion_Custom_Icon_Set {
 	}
 
 	/**
-	 * Processes icon package, extracts files and saves post meta.
+	 * Processes icon package, exctracts files and saves post meta.
 	 * Separate method as it might be needed to be called as AJAX callback.
 	 *
 	 * @since 6.2
@@ -741,28 +694,19 @@ class Fusion_Custom_Icon_Set {
 			$icon_set_dir_name = $this->get_unique_dir_name( pathinfo( $package_path, PATHINFO_FILENAME ), FUSION_ICONS_BASE_DIR );
 			$icon_set_path     = FUSION_ICONS_BASE_DIR . $icon_set_dir_name;
 
+			// Create icon set directory.
+			wp_mkdir_p( $icon_set_path );
+
 			// Attempt to manually extract the zip file first. Required for fptext method.
 			if ( class_exists( 'ZipArchive' ) ) {
-				$zip        = new ZipArchive();
-				$to_extract = [];
-
+				$zip = new ZipArchive();
 				if ( true === $zip->open( $package_path ) ) {
-
-					// Check if icomoon file extensions are allowed.
-					for ( $i = 0; $i < $zip->numFiles; $i++ ) {
-						$filename = $zip->getNameIndex( $i );
-
-						if ( preg_match( '/(\.json$|\.js$|\.css$|\.txt$|\.ttf$|\.woff$|\.woff2$|\.otf$|\.eot$|\.scss$|\.less$|\.styl$|\/$)/', $filename ) ) {
-							$to_extract[] = $filename;
-						}
-					}
-
-					if ( ! empty( $to_extract ) ) {
-						wp_mkdir_p( $icon_set_path ); // Create icon set directory.
-						$status = $zip->extractTo( $icon_set_path, $to_extract );
-					}
+					$zip->extractTo( $icon_set_path );
 					$zip->close();
+					$status = true;
 				}
+			} else {
+				$status = unzip_file( $package_path, $icon_set_path );
 			}
 		}
 
@@ -937,17 +881,18 @@ class Fusion_Custom_Icon_Set {
 	public function add_new_custom_icon_set() {
 		check_admin_referer( 'fusion_new_custom_icon_set' );
 
-		if ( ! AWB_Access_Control::wp_user_can_for_post( $this->post_type, 'create_posts' ) ) {
+		$post_type_object = get_post_type_object( $this->post_type );
+		if ( ! current_user_can( $post_type_object->cap->edit_posts ) ) {
 			return;
 		}
 
 		$custom_icon_set = [
 			'post_title'  => isset( $_GET['name'] ) ? sanitize_text_field( wp_unslash( $_GET['name'] ) ) : '',
-			'post_status' => AWB_Access_Control::wp_user_can_for_post( $this->post_type, 'publish_posts' ) ? 'publish' : 'pending',
+			'post_status' => 'publish',
 			'post_type'   => $this->post_type,
 		];
 
-		$set_id = wp_insert_post( $custom_icon_set, true );
+		$set_id = wp_insert_post( $custom_icon_set );
 		if ( is_wp_error( $set_id ) ) {
 			$error_string = $set_id->get_error_message();
 			wp_die( esc_html( $error_string ) );

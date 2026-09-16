@@ -162,7 +162,14 @@
 										<div class="option-field fusion-builder-option-container">
 											<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.legend_text_color }}</span>
 											<div class="fusion-colorpicker-container">
-												<input type="text" value="{{ txt_color }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+												<input type="text" value="{{ txt_color }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+												<span class="wp-picker-input-container">
+													<label>
+														<input class="color-picker color-picker-placeholder" type="text" value="{{ txt_color }}">
+													</label>
+													<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+												</span>
+												<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 											</div>
 										</div>
 									</div>
@@ -173,7 +180,14 @@
 										<div class="option-field fusion-builder-option-container">
 											<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.background_color }}</span>
 											<div class="fusion-colorpicker-container">
-												<input type="text" value="{{ bg_color }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+												<input type="text" value="{{ bg_color }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+												<span class="wp-picker-input-container">
+													<label>
+														<input class="color-picker color-picker-placeholder" type="text" value="{{ bg_color }}">
+													</label>
+													<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+												</span>
+												<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 											</div>
 										</div>
 								</div>
@@ -184,7 +198,14 @@
 									<div class="option-field fusion-builder-option-container">
 										<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.border_color }}</span>
 										<div class="fusion-colorpicker-container">
-											<input type="text" value="{{ border_color }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+											<input type="text" value="{{ border_color }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+											<span class="wp-picker-input-container">
+												<label>
+													<input class="color-picker color-picker-placeholder" type="text" value="{{ border_color }}">
+												</label>
+												<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+											</span>
+											<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 										</div>
 									</div>
 								</div>
@@ -203,7 +224,14 @@
 									<div class="option-field fusion-builder-option-container">
 										<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.legend_text_color }}</span>
 										<div class="fusion-colorpicker-container">
-											<input type="text" value="#ffffff" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+											<input type="text" value="#ffffff" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+											<span class="wp-picker-input-container">
+												<label>
+													<input class="color-picker color-picker-placeholder" type="text" value="#ffffff">
+												</label>
+												<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+											</span>
+											<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 										</div>
 									</div>
 								</div>
@@ -214,7 +242,14 @@
 									<div class="option-field fusion-builder-option-container">
 										<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.background_color }}</span>
 										<div class="fusion-colorpicker-container">
-											<input type="text" value="{{ sampleColors[c-5] }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+											<input type="text" value="{{ sampleColors[c-5] }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+											<span class="wp-picker-input-container">
+												<label>
+													<input class="color-picker color-picker-placeholder" type="text" value="{{ sampleColors[c-5] }}">
+												</label>
+												<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+											</span>
+											<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 										</div>
 									</div>
 							</div>
@@ -225,7 +260,14 @@
 								<div class="option-field fusion-builder-option-container">
 									<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.border_color }}</span>
 									<div class="fusion-colorpicker-container">
-										<input type="text" value="{{ sampleColors[c-5] }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+										<input type="text" value="{{ sampleColors[c-5] }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+										<span class="wp-picker-input-container">
+											<label>
+												<input class="color-picker color-picker-placeholder" type="text" value="{{ sampleColors[c-5] }}">
+											</label>
+											<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+										</span>
+										<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 									</div>
 								</div>
 							</div>
@@ -255,7 +297,14 @@
 											<div class="option-field fusion-builder-option-container">
 												<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.legend_text_color }}</span>
 												<div class="fusion-colorpicker-container">
-													<input type="text" value="{{ td[ i ][2] }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+													<input type="text" value="{{ td[ i ][2] }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+													<span class="wp-picker-input-container">
+														<label>
+															<input class="color-picker color-picker-placeholder" type="text" value="{{ td[ i ][2] }}">
+														</label>
+														<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+													</span>
+													<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 												</div>
 											</div>
 										</div>
@@ -266,7 +315,14 @@
 											<div class="option-field fusion-builder-option-container">
 												<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.background_color }}</span>
 												<div class="fusion-colorpicker-container">
-													<input type="text" value="{{ td[ i ][3] }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+													<input type="text" value="{{ td[ i ][3] }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+													<span class="wp-picker-input-container">
+														<label>
+															<input class="color-picker color-picker-placeholder" type="text" value="{{ td[ i ][3] }}">
+														</label>
+														<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+													</span>
+													<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 												</div>
 											</div>
 										</div>
@@ -277,7 +333,14 @@
 											<div class="option-field fusion-builder-option-container">
 												<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.border_color }}</span>
 												<div class="fusion-colorpicker-container">
-													<input type="text" value="{{ td[ i ][4] }}" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+													<input type="text" value="{{ td[ i ][4] }}" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+													<span class="wp-picker-input-container">
+														<label>
+															<input class="color-picker color-picker-placeholder" type="text" value="{{ td[ i ][4] }}">
+														</label>
+														<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+													</span>
+													<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 												</div>
 											</div>
 										</div>
@@ -313,7 +376,14 @@
 										<div class="option-field fusion-builder-option-container">
 											<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.legend_text_color }}</span>
 											<div class="fusion-colorpicker-container">
-												<input type="text" value="#ffffff" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+												<input type="text" value="#ffffff" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+												<span class="wp-picker-input-container">
+													<label>
+														<input class="color-picker color-picker-placeholder" type="text" value="#ffffff">
+													</label>
+													<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+												</span>
+												<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 											</div>
 										</div>
 									</div>
@@ -324,7 +394,14 @@
 										<div class="option-field fusion-builder-option-container">
 											<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.background_color }}</span>
 											<div class="fusion-colorpicker-container">
-												<input type="text" value="#03a9f4" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+												<input type="text" value="#03a9f4" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+												<span class="wp-picker-input-container">
+													<label>
+														<input class="color-picker color-picker-placeholder" type="text" value="#03a9f4">
+													</label>
+													<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+												</span>
+												<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 											</div>
 										</div>
 									</div>
@@ -335,7 +412,14 @@
 										<div class="option-field fusion-builder-option-container">
 											<span class="fusion-builder-colorpicker-title">{{ fusionBuilderText.border_color }}</span>
 											<div class="fusion-colorpicker-container">
-												<input type="text" value="#03a9f4" data-globals="false" data-hide="false" class="fusion-builder-color-picker-hex color-picker" data-allow-picker-toggle="false" data-alpha="true" />
+												<input type="text" value="#03a9f4" class="fusion-builder-color-picker-hex color-picker" data-alpha="true" />
+												<span class="wp-picker-input-container">
+													<label>
+														<input class="color-picker color-picker-placeholder" type="text" value="#03a9f4">
+													</label>
+													<input type="button" class="button button-small wp-picker-clear" value="Clear"></span>
+												</span>
+												<span class="fusion-colorpicker-icon fusiona-color-dropper"></span><button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
 											</div>
 										</div>
 									</div>

@@ -26,7 +26,7 @@ class Fusion_PLL_Rewrite_Slugs {
 	 * @since 6.1
 	 */
 	public function __construct() {
-		add_action( 'init', [ $this, 'init' ], 9 );
+		add_action( 'init', [ $this, 'init' ], 20 );
 	}
 
 	/**
@@ -140,7 +140,7 @@ class Fusion_PLL_Rewrite_Slugs {
 	public function post_type_archive_link_filter( $link, $post_type ) {
 		if ( is_admin() ) {
 			global $polylang;
-			$lang = isset( $polylang->pref_lang ) ? $polylang->pref_lang->slug : null;
+			$lang = $polylang->pref_lang->slug;
 		} else {
 			$lang = pll_current_language();
 		}
@@ -165,31 +165,36 @@ class Fusion_PLL_Rewrite_Slugs {
 	private function get_post_type_archive_link( $post_type, $lang ) {
 		global $wp_rewrite, $polylang;
 
-		$translated_slugs = $this->post_types[ $post_type ]->translated_slugs;
-		$translated_slug  = $translated_slugs[ $lang ];
+		// If the post type is handle, let the "$this->get_post_type_archive_link"
+		// function handle this.
+		if ( isset( $this->post_types[ $post_type ] ) ) {
+			$translated_slugs = $this->post_types[ $post_type ]->translated_slugs;
+			$translated_slug  = $translated_slugs[ $lang ];
 
-		if ( ! $translated_slug->has_archive ) {
-			return false;
-		}
-
-		if ( get_option( 'permalink_structure' ) && is_array( $translated_slug->rewrite ) ) {
-			$struct = ( true === $translated_slug->has_archive ) ? $translated_slug->rewrite['slug'] : $translated_slug->has_archive;
-
-			if (
-				// If the "URL modifications" is set to "The language is set from the directory name in pretty permalinks".
-				$polylang->options['force_lang'] &&
-				// If NOT ("Hide URL language information for default language" option is
-				// set to true and the $lang is the default language).
-				! ( $polylang->options['hide_default'] && pll_default_language() === $lang )
-			) {
-				$struct = $lang . '/' . $struct;
+			if ( ! $translated_slug->has_archive ) {
+				return false;
 			}
 
-			$struct = ( $translated_slug->rewrite['with_front'] ) ? $wp_rewrite->front . $struct : $wp_rewrite->root . $struct;
-			return home_url( user_trailingslashit( $struct, 'post_type_archive' ) );
+			if ( get_option( 'permalink_structure' ) && is_array( $translated_slug->rewrite ) ) {
+				$struct = ( true === $translated_slug->has_archive ) ? $translated_slug->rewrite['slug'] : $translated_slug->has_archive;
+
+				if (
+					// If the "URL modifications" is set to "The language is set from the directory name in pretty permalinks".
+					$polylang->options['force_lang'] &&
+					// If NOT ("Hide URL language information for default language" option is
+					// set to true and the $lang is the default language).
+					! ( $polylang->options['hide_default'] && pll_default_language() === $lang )
+				) {
+					$struct = $lang . '/' . $struct;
+				}
+
+				$struct = ( $translated_slug->rewrite['with_front'] ) ? $wp_rewrite->front . $struct : $wp_rewrite->root . $struct;
+				return home_url( user_trailingslashit( $struct, 'post_type_archive' ) );
+			}
+			return home_url( '?post_type=' . $post_type );
 		}
 
-		return home_url( '?post_type=' . $post_type );
+		return $link;
 	}
 
 	/**

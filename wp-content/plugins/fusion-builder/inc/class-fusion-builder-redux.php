@@ -54,11 +54,10 @@ class Fusion_Builder_Redux extends Fusion_FusionRedux {
 			'before_after_offset',
 			'before_after_transition_time',
 			'blog_grid_columns',
+			'gallery_columns',
 			'carousel_speed',
-			'container_hundred_percent_scroll_sensitivity',
 			'counter_box_speed',
 			'flip_boxes_flip_duration',
-			'gallery_columns',
 			'testimonials_speed',
 			'text_columns',
 		];

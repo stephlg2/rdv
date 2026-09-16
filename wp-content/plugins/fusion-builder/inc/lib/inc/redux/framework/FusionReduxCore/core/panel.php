@@ -10,7 +10,7 @@
 		 */
 		class fusionreduxCorePanel {
 			/**
-			 * @var object|null
+			 * @var null
 			 */
 			public $parent = null;
 			/**
@@ -56,7 +56,7 @@
 				 */
 				do_action( "fusionredux/{$this->parent->args['opt_name']}/panel/before" );
 
-				// echo '<div class="wrap"><h2></h2></div>'; // Stupid hack for Wordpress alerts and warnings
+				echo '<div class="wrap"><h2></h2></div>'; // Stupid hack for Wordpress alerts and warnings
 
 				echo '<div class="clear"></div>';
 				echo '<div class="wrap">';
@@ -77,7 +77,7 @@
 				/**
 				 * action 'fusionredux/page/{opt_name}/form/before'
 				 *
-				 * @param fusionreduxCorePanel $object
+				 * @param object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux/page/{$this->parent->args['opt_name']}/form/before", $this );
 
@@ -93,7 +93,7 @@
 				/**
 				 * action 'fusionredux/page/{opt_name}/form/after'
 				 *
-				 * @param fusionreduxCorePanel $object
+				 * @param object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux/page/{$this->parent->args['opt_name']}/form/after", $this );
 				echo '<div class="clear"></div>';
@@ -129,15 +129,14 @@
 						/**
 						 * action 'fusionredux/options/{opt_name}/import'
 						 *
-						 * @param fusionreduxCorePanel $object
-						 * @param mixed $value Changed value.
+						 * @param object $this FusionReduxFramework
 						 */
 						do_action( "fusionredux/options/{$this->parent->args['opt_name']}/import", $this, $this->parent->transients['changed_values'] );
 
 						/**
 						 * filter 'fusionredux-imported-text-{opt_name}'
 						 *
-						 * @param string $translated
+						 * @param string  translated "settings imported" text
 						 */
 						echo '<div class="admin-notice notice-blue saved_notice"><strong>' . apply_filters( "fusionredux-imported-text-{$this->parent->args['opt_name']}", __( 'Settings Imported!', 'fusion-builder' ) ) . '</strong></div>';
 						//exit();
@@ -145,28 +144,28 @@
 						/**
 						 * action 'fusionredux/options/{opt_name}/reset'
 						 *
-						 * @param fusionreduxCorePanel $object
+						 * @param object $this FusionReduxFramework
 						 */
 						do_action( "fusionredux/options/{$this->parent->args['opt_name']}/reset", $this );
 
 						/**
 						 * filter 'fusionredux-defaults-text-{opt_name}'
 						 *
-						 * @param string $translated "settings imported" text
+						 * @param string  translated "settings imported" text
 						 */
 						echo '<div class="saved_notice admin-notice notice-yellow"><strong>' . apply_filters( "fusionredux-defaults-text-{$this->parent->args['opt_name']}", __( 'All Defaults Restored!', 'fusion-builder' ) ) . '</strong></div>';
 					} else if ( $this->parent->transients['last_save_mode'] == "defaults_section" ) {
 						/**
 						 * action 'fusionredux/options/{opt_name}/section/reset'
 						 *
-						 * @param fusionreduxCorePanel $object
+						 * @param object $this FusionReduxFramework
 						 */
 						do_action( "fusionredux/options/{$this->parent->args['opt_name']}/section/reset", $this );
 
 						/**
 						 * filter 'fusionredux-defaults-section-text-{opt_name}'
 						 *
-						 * @param string $translated "settings imported" text
+						 * @param string  translated "settings imported" text
 						 */
 						echo '<div class="saved_notice admin-notice notice-yellow"><strong>' . apply_filters( "fusionredux-defaults-section-text-{$this->parent->args['opt_name']}", __( 'Section Defaults Restored!', 'fusion-builder' ) ) . '</strong></div>';
 					} else if ( $this->parent->transients['last_save_mode'] == "normal" ) {
@@ -174,14 +173,13 @@
 						 * action 'fusionredux/options/{opt_name}/saved'
 						 *
 						 * @param mixed $value set/saved option value
-						 * @param mixed $changed_value
 						 */
 						do_action( "fusionredux/options/{$this->parent->args['opt_name']}/saved", $this->parent->options, $this->parent->transients['changed_values'] );
 
 						/**
 						 * filter 'fusionredux-saved-text-{opt_name}'
 						 *
-						 * @param string $translated "settings saved" text
+						 * @param string translated "settings saved" text
 						 */
 						echo '<div class="saved_notice admin-notice notice-green">' . apply_filters( "fusionredux-saved-text-{$this->parent->args['opt_name']}", '<strong>'.__( 'Settings Saved!', 'fusion-builder' ) ).'</strong>' . '</div>';
 					}
@@ -194,22 +192,21 @@
 				/**
 				 * action 'fusionredux/options/{opt_name}/settings/changes'
 				 *
-				 * @param array $options set/saved options.
-				 * @param mixed $value   changed value.
+				 * @param mixed $value set/saved option value
 				 */
 				do_action( "fusionredux/options/{$this->parent->args['opt_name']}/settings/change", $this->parent->options, $this->parent->transients['changed_values'] );
 
 				/**
 				 * filter 'fusionredux-changed-text-{opt_name}'
 				 *
-				 * @param string $translated "settings have changed" text
+				 * @param string translated "settings have changed" text
 				 */
 				echo '<div class="fusionredux-save-warn notice-yellow"><strong>' . apply_filters( "fusionredux-changed-text-{$this->parent->args['opt_name']}", __( 'Settings have changed, you should save them!', 'fusion-builder' ) ) . '</strong></div>';
 
 				/**
 				 * action 'fusionredux/options/{opt_name}/errors'
 				 *
-				 * @param array $errors
+				 * @param array $this ->errors error information
 				 */
 				do_action( "fusionredux/options/{$this->parent->args['opt_name']}/errors", $this->parent->errors );
 				echo '<div class="fusionredux-field-errors notice-red"><strong><span></span> ' . __( 'error(s) were found!', 'fusion-builder' ) . '</strong></div>';
@@ -217,7 +214,7 @@
 				/**
 				 * action 'fusionredux/options/{opt_name}/warnings'
 				 *
-				 * @param array $warning
+				 * @param array $this ->warnings warning information
 				 */
 				do_action( "fusionredux/options/{$this->parent->args['opt_name']}/warnings", $this->parent->warnings );
 				echo '<div class="fusionredux-field-warnings notice-yellow"><strong><span></span> ' . __( 'warning(s) were found!', 'fusion-builder' ) . '</strong></div>';

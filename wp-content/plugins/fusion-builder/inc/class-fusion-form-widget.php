@@ -121,7 +121,6 @@ class Fusion_Form_Widget extends WP_Widget {
 			</select>
 		</p>
 		<?php
-		// @phpstan-ignore-line -- Todo: Needs to return string and not echo HTML, to be fixed in future.
 	}
 }
 

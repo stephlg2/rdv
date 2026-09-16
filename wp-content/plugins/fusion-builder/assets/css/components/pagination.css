@@ -1,34 +1,10 @@
 .fusion-body .fusion-pagination-tb {
-  --awb-font-size: var(--body_typography-font-size);
-  --awb-height: 36px;
-  --awb-preview-wrapper-width: 500px;
-  --awb-preview-width: 20px;
-  --awb-preview-height: 90px;
-  --awb-border-color: var(--sep_color);
-  --awb-border-size: 1px;
-  --awb-bg-color: transparent;
-  --awb-box-shadow: none;
-  --awb-text-color: var(--link_color);
-  --awb-text-hover-color: var(--link_hover_color);
-  --awb-preview-text-color: var(--link_color);
-  --awb-preview-font-size: var(--body_typography-font-size);
-  --awb-z-index: 100;
-  --awb-margin-bottom: 0;
-  --awb-margin-left: 0;
-  --awb-margin-right: 0;
-  --awb-margin-top: 0;
   position: relative;
-  font-size: var(--awb-font-size);
-  margin-top: var(--awb-margin-top);
-  margin-bottom: var(--awb-margin-bottom);
-  margin-right: var(--awb-margin-right);
-  margin-left: var(--awb-margin-left);
 }
 .fusion-body .fusion-pagination-tb:not(.layout-sticky) {
   display: flex;
   justify-content: space-between;
   line-height: normal;
-  min-height: var(--awb-height);
 }
 .fusion-body .fusion-pagination-tb:not(.layout-sticky) a {
   margin: 0;
@@ -130,7 +106,7 @@
   bottom: 100%;
 }
 .fusion-body .fusion-pagination-tb.layout-sticky {
-  z-index: var(--awb-z-index);
+  z-index: 100;
 }
 .fusion-body .fusion-pagination-tb.layout-sticky.has-box-shadow .fusion-control-navigation:before {
   content: "";
@@ -145,8 +121,7 @@
 .fusion-body .fusion-pagination-tb.layout-sticky .fusion-control-navigation {
   width: auto;
   max-width: 50vw;
-  height: var(--awb-preview-height);
-  min-width: var(--awb-preview-wrapper-width);
+  height: 90px;
   position: fixed;
   right: 0;
   top: 50%;
@@ -160,6 +135,7 @@
   flex: 1;
   display: flex;
   align-items: center;
+  width: -webkit-min-content;
   width: min-content;
   position: relative;
 }
@@ -180,7 +156,7 @@
   border-left: 0;
   left: 0;
   right: auto;
-  transform: translate(calc(max(-1 * var(--awb-preview-wrapper-width), -50vw) + var(--awb-preview-width)), -50%);
+  transform: translate(calc(max(-500px, -50vw) + 20px), -50%);
   /* stylelint-disable-line */
   transition: transform 0.3s ease-in;
 }
@@ -195,7 +171,7 @@
 .fusion-body .fusion-pagination-tb.layout-sticky .fusion-control-navigation.next {
   border-right: 0;
   right: 0;
-  transform: translate(calc(min(var(--awb-preview-wrapper-width), 50vw) - var(--awb-preview-width)), -50%);
+  transform: translate(calc(min(500px, 50vw) - 20px), -50%);
   /* stylelint-disable-line */
   transition: transform 0.3s ease-in;
 }
@@ -226,6 +202,7 @@
 .fusion-body .fusion-pagination-tb.layout-sticky .fusion-control-navigation .fusion-item-media img,
 .fusion-body .fusion-pagination-tb.layout-sticky .fusion-control-navigation .fusion-item-media svg {
   display: block;
+  max-width: -webkit-fit-content;
   max-width: fit-content;
   height: inherit;
   width: auto;
@@ -251,53 +228,6 @@
 .fusion-body .fusion-pagination-tb .fusion-tb-next {
   display: flex;
   align-items: center;
-}
-.fusion-body .fusion-pagination-tb.single-navigation:not(.layout-sticky) {
-  border-color: var(--awb-border-color);
-  border-width: var(--awb-border-size);
-}
-.fusion-body .fusion-pagination-tb.single-navigation.position-top.layout-preview .fusion-pagination-preview-wrapper {
-  margin-bottom: calc(var(--awb-border-size) + 1px);
-}
-.fusion-body .fusion-pagination-tb.single-navigation.position-bottom.layout-preview .fusion-pagination-preview-wrapper {
-  margin-top: calc(var(--awb-border-size) + 1px);
-}
-.fusion-body .fusion-pagination-tb.layout-sticky:not(.layoout-text) .fusion-control-navigation {
-  background: var(--awb-bg-color);
-}
-.fusion-body .fusion-pagination-tb.layout-sticky:not(.layoout-text) .fusion-control-navigation.has-box-shadow .fusion-control-navigation:before {
-  box-shadow: var(--awb-box-shadow) !important;
-}
-.fusion-body .fusion-pagination-tb:not(.layout-sticky):not(.layoout-text).layout-preview .fusion-pagination-preview-wrapper {
-  background: var(--awb-bg-color);
-}
-.fusion-body .fusion-pagination-tb:not(.layout-sticky):not(.layoout-text).layout-preview.has-box-shadow .fusion-pagination-preview-wrapper {
-  box-shadow: var(--awb-box-shadow) !important;
-}
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a {
-  color: var(--awb-text-color) !important;
-}
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a:before,
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a:after {
-  color: var(--awb-text-color) !important;
-}
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a:hover,
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a.hover {
-  color: var(--awb-text-hover-color) !important;
-}
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a:hover:before,
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a.hover:before,
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a:hover:after,
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.single-navigation:not(.layout-sticky) a.hover:after {
-  color: var(--awb-text-hover-color) !important;
-}
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb.layout-sticky .fusion-control-navigation a {
-  color: var(--awb-preview-text-color);
-  font-size: var(--awb-preview-font-size);
-}
-.fusion-body .fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb:not(.layout-sticky).layout-preview .fusion-pagination-preview-wrapper .fusion-item-title {
-  color: var(--awb-preview-text-color);
-  font-size: var(--awb-preview-font-size);
 }
 .fusion-body.rtl .fusion-pagination-tb.text:not(.layout-sticky) .fusion-tb-previous a,
 .fusion-body.rtl .fusion-pagination-tb.layout-preview:not(.layout-sticky) .fusion-tb-previous a,
@@ -399,7 +329,7 @@
 .fusion-body.rtl .fusion-pagination-tb.layout-sticky .fusion-control-navigation.next {
   left: 0;
   right: auto;
-  transform: translate(calc(max(-1 * var(--awb-preview-wrapper-width), -50vw) + var(--awb-preview-width)), -50%) !important;
+  transform: translate(calc(max(-500px, -50vw) + 20px), -50%);
   /* stylelint-disable-line */
   transition: transform 0.3s ease-in;
 }
@@ -414,7 +344,7 @@
 .fusion-body.rtl .fusion-pagination-tb.layout-sticky .fusion-control-navigation.prev {
   right: 0;
   left: auto;
-  transform: translate(calc(min(var(--awb-preview-wrapper-width), 50vw) - var(--awb-preview-width)), -50%) !important;
+  transform: translate(calc(min(500px, 50vw) - 20px), -50%);
   /* stylelint-disable-line */
   transition: transform 0.3s ease-in;
 }

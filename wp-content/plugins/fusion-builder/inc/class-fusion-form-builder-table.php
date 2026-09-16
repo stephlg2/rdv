@@ -31,14 +31,6 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	public $columns = [];
 
 	/**
-	 * Number of total table items.
-	 *
-	 * @since 3.6
-	 * @var int
-	 */
-	public $total_items = -1;
-
-	/**
 	 * Class constructor.
 	 *
 	 * @since 1.0
@@ -83,9 +75,11 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 		$hidden       = $this->get_hidden_columns();
 		$sortable     = $this->get_sortable_columns();
 
+		$total_items = count( $this->table_data() );
+
 		$this->set_pagination_args(
 			[
-				'total_items' => -1 !== $this->total_items ? $this->total_items : count( $this->table_data() ),
+				'total_items' => $total_items,
 				'per_page'    => $per_page,
 			]
 		);
@@ -106,8 +100,7 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 			'cb'          => '<input type="checkbox" />',
 			'title'       => esc_html__( 'Title', 'fusion-builder' ),
 			'views'       => __( 'Views', 'fusion-builder' ),
-			'entries'     => __( 'Database Entries', 'fusion-builder' ),
-			'submissions' => __( 'Submissions', 'fusion-builder' ),
+			'submissions' => __( 'Entries', 'fusion-builder' ),
 			'conversions' => __( 'Conversion Rate', 'fusion-builder' ),
 		];
 
@@ -134,9 +127,9 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	 */
 	public function get_sortable_columns() {
 		return [
-			'title'       => [ 'title', true ],
 			'views'       => [ 'views', true ],
 			'submissions' => [ 'submissions', true ],
+			'conversions' => [ 'conversions', true ],
 		];
 	}
 
@@ -152,7 +145,7 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	private function table_data( $per_page = -1, $current_page = 0 ) {
 		$data          = [];
 		$library_query = [];
-		$status        = [ 'publish', 'draft', 'future', 'pending', 'private' ];
+		$status        = [ 'publish', 'draft' ];
 
 		// Make sure current-page and per-page are integers.
 		$per_page     = (int) $per_page;
@@ -176,19 +169,11 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 			$args['order']   = ( isset( $_GET['order'] ) ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'ASC';
 		}
 
-		add_filter( 'posts_join', __CLASS__ . '::join_needed_forms_for_table', 10, 2 );
-		add_filter( 'posts_orderby', __CLASS__ . '::orderby_needed_forms_for_table', 10, 2 );
 		$library_query = new WP_Query( $args );
-		remove_filter( 'posts_join', __CLASS__ . '::join_needed_forms_for_table', 10 );
-		remove_filter( 'posts_orderby', __CLASS__ . '::orderby_needed_forms_for_table', 10 );
-		$fusion_forms       = new Fusion_Form_DB_Forms();
-		$fusion_submissions = new Fusion_Form_DB_Submissions();
+		$fusion_forms  = new Fusion_Form_DB_Forms();
 
 		// Check if there are items available.
 		if ( $library_query->have_posts() ) {
-
-			$this->total_items = $library_query->found_posts;
-
 			// The loop.
 			while ( $library_query->have_posts() ) :
 				$library_query->the_post();
@@ -213,8 +198,6 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 					$form_stats['id']                = (int) $form->id;
 				}
 
-				$entries = $fusion_submissions->count_form_database_entries( $element_post_id );
-
 				$element_post = [
 					'title'       => get_the_title(),
 					'id'          => $element_post_id,
@@ -222,7 +205,6 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 					'time'        => get_the_date( 'm/d/Y g:i:s A' ),
 					'status'      => get_post_status(),
 					'submissions' => $form_stats['submissions_count'],
-					'entries'     => $entries,
 					'views'       => $form_stats['views'],
 					'conversions' => $form_stats['conversions'],
 					'form_id'     => $form_stats['id'],
@@ -237,60 +219,6 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 
 		return $data;
 		// phpcs:enable WordPress.Security.NonceVerification
-	}
-
-	/**
-	 * Filter function used to add join clause to SQL to order forms table.
-	 *
-	 * @param string $join Join SQL clause.
-	 * @param Object $query Query object.
-	 * @return string
-	 */
-	public static function join_needed_forms_for_table( $join, $query ) {
-		global $wpdb;
-
-		if ( is_array( $query->query ) && isset( $query->query['orderby'] ) && ( 'views' === $query->query['orderby'] || 'submissions' === $query->query['orderby'] ) ) {
-			$fusion_forms_table_name = $wpdb->prefix . 'fusion_forms';
-			if ( strpos( $fusion_forms_table_name, ' ' ) !== false ) {
-				$fusion_forms_table_name = '`' . $fusion_forms_table_name . '`';
-			}
-
-			$join .= "LEFT JOIN $fusion_forms_table_name ON $wpdb->posts.ID = $fusion_forms_table_name.form_id ";
-		}
-
-		return $join;
-	}
-
-	/**
-	 * Filter function used to add orderby clause to SQL to order forms table.
-	 *
-	 * @param string $orderby Orderby SQL clause.
-	 * @param Object $query Query object.
-	 * @return string
-	 */
-	public static function orderby_needed_forms_for_table( $orderby, $query ) {
-		global $wpdb;
-
-		if ( is_array( $query->query ) && isset( $query->query['orderby'] ) && ( 'views' === $query->query['orderby'] || 'submissions' === $query->query['orderby'] ) ) {
-			$fusion_forms_table_name = $wpdb->prefix . 'fusion_forms';
-			if ( strpos( $fusion_forms_table_name, ' ' ) !== false ) {
-				$fusion_forms_table_name = '`' . $fusion_forms_table_name . '`';
-			}
-
-			if ( isset( $query->query['order'] ) && ( 'asc' === $query->query['order'] || 'ASC' === $query->query['order'] ) ) {
-				$order = 'ASC';
-			} else {
-				$order = 'DESC';
-			}
-
-			if ( 'views' === $query->query['orderby'] ) {
-				return $fusion_forms_table_name . '.views ' . $order;
-			} elseif ( 'submissions' === $query->query['orderby'] ) {
-				return $fusion_forms_table_name . '.submissions_count ' . $order;
-			}
-		}
-
-		return $orderby;
 	}
 
 	/**
@@ -321,24 +249,33 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	 */
 	public function column_title( $item ) {
 		$wpnonce = wp_create_nonce( 'fusion-form-builder' );
-		$actions = [];
 
 		if ( isset( $_GET['status'] ) && 'trash' === $_GET['status'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$actions['restore'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Restore', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_restore_element', esc_attr( $item['id'] ) );
 			$actions['delete']  = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Delete Permanently', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_delete_element', esc_attr( $item['id'] ) );
 		} else {
-			$actions = awb_get_list_table_edit_links( $actions, $item );
+			$live_editor     = apply_filters( 'fusion_load_live_editor', true );
+			$actions['edit'] = sprintf( '<a href="post.php?post=%s&action=%s">' . esc_html__( 'Edit', 'fusion-builder' ) . '</a>', esc_attr( $item['id'] ), 'edit' );
 
 			if ( current_user_can( 'edit_others_posts' ) ) {
 				$actions['clone_section'] = '<a href="' . $this->get_section_clone_link( $item['id'] ) . '" title="' . esc_attr( __( 'Clone this form', 'fusion-builder' ) ) . '">' . __( 'Clone', 'fusion-builder' ) . '</a>';
 			}
 
-			if ( current_user_can( 'delete_post', $item['id'] ) ) {
-				$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
+			if ( $live_editor ) {
+				/* translators: The title. */
+				$actions['fusion_builder_live'] = '<a href="' . esc_url_raw( add_query_arg( 'fb-edit', '1', get_the_permalink( $item['id'] ) ) ) . '" aria-label="' . sprintf( esc_attr__( 'Edit %s with Avada Live', 'fusion-builder' ), '&#8220;' . get_the_title( $item['id'] ) . '&#8221;' ) . '">' . esc_html__( 'Avada Live', 'fusion-builder' ) . '</a>';
 			}
+			$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
 		}
 
-		return awb_get_list_table_title( $item ) . ' ' . $this->row_actions( $actions );
+		$status = '';
+		if ( 'draft' === $item['status'] ) {
+			$status = ' &mdash; <span class="post-state">' . ucwords( $item['status'] ) . '</span>';
+		}
+
+		$title = '<strong><a href="post.php?post=' . esc_attr( $item['id'] ) . '&action=edit">' . esc_html( $item['title'] ) . '</a>' . $status . '</strong>';
+
+		return $title . ' ' . $this->row_actions( $actions );
 	}
 
 
@@ -352,12 +289,12 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	public function get_bulk_actions() {
 		if ( isset( $_GET['status'] ) && 'trash' === $_GET['status'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$actions = [
-				'fusion_bulk_restore_element' => esc_html__( 'Restore', 'fusion-builder' ),
-				'fusion_bulk_delete_element'  => esc_html__( 'Delete Permanently', 'fusion-builder' ),
+				'fusion_restore_element' => esc_html__( 'Restore', 'fusion-builder' ),
+				'fusion_delete_element'  => esc_html__( 'Delete Permanently', 'fusion-builder' ),
 			];
 		} else {
 			$actions = [
-				'fusion_bulk_trash_element' => esc_html__( 'Move to Trash', 'fusion-builder' ),
+				'fusion_trash_element' => esc_html__( 'Move to Trash', 'fusion-builder' ),
 			];
 		}
 
@@ -365,18 +302,18 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	}
 
 	/**
-	 * The entries column.
+	 * The submissions column.
 	 *
 	 * @since 2.3
 	 * @access public
 	 * @param  array $item Data.
 	 * @return string
 	 */
-	public function column_entries( $item ) {
+	public function column_submissions( $item ) {
 
-		if ( 1 <= $item['entries'] ) {
+		if ( 1 <= $item['submissions'] ) {
 			$url   = admin_url( 'admin.php?page=avada-form-entries&form_id=' . $item['form_id'] );
-			$html  = '<span class="counter">' . $item['entries'] . '</span>';
+			$html  = '<span class="counter">' . $item['submissions'] . '</span>';
 			$html .= '<a class="view-submissions" href="' . esc_url( $url ) . '">' . esc_html__( 'View Entries', 'fusion-builder' ) . '</a>';
 
 			return $html;
@@ -414,11 +351,7 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_cb( $item ) {
-		if ( current_user_can( 'delete_post', $item['id'] ) || current_user_can( 'edit_post', $item['id'] ) ) {
-			return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
-		}
-
-		return '';
+		return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
 	}
 
 	/**
@@ -444,10 +377,11 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 	 * @return void
 	 */
 	public function get_status_links() {
-		$post_status        = [];
-		$count_posts        = wp_count_posts( 'fusion_form' );
-		$count_posts        = (array) $count_posts;
-		$post_status['all'] = $count_posts['publish'] + $count_posts['draft'] + $count_posts['pending'];
+		$post_status = [];
+		$count_posts = wp_count_posts( 'fusion_form' );
+		$count_posts = (array) $count_posts;
+
+		$post_status['all'] = $count_posts['publish'] + $count_posts['draft'];
 
 		if ( isset( $count_posts['publish'] ) && $count_posts['publish'] ) {
 			$post_status['publish'] = $count_posts['publish'];
@@ -459,10 +393,6 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 
 		if ( isset( $count_posts['trash'] ) && $count_posts['trash'] ) {
 			$post_status['trash'] = $count_posts['trash'];
-		}
-
-		if ( isset( $count_posts['pending'] ) && $count_posts['pending'] ) {
-			$post_status['pending'] = $count_posts['pending'];
 		}
 		?>
 		<ul class="subsubsub">
@@ -488,7 +418,7 @@ class Fusion_Form_Builder_Table extends WP_List_Table {
 				</li>
 
 				<?php
-				// Add separator if needed.
+				// Add separatorif needed.
 				if ( $i < count( $post_status ) ) {
 					echo ' | ';
 				}

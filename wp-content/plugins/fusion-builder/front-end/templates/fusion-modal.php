@@ -11,7 +11,14 @@
 <div class="fusion-builder-placeholder-preview">
 	<i class="{{ icon }}" aria-hidden="true"></i> {{ label }} ({{ name }})
 </div>
+<#
+var style = '';
+if ( '' !== borderColor ) {
+	style = '<style type="text/css">.modal-' + cid + ' .modal-header, .modal-' + cid + ' .modal-footer{border-color:' + borderColor + ';}</style>';
+}
+#>
 <div {{{ _.fusionGetAttributes( attrModal ) }}}>
+	{{{ style }}}
 	<div {{{ _.fusionGetAttributes( attrDialog ) }}}>
 		<div {{{ _.fusionGetAttributes( attrContent ) }}}>
 			<div {{{ _.fusionGetAttributes( 'modal-header' ) }}}>

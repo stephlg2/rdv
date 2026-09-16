@@ -68,7 +68,7 @@ class Fusion_Builder_Options_Panel {
 		];
 
 		if ( ! is_customize_preview() ) {
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/class-fusion-builder-redux.php';
+			require_once FUSION_BUILDER_PLUGIN_DIR . '/inc/class-fusion-builder-redux.php';
 
 			// If the current theme doesn't have an integration with fusion-builder-options
 			// Instantiate our admin options.
@@ -100,7 +100,7 @@ class Fusion_Builder_Options_Panel {
 	protected function includes() {
 
 		if ( ! class_exists( 'Fusion_Builder_Options' ) ) {
-			include_once FUSION_BUILDER_PLUGIN_DIR . 'inc/class-fusion-builder-options.php';
+			include_once FUSION_BUILDER_PLUGIN_DIR . '/inc/class-fusion-builder-options.php';
 		}
 
 	}
@@ -141,8 +141,7 @@ class Fusion_Builder_Options_Panel {
 								if ( is_array( $fields_array ) && in_array( $field_key, $fields_array ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 
 									// If the field already exist somewhere in $sections, then don't add twice.
-									$element_options[ $option_panel ]['fields'][ $key ];
-									unset( $element_options[ $option_panel ]['fields'][ $key ]['fields'][ $field_key ] ); // @phpstan-ignore-line
+									unset( $element_options[ $option_panel ]['fields'][ $key ]['fields'][ $field_key ] );
 									if ( empty( $element_options[ $option_panel ]['fields'][ $key ]['fields'] ) ) {
 
 										// If the accordian is now empty, remove it.

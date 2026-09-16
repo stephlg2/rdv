@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Fusion-Library
  * @since      2.2.0
  */

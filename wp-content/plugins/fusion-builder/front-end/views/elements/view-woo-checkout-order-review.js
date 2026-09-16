@@ -27,6 +27,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock();
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -45,19 +46,25 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
+
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
 				}
-
-				if ( 'show' !== this.values.table_header ) {
-					attr[ 'class' ] += ' hide-header';
-				}
-
-				if ( 'show' !== this.values.display_product_images ) {
-					attr[ 'class' ] += ' hide-product-images';
-				}
-
-				attr.style += this.getStyleVariables( values );
 
 				if ( '' !== values.id ) {
 					attr.id = values.id;
@@ -138,18 +145,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				  this.addCssProperty( selector, 'font-size',  this.values.header_font_size );
 				}
 
-				if ( !this.isDefault( 'header_line_height' ) ) {
-					this.addCssProperty( selector, 'line-height', this.values.header_line_height );
-				}
-
-				if ( !this.isDefault( 'header_text_transform' ) ) {
-					this.addCssProperty( selector, 'text-transform', this.values.header_text_transform );
-				}
-
-				if ( !this.isDefault( 'header_letter_spacing' ) ) {
-					this.addCssProperty( selector, 'letter-spacing',  _.fusionGetValueWithUnit( this.values.header_letter_spacing ) );
-				}
-
 				selector = this.baseSelector + ' tbody tr td';
 				if ( !this.isDefault( 'table_cell_backgroundcolor' ) ) {
 				  this.addCssProperty( selector, 'background-color',  this.values.table_cell_backgroundcolor );
@@ -169,18 +164,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( !this.isDefault( 'text_font_size' ) ) {
 				  this.addCssProperty( selector, 'font-size',  this.values.text_font_size );
-				}
-
-				if ( !this.isDefault( 'text_line_height' ) ) {
-					this.addCssProperty( selector, 'line-height', this.values.text_line_height );
-				}
-
-				if ( !this.isDefault( 'text_text_transform' ) ) {
-					this.addCssProperty( selector, 'text-transform', this.values.text_text_transform );
-				}
-
-				if ( !this.isDefault( 'text_letter_spacing' ) ) {
-					this.addCssProperty( selector, 'letter-spacing',  _.fusionGetValueWithUnit( this.values.text_letter_spacing ) );
 				}
 
 				selector = this.baseSelector + ' tr, ' +  this.baseSelector + ' tr td, ' +  this.baseSelector + ' tr th, ' +  this.baseSelector + ' tfoot';
@@ -210,135 +193,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				  this.addCssProperty( selector, 'font-size',  this.values.footer_font_size );
 				}
 
-				if ( !this.isDefault( 'footer_line_height' ) ) {
-					this.addCssProperty( selector, 'line-height', this.values.footer_line_height );
-				}
-
-				if ( ! this.isDefault( 'footer_text_transform' ) ) {
-					this.addCssProperty( selector, 'text-transform', this.values.footer_text_transform );
-				}
-
-				if ( !this.isDefault( 'footer_letter_spacing' ) ) {
-					this.addCssProperty( selector, 'letter-spacing',  _.fusionGetValueWithUnit( this.values.footer_letter_spacing ) );
-				}
-
 				if ( 'show' !== this.values.table_header ) {
 					this.addCssProperty( this.baseSelector + ' thead', 'display', 'none' );
-				}
-
-				if ( 'show' !== this.values.display_product_images ) {
-					this.addCssProperty( this.baseSelector + ' .product-thumbnail', 'display', 'none' );
-					this.addCssProperty( this.baseSelector + ' .shop_table tbody tr', 'height', 'auto' );
 				}
 
 				css = this.parseCSS();
 				return ( css ) ? '<style>' + css + '</style>' : '';
 
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
-
-
-				if ( ! this.isDefault( 'footer_color' ) ) {
-					customVars.amount_color = values.footer_color;
-				}
-
-				if ( ! this.isDefault( 'fusion_font_variant_footer_font' ) ) {
-					customVars.amount_font_weight = values.fusion_font_variant_footer_font;
-				}
-
-				if ( ! this.isDefault( 'cell_padding_top' ) ) {
-					customVars.header_padding_top = _.fusionGetValueWithUnit( values.cell_padding_top );
-					customVars.footer_padding_top = _.fusionGetValueWithUnit( values.cell_padding_top );
-				}
-
-				if ( ! this.isDefault( 'cell_padding_bottom' ) ) {
-					customVars.header_padding_bottom = _.fusionGetValueWithUnit( values.cell_padding_bottom );
-					customVars.footer_padding_bottom = _.fusionGetValueWithUnit( values.cell_padding_bottom );
-				}
-
-				if ( ! this.isDefault( 'cell_padding_left' ) ) {
-					customVars.header_padding_left = _.fusionGetValueWithUnit( values.cell_padding_left );
-					customVars.footer_padding_left = _.fusionGetValueWithUnit( values.cell_padding_left );
-				}
-
-				if ( ! this.isDefault( 'cell_padding_right' ) ) {
-					customVars.header_padding_right = _.fusionGetValueWithUnit( values.cell_padding_right );
-					customVars.footer_padding_right = _.fusionGetValueWithUnit( values.cell_padding_right );
-				}
-
-				if ( ! this.isDefault( 'fusion_font_family_footer_font' ) ) {
-					customVars.fusion_font_family_footer_td_font = values.fusion_font_family_footer_font;
-				}
-
-				if ( ! this.isDefault( 'fusion_font_variant_footer_font' ) ) {
-					customVars.fusion_font_variant_footer_td_font = values.fusion_font_variant_footer_font;
-				}
-
-				if ( ! this.isDefault( 'footer_font_size' ) ) {
-					customVars.footer_td_font_size = _.fusionGetValueWithUnit( values.footer_font_size );
-				}
-
-				if ( ! this.isDefault( 'footer_line_height' ) ) {
-					customVars.footer_td_line_height = values.footer_line_height;
-				}
-
-				if ( ! this.isDefault( 'footer_letter_spacing' ) ) {
-					customVars.footer_td_letter_spacing = _.fusionGetValueWithUnit( values.footer_letter_spacing );
-				}
-
-				if ( ! this.isDefault( 'footer_text_transform' ) ) {
-					customVars.footer_td_text_transform = values.footer_text_transform;
-				}
-
-
-				cssVarsOptions = [
-					'header_cell_backgroundcolor',
-					'header_color',
-					'table_cell_backgroundcolor',
-					'text_color',
-					'border_color',
-					'footer_cell_backgroundcolor',
-					'footer_color',
-					'fusion_font_family_header_font',
-					'fusion_font_variant_header_font',
-					'header_line_height',
-					'header_text_transform',
-					'fusion_font_family_text_font',
-					'fusion_font_variant_text_font',
-					'text_line_height',
-					'text_text_transform',
-					'fusion_font_family_footer_font',
-					'fusion_font_variant_footer_font',
-					'footer_line_height',
-					'footer_text_transform'
-				];
-
-				cssVarsOptions.margin_top            = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.cell_padding_top      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.cell_padding_bottom   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.cell_padding_left     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.cell_padding_right    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.header_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.header_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_font_size        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_letter_spacing   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.footer_font_size      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.footer_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
 			}
 		} );
 	} );

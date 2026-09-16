@@ -36,27 +36,6 @@ if ( !class_exists ( 'FusionReduxFramework_slides' ) ) {
 	class FusionReduxFramework_slides {
 
 		/**
-		 * Field options.
-		 *
-		 * @var array
-		 */
-		public $field = [];
-
-		/**
-		 * The parent.
-		 *
-		 * @var mixed
-		 */
-		public $parent;
-
-		/**
-		 * The value.
-		 *
-		 * @var array|string
-		 */
-		public $value = '';
-
-		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
 		 *
@@ -283,7 +262,7 @@ if ( !class_exists ( 'FusionReduxFramework_slides' ) ) {
 				'fusionredux-field-slides-js',
 				FusionReduxFramework::$_url . 'inc/fields/slides/field_slides' . FusionRedux_Functions::isMin () . '.js',
 				array( 'jquery', 'jquery-ui-core', 'jquery-ui-accordion', 'jquery-ui-sortable', 'fusionredux-field-media-js' ),
-				time(),
+				time (),
 				true
 			);
 		}

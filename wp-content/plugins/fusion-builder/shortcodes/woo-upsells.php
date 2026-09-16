@@ -186,8 +186,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_upsells' ) ) {
 				$args = wp_parse_args( $args, $defaults );
 
 				// Get visible cross sells then sort them at random.
-				$cross_sells = is_object( WC()->cart ) ? WC()->cart->get_cross_sells() : [];
-				$cross_sells = array_filter( array_map( 'wc_get_product', $cross_sells ), 'wc_products_array_filter_visible' );
+				$cross_sells = array_filter( array_map( 'wc_get_product', WC()->cart->get_cross_sells() ), 'wc_products_array_filter_visible' );
 
 				// Handle orderby and limit results.
 				$orderby          = apply_filters( 'woocommerce_cross_sells_orderby', $args['orderby'] );
@@ -238,6 +237,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_upsells' ) ) {
  * @since 3.2
  */
 function fusion_component_woo_upsells() {
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(

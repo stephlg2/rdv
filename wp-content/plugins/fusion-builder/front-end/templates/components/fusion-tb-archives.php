@@ -27,7 +27,7 @@ if ( 'undefined' !== typeof query_data && 'undefined' !== typeof query_data.post
 	if ( 'timeline' === values.layout ) {
 
 		wrapLoopOpen = '<div class="fusion-timeline-icon">';
-		wrapLoopOpen += '<i class="awb-icon-bubbles" style="color: ' + values.grid_element_color + ';" aria-hidden="true"></i>';
+		wrapLoopOpen += '<i class="fusion-icon-bubbles" style="color: ' + values.grid_element_color + ';" aria-hidden="true"></i>';
 		wrapLoopOpen += '</div>';
 		wrapLoopOpen += '<div class="fusion-blog-layout-timeline fusion-clearfix">';
 		wrapLoopOpen += '<div class="fusion-timeline-line" style="border-color:' + values.grid_element_color + ';"></div>';

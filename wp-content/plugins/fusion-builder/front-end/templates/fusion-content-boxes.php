@@ -9,6 +9,7 @@
 ?>
 <script type="text/html" id="tmpl-fusion_content_boxes-shortcode">
 	<div {{{ _.fusionGetAttributes( attr ) }}}>
+		<style type="text/css">{{{ styles }}}</style>
 	</div>
 </script>
 <script type="text/html" id="tmpl-fusion_content_box-shortcode">
@@ -19,7 +20,6 @@ var output          = '',
 	content_output  = '',
 	link_output     = '',
 	heading         = '',
-	heading_size    = '',
 	heading_content = '',
 	full_icon_size  = '',
 	timeline        = '';
@@ -40,16 +40,8 @@ if ( values.image && '' !== values.image ) {
 	}
 }
 
-let title = values.title;
-let itemContent = FusionPageBuilderApp.renderContent( values.element_content, cid, false );
-
-if ( usingDynamicParent ) {
-	title = '<?php esc_html_e( 'Box Title.', 'fusion-builder' ); ?>';
-	itemContent = '<?php esc_html_e( 'This content box element is set to use dynamic data.  For a preview please check the front-end.', 'fusion-builder' ); ?>';
-}
-if ( '' !== title ) {
-	heading_size = 'div' === values.heading_size || 'p' === values.heading_size ? values.heading_size : 'h' + values.heading_size;
-	title_output = '<' + heading_size + _.fusionGetAttributes( attrContentBoxHeading ) + '>' + title + '</' + heading_size +'>';
+if ( '' !== values.title ) {
+	title_output = '<h' + values.heading_size + _.fusionGetAttributes( attrContentBoxHeading ) + '>' + values.title + '</h' + values.heading_size +'>';
 }
 
 if ( 'right' === parentValues.icon_align && -1 !== jQuery.inArray( parentValues.layout, [ 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ] ) ) {
@@ -80,7 +72,7 @@ if ( '' !== values.link && '' !== values.linktext ) {
 
 content_output  = '<div class="fusion-clearfix"></div>';
 
-content_output += '<div ' + _.fusionGetAttributes( attrContentContainer ) + '>' + itemContent + '</div>' + link_output;
+content_output += '<div ' + _.fusionGetAttributes( attrContentContainer ) + '>' + FusionPageBuilderApp.renderContent( values.element_content, cid, false ) + '</div>' + link_output;
 output          = heading + content_output;
 
 if ( values.icon && 'yes' === parentValues.icon_circle && 'timeline-horizontal' === parentValues.layout && '1' != parentValues.columns ) {
@@ -91,5 +83,6 @@ if ( values.icon && 'yes' === parentValues.icon_circle && 'timeline-vertical' ==
 	timeline = '<div ' + _.fusionGetAttributes( attrShortcodeTimeline ) + '></div>';
 }
 #>
+<style type="text/css">{{{ styles }}}</style>
 <div {{{ _.fusionGetAttributes( attrContentWrapper ) }}}> {{{ output }}} {{{ timeline }}}</div>
 </script>

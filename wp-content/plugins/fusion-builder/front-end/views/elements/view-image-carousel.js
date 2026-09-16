@@ -29,7 +29,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			afterPatch: function() {
-				this.appendChildren( '.swiper-wrapper' );
+				this.appendChildren( '.fusion-carousel-holder' );
 				this._refreshJs();
 			},
 
@@ -66,18 +66,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Validate values.
 				this.validateValues( atts.values );
 				this.extras = atts.extras;
-				this.values = atts.values;
 
 				// Create attribute objects
-				attributes.attr          = this.buildAttr( atts.values );
-				attributes.attrCarousel  = this.buildCarouselAttr( atts.values );
-				attributes.attrCarouselWrapper  = this.buildCarouselWrapperAttr( atts.values );
-				attributes.captionStyles = this.buildCaptionStyles( atts );
+				attributes.attr         = this.buildAttr( atts.values );
+				attributes.attrCarousel = this.buildCarouselAttr( atts.values );
 
 				// Whether it has a dynamic data stream.
 				attributes.usingDynamic = 'undefined' !== typeof atts.values.multiple_upload && 'Select Images' !== atts.values.multiple_upload;
-
-				attributes.usingDynamicParent = this.isParentHasDynamicContent( atts.values );
 
 				// Any extras that need passed on.
 				attributes.show_nav = atts.values.show_nav;
@@ -94,10 +89,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			validateValues: function( values ) {
 				values.column_spacing = _.fusionValidateAttrValue( values.column_spacing, 'px' );
-				values.margin_bottom  = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left    = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right   = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top     = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -109,7 +100,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildAttr: function( values ) {
 				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-image-carousel fusion-image-carousel-' + this.model.get( 'cid' ),
+					class: 'fusion-image-carousel',
 					style: ''
 				} );
 
@@ -117,22 +108,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( true === this.model.attributes.showPlaceholder ) {
 					attr[ 'class' ] += ' fusion-show-placeholder';
-				}
-
-				if ( '' !== values.margin_top ) {
-					attr.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_right ) {
-					attr.style += 'margin-right:' + values.margin_right + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
-
-				if ( '' !== values.margin_left ) {
-					attr.style += 'margin-left:' + values.margin_left + ';';
 				}
 
 				if ( 'yes' === values.lightbox ) {
@@ -145,10 +120,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( -1 !== jQuery.inArray( values.caption_style, [ 'above', 'below' ] ) ) {
-					attr[ 'class' ] += ' awb-image-carousel-top-below-caption awb-imageframe-style awb-imageframe-style-' + values.caption_style + ' awb-imageframe-style-' + this.model.get( 'cid' );
 				}
 
 				if ( '' !== values.id ) {
@@ -167,8 +138,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildCarouselAttr: function( values ) {
 				var attr = {
-					class: 'awb-carousel awb-swiper awb-swiper-carousel',
-					style: this.getInlineStyle( values )
+					class: 'fusion-carousel',
+					style: ''
 				};
 
 				attr[ 'data-autoplay' ]    = values.autoplay;
@@ -178,21 +149,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attr[ 'data-touchscroll' ] = values.mouse_scroll;
 				attr[ 'data-imagesize' ]   = values.picture_size;
 				attr[ 'data-scrollitems' ] = values.scroll_items;
-
-				return attr;
-			},
-
-			/**
-			 * Builds carousel wrapper attributes.
-			 *
-			 * @since 3.9.1
-			 * @param {Object} values - The values object.
-			 * @return {Object}
-			 */
-			buildCarouselWrapperAttr: function( values ) {
-				var attr = {
-					class: 'swiper-wrapper awb-image-carousel-wrapper fusion-child-element fusion-flex-align-items-' + values.flex_align_items
-				};
 
 				return attr;
 			},
@@ -284,86 +240,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						imageMap[ image ] = imageSizes;
 					}
 				} );
-			},
-
-			/**
-			 * Get inline style.
-			 *
-			 * @since 3.9
-			 * @param {object} values
-			 * @return string
-			 */
-			getInlineStyle: function( values ) {
-				var cssVarsOptions = [
-					'columns',
-					'caption_title_transform',
-					'caption_title_line_height',
-					'caption_text_transform',
-					'caption_text_line_height',
-					'caption_title_color',
-					'caption_text_color',
-					'caption_border_color',
-					'caption_overlay_color',
-					'caption_background_color'
-				];
-
-				cssVarsOptions.caption_title_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.caption_title_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.caption_text_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.caption_text_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.caption_margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.caption_margin_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.caption_margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.caption_margin_left = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getFontStylingVars( 'caption_title_font', values ) + this.getFontStylingVars( 'caption_text_font', values );
-			},
-
-			/**
-			 * Builds caption styles.
-			 *
-			 * @since 3.5
-			 * @param {Object} atts - The atts object.
-			 * @return {string}
-			 */
-			buildCaptionStyles: function( atts ) {
-				var selectors,
-css = '',
-media,
-responsive = '';
-				this.dynamic_css  = {};
-				this.baseSelector = '.fusion-image-carousel.fusion-image-carousel-' + this.model.get( 'cid' );
-
-				if ( 'off' === atts.values.caption_style ) {
-					return '';
-				}
-
-				if ( -1 !== jQuery.inArray( atts.values.caption_style, [ 'above', 'below' ] ) ) {
-					_.each( [ '', 'medium', 'small' ], function( size ) {
-						var key = 'caption_align' + ( '' === size ? '' : '_' + size );
-
-						// Check for default value.
-						if ( this.isDefault( key ) ) {
-							return;
-						}
-
-						this.dynamic_css  = {};
-
-						// Build responsive alignment.
-						selectors = [ this.baseSelector + ' .awb-imageframe-caption-container' ];
-						this.addCssProperty( selectors, 'text-align', atts.values[ key ] );
-
-						if ( '' === size ) {
-							responsive += this.parseCSS();
-						} else {
-							media       = '@media only screen and (max-width:' + this.extras[ 'visibility_' + size ] + 'px)';
-							responsive += media + '{' + this.parseCSS() + '}';
-						}
-					}, this );
-					css += responsive;
-				}
-
-				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 

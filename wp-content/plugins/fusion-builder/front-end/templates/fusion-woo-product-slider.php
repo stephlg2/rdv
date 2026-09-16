@@ -11,13 +11,14 @@
 <# if ( productList ) { #>
 	<div {{{ _.fusionGetAttributes( wooProductSliderShortcode ) }}}>
 		<div {{{ _.fusionGetAttributes( wooProductSliderShortcodeCarousel ) }}}>
-			<div class="swiper-wrapper">
+			<div class="fusion-carousel-positioner">
+			<ul class="fusion-carousel-holder">
 				{{{ productList }}}
-			</div>
+			</ul>
 			<# if ( 'yes' == showNav ) { #>
-				<div class="awb-swiper-button awb-swiper-button-prev"><i class="awb-icon-angle-left"></i></div>
-				<div class="awb-swiper-button awb-swiper-button-next"><i class="awb-icon-angle-right"></i></div>
+				<div class="fusion-carousel-nav"><span class="fusion-nav-prev"></span><span class="fusion-nav-next"></span></div>
 			<# } #>
+			</div>
 		</div>
 	</div>
 <# } else if ( placeholder ) { #>

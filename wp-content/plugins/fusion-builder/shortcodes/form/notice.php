@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_notice' ) ) {
 		class FusionForm_Notice extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -36,7 +54,7 @@ if ( fusion_is_element_enabled( 'fusion_form_notice' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'error'         => '',
 					'success'       => '',
@@ -46,7 +64,6 @@ if ( fusion_is_element_enabled( 'fusion_form_notice' ) ) {
 					'margin_left'   => '',
 					'margin_right'  => '',
 					'margin_top'    => '',
-					'logics'        => '',
 				];
 			}
 
@@ -71,11 +88,8 @@ if ( fusion_is_element_enabled( 'fusion_form_notice' ) ) {
 
 				$this->params = $this->get_form_data();
 
-				// Add form element data to a form.
-				$this->add_field_data_to_form();
-
-				// If post, notices are up to user when processing data.
-				if ( 'post' === $this->params['form_meta']['form_type'] ) {
+				// If default, notices are up to user when processing data.
+				if ( 'default' === $this->params['form_meta']['form_type'] ) {
 					$html .= '<input type="hidden" value="fusion-notices-' . $this->counter . '" name="form_notices" />';
 					ob_start();
 					do_action( 'fusion_form_post_notice', $this->args );
@@ -105,7 +119,7 @@ if ( fusion_is_element_enabled( 'fusion_form_notice' ) ) {
 			public function attr() {
 
 				$attr = [
-					'class' => 'form-submission-notices data-notice_' . $this->counter,
+					'class' => 'form-submission-notices',
 					'id'    => 'fusion-notices-' . $this->counter,
 				];
 
@@ -165,6 +179,8 @@ if ( fusion_is_element_enabled( 'fusion_form_notice' ) ) {
  */
 function fusion_form_notice() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_Notice',
@@ -177,22 +193,20 @@ function fusion_form_notice() {
 				'preview_id'     => 'fusion-builder-block-module-form-element-preview-template',
 				'params'         => [
 					[
-						'type'         => 'raw_textarea',
-						'heading'      => esc_attr__( 'Success Message', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Enter a message to be shown when the form has been successfully submitted.', 'fusion-builder' ),
-						'param_name'   => 'success',
-						'value'        => 'Thank you for your message. It has been sent.',
-						'dynamic_data' => true,
+						'type'        => 'raw_textarea',
+						'heading'     => esc_attr__( 'Success Message', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter a message to be shown when the form has been successfully submitted.', 'fusion-builder' ),
+						'param_name'  => 'success',
+						'value'       => 'Thank you for your message. It has been sent.',
 					],
 					[
-						'type'         => 'raw_textarea',
-						'heading'      => esc_attr__( 'Error Message', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Enter a message to be shown when a problem has been encountered while submitting the form.', 'fusion-builder' ),
-						'param_name'   => 'error',
-						'value'        => 'There was an error trying to send your message. Please try again later.',
-						'dynamic_data' => true,
+						'type'        => 'raw_textarea',
+						'heading'     => esc_attr__( 'Error Message', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter a message to be shown when a problem has been encountered while submitting the form.', 'fusion-builder' ),
+						'param_name'  => 'error',
+						'value'       => 'There was an error trying to send your message. Please try again later.',
 					],
-					'fusion_margin_placeholder'      => [
+					'fusion_margin_placeholder' => [
 						'group'      => esc_attr__( 'General', 'fusion-builder' ),
 						'param_name' => 'margin',
 						'value'      => [
@@ -216,7 +230,6 @@ function fusion_form_notice() {
 						'value'       => '',
 						'description' => esc_attr__( 'Add an ID for the input field.', 'fusion-builder' ),
 					],
-					'fusion_form_logics_placeholder' => [],
 				],
 			]
 		)

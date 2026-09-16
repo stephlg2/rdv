@@ -23,6 +23,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -51,8 +52,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				attr = _.fusionAnimations( values, attr );
 
-				attr.style += this.getStyleVariables( values );
-
 				return attr;
 			},
 
@@ -77,36 +76,47 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var css,
+					self = this,
+					textStyles = {};
 
-				// Price typography.
-				jQuery.each( _.fusionGetFontStyle( 'text_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'text-' + rule ] = value;
+				this.baseSelector = '.fusion-woo-short-description-tb.fusion-woo-short-description-tb-' + this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				// Text styles.
+				if ( ! this.isDefault( 'text_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .woocommerce-product-details__short-description', 'color', values.text_color );
+				}
+
+				if ( ! this.isDefault( 'text_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .woocommerce-product-details__short-description', 'font-size',  _.fusionGetValueWithUnit( values.text_font_size ) );
+				}
+
+				// Text typography styles.
+				textStyles = _.fusionGetFontStyle( 'text_font', values, 'object' );
+				jQuery.each( textStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector + ' .woocommerce-product-details__short-description', rule, value );
 				} );
 
-				cssVarsOptions = [
-				'text_color',
-				'text_line_height',
-				'text_text_transform'
-			];
+				jQuery.each( [ 'top', 'right', 'bottom', 'left' ], function( index, side ) {
+					var marginName      = 'margin_' + side;
 
-				cssVarsOptions.margin_bottom        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_font_size       = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_letter_spacing  = { 'callback': _.fusionGetValueWithUnit };
+					// Element margin.
+					if ( '' !==  values[ marginName ] ) {
+						self.addCssProperty( self.baseSelector, 'margin-' + side,  _.fusionGetValueWithUnit( values[ marginName ] ) );
+					}
+				} );
 
+				css = this.parseCSS();
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

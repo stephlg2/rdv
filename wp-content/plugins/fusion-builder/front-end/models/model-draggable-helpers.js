@@ -27,15 +27,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return model.get( 'cid' ) == cid; // jshint ignore: line
 			} );
 
-			$values     = _.fusionCleanParameters( jQuery.extend( true, {}, $element.get( 'params' ) ) );
+			$values  = _.fusionCleanParameters( jQuery.extend( true, {}, $element.get( 'params' ) ) );
 			$parentCID  = $element.get( 'parent' );
-			$classes    = '';
 
 			switch ( $element.get( 'type' ) ) {
 
 			case 'fusion_builder_container':
-			case 'fusion_builder_form_step':
-			case 'fusion_builder_next_page':
 
 				if ( 'undefined' !== typeof $values.fusion_global ) {
 					$classes = ' container-global-helper';

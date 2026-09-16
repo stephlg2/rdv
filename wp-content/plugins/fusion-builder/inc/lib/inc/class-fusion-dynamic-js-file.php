@@ -71,6 +71,7 @@ final class Fusion_Dynamic_JS_File {
 
 		if ( $no_file || ! $this->js_file_is_readable() ) {
 			new Fusion_Dynamic_JS_Separate( $dynamic_js );
+			$this->disable_dynamic_js();
 		} else {
 			$this->enqueue_scripts();
 		}
@@ -86,10 +87,6 @@ final class Fusion_Dynamic_JS_File {
 	public function enqueue_scripts() {
 		global $fusion_library_latest_version;
 
-		// Don't need JS on builder frame.
-		if ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() ) {
-			return;
-		}
 		// Get an array of external dependencies.
 		$dependencies = array_unique( $this->dynamic_js->get_external_dependencies() );
 
@@ -139,6 +136,21 @@ final class Fusion_Dynamic_JS_File {
 			}
 		}
 		return apply_filters( 'fusion_compiler_js_file_is_readable', $is_readable );
+	}
+
+	/**
+	 * Disable Dynamic JS compiler.
+	 *
+	 * @access public
+	 * @since 1.0.0
+	 * @return void
+	 */
+	public function disable_dynamic_js() {
+		$options                = (array) get_option( Fusion_Settings::get_option_name(), [] );
+		$options['js_compiler'] = '0';
+
+		update_option( Fusion_Settings::get_option_name(), $options );
+		add_filter( 'fusion_compiler_js_file_is_readable', '__return_false' );
 	}
 
 	/**
@@ -302,9 +314,12 @@ final class Fusion_Dynamic_JS_File {
 	 *
 	 * @static
 	 * @since 1.0.0
+	 * @return bool
 	 */
 	public static function reset_cached_filenames() {
-		delete_transient( 'fusion_dynamic_js_filenames' );
+
+		return delete_transient( 'fusion_dynamic_js_filenames' );
+
 	}
 
 	/**
@@ -312,9 +327,11 @@ final class Fusion_Dynamic_JS_File {
 	 *
 	 * @static
 	 * @since 1.0.0
-	 * @return void
+	 * @return bool
 	 */
 	public static function delete_dynamic_js_transient() {
-		delete_transient( 'fusion_dynamic_js_readable' );
+
+		return delete_transient( 'fusion_dynamic_js_readable' );
+
 	}
 }

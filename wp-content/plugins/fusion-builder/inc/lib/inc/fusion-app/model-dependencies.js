@@ -63,7 +63,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			self.collectDependencyIds();
 
 			if ( 'undefined' !== typeof self.dependencyIds && self.dependencyIds.length ) {
-				this.$targetEl.find( self.dependencyIds.substring( 2 ) ).on( 'change paste keyup fusion-change', function() {
+				this.$targetEl.on( 'change paste keyup fusion-change', self.dependencyIds.substring( 2 ), function() {
 					self.processDependencies( jQuery( this ).attr( 'id' ), view );
 				} );
 
@@ -128,30 +128,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					operator    = dependency[ self.operatorKey ],
 					value       = dependency.value,
 					hasParent   = -1 !== setting.indexOf( 'parent_' ),
+					parentValue = self.repeaterFields && hasParent ? self.$parentEl.find( '#' + setting.replace( 'parent_', '' ) ).val() : self.$targetEl.find( '#' + setting ).val(),
 					element     = self.repeaterFields && hasParent ? self.$parentEl.find( '.fusion-builder-module-settings' ).data( 'element' ) : self.$targetEl.find( '.fusion-builder-module-settings' ).data( 'element' ),
 					result      = false,
-					poFields,
-					parentValue,
 					containerView,
 					containerParams;
 
-				if ( self.repeaterFields && hasParent ) {
-					parentValue = self.$parentEl.find( '#' + setting.replace( 'parent_', '' ) ).val();
-				} else if ( 0 < self.$targetEl.find( '#' + setting ).closest( '.dynamic-param-fields' ).length ) {
-					// Check and exclude for dynamic data fields.
-					parentValue = self.$targetEl.find( '#' + setting ).closest( '[data-dynamic]' ).siblings().find( '#' + setting ).val();
-				} else {
-					const input = self.$targetEl.find( '#' + setting );
-					// Multi Select option.
-					if ( input.is( 'div' ) && input.is( '.fusion-form-multiple-select' ) ) {
-						parentValue = [];
-						input.find( '.fusion-select-options input.fusion-select-option:checked' ).each( function() {
-							parentValue.push( jQuery( this ).val() );
-						} );
-					} else {
-						parentValue = input.val();
-					}
-				}
 				if ( 'undefined' === typeof parentValue ) {
 					if ( 'TO' === self.type ) {
 						parentValue = FusionApp.settings[ setting ];
@@ -161,15 +143,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 						if ( 'undefined' !== typeof FusionApp.data.postMeta._fusion && 'undefined' !== typeof FusionApp.data.postMeta._fusion[ setting ] ) {
 							parentValue = FusionApp.data.postMeta._fusion[ setting ];
-						}
-
-						// Get the default value.
-						if ( ( 'undefined' === typeof parentValue || '' === parentValue ) ) {
-							poFields = FusionApp.sidebarView.getFlatPoObject();
-
-							if ( poFields[ setting ] && poFields[ setting ][ 'default' ] ) {
-								parentValue = poFields[ setting ][ 'default' ];
-							}
 						}
 					}
 				}
@@ -241,12 +214,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							}
 						}
 
-						if ( 'EO' === self.type && 'undefined' !== typeof self.attributes[ setting ] && 'range' !== self.attributes[ setting ].type ) {
-
-							// Fix value names ( TO to EO )
-							parentValue = self.fixEoToValue( parentValue );
-						}
-
 						$passedArray.push( self.doesTestPass( parentValue, value, operator ) );
 					}
 				} else {
@@ -260,11 +227,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 								parentValue = '';
 							}
 						}
-					}
-
-					// Check for current post type dependency.
-					if ( 'EO' === self.type && '_post_type_edited' === setting && 'object' === typeof self.elementView ) {
-						parentValue = FusionApp.data.postDetails.post_type;
 					}
 
 					$passedArray.push( self.doesTestPass( parentValue, value, operator ) );
@@ -365,10 +327,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		hideShowOption: function( show, optionName ) {
 			if ( show ) {
 				this.$targetEl.find( '[data-option-id="' + optionName + '"]' ).fadeIn( 300 );
-				this.$targetEl.find( '[data-option-id="' + optionName + '"]' ).removeClass( 'dependency-hide' );
 			} else {
 				this.$targetEl.find( '[data-option-id="' + optionName + '"]' ).hide();
-				this.$targetEl.find( '[data-option-id="' + optionName + '"]' ).addClass( 'dependency-hide' );
 			}
 		},
 
@@ -509,10 +469,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				arr,
 				media;
 
-			// If dependencies are disabled, always show the option.
-			if ( 'undefined' !== FusionApp.settings.dependencies_status && 0 === parseInt( FusionApp.settings.dependencies_status ) ) {
-				return true;
-			}
 			switch ( operation ) {
 			case '=':
 			case '==':
@@ -660,7 +616,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} else if ( -1 !== parentValue.toString().indexOf( checkValue ) ) {
 					show = true;
 				}
-
 				break;
 
 			case 'doesnt_contain':
@@ -726,18 +681,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					if ( media && media.url ) {
 						show = true;
 					}
-				}
-				break;
-
-			case 'is_transparent':
-				if ( parentValue && 0 === jQuery.AWB_Color( parentValue ).alpha() ) {
-					show = true;
-				}
-				break;
-
-			case 'is_not_transparent':
-				if ( parentValue && 0 !== jQuery.AWB_Color( parentValue ).alpha() ) {
-					show = true;
 				}
 				break;
 
@@ -839,29 +782,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				break;
 
 			case 'show':
-			case '1':
-				value = 'yes';
-
-				break;
-			}
-
-			return value;
-		},
-
-		/**
-		 * Convert option values.
-		 *
-		 * @since 3.7.0
-		 * @return string
-		 */
-		fixEoToValue: function( value ) {
-			switch ( value ) {
-
-			case '0':
-				value = 'no';
-
-				break;
-
 			case '1':
 				value = 'yes';
 

@@ -8,7 +8,6 @@ FusionPageBuilder.options.radioButtonSet = {
 
 		$element         = $element || this.$el;
 		$radiobuttonsets = $element.find( '.fusion-form-radio-button-set' );
-		const $tabs = $element.parent();
 
 		if ( $radiobuttonsets.length ) {
 			$radiobuttonsets.each( function() {
@@ -41,67 +40,7 @@ FusionPageBuilder.options.radioButtonSet = {
 						}
 					} );
 				}
-
-				// Radio buttons soft dependencies. for now its check single dependency support == and != operators only.
-				if ( $radiobuttonset.find( 'a[data-dependency]' ).length ) {
-					$radiobuttonset.find( 'a[data-dependency]' ).each( function() {
-						const prop = jQuery( this ).data( 'dependency' );
-						const value = jQuery( this ).data( 'dependency-value' );
-						const operator = jQuery( this ).data( 'dependency-operator' ) || '==';
-
-						const currentValue = $tabs.find( `input#${prop}` ).val();
-
-						if ( '==' === operator ) {
-							if ( currentValue == value ) {
-								jQuery( this ).show();
-							} else {
-								jQuery( this ).hide();
-							}
-						}
-
-						if ( '!=' === operator ) {
-							if ( currentValue != value ) {
-								jQuery( this ).show();
-							} else {
-								jQuery( this ).hide();
-							}
-						}
-
-					} );
-
-				}
-
 			} );
 		}
-
-		if ( $tabs.find( '.fusion-form-radio-button-set a[data-dependency]' ).length ) {
-			$tabs.find( '.fusion-form-radio-button-set a[data-dependency]' ).each( function() {
-				const $btn = jQuery( this );
-				const prop = jQuery( this ).data( 'dependency' );
-				const value = jQuery( this ).data( 'dependency-value' );
-				const operator = jQuery( this ).data( 'dependency-operator' ) || '==';
-
-				$tabs.find( 'input#' + prop ).on( 'change', function() {
-					const currentValue = jQuery( this ).val();
-
-					if ( '==' === operator ) {
-						if ( currentValue == value ) {
-							$btn.show();
-						} else {
-							$btn.hide();
-						}
-					}
-
-					if ( '!=' === operator ) {
-						if ( currentValue != value ) {
-							$btn.show();
-						} else {
-							$btn.hide();
-						}
-					}
-				} );
-			} );
-		}
-
 	}
 };

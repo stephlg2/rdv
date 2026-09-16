@@ -1,21 +1,21 @@
+/* stylelint-disable length-zero-no-unit */
+/* stylelint-enable length-zero-no-unit */
 .fusion-counters-circle {
-  --awb-margin-top: 0;
-  --awb-margin-right: 0;
-  --awb-margin-bottom: 20px;
-  --awb-margin-left: 0;
-  margin: var(--awb-margin-top) var(--awb-margin-right) var(--awb-margin-bottom) var(--awb-margin-left);
+  margin-bottom: 20px;
   text-align: center;
 }
 .fusion-counters-circle .counter-circle-wrapper {
-  --awb-font-size: 50px;
-  --awb-size: 220px;
   display: inline-block;
   position: relative;
-  margin: 0 7.5px 15px 7.5px;
+  margin-bottom: 20px;
+  margin-right: 15px;
+  height: 220px;
+  width: 220px;
   overflow: hidden;
-  text-align: center;
-  height: var(--awb-size);
-  width: var(--awb-size);
+  vertical-align: middle;
+}
+.fusion-counters-circle .counter-circle-wrapper:hover {
+  overflow: visible;
 }
 .fusion-counters-circle .counter-circle {
   display: flex;
@@ -23,9 +23,9 @@
   justify-content: center;
   overflow: hidden;
   position: relative;
-  height: var(--awb-size);
-  width: var(--awb-size);
-  font-size: var(--awb-font-size);
+  height: 220px;
+  width: 220px;
+  font-size: 50px;
 }
 .fusion-counters-circle .counter-circle .fusion-counter-circle-content-inner {
   line-height: 1;
@@ -34,7 +34,7 @@
 .fusion-counters-circle .counter-circle .fontawesome-icon {
   float: none;
   margin: 0;
-  font-size: inherit;
+  font-size: 50px;
 }
 .fusion-counters-circle .counter-circle canvas {
   position: absolute;

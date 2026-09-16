@@ -8,13 +8,14 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_search-shortcode">
+	{{{formStyles}}}
 	<div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
 		<form role="search" {{{ _.fusionGetAttributes( formAttr ) }}} method="get" action="<?php echo esc_url_raw( home_url( '/' ) ); ?>">
 				<div class="fusion-search-form-content">
 					<div class="fusion-search-field search-field">
 						<label><span class="screen-reader-text"><?php esc_attr_e( 'Search for:', 'fusion-builder' ); ?></span>
 							<# if ( values.live_search ) { #>
-								<input type="search" class="s fusion-live-search-input" name="s" id="fusion-live-search-input-{{cid}}" autocomplete="off" placeholder="{{{values.placeholder}}}" required aria-required="true" aria-label="{{{values.placeholder}}}"/>
+								<input type="search" class="s fusion-live-search-input" name="s" id="fusion-live-search-input" autocomplete="off" placeholder="{{{values.placeholder}}}" required aria-required="true" aria-label="{{{values.placeholder}}}"/>
 							<# } else { #>
 								<input type="search" value="" name="s" class="s" placeholder="{{{values.placeholder}}}" required aria-required="true" aria-label="{{{values.placeholder}}}"/>
 							<# } #>

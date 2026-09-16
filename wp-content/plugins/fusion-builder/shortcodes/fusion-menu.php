@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Counter for elements.
 			 *
 			 * @access protected
@@ -33,6 +42,33 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			 * @var int
 			 */
 			protected $count = 0;
+
+			/**
+			 * An array of the dynamic CSS.
+			 *
+			 * @access protected
+			 * @since 3.0
+			 * @var array
+			 */
+			protected $dynamic_css;
+
+			/**
+			 * The base selector for generated styles.
+			 *
+			 * @access private
+			 * @since 3.0
+			 * @var string
+			 */
+			private $base_selector;
+
+			/**
+			 * The base selector for generated styles, without the .fusion-body class prepended.
+			 *
+			 * @access private
+			 * @since 3.0
+			 * @var string
+			 */
+			private $base_selector_no_body;
 
 			/**
 			 * Has the inline script already been added?
@@ -96,7 +132,7 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					add_filter( 'fusion_builder_live_request', '__return_true' );
 				}
 
-				$return_data['menu_markup'] = wp_nav_menu( $this->fetch_menu_args() );
+				$return_data['menu_markup'] = wp_nav_menu( $this->fetch_menu_args( [ 'method' => 'hover' ] ) );
 
 				// Add search overlay form as direct child of <nav>.
 				if ( '' !== self::$overlay_search_markup ) {
@@ -107,6 +143,7 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 
 				$return_data['button_markup']        = $this->get_button();
 				$return_data['flyout_button_markup'] = $this->get_flyout_button();
+				$return_data['styles']               = $this->get_styles();
 
 				echo wp_json_encode( $return_data );
 
@@ -122,7 +159,7 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
 					'active_bg'                            => 'rgba(0,0,0,0)',
@@ -137,7 +174,6 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					'animation_offset'                     => $fusion_settings->get( 'animation_offset' ),
 					'animation_speed'                      => '',
 					'animation_type'                       => '',
-					'animation_color'                      => '',
 					'arrows'                               => [ '' ],
 					'arrows_size_height'                   => '12px',
 					'arrows_size_width'                    => '23px',
@@ -165,16 +201,11 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					'collapsed_nav_icon_close'             => 'fa-bars fas',
 					'collapsed_nav_icon_open'              => 'fa-times fas',
 					'collapsed_nav_text'                   => '',
-					'color'                                => '',
+					'color'                                => '#212934',
 					'direction'                            => 'row',
 					'dropdown_carets'                      => 'yes',
 					'expand_direction'                     => 'right',
 					'expand_method'                        => 'hover',
-					'close_on_outer_click'                 => 'no',
-					'close_on_outer_click_stacked'         => 'no',
-					'stacked_expand_method'                => 'click',
-					'stacked_click_mode'                   => 'toggle',
-					'stacked_submenu_indent'               => '',
 					'submenu_mode'                         => 'dropdown',
 					'submenu_flyout_direction'             => 'fade',
 					'expand_transition'                    => 'fade',
@@ -197,7 +228,6 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					'items_padding_right'                  => '0px',
 					'items_padding_top'                    => '0px',
 					'justify_content'                      => 'flex-start',
-					'justify_title'                        => 'center',
 					'margin_bottom'                        => '0px',
 					'margin_top'                           => '0px',
 					'menu'                                 => false,
@@ -208,9 +238,6 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					'mobile_bg'                            => '#ffffff',
 					'mobile_color'                         => '#4a4e57',
 					'mobile_font_size'                     => '1em',
-					'mobile_text_transform'                => '',
-					'mobile_line_height'                   => '',
-					'mobile_letter_spacing'                => '',
 					'mobile_trigger_font_size'             => '1em',
 					'mobile_indent_submenu'                => 'on',
 					'mobile_nav_button_align_hor'          => 'flex-start',
@@ -241,12 +268,8 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					'submenu_items_padding_top'            => '12px',
 					'submenu_sep_color'                    => '#e2e2e2',
 					'submenu_space'                        => '0px',
-					'submenu_text_transform'               => '',
-					'submenu_line_height'                  => '',
-					'submenu_letter_spacing'               => '',
-					'sub_justify_content'                  => 'space-between',
-					'text_transform'                       => '',
-					'line_height'                          => '',
+					'submenu_text_transform'               => 'none',
+					'text_transform'                       => 'none',
 					'thumbnail_size_height'                => '14px',
 					'thumbnail_size_width'                 => '26px',
 					'transition_time'                      => '300',
@@ -257,9 +280,6 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					'trigger_padding_top'                  => '12px',
 					'mobile_justify_content'               => 'left',
 					'main_justify_content'                 => 'left',
-					'letter_spacing'                       => '',
-					'mobile_sticky_max_height'             => '',
-					'mobile_opening_mode'                  => 'toggle',
 				];
 			}
 
@@ -273,6 +293,67 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			 */
 			public static function settings_to_params() {
 				return [];
+			}
+
+			/**
+			 * Adds units to attributes that require it.
+			 *
+			 * @access protected
+			 * @since 3.0
+			 * @return void
+			 */
+			protected function add_units_to_args() {
+				$requires_units = [
+					'margin_top',
+					'margin_bottom',
+					'items_padding_top',
+					'items_padding_bottom',
+					'items_padding_left',
+					'items_padding_right',
+					'gap',
+					'font_size',
+					'min_height',
+					'border_top',
+					'border_bottom',
+					'border_left',
+					'border_right',
+					'active_border_top',
+					'active_border_bottom',
+					'active_border_left',
+					'active_border_right',
+					'border_radius_top_left',
+					'border_radius_top_right',
+					'border_radius_bottom_right',
+					'border_radius_bottom_left',
+					'submenu_border_radius_top_left',
+					'submenu_border_radius_top_right',
+					'submenu_border_radius_bottom_right',
+					'submenu_border_radius_bottom_left',
+					'submenu_space',
+					'arrows_size_width',
+					'arrows_size_height',
+					'submenu_items_padding_top',
+					'submenu_items_padding_bottom',
+					'submenu_items_padding_left',
+					'submenu_items_padding_right',
+					'submenu_font_size',
+					'box_shadow_horizontal',
+					'box_shadow_spread',
+					'box_shadow_vertical',
+					'thumbnail_size_width',
+					'thumbnail_size_height',
+					'trigger_padding_top',
+					'trigger_padding_right',
+					'trigger_padding_bottom',
+					'trigger_padding_left',
+					'mobile_trigger_font_size',
+				];
+
+				foreach ( $requires_units as $setting ) {
+					if ( isset( $this->args[ $setting ] ) && is_numeric( $this->args[ $setting ] ) ) {
+						$this->args[ $setting ] = trim( $this->args[ $setting ] ) . 'px';
+					}
+				}
 			}
 
 			/**
@@ -292,21 +373,6 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 				$this->args     = $defaults;
 				$html           = '';
 
-				// Use stacked expand method if menu is vertical and submenu mode is stacked.
-				if ( 'column' === $this->args['direction'] && 'stacked' === $this->args['submenu_mode'] ) {
-					$this->args['expand_method'] = $this->args['stacked_expand_method'];
-
-					// Force click expand mode if submenu stacked is enabled and expand method is always.
-					if ( 'always' === $this->args['expand_method'] ) {
-						$this->args['expand_method'] = 'click';
-					}
-				}
-
-				// Active, inherit from default.
-				if ( '' === $this->args['active_color'] && '' !== $this->args['color'] ) {
-					$this->args['active_color'] = $this->args['color'];
-				}
-
 				// Force click expand mode if submenu flyout is enabled.
 				$this->args['expand_method'] = 'flyout' === $this->args['submenu_mode'] ? 'click' : $this->args['expand_method'];
 
@@ -314,14 +380,9 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 				$this->args['box_shadow'] = 'flyout' === $this->args['submenu_mode'] ? 'no' : $this->args['box_shadow'];
 
 				// Force opacity submenu transition for vertical menus.
-				$this->args['expand_transition'] = 'row' !== $this->args['direction'] ? 'fade' : $this->args['expand_transition'];
+				$this->args['expand_transition'] = 'row' !== $this->args['direction'] ? 'opacity' : $this->args['expand_transition'];
 
-				// For any variable font families, the variant comes from that.
-				foreach ( [ 'typography', 'submenu_typography', 'mobile_typography' ] as $typo_var ) {
-					if ( false !== strpos( $this->args[ 'fusion_font_family_' . $typo_var ], 'var(' ) ) {
-						$this->args[ 'fusion_font_variant_' . $typo_var ] = AWB_Global_Typography()->get_var_string( $this->args[ 'fusion_font_family_' . $typo_var ], 'font-weight' );
-					}
-				}
+				$this->add_units_to_args();
 
 				if ( $this->args['menu'] ) {
 					$menu = wp_get_nav_menus( $this->args['menu'] );
@@ -337,15 +398,15 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 						self::$overlay_search_markup = '';
 					}
 
-					// Add button for mobile trigger if mobile is enabled.
-					if ( 'never' !== $this->args['breakpoint'] ) {
-						$html .= $this->get_button();
-					}
+					// Add button.
+					$html .= $this->get_button();
 
 					// Add close 'flyout' submenu button.
 					if ( 'flyout' === $this->args['submenu_mode'] ) {
 						$html .= $this->get_flyout_button();
 					}
+
+					$html .= $this->get_styles();
 
 					// Add the menu.
 					$html .= $menu_markup;
@@ -373,7 +434,7 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 				}
 
 				echo '<script type="text/javascript">';
-				echo fusion_file_get_contents( FUSION_BUILDER_PLUGIN_DIR . 'assets/js/min/general/fusion-menu-inline.js' ); // phpcs:ignore WordPress.Security.EscapeOutput
+				include FUSION_BUILDER_PLUGIN_DIR . 'assets/js/min/general/fusion-menu-inline.js';
 				echo '</script>';
 				self::$inline_script_added = true;
 			}
@@ -388,26 +449,25 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			protected function get_button() {
 				$html = '';
 
-				$trigger_class      = 'awb-menu__m-toggle';
+				$trigger_class      = 'avada-menu-mobile-menu-trigger';
 				$collapsed_nav_text = $this->args['collapsed_nav_text'];
-				$has_nav_text       = ! empty( $collapsed_nav_text );
-				if ( ! $has_nav_text ) {
-					$trigger_class      = 'awb-menu__m-toggle awb-menu__m-toggle_no-text';
+				if ( ! $collapsed_nav_text ) {
+					$trigger_class      = 'avada-menu-mobile-menu-trigger no-text';
 					$collapsed_nav_text = '<span class="screen-reader-text">' . esc_html__( 'Toggle Navigation', 'fusion-builder' ) . '</span>';
 				}
 
 				// Start the button.
-				$html .= '<button type="button" class="' . $trigger_class . '" aria-expanded="false" aria-controls="menu-' . $this->args['menu'] . '">';
+				$html .= '<button type="button" class="' . $trigger_class . '" onClick="fusionNavClickExpandBtn(this);" aria-expanded="false">';
 
 				// We use a wrapper span because we set it to flex, so RTL & LTR both work properly
 				// and the icon changes place automagically depending on language direction.
-				$html .= '<span class="awb-menu__m-toggle-inner">';
+				$html .= '<span class="inner">';
 				// The text.
 				$html .= '<span class="collapsed-nav-text">' . $collapsed_nav_text . '</span>';
 				// The icons.
-				$html .= '<span class="awb-menu__m-collapse-icon' . ( ! $has_nav_text ? ' awb-menu__m-collapse-icon_no-text' : '' ) . '">';
-				$html .= '<span class="awb-menu__m-collapse-icon-open ' . ( ! $has_nav_text ? 'awb-menu__m-collapse-icon-open_no-text ' : '' ) . fusion_font_awesome_name_handler( $this->args['collapsed_nav_icon_open'] ) . '"></span>';
-				$html .= '<span class="awb-menu__m-collapse-icon-close ' . ( ! $has_nav_text ? 'awb-menu__m-collapse-icon-close_no-text ' : '' ) . fusion_font_awesome_name_handler( $this->args['collapsed_nav_icon_close'] ) . '"></span>';
+				$html .= '<span class="collapsed-nav-icon">';
+				$html .= '<span class="collapsed-nav-icon-open ' . fusion_font_awesome_name_handler( $this->args['collapsed_nav_icon_open'] ) . '"></span>';
+				$html .= '<span class="collapsed-nav-icon-close ' . fusion_font_awesome_name_handler( $this->args['collapsed_nav_icon_close'] ) . '"></span>';
 				$html .= '</span>';
 				// Close the wrapper.
 				$html .= '</span>';
@@ -427,7 +487,1810 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			 * @return string
 			 */
 			protected function get_flyout_button() {
-				return '<button type="button" class="awb-menu__flyout-close" onClick="fusionNavCloseFlyoutSub(this);"></button>';
+				return '<button type="button" class="fusion-close-flyout" onClick="fusionNavCloseFlyoutSub(this);"></button>';
+			}
+
+			/**
+			 * Get the styles.
+			 *
+			 * @access protected
+			 * @since 3.0
+			 * @return string
+			 */
+			protected function get_styles() {
+				$this->base_selector         = '.fusion-body .fusion-menu-element-wrapper[data-count="' . $this->count . '"]';
+				$this->base_selector_no_body = '.fusion-menu-element-wrapper[data-count="' . $this->count . '"]';
+				$this->dynamic_css           = [];
+
+				if ( ! $this->is_default( 'font_size' ) ) {
+					$selectors = [
+						$this->base_selector,
+						$this->base_selector . ' .fusion-menu-element-list .menu-item > a',
+					];
+
+					$this->add_css_property( $selectors, 'font-size', $this->args['font_size'] );
+				}
+
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-top', $this->args['margin_top'] );
+				}
+
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-bottom', $this->args['margin_bottom'] );
+				}
+
+				// Flex direction.
+				if ( ! $this->is_default( 'direction' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list', 'flex-direction', $this->args['direction'] );
+				}
+
+				// Justify content.
+				if ( ! $this->is_default( 'justify_content' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list', 'justify-content', $this->args['justify_content'] );
+				}
+
+				// Align items.
+				if ( ! $this->is_default( 'align_items' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list', 'align-items', $this->args['align_items'] );
+				}
+
+				// Font family.
+				$selectors = [
+					$this->base_selector . ' .fusion-menu-element-list',
+					$this->base_selector . ' > .avada-menu-mobile-menu-trigger',
+					$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu .fusion-megamenu-submenu .fusion-megamenu-title',
+				];
+
+				$menu_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'typography', 'array' );
+
+				foreach ( $menu_styles as $rule => $value ) {
+					$this->add_css_property( $selectors, $rule, $value );
+				}
+
+				// This is outside the condition on purpose.
+				$this->add_css_property(
+					[
+						$this->base_selector . ' [class*="fusion-icon-"]',
+						$this->base_selector . ' [class^="fusion-icon-"]',
+					],
+					'font-family',
+					$this->args['fusion_font_family_typography'],
+					true
+				);
+
+				// Minimum height.
+				if ( ! $this->is_default( 'min_height' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list', 'min-height', $this->args['min_height'] );
+				}
+
+				// Sticky minimum height for transition.
+				if ( ! $this->is_default( 'sticky_min_height' ) ) {
+					$this->add_css_property( '.fusion-body .fusion-sticky-container.fusion-sticky-transition ' . $this->base_selector_no_body . ' .fusion-menu-element-list', 'min-height', $this->args['sticky_min_height'] );
+				}
+
+				// Text transform.
+				if ( ! $this->is_default( 'text_transform' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list', 'text-transform', $this->args['text_transform'] );
+				}
+
+				// Trigger background color.
+				if ( ! $this->is_default( 'mobile_trigger_background_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' > .avada-menu-mobile-menu-trigger', 'background-color', $this->args['mobile_trigger_background_color'] );
+				}
+
+				// Trigger background color.
+				if ( ! $this->is_default( 'mobile_trigger_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' > .avada-menu-mobile-menu-trigger', 'color', $this->args['mobile_trigger_color'] );
+				}
+
+				// Trigger paddings.
+				if ( ! $this->is_default( 'trigger_padding_top' ) ) {
+					$this->add_css_property( $this->base_selector . ' > .avada-menu-mobile-menu-trigger', 'padding-top', $this->args['trigger_padding_top'] );
+				}
+
+				if ( ! $this->is_default( 'trigger_padding_right' ) ) {
+					$this->add_css_property( $this->base_selector . ' > .avada-menu-mobile-menu-trigger', 'padding-right', $this->args['trigger_padding_right'] );
+				}
+
+				if ( ! $this->is_default( 'trigger_padding_bottom' ) ) {
+					$this->add_css_property( $this->base_selector . ' > .avada-menu-mobile-menu-trigger', 'padding-bottom', $this->args['trigger_padding_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'trigger_padding_left' ) ) {
+					$this->add_css_property( $this->base_selector . ' > .avada-menu-mobile-menu-trigger', 'padding-left', $this->args['trigger_padding_left'] );
+				}
+
+				// Transition duration.
+				if ( ! $this->is_default( 'transition_time' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list',
+						$this->base_selector . ' .fusion-menu-element-list .menu-item a',
+						$this->base_selector . ' .fusion-menu-element-list > li',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button)',
+						$this->base_selector . ' .fusion-overlay-search',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active',
+						$this->base_selector . '.expand-method-click.direction-row > ul > li > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.submenu-mode-flyout) .fusion-menu-element-list li:not(.fusion-mega-menu) .sub-menu',
+						$this->base_selector . ':not(.submenu-mode-flyout) .fusion-menu-element-list .fusion-megamenu-wrapper',
+						$this->base_selector . ' .avada-menu-mobile-menu-trigger .collapsed-nav-icon-open',
+						$this->base_selector . ' .avada-menu-mobile-menu-trigger .collapsed-nav-icon-close',
+					];
+					if ( 'never' !== $this->args['breakpoint'] ) {
+						$selectors[] = $this->base_selector . '.collapse-enabled.mobile-mode-collapse-to-button > ul';
+						$selectors[] = $this->base_selector . '.collapse-enabled .menu-item a > .fusion-button';
+					}
+
+					$this->add_css_property( $selectors, 'transition-duration', (int) $this->args['transition_time'] . 'ms' );
+				}
+
+				// Gap.
+				if ( ! $this->is_default( 'gap' ) ) {
+					if ( 'column' !== $this->args['direction'] ) {
+						$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li', 'margin-left', "calc({$this->args['gap']} / 2)" );
+						$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li', 'margin-right', "calc({$this->args['gap']} / 2)" );
+					} else {
+						$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li:not(:last-child)', 'margin-bottom', $this->args['gap'], true );
+					}
+				}
+
+				// Background color.
+				if ( ! $this->is_default( 'bg' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button)',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+						$this->base_selector . ' .custom-menu-search-overlay ~ .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .custom-menu-search-overlay .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .custom-menu-search-dropdown',
+					];
+					$this->add_css_property( $selectors, 'background-color', $this->args['bg'] );
+				}
+
+				// Border radius.
+				if ( ! $this->is_default( 'border_radius_top_left' ) || ! $this->is_default( 'border_radius_top_right' ) || ! $this->is_default( 'border_radius_bottom_right' ) || ! $this->is_default( 'border_radius_bottom_left' ) ) {
+					$value     = $this->args['border_radius_top_left'] . ' ' . $this->args['border_radius_top_right'] . ' ' . $this->args['border_radius_bottom_right'] . ' ' . $this->args['border_radius_bottom_left'];
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button)',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active',
+					];
+
+					$this->add_css_property( $selectors, 'border-radius', $value );
+				}
+
+				// Menu item paddings, combined with borders.
+				// Combined, padding top, border top.
+				if ( ! $this->is_default( 'items_padding_top' ) || ! $this->is_default( 'border_top' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) .fusion-widget-cart > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .fusion-open-nav-submenu',
+					];
+					$this->add_css_property( $selectors, 'padding-top', 'calc(' . $this->args['items_padding_top'] . ' + ' . $this->args['border_top'] . ')' );
+				}
+
+				// Combined, padding right, border right.
+				if ( ! $this->is_default( 'items_padding_right' ) || ! $this->is_default( 'border_right' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) .fusion-widget-cart > a',
+					];
+					$this->add_css_property( $selectors, 'padding-right', 'calc(' . $this->args['items_padding_right'] . ' + ' . $this->args['border_right'] . ')' );
+				}
+
+				// Combined, padding bottom, border bottom.
+				if ( ! $this->is_default( 'items_padding_bottom' ) || ! $this->is_default( 'border_bottom' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > a',
+					];
+
+					if ( class_exists( 'WooCommerce' ) ) {
+						$selectors[] = $this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) .fusion-widget-cart > a';
+					}
+					$this->add_css_property( $selectors, 'padding-bottom', 'calc(' . $this->args['items_padding_bottom'] . ' + ' . $this->args['border_bottom'] . ')' );
+				}
+
+				// Combined, padding left, border left.
+				if ( ! $this->is_default( 'items_padding_left' ) || ! $this->is_default( 'border_left' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > a',
+					];
+					if ( class_exists( 'WooCommerce' ) ) {
+						$selectors[] = $this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) .fusion-widget-cart > a';
+					}
+					$this->add_css_property( $selectors, 'padding-left', 'calc(' . $this->args['items_padding_left'] . ' + ' . $this->args['border_left'] . ')' );
+				}
+
+				// Combined padding top and active border top.
+				if ( ! $this->is_default( 'items_padding_top' ) || ! $this->is_default( 'active_border_top' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):hover > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).hover > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):focus > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):active > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):focus-within > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-item > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-ancestor > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-parent > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).expanded > a',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):focus > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):active > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):focus-within > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-item > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-ancestor > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-parent > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button).expanded > .fusion-open-nav-submenu',
+					];
+
+					if ( 'column' === $this->args['direction'] ) {
+						$selectors[] = $this->base_selector . '.direction-column .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .fusion-open-nav-submenu';
+					}
+					$this->add_css_property( $selectors, 'padding-top', 'calc(' . $this->args['items_padding_top'] . ' + ' . $this->args['active_border_top'] . ')' );
+				}
+
+				$selectors = [
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children):hover > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children).hover > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children):focus > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children):active > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children):focus-within > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children).current-menu-item > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children).current-menu-ancestor > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children).current-menu-parent > a',
+					$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.menu-item-has-children).expanded > a',
+				];
+
+				// Combined padding right and active border right.
+				if ( ! $this->is_default( 'items_padding_right' ) || ! $this->is_default( 'active_border_right' ) ) {
+					$this->add_css_property( $selectors, 'padding-right', 'calc(' . $this->args['items_padding_right'] . ' + ' . $this->args['active_border_right'] . ')' );
+				}
+
+				// Combined padding bottom and active border bottom.
+				if ( ! $this->is_default( 'items_padding_bottom' ) || ! $this->is_default( 'active_border_bottom' ) ) {
+					$this->add_css_property( $selectors, 'padding-bottom', 'calc(' . $this->args['items_padding_bottom'] . ' + ' . $this->args['active_border_bottom'] . ')' );
+					if ( 'column' === $this->args['direction'] ) {
+						$this->add_css_property( $this->base_selector . '.direction-column .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .fusion-open-nav-submenu', 'padding-bottom', 'calc(' . $this->args['items_padding_bottom'] . ' + ' . $this->args['active_border_bottom'] . ')' );
+					} elseif ( 'click' === $this->args['expand_method'] ) {
+						$this->add_css_property(
+							$this->base_selector . '.expand-method-click.direction-row > ul > li > .fusion-open-nav-submenu',
+							'padding-bottom',
+							'calc(' . $this->args['items_padding_bottom'] . ' + ' . $this->args['active_border_bottom'] . ')'
+						);
+					}
+				}
+
+				// Combined padding left and active border left.
+				if ( ! $this->is_default( 'items_padding_left' ) || ! $this->is_default( 'active_border_left' ) ) {
+					$this->add_css_property( $selectors, 'padding-left', 'calc(' . $this->args['items_padding_left'] . ' + ' . $this->args['active_border_left'] . ')' );
+				}
+
+				// Padding top.
+				if ( ! $this->is_default( 'items_padding_top' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-form-inline',
+						$this->base_selector . ' .custom-menu-search-overlay ~ .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .custom-menu-search-overlay .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .fusion-menu-form-inline',
+					];
+					$this->add_css_property( $selectors, 'padding-top', $this->args['items_padding_top'] );
+				}
+
+				// Combined padding top and submenu item padding top.
+				if ( 'row' === $this->args['direction'] && 'click' === $this->args['expand_method'] && ( ! $this->is_default( 'items_padding_top' ) || ! $this->is_default( 'submenu_items_padding_top' ) ) ) {
+					$this->add_css_property(
+						$this->base_selector . '.expand-method-click.direction-row > ul > li > .fusion-open-nav-submenu',
+						'padding-bottom',
+						'calc(' . $this->args['items_padding_bottom'] . ' + ' . $this->args['active_border_bottom'] . ')'
+					);
+
+					if ( 'yes' === $this->args['dropdown_carets'] ) {
+						$this->add_css_property(
+							$this->base_selector . '.dropdown-carets-yes:not(.collapse-enabled).direction-row.expand-method-click li.menu-item-has-children:not(.fusion-menu-item-button) ul .fusion-open-nav-submenu',
+							'padding-top',
+							$this->args['submenu_items_padding_top']
+						);
+						$this->add_css_property(
+							$this->base_selector . '.dropdown-carets-yes:not(.collapse-enabled).direction-row.expand-method-click li.menu-item-has-children:not(.fusion-menu-item-button) ul .fusion-open-nav-submenu',
+							'padding-bottom',
+							$this->args['submenu_items_padding_bottom']
+						);
+					}
+				}
+
+				// Padding bottom.
+				if ( ! $this->is_default( 'items_padding_bottom' ) ) {
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-form-inline',
+						$this->base_selector . ':not(.collapse-enabled) .custom-menu-search-overlay ~ .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .custom-menu-search-overlay .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .fusion-menu-form-inline',
+					];
+					$this->add_css_property( $selectors, 'padding-bottom', $this->args['items_padding_bottom'] );
+				}
+
+				// Padding right.
+				if ( ! $this->is_default( 'items_padding_right' ) ) {
+					if ( ! is_rtl() && 'click' === $this->args['expand_method'] ) {
+						$this->add_css_property(
+							[ '.ltr' . $this->base_selector . '.expand-method-click li.menu-item-has-children:not(.fusion-menu-item-button) > .fusion-open-nav-submenu' ],
+							'padding-right',
+							$this->args['items_padding_right']
+						);
+					}
+
+					// Regular paddings.
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-form-inline',
+						$this->base_selector . ':not(.collapse-enabled) .custom-menu-search-overlay ~ .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .custom-menu-search-overlay .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .fusion-menu-form-inline',
+					];
+
+					if ( ! is_rtl() && 'click' === $this->args['expand_method'] && 'column' === $this->args['direction'] ) {
+						$selectors[] = '.ltr' . $this->base_selector . '.direction-column.expand-method-click.expand-left .menu-item-has-children > a';
+					}
+					$this->add_css_property( $selectors, 'padding-right', $this->args['items_padding_right'] );
+
+					$this->add_css_property( $this->base_selector . ' .custom-menu-search-dropdown .fusion-main-menu-icon', 'padding-right', $this->args['items_padding_right'], true );
+				}
+
+				// Padding left.
+				if ( ! $this->is_default( 'items_padding_left' ) ) {
+					if ( is_rtl() && 'click' === $this->args['expand_method'] ) {
+						$selectors = [ '.rtl' . $this->base_selector . '.expand-method-click li.menu-item-has-children:not(.fusion-menu-item-button) > .fusion-open-nav-submenu' ];
+						$this->add_css_property( $selectors, 'padding-left', $this->args['items_padding_left'] );
+					}
+
+					// Regular padding.
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-form-inline',
+						$this->base_selector . ':not(.collapse-enabled) .custom-menu-search-overlay ~ .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .custom-menu-search-overlay .fusion-overlay-search',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .fusion-menu-form-inline',
+					];
+					if ( ! is_rtl() && 'click' === $this->args['expand_method'] && 'column' === $this->args['direction'] ) {
+						$selectors[] = '.ltr' . $this->base_selector . '.direction-column.expand-method-click.expand-left .menu-item-has-children > a';
+					}
+
+					$this->add_css_property( $selectors, 'padding-left', $this->args['items_padding_left'] );
+
+					// Important ones.
+					$this->add_css_property( $this->base_selector . ' .custom-menu-search-dropdown .fusion-main-menu-icon', 'padding-left', $this->args['items_padding_left'], true );
+				}
+
+				// Color.
+				if ( ! $this->is_default( 'color' ) ) {
+					// Ones with important.
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button) > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .fusion-open-nav-submenu',
+					];
+					$this->add_css_property( $selectors, 'color', $this->args['color'], true );
+
+					// Ones without important.
+					if ( 'click' === $this->args['expand_method'] ) {
+						$selectors[] = $this->base_selector . '.expand-method-click li ul .fusion-open-nav-submenu';
+					}
+					$this->add_css_property( $selectors, 'color', $this->args['color'] );
+
+					// Background, but why?
+					$selectors = [
+						$this->base_selector . ' .fusion-overlay-search .fusion-close-search:before',
+						$this->base_selector . ' .fusion-overlay-search .fusion-close-search:after',
+					];
+					$this->add_css_property( $selectors, 'background', $this->args['color'] );
+				}
+
+				// Active background.
+				if ( ! $this->is_default( 'active_bg' ) ) {
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active',
+					];
+					$this->add_css_property( $this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active', 'background', $this->args['active_bg'] );
+
+					// Border top.
+					if ( 'row' === $this->args['direction'] ) {
+						// Click method.
+						$selectors = [
+							$this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children.expanded:after',
+							$this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:hover:after',
+							$this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children.hover:after',
+							$this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:focus:after',
+							$this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:active:after',
+							$this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:focus-within:after',
+						];
+
+						if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li:hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li:focus:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li:active:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li:focus-within:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li.current-menu-item:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li.current-menu-ancestor:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li.current-menu-parent:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li.expanded:after';
+
+							if ( 'click' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li.expanded:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'border-top-color', $this->args['active_bg'] );
+					}
+
+					// Border left.
+					if ( 'column' === $this->args['direction'] ) {
+						if ( 'click' === $this->args['expand_method'] ) {
+							$selectors = [
+								$this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu):after',
+							];
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right > ul > li.expanded:after';
+							}
+						}
+
+						if ( 'hover' === $this->args['expand_method'] ) {
+							$selectors = [];
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors = [
+									$this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):hover:after',
+									$this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).hover:after',
+									$this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus:after',
+									$this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):active:after',
+									$this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus-within:after',
+								];
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right > ul > li.expanded:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'border-left-color', $this->args['active_bg'] );
+					}
+
+					// Border right.
+					if ( 'column' === $this->args['direction'] ) {
+						if ( 'click' === $this->args['expand_method'] ) {
+							$selectors = [
+								$this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu):after',
+							];
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left > ul > li.expanded:after';
+							}
+						}
+						if ( 'hover' === $this->args['expand_method'] ) {
+							$selectors = [];
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus-within:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li.expanded:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'border-right-color', $this->args['active_bg'] );
+					}
+				}
+
+				// Active color.
+				if ( ! $this->is_default( 'active_color' ) ) {
+					// Important ones.
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.custom-menu-search-overlay):hover > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).hover > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.custom-menu-search-overlay):focus > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.custom-menu-search-overlay):active > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.custom-menu-search-overlay):focus-within > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-item > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-ancestor > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-parent > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).expanded > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):hover > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).hover > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):focus > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):active > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button):focus-within > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-item > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-ancestor > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).current-menu-parent > .fusion-open-nav-submenu',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li:not(.fusion-menu-item-button).expanded > .fusion-open-nav-submenu',
+					];
+					$this->add_css_property( $selectors, 'color', $this->args['active_color'], true );
+				}
+
+				// Border top.
+				if ( ! $this->is_default( 'border_top' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+					];
+					$this->add_css_property( $selectors, 'border-top-width', $this->args['border_top'] );
+				}
+
+				// Border right.
+				if ( ! $this->is_default( 'border_right' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+					];
+					$this->add_css_property( $selectors, 'border-right-width', $this->args['border_right'] );
+				}
+
+				// Border bottom.
+				if ( ! $this->is_default( 'border_bottom' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+					];
+					$this->add_css_property( $selectors, 'border-bottom-width', $this->args['border_bottom'] );
+				}
+
+				// Border left.
+				if ( ! $this->is_default( 'border_left' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+					];
+					$this->add_css_property( $selectors, 'border-left-width', $this->args['border_left'] );
+				}
+
+				// Border color.
+				if ( ! $this->is_default( 'border_color' ) ) {
+					// Important ones.
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-default',
+					];
+					$this->add_css_property( $selectors, 'border-color', $this->args['border_color'] );
+				}
+
+				// Active border sizes.
+				if ( ! $this->is_default( 'active_border_top' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active', 'border-top-width', $this->args['active_border_top'] );
+				}
+
+				// Active border sizes.
+				if ( ! $this->is_default( 'active_border_right' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active', 'border-right-width', $this->args['active_border_right'] );
+				}
+
+				// Active border sizes.
+				if ( ! $this->is_default( 'active_border_bottom' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active', 'border-bottom-width', $this->args['active_border_bottom'] );
+				}
+
+				// Active border sizes.
+				if ( ! $this->is_default( 'active_border_left' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active', 'border-left-width', $this->args['active_border_left'] );
+				}
+
+				// Active border color.
+				if ( ! $this->is_default( 'active_border_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list > li:not(.fusion-menu-item-button) > .background-active', 'border-color', $this->args['active_border_color'] );
+
+					if ( 'row' === $this->args['direction'] ) {
+						$selectors = [];
+						if ( 'click' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-row.has-active-border-bottom-yes > ul > li.menu-item-has-children.expanded:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row.has-active-border-bottom-yes > ul > li.expanded:after';
+							}
+						}
+
+						if ( 'hover' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-row.has-active-border-bottom-color-yes > ul > li.menu-item-has-children:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-row.has-active-border-bottom-color-yes > ul > li.menu-item-has-children.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-row.has-active-border-bottom-color-yes > ul > li.menu-item-has-children:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-row.has-active-border-bottom-color-yes > ul > li.menu-item-has-children:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-row.has-active-border-bottom-color-yes > ul > li.menu-item-has-children:focus-within:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row.has-active-border-bottom-yes > ul > li.expanded:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'border-top-color', $this->args['active_border_color'] );
+					}
+					if ( 'column' === $this->args['direction'] ) {
+						$selectors = [];
+						if ( 'click' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-column.expand-right.has-active-border-right-yes > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu):after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-right.has-active-border-right-yes > ul > li.expanded:after';
+							}
+						}
+
+						if ( 'hover' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right.has-active-border-right-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right.has-active-border-right-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right.has-active-border-right-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right.has-active-border-right-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right.has-active-border-right-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus-within:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-right.has-active-border-right-yes > ul > li.expanded:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'border-left-color', $this->args['active_border_color'] );
+					}
+
+					if ( 'column' === $this->args['direction'] ) {
+						$selectors = [];
+						if ( 'click' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-column.expand-left.has-active-border-left-yes > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu):after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-column.expand-left.has-active-border-left-yes > ul > li.expanded:after';
+							}
+						}
+						if ( 'hover' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left.has-active-border-left-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left.has-active-border-left-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left.has-active-border-left-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left.has-active-border-left-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left.has-active-border-left-yes > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus-within:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li:focus-within:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li.current-menu-item:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li.current-menu-ancestor:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li.current-menu-parent:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left.has-active-border-left-yes > ul > li.expanded:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'border-right-color', $this->args['active_border_color'] );
+					}
+				}
+
+				// Submenu space.
+				if ( ! $this->is_default( 'submenu_space' ) ) {
+					if ( 'flyout' !== $this->args['submenu_mode'] ) {
+						$selectors = [
+							$this->base_selector . ':not(.collapse-enabled):not(.submenu-mode-flyout) .fusion-menu-element-list .fusion-megamenu-wrapper',
+							$this->base_selector . '.direction-row:not(.collapse-enabled):not(.submenu-mode-flyout) .fusion-menu-element-list > li > ul.sub-menu:not(.fusion-megamenu)',
+						];
+						$this->add_css_property( $selectors, 'margin-top', $this->args['submenu_space'], true );
+					}
+
+					if ( 'row' === $this->args['direction'] ) {
+						$selectors = [];
+						if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click.direction-row > ul > li:after';
+						}
+						if ( 'hover' === $this->args['expand_method'] ) {
+							$selectors[] = $this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:hover:before';
+							$selectors[] = $this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li.hover:before';
+							$selectors[] = $this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:focus:before';
+							$selectors[] = $this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:active:before';
+							$selectors[] = $this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:focus-within:before';
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-row > ul > li:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'bottom', 'calc(0px - ' . $this->args['submenu_space'] . ')' );
+
+						if ( 'click' === $this->args['expand_method'] ) {
+							$selectors = [];
+							if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children::after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children::after';
+							}
+
+							$this->add_css_property( $selectors, 'bottom', 'calc(0px - ' . $this->args['submenu_space'] . ')' );
+						}
+					}
+
+					if ( 'column' === $this->args['direction'] ) {
+						if ( 'hover' === $this->args['expand_method'] ) {
+							$selectors = [
+								$this->base_selector . '.expand-method-hover.direction-column.expand-right li:hover:before',
+								$this->base_selector . '.expand-method-hover.direction-column.expand-right li.hover:before',
+								$this->base_selector . '.expand-method-hover.direction-column.expand-right li:focus:before',
+								$this->base_selector . '.expand-method-hover.direction-column.expand-right li:active:before',
+								$this->base_selector . '.expand-method-hover.direction-column.expand-right li:focus-within:before',
+							];
+							$this->add_css_property( $selectors, 'width', $this->args['submenu_space'] );
+						}
+
+						$this->add_css_property( $this->base_selector . '.direction-column.expand-right .fusion-menu-element-list ul', 'margin-left', $this->args['submenu_space'], true );
+
+						$this->add_css_property( $this->base_selector . '.direction-column.expand-left .fusion-menu-element-list ul', 'margin-right', $this->args['submenu_space'], true );
+
+						$selectors = [];
+						if ( 'click' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-column.expand-left > ul > li:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-column.expand-left > ul > li:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.active-item-arrows-on.direction-column.expand-left > ul > li:after';
+							}
+						}
+
+						if ( 'hover' === $this->args['expand_method'] ) {
+							if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li:after';
+							}
+							if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover.direction-column.expand-left > ul > li:after';
+							}
+						}
+						$this->add_css_property( $selectors, 'left', 'calc(0px - ' . $this->args['submenu_space'] . ')' );
+					}
+
+					if ( 'row' === $this->args['direction'] ) {
+
+						if ( 'hover' === $this->args['expand_method'] ) {
+							$selectors = [
+								$this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:hover:before',
+								$this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li.hover:before',
+								$this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:focus:before',
+								$this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:active:before',
+								$this->base_selector . '.expand-method-hover.direction-row .fusion-menu-element-list > li:focus-within:before',
+							];
+							$this->add_css_property( $selectors, 'height', $this->args['submenu_space'] );
+						}
+
+						if ( 'slide_up' === $this->args['expand_transition'] ) {
+							$this->add_css_property(
+								[ $this->base_selector . '.submenu-transition-slide_up:not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.direction-row .fusion-menu-element-list li::after' ],
+								'transform',
+								"translateY({$this->args['submenu_space']})"
+							);
+						}
+					}
+				}
+
+				// Submenu and arrow width.
+				if ( ( ! $this->is_default( 'submenu_space' ) || ! $this->is_default( 'arrows_size_width' ) ) && 'column' === $this->args['direction'] ) {
+					$selectors = [];
+					if ( 'click' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-column > ul > li:not(.fusion-menu-item-button):after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-column > ul > li:not(.fusion-menu-item-button):after';
+						}
+					}
+					if ( 'hover' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-right > ul > li:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li:after';
+						}
+					}
+					$this->add_css_property( $selectors, 'width', 'calc(' . $this->args['submenu_space'] . ' - ' . $this->args['arrows_size_width'] . ' * 2)' );
+				}
+
+				// Submenu and arrow height.
+				if ( ( ! $this->is_default( 'submenu_space' ) || ! $this->is_default( 'arrows_size_height' ) ) && 'row' === $this->args['direction'] ) {
+					if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+						$this->add_css_property(
+							[ $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-' . $this->args['expand_method'] . '.direction-row > ul > li:after' ],
+							'height',
+							$this->args['submenu_space']
+						);
+					}
+
+					if ( 'slide_up' === $this->args['expand_transition'] ) {
+						$this->add_css_property(
+							[ $this->base_selector . ':not(.collapse-enabled).submenu-transition-slide_up.direction-row.dropdown-arrows-parent > ul > li:after' ],
+							'top',
+							'calc(100% - ' . $this->args['submenu_space'] . ')',
+							true
+						);
+					}
+
+					// Expanded.
+					$selectors = [];
+					if ( 'click' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children.expanded:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.expanded:after';
+						}
+					}
+					if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:hover:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children.hover:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:focus:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:active:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-' . $this->args['expand_method'] . '.dropdown-arrows-parent.direction-row > ul > li.menu-item-has-children:focus-within:after';
+					}
+					if ( 'hover' === $this->args['expand_method'] && false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:hover:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.hover:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:focus:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:active:after';
+						$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:focus-within:after';
+					}
+					$this->add_css_property( $selectors, 'height', 'calc(' . $this->args['submenu_space'] . ' - ' . $this->args['arrows_size_height'] . ' * 2)' );
+
+					if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+						$this->add_css_property(
+							[
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li:hover:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li.hover:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li:focus:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li:active:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li:focus-within:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li.current-menu-item:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li.current-menu-ancestor:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li.current-menu-parent:after',
+								$this->base_selector . '.active-item-arrows-on.direction-row:not(.collapse-enabled) > ul > li.expanded:after',
+							],
+							'height',
+							'calc(' . $this->args['submenu_space'] . ' - ' . $this->args['arrows_size_height'] . ' * 2)',
+							true
+						);
+					}
+				}
+
+				// Arrow size width.
+				if ( ! $this->is_default( 'arrows_size_width' ) ) {
+					$selectors = [];
+					if ( 'click' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent > ul > li.menu-item-has-children.expanded:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child > ul > li.menu-item-has-children.expanded:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-click > ul > li:not(.fusion-menu-item-button):after';
+						}
+					}
+					if ( 'hover' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children.hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:focus:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:active:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:focus-within:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children.hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:focus:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:active:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:focus-within:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover > ul > li:not(.fusion-menu-item-button):after';
+						}
+					}
+					$this->add_css_property( $selectors, 'border-left-width', $this->args['arrows_size_width'] );
+					$this->add_css_property( $selectors, 'border-right-width', $this->args['arrows_size_width'] );
+				}
+
+				// Arrow size height.
+				if ( ! $this->is_default( 'arrows_size_height' ) ) {
+					$selectors = [];
+					if ( 'click' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent > ul > li.menu-item-has-children.expanded:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent > ul > li.menu-item-has-children.expanded:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child > ul > li.menu-item-has-children.expanded:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child > ul > li.menu-item-has-children.expanded:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.active-item-arrows-on > ul > li:not(.fusion-menu-item-button):after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.active-item-arrows-on > ul > li:not(.fusion-menu-item-button):after';
+						}
+					}
+					if ( 'hover' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children.hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:focus:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:active:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent > ul > li.menu-item-has-children:focus-within:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children.hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:focus:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:active:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child > ul > li.menu-item-has-children:focus-within:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover > ul > li:not(.fusion-menu-item-button):after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).active-item-arrows-on.expand-method-hover > ul > li:not(.fusion-menu-item-button):after';
+						}
+					}
+					$this->add_css_property( $selectors, 'border-top-width', $this->args['arrows_size_height'] );
+					$this->add_css_property( $selectors, 'border-bottom-width', $this->args['arrows_size_height'] );
+
+					$selectors = [];
+					if ( 'click' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-parent.direction-column > ul > li:not(.fusion-menu-item-button):after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-column > ul > li:not(.fusion-menu-item-button):after';
+						}
+					}
+					if ( 'hover' === $this->args['expand_method'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li:after';
+						}
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-right > ul > li:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li:after';
+						}
+					}
+					$this->add_css_property( $selectors, 'top', 'calc(50% - ' . $this->args['arrows_size_height'] . ')' );
+				}
+
+				// Submenu border radius.
+				if ( 'flyout' !== $this->args['submenu_mode'] ) {
+					if ( ! $this->is_default( 'submenu_border_radius_top_left' ) ) {
+						$selectors = [
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu',
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu > li:first-child',
+							$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+							$this->base_selector . ' .fusion-megamenu-wrapper',
+						];
+
+						$this->add_css_property( $selectors, 'border-top-left-radius', $this->args['submenu_border_radius_top_left'] );
+					}
+					if ( ! $this->is_default( 'submenu_border_radius_top_right' ) ) {
+						$selectors = [
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu',
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu > li:first-child',
+							$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+							$this->base_selector . ' .fusion-megamenu-wrapper',
+						];
+
+						$this->add_css_property( $selectors, 'border-top-right-radius', $this->args['submenu_border_radius_top_right'] );
+					}
+					if ( ! $this->is_default( 'submenu_border_radius_bottom_left' ) ) {
+						$selectors = [
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu',
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu > li:last-child',
+							$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+							$this->base_selector . ' .fusion-megamenu-wrapper',
+						];
+
+						$this->add_css_property( $selectors, 'border-bottom-left-radius', $this->args['submenu_border_radius_bottom_left'] );
+					}
+					if ( ! $this->is_default( 'submenu_border_radius_bottom_right' ) ) {
+						$selectors = [
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu',
+							$this->base_selector . ' .fusion-menu-element-list .sub-menu > li:last-child',
+							$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+							$this->base_selector . ' .fusion-megamenu-wrapper',
+						];
+
+						$this->add_css_property( $selectors, 'border-bottom-right-radius', $this->args['submenu_border_radius_bottom_right'] );
+					}
+				}
+
+				// Submenu font family.
+				$selectors = [
+					$this->base_selector . ' .fusion-menu-element-list .sub-menu > li',
+					$this->base_selector . ' .fusion-menu-element-list .sub-menu li a',
+				];
+
+				$menu_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'submenu_typography', 'array' );
+
+				foreach ( $menu_styles as $rule => $value ) {
+					$this->add_css_property( $selectors, $rule, $value );
+				}
+
+				if ( ! $this->is_default( 'submenu_bg' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-holder',
+						$this->base_selector . ' .sub-menu .fusion-menu-cart',
+						$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+						$this->base_selector . ' .avada-menu-login-box .avada-custom-menu-item-contents',
+					];
+
+					if ( 'flyout' === $this->args['submenu_mode'] ) {
+						$selectors[] = $this->base_selector . '.submenu-mode-flyout .fusion-custom-menu .sub-menu';
+						$selectors[] = $this->base_selector . '.submenu-mode-flyout .fusion-custom-menu .fusion-megamenu-wrapper';
+						$selectors[] = $this->base_selector . '.submenu-mode-flyout .fusion-custom-menu .fusion-flyout-menu-backgrounds';
+					} else {
+						$selectors[] = $this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button)';
+					}
+
+					$this->add_css_property( $selectors, 'background-color', $this->args['submenu_bg'] );
+
+					if ( 'row' === $this->args['direction'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors = [];
+							if ( 'click' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.expanded:after';
+							}
+							if ( 'hover' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children:focus-within:after';
+							}
+							$this->add_css_property( $selectors, 'border-bottom-color', $this->args['submenu_bg'] );
+						}
+					}
+					if ( 'column' === $this->args['direction'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors = [];
+							if ( 'click' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-column.expand-right > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu):after';
+							}
+							if ( 'hover' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus-within:after';
+							}
+							$this->add_css_property( $selectors, 'border-right-color', $this->args['submenu_bg'] );
+						}
+
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors = [];
+							if ( 'click' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-column.expand-left > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu):after';
+							}
+							if ( 'hover' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu):focus-within:after';
+							}
+							$this->add_css_property( $selectors, 'border-left-color', $this->args['submenu_bg'] );
+						}
+					}
+				}
+
+				if ( ! $this->is_default( 'submenu_color' ) ) {
+
+					$selectors = [
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu .fusion-megamenu-submenu .fusion-megamenu-title a',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu .fusion-megamenu-submenu .fusion-megamenu-icon',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu .fusion-megamenu-submenu .fusion-megamenu-widgets-container .widget_text .textwidget',
+					];
+
+					// In hover mode color is inherited from parent anchor.
+					if ( 'click' === $this->args['expand_method'] ) {
+						$selectors[] = $this->base_selector . ' ul ul .fusion-open-nav-submenu';
+					}
+
+					$this->add_css_property( $selectors, 'color', $this->args['submenu_color'] );
+
+					// Important ones.
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button) > a', 'color', $this->args['submenu_color'], true );
+					if ( 'click' === $this->args['expand_method'] ) {
+						$this->add_css_property( $this->base_selector . '.expand-method-click li .sub-menu .fusion-open-nav-submenu', 'color', $this->args['submenu_color'], true );
+					}
+				}
+
+				if ( class_exists( 'WooCommerce' ) ) {
+					$this->add_css_property(
+						[
+							$this->base_selector . ' .fusion-menu-cart-checkout a:before',
+							$this->base_selector . ' .fusion-menu-cart-items a',
+							$this->base_selector . ' ul .fusion-menu-login-box-register',
+							$this->base_selector . ' ul .fusion-menu-cart-checkout a:before',
+							$this->base_selector . ' .fusion-menu-cart-items a',
+						],
+						'color',
+						$this->args['submenu_color']
+					);
+				}
+
+				if ( ! $this->is_default( 'submenu_active_bg' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu):not(.fusion-menu-searchform-dropdown) > li:not(.fusion-menu-item-button):hover',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu):not(.fusion-menu-searchform-dropdown) > li:not(.fusion-menu-item-button):focus',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu):not(.fusion-menu-searchform-dropdown) > li:not(.fusion-menu-item-button):focus-within',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu):not(.fusion-menu-searchform-dropdown) > li:not(.fusion-menu-item-button).expanded',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-item:not(.fusion-menu-item-button)',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-parent:not(.fusion-menu-item-button)',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-ancestor:not(.fusion-menu-item-button)',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current_page_item:not(.fusion-menu-item-button)',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:hover',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a.hover',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:active',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus-within',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a.hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:active > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus-within > .fusion-open-nav-submenu',
+						$this->base_selector . '.submenu-mode-dropdown li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children:focus-within .fusion-open-nav-submenu',
+						$this->base_selector . '.submenu-mode-dropdown li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children .fusion-background-highlight:hover .fusion-open-nav-submenu',
+						$this->base_selector . '.submenu-mode-dropdown li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children:focus-within > .fusion-background-highlight',
+						$this->base_selector . '.submenu-mode-dropdown li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children .fusion-background-highlight:hover',
+					];
+					$this->add_css_property( $selectors, 'background-color', $this->args['submenu_active_bg'] );
+
+					if ( 'column' === $this->args['direction'] ) {
+						$selectors = [];
+						if ( 'click' === $this->args['expand_method'] && false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-column.expand-right > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu).alt-arrow-child-color:after';
+						}
+						if ( 'hover' === $this->args['expand_method'] && false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color.hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:focus:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:active:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-right > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:focus-within:after';
+						}
+						$this->add_css_property( $selectors, 'border-right-color', $this->args['submenu_active_bg'] );
+
+						$selectors = [];
+						if ( 'click' === $this->args['expand_method'] && false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-column.expand-left > ul > li.menu-item-has-children.expanded:not(.fusion-megamenu-menu).alt-arrow-child-color:after';
+						}
+						if ( 'hover' === $this->args['expand_method'] && false !== strpos( $this->args['arrows'], 'main' ) ) {
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color.hover:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:focus:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:active:after';
+							$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-parent.direction-column.expand-left > ul > li.menu-item-has-children:not(.fusion-megamenu-menu).alt-arrow-child-color:focus-within:after';
+						}
+						$this->add_css_property( $selectors, 'border-left-color', $this->args['submenu_active_bg'] );
+					}
+
+					if ( 'row' === $this->args['direction'] ) {
+						if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
+							$selectors = [];
+							if ( 'click' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-click.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.expanded.alt-arrow-child-color:after';
+							}
+							if ( 'hover' === $this->args['expand_method'] ) {
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.alt-arrow-child-color:hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.alt-arrow-child-color.hover:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.alt-arrow-child-color:focus:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.alt-arrow-child-color:active:after';
+								$selectors[] = $this->base_selector . ':not(.collapse-enabled).expand-method-hover.dropdown-arrows-child.direction-row > ul > li.menu-item-has-children.alt-arrow-child-color:focus-within:after';
+							}
+							$this->add_css_property( $selectors, 'border-bottom-color', $this->args['submenu_active_bg'] );
+						}
+					}
+				}
+
+				if ( ! $this->is_default( 'submenu_active_color' ) ) {
+					// Important ones.
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:hover > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.hover > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:focus > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:focus-within > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.expanded > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button).current-menu-item > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button).current-menu-ancestor > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button).current-menu-parent > a',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:hover > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.hover > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:focus > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:focus-within > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.expanded > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-item > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-ancestor > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-parent > a .fusion-button',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:focus > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:focus-within > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.expanded > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-item > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-ancestor > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li.current-menu-parent > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:hover',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a.hover',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:active',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus-within',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a.hover > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:active > .fusion-open-nav-submenu',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus-within > .fusion-open-nav-submenu',
+						$this->base_selector . '.submenu-mode-dropdown li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children:focus-within .fusion-open-nav-submenu',
+						$this->base_selector . ' li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children .fusion-background-highlight:hover .fusion-open-nav-submenu',
+						$this->base_selector . ' li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children:focus-within > .fusion-background-highlight',
+						$this->base_selector . ' li ul.fusion-megamenu li.menu-item-has-children .sub-menu li.menu-item-has-children .fusion-background-highlight:hover',
+					];
+
+					if ( class_exists( 'WooCommerce' ) ) {
+						$selectors[] = $this->base_selector . ' .fusion-menu-cart-checkout:hover .fusion-menu-cart-link a';
+						$selectors[] = $this->base_selector . ' .fusion-menu-cart-checkout:hover .fusion-menu-cart-checkout-link a';
+						$selectors[] = $this->base_selector . ' .fusion-menu-cart-checkout:hover .fusion-menu-cart-link a:before';
+						$selectors[] = $this->base_selector . ' .fusion-menu-cart-checkout:hover .fusion-menu-cart-checkout-link a:before';
+					}
+
+					$this->add_css_property( $selectors, 'color', $this->args['submenu_active_color'], true );
+				}
+
+				if ( 'flyout' === $this->args['submenu_mode'] ) {
+
+					$selectors = [
+						$this->base_selector . '.submenu-mode-flyout .fusion-close-flyout:before',
+						$this->base_selector . '.submenu-mode-flyout .fusion-close-flyout:after',
+					];
+					$this->add_css_property( $selectors, 'background-color', $this->args['flyout_close_color'] );
+
+					$selectors = [
+						$this->base_selector . '.submenu-mode-flyout .fusion-close-flyout:hover:before',
+						$this->base_selector . '.submenu-mode-flyout .fusion-close-flyout:hover:after',
+					];
+					$this->add_css_property( $selectors, 'background-color', $this->args['flyout_active_close_color'], true );
+				}
+
+				if ( ! $this->is_default( 'submenu_max_width' ) && 'dropdown' === $this->args['submenu_mode'] ) {
+					$this->add_css_property( [ $this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list ul:not(.fusion-megamenu) > li' ], 'width', $this->args['submenu_max_width'], true );
+
+					// Don't set min width if sub menu width is explictly set.
+					$this->add_css_property( [ $this->base_selector . '.direction-row:not(.collapse-enabled) .sub-menu' ], 'min-width', '0' );
+				}
+
+				if ( ! $this->is_default( 'submenu_items_padding_top' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button) > a',
+						$this->base_selector . ' .fusion-megamenu-wrapper li .fusion-megamenu-title-disabled',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu .sub-menu a',
+						$this->base_selector . ' .sub-menu .fusion-menu-cart a',
+						$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+						$this->base_selector . ' .avada-menu-login-box .avada-custom-menu-item-contents form',
+					];
+					if ( 'click' === $this->args['expand_method'] ) {
+						$selectors[] = $this->base_selector . '.expand-method-click li ul .fusion-open-nav-submenu';
+					}
+					$this->add_css_property( $selectors, 'padding-top', $this->args['submenu_items_padding_top'] );
+
+					if ( 'column' === $this->args['direction'] ) {
+						$this->add_css_property( $this->base_selector . '.direction-column .fusion-menu-element-list ul', 'top', 'calc(0.5em - ' . $this->args['submenu_items_padding_top'] . ')' );
+					}
+				}
+				if ( ! $this->is_default( 'submenu_items_padding_right' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button) > a',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu .sub-menu a',
+						$this->base_selector . ' .sub-menu .fusion-menu-cart a',
+						$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+						$this->base_selector . ' ul ul .fusion-open-nav-submenu:before',
+						$this->base_selector . ' .avada-menu-login-box .avada-custom-menu-item-contents form',
+						$this->base_selector . ' .avada-menu-login-box .avada-custom-menu-item-contents .fusion-menu-login-box-register',
+					];
+					if ( 'never' !== $this->args['breakpoint'] ) {
+						$selectors[] = $this->base_selector . '.collapse-enabled .fusion-megamenu-holder';
+					}
+
+					if ( 'column' === $this->args['direction'] && ! is_rtl() && 'click' === $this->args['expand_method'] ) {
+						$selectors[] = '.ltr' . $this->base_selector . '.direction-column.expand-method-click.expand-left .menu-item-has-children li a';
+					}
+					if ( class_exists( 'WooCommerce' ) ) {
+						$selectors[] = $this->base_selector . ' .fusion-menu-cart-checkout';
+					}
+					if ( 'flyout' === $this->args['submenu_mode'] ) {
+						$selectors[] = '.ltr' . $this->base_selector . '.submenu-mode-flyout:not(.collapse-enabled) .sub-menu li:not(.fusion-menu-item-button) > a';
+					}
+					$this->add_css_property( $selectors, 'padding-right', $this->args['submenu_items_padding_right'] );
+
+					if ( class_exists( 'WooCommerce' ) ) {
+						$this->add_css_property( '.rtl' . $this->base_selector . ' .fusion-menu-cart-link', 'padding-right', '0' );
+						$this->add_css_property( '.ltr' . $this->base_selector . ' .fusion-menu-cart-checkout-link', 'padding-right', '0' );
+					}
+				}
+				if ( ! $this->is_default( 'submenu_items_padding_bottom' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button) > a',
+						$this->base_selector . ' .fusion-megamenu-wrapper li .fusion-megamenu-title-disabled',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu .sub-menu a',
+						$this->base_selector . ' .sub-menu .fusion-menu-cart a',
+						$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+						$this->base_selector . ' .avada-menu-login-box .avada-custom-menu-item-contents .fusion-menu-login-box-register',
+					];
+					if ( 'click' === $this->args['expand_method'] ) {
+						$selectors[] = $this->base_selector . '.expand-method-click li ul .fusion-open-nav-submenu';
+					}
+					$this->add_css_property( $selectors, 'padding-bottom', $this->args['submenu_items_padding_bottom'] );
+				}
+				if ( ! $this->is_default( 'submenu_items_padding_left' ) ) {
+					$selectors = [
+						$this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu) > li:not(.fusion-menu-item-button) > a',
+						$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu .sub-menu a',
+						$this->base_selector . ' .sub-menu .fusion-menu-cart a',
+						$this->base_selector . ' .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+						$this->base_selector . ' ul ul .fusion-open-nav-submenu:before',
+						$this->base_selector . ' .avada-menu-login-box .avada-custom-menu-item-contents form',
+						$this->base_selector . ' .avada-menu-login-box .avada-custom-menu-item-contents .fusion-menu-login-box-register',
+					];
+					if ( 'never' !== $this->args['breakpoint'] ) {
+						$selectors[] = $this->base_selector . '.collapse-enabled .fusion-megamenu-holder';
+					}
+					if ( 'column' === $this->args['direction'] && is_rtl() && 'click' === $this->args['expand_method'] ) {
+						$selectors[] = '.rtl' . $this->base_selector . '.direction-column.expand-method-click.expand-right .menu-item-has-children li a';
+					}
+					if ( class_exists( 'WooCommerce' ) ) {
+						$selectors[] = $this->base_selector . ' .fusion-menu-cart-checkout';
+					}
+					if ( 'flyout' === $this->args['submenu_mode'] ) {
+						$selectors[] = '.rtl' . $this->base_selector . '.submenu-mode-flyout:not(.collapse-enabled) .sub-menu li:not(.fusion-menu-item-button) > a';
+					}
+					$this->add_css_property( $selectors, 'padding-left', $this->args['submenu_items_padding_left'] );
+
+					if ( class_exists( 'WooCommerce' ) ) {
+						$this->add_css_property( '.rtl' . $this->base_selector . ' .fusion-menu-cart-checkout-link', 'padding-left', '0' );
+						$this->add_css_property( '.ltr' . $this->base_selector . ' .fusion-menu-cart-link', 'padding-left', '0' );
+					}
+				}
+
+				// Combined left and right padding.
+				if ( ( ! $this->is_default( 'submenu_items_padding_left' ) || ! $this->is_default( 'submenu_items_padding_right' ) ) && 'click' === $this->args['expand_method'] ) {
+					$this->add_css_property( $this->base_selector . '.expand-method-click li ul .fusion-open-nav-submenu', 'width', 'calc(1em + ' . $this->args['submenu_items_padding_left'] . ' / 2 + ' . $this->args['submenu_items_padding_right'] . ' / 2)' );
+				}
+
+				// Submenu separator color.
+				if ( ! $this->is_default( 'submenu_sep_color' ) ) {
+					$this->add_css_property( [ $this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list ul:not(.fusion-megamenu) > li' ], 'border-bottom-color', $this->args['submenu_sep_color'] );
+					$this->add_css_property(
+						[
+							$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu .fusion-megamenu-submenu',
+							$this->base_selector . ' .fusion-megamenu-wrapper .fusion-megamenu-submenu .fusion-megamenu-border',
+						],
+						'border-color',
+						$this->args['submenu_sep_color']
+					);
+					$this->add_css_property( $this->base_selector . ' .fusion-megamenu-wrapper li .fusion-megamenu-title-disabled', 'color', $this->args['submenu_sep_color'] );
+				}
+
+				// Submenu font size.
+				if ( ! $this->is_default( 'submenu_font_size' ) ) {
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list ul:not(.fusion-megamenu) a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper li .fusion-megamenu-title-disabled',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper .fusion-megamenu-submenu > a',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper .fusion-megamenu-submenu > a.hover',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:hover',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:active',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper .fusion-megamenu-submenu > a:focus-within',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu .fusion-megamenu-submenu',
+					];
+					$this->add_css_property( $selectors, 'font-size', $this->args['submenu_font_size'] );
+
+					if ( 'flyout' === $this->args['submenu_mode'] ) {
+						$selectors = [
+							$this->base_selector . '.submenu-mode-flyout .fusion-close-flyout',
+						];
+						$this->add_css_property( $selectors, 'width', $this->args['submenu_font_size'] );
+						$this->add_css_property( $selectors, 'height', $this->args['submenu_font_size'] );
+					}
+				}
+
+				if ( ! $this->is_default( 'mobile_nav_button_align_hor' ) ) {
+					$selectors = [];
+					if ( 'on' === $this->args['mobile_nav_trigger_fullwidth'] ) {
+						$selectors[] = $this->base_selector . '.mobile-trigger-fullwidth-on > .avada-menu-mobile-menu-trigger > .inner';
+					}
+					if ( 'never' !== $this->args['breakpoint'] ) {
+						$selectors[] = $this->base_selector . '.collapse-enabled';
+					}
+					$this->add_css_property( $selectors, 'justify-content', $this->args['mobile_nav_button_align_hor'] );
+				}
+
+				if ( ! $this->is_default( 'mobile_nav_trigger_bottom_margin' ) && 'never' !== $this->args['breakpoint'] ) {
+					$this->add_css_property(
+						$this->base_selector . '.collapse-enabled .fusion-menu-element-list',
+						'margin-top',
+						fusion_library()->sanitize->get_value_with_unit( $this->args['mobile_nav_trigger_bottom_margin'] )
+					);
+				}
+
+				if ( ! $this->is_default( 'submenu_text_transform' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-menu-element-list ul:not(.fusion-megamenu)', 'text-transform', $this->args['submenu_text_transform'] );
+				}
+
+				if ( ! $this->is_default( 'icons_size' ) ) {
+					$this->add_css_property(
+						[
+							$this->base_selector . ':not(.collapse-enabled) li.menu-item > .fusion-megamenu-icon',
+							$this->base_selector . ':not(.collapse-enabled) li.menu-item > a > .fusion-megamenu-icon',
+							$this->base_selector . ':not(.collapse-enabled) li.menu-item > a.fusion-menu-icon-search',
+						],
+						'font-size',
+						fusion_library()->sanitize->get_value_with_unit( $this->args['icons_size'] )
+					);
+				}
+
+				if ( ! $this->is_default( 'icons_color' ) ) {
+					$this->add_css_property(
+						[
+							$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item > .fusion-megamenu-icon',
+							$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item > a > .fusion-megamenu-icon',
+						],
+						'color',
+						$this->args['icons_color']
+					);
+
+					$this->add_css_property(
+						[
+							$this->base_selector . ' .custom-menu-search-dropdown .fusion-main-menu-icon',
+							$this->base_selector . ' .custom-menu-search-overlay .fusion-menu-icon-search.trigger-overlay',
+							$this->base_selector . ' .custom-menu-search-overlay ~ .fusion-overlay-search',
+						],
+						'color',
+						$this->args['icons_color'],
+						true
+					);
+				}
+
+				$this->add_css_property(
+					[
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item:hover > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item.hover > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item:focus > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item:active > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item:focus-within > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item.current-menu-item > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item.current-menu-ancestor > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item.current-menu-parent > a .fusion-megamenu-icon',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list > li.menu-item.expanded > a .fusion-megamenu-icon',
+					],
+					'color',
+					$this->args['icons_hover_color']
+				);
+
+				$this->add_css_property(
+					[
+						$this->base_selector . ' .custom-menu-search-dropdown:hover .fusion-main-menu-icon',
+						$this->base_selector . ' .custom-menu-search-overlay:hover .fusion-menu-icon-search.trigger-overlay',
+						$this->base_selector . ' .custom-menu-search-overlay:hover ~ .fusion-overlay-search',
+					],
+					'color',
+					$this->args['icons_hover_color'],
+					true
+				);
+
+				// Thumbnail size.
+				if ( ! $this->is_default( 'thumbnail_size_width' ) ) {
+					$this->add_css_property( $this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-title .fusion-megamenu-image > img', 'width', $this->args['thumbnail_size_width'] );
+					$this->add_css_property( $this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-title .fusion-megamenu-thumbnail > img', 'width', $this->args['thumbnail_size_width'] );
+				}
+				if ( ! $this->is_default( 'thumbnail_size_height' ) ) {
+					$this->add_css_property( $this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-title .fusion-megamenu-image > img', 'height', $this->args['thumbnail_size_height'] );
+					$this->add_css_property( $this->base_selector . ':not(.collapse-enabled) .fusion-megamenu-title .fusion-megamenu-thumbnail > img', 'height', $this->args['thumbnail_size_width'] );
+				}
+
+				// Mobile icon size.
+				if ( ! $this->is_default( 'mobile_trigger_font_size' ) ) {
+					$this->add_css_property(
+						$this->base_selector . ' > .avada-menu-mobile-menu-trigger',
+						'font-size',
+						$this->args['mobile_trigger_font_size']
+					);
+				}
+
+				// Mobile.
+				if ( 'never' !== $this->args['breakpoint'] ) {
+
+					// Mobile background.
+					if ( ! $this->is_default( 'mobile_bg' ) ) {
+						$selectors = [
+							$this->base_selector . '.collapse-enabled ul li > a',
+							$this->base_selector . '.collapse-enabled ul li:hover .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.hover .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li:focus .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li:active .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li:focus-within .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-item .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-ancestor .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-parent .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.expanded .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.custom-menu-search-inline',
+							$this->base_selector . '.collapse-enabled ul .fusion-menu-form-inline',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button',
+							$this->base_selector . '.collapse-enabled ul',
+							$this->base_selector . '.fusion-menu-element-wrapper.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li',
+						];
+						$this->add_css_property( $selectors, 'background', $this->args['mobile_bg'], true );
+					}
+
+					// Mobile color.
+					if ( ! $this->is_default( 'mobile_color' ) ) {
+						$selectors = [
+							$this->base_selector . '.collapse-enabled ul li > a',
+							$this->base_selector . '.collapse-enabled ul li > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:hover .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.hover .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li:focus .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li:active .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li:focus-within .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-item .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-ancestor .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-parent .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.collapse-enabled ul li.expanded .sub-menu li:not(.current-menu-item):not(.current-menu-ancestor):not(.current-menu-parent):not(.expanded) a',
+							$this->base_selector . '.fusion-menu-element-wrapper.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li a',
+						];
+						$this->add_css_property( $selectors, 'color', $this->args['mobile_color'], true );
+					}
+
+					// Mobile active background.
+					if ( ! $this->is_default( 'mobile_active_bg' ) ) {
+						$selectors = [
+							$this->base_selector . '.collapse-enabled ul li:hover > a',
+							$this->base_selector . '.collapse-enabled ul li.hover > a',
+							$this->base_selector . '.collapse-enabled ul li:focus > a',
+							$this->base_selector . '.collapse-enabled ul li:active > a',
+							$this->base_selector . '.collapse-enabled ul li:focus-within > a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-item > a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-ancestor > a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-parent > a',
+							$this->base_selector . '.collapse-enabled ul li.expanded > a',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button:hover',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button.hover',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button:focus',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button:active',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button:focus-within',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button.current-menu-item',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button.current-menu-ancestor',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button.current-menu-parent',
+							$this->base_selector . '.collapse-enabled ul li.fusion-menu-item-button.expanded',
+							$this->base_selector . '.fusion-menu-element-wrapper.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li.current-menu-item',
+							$this->base_selector . '.fusion-menu-element-wrapper.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:hover',
+							$this->base_selector . '.fusion-menu-element-wrapper.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:active',
+							$this->base_selector . '.fusion-menu-element-wrapper.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:focus',
+							$this->base_selector . '.fusion-menu-element-wrapper.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:focus-within',
+						];
+						$this->add_css_property( $selectors, 'background', $this->args['mobile_active_bg'], true );
+					}
+
+					// Mobile active color.
+					if ( ! $this->is_default( 'mobile_active_color' ) ) {
+						$selectors = [
+							$this->base_selector . '.collapse-enabled ul li:hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li.hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:focus > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:active > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:focus-within > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:hover > a',
+							$this->base_selector . '.collapse-enabled ul li.hover > a',
+							$this->base_selector . '.collapse-enabled ul li:focus > a',
+							$this->base_selector . '.collapse-enabled ul li:active > a',
+							$this->base_selector . '.collapse-enabled ul li:focus-within > a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-item > a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-ancestor > a',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-parent > a',
+							$this->base_selector . '.collapse-enabled ul li.expanded > a',
+							$this->base_selector . '.collapse-enabled ul li:hover > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li.hover > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li:focus > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li:active > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li:focus-within > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-item > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-ancestor > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-parent > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li.expanded > a .fusion-button',
+							$this->base_selector . '.collapse-enabled ul li:hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li.hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:focus > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:active > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li:focus-within > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-item > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-parent > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul li.current-menu-ancestor > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-ancestor > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-parent > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.expanded > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:active > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus-within > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:hover > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.hover > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:active > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus-within > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-item > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-ancestor > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-parent > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.expanded > a',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:hover > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.hover > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:active > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus-within > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-item > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-ancestor > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-parent > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.expanded > a:hover',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.hover > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:active > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li:focus-within > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-item > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-ancestor > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.current-menu-parent > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled ul.sub-menu.sub-menu li.expanded > .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li.current-menu-item a',
+							$this->base_selector . '.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:hover a',
+							$this->base_selector . '.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:active a',
+							$this->base_selector . '.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:focus a',
+							$this->base_selector . '.collapse-enabled .fusion-megamenu-menu .fusion-megamenu-wrapper .fusion-megamenu-holder ul li:focus-within a',
+						];
+						$this->add_css_property( $selectors, 'color', $this->args['mobile_active_color'], true );
+					}
+
+					// Mobile separators color.
+					if ( ! $this->is_default( 'mobile_sep_color' ) ) {
+						$selectors = [
+							$this->base_selector . '.collapse-enabled li:not(:last-child)',
+							$this->base_selector . '.collapse-enabled li.menu-item.expanded .fusion-megamenu-wrapper ul.fusion-megamenu li.menu-item-has-children .fusion-megamenu-title',
+							$this->base_selector . '.collapse-enabled li.menu-item:not(.expanded)',
+						];
+
+						$this->add_css_property( $selectors, 'border-bottom-color', $this->args['mobile_sep_color'], true );
+
+						$this->add_css_property( $this->base_selector . '.collapse-enabled li.menu-item.expanded .fusion-megamenu-wrapper', 'border-top-color', $this->args['mobile_sep_color'] );
+						$this->add_css_property( $this->base_selector . '.collapse-enabled li.menu-item.menu-item-has-children ul.sub-menu li.menu-item-has-children.expanded>ul.sub-menu', 'border-top-color', $this->args['mobile_sep_color'] );
+					}
+
+					// Mobile active color.
+					if ( ! $this->is_default( 'mobile_nav_items_height' ) ) {
+						$selectors = [
+							$this->base_selector . '.collapse-enabled ul li > a',
+							$this->base_selector . '.collapse-enabled .fusion-open-nav-submenu-on-click:before',
+							$this->base_selector . '.collapse-enabled li.menu-item',
+						];
+						$this->add_css_property( $selectors, 'min-height', fusion_library()->sanitize->get_value_with_unit( $this->args['mobile_nav_items_height'] ) );
+					}
+
+					// Mobile font-size.
+					if ( ! $this->is_default( 'mobile_font_size' ) ) {
+						$this->add_css_property(
+							[
+								$this->base_selector . '.collapse-enabled .fusion-menu-element-list li a',
+								$this->base_selector . '.collapse-enabled .fusion-menu-element-list li a .fusion-button',
+								$this->base_selector . '.collapse-enabled .fusion-menu-element-list li .fusion-open-nav-submenu:before',
+								$this->base_selector . '.collapse-enabled .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu-submenu .fusion-megamenu-title a',
+							],
+							'font-size',
+							$this->args['mobile_font_size']
+						);
+					}
+
+					$selectors = [
+						$this->base_selector . '.collapse-enabled',
+						$this->base_selector . '.collapse-enabled ul li > a',
+						$this->base_selector . '.collapse-enabled ul li > a .fusion-button',
+						$this->base_selector . '.collapse-enabled .fusion-megamenu-wrapper .fusion-megamenu-holder .fusion-megamenu-submenu .fusion-megamenu-title a',
+					];
+
+					$menu_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'mobile_typography', 'array' );
+
+					foreach ( $menu_styles as $rule => $value ) {
+						$this->add_css_property( $selectors, $rule, $value );
+					}
+				}
+
+				// Box shadow.
+				if ( ! $this->is_default( 'box_shadow' ) ) {
+					$selectors = [
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list ul',
+						$this->base_selector . ':not(.collapse-enabled) .fusion-menu-element-list .fusion-megamenu-wrapper',
+						$this->base_selector . ':not(.collapse-enabled) .custom-menu-search-dropdown .fusion-menu-searchform-dropdown .fusion-search-form-content',
+					];
+					$this->add_css_property( $selectors, 'box-shadow', Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles( $this->args ) );
+				}
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -440,66 +2303,24 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			 */
 			public function fetch_menu_args( $menu_args = [] ) {
 
-				// We have arrows enabled for top level, either main or active and active border color is not transparent.
-				$active_arrow_border = false;
-				if ( ( false !== strpos( $this->args['arrows'], 'main' ) || false !== strpos( $this->args['arrows'], 'active' ) ) && ! Fusion_Color::new_color( $this->args['active_border_color'] )->is_color_transparent() ) {
-					$direction = 'bottom';
-					if ( 'column' === $this->args['direction'] ) {
-						$direction = $this->args['expand_direction'];
-					}
-
-					if ( $this->args[ 'active_border_' . $direction ] && ! in_array( $this->args[ 'active_border_' . $direction ], [ '', '0', '0px' ], true ) ) {
-						$active_arrow_border = true;
-					}
-				}
-
-				// Click mode with carets and no item spacing, we will need to add 0.5em space between caret and anchor.
-				$click_mode_spacing = false;
-				if ( 'yes' === $this->args['dropdown_carets'] && 'click' === $this->args['expand_method'] ) {
-					$side = 'right';
-					if ( 'column' !== $this->args['direction'] ) {
-						$side = is_rtl() ? 'left' : 'right';
-					} elseif ( $this->args['expand_direction'] ) {
-						$side = $this->args['expand_direction'];
-					}
-
-					// Its empty, we need that 0.5em.
-					if ( in_array( $this->args[ 'items_padding_' . $side ], [ '', '0', '0px' ], true ) ) {
-						$click_mode_spacing = true;
-					}
-				}
-
-				$direction             = isset( $menu_args['direction'] ) ? $menu_args['direction'] : $this->args['direction'];
-				$submenu_mode          = isset( $this->args['submenu_mode'] ) ? $this->args['submenu_mode'] : 'dropdown';
-				$expand_method         = isset( $menu_args['method'] ) ? $menu_args['method'] : $this->args['expand_method'];
-				$stacked_expand_method = isset( $menu_args['stacked_method'] ) ? $menu_args['stacked_method'] : $this->args['stacked_expand_method'];
-
-				if ( 'column' === $direction && 'stacked' === $submenu_mode ) {
-					$expand_method = $stacked_expand_method;
-
-					if ( 'always' === $expand_method ) {
-						$expand_method = 'click';
-					}
-				}
-
 				$main_menu_args = [
 					'menu'         => $this->args['menu'],
 					'depth'        => 5,
-					'menu_class'   => 'fusion-menu awb-menu__main-ul awb-menu__main-ul_' . $this->args['direction'],
+					'menu_class'   => 'fusion-menu fusion-custom-menu fusion-menu-element-list',
 					'items_wrap'   => '<ul id="%1$s" class="%2$s">%3$s</ul>',
-					'fallback_cb'  => 'AWB_Nav_Walker::fallback',
-					'walker'       => new AWB_Nav_Walker(
+					'fallback_cb'  => 'Fusion_Nav_Walker::fallback',
+					'walker'       => new Fusion_Nav_Walker(
 						[
-							'transition_type'       => $this->args['transition_type'],
-							'direction'             => $direction,
-							'submenu_mode'          => $submenu_mode,
-							'expand_method'         => $expand_method,
-							'expand_direction'      => isset( $menu_args['direction'] ) ? $menu_args['direction'] : $this->args['expand_direction'],
-							'stacked_expand_method' => $stacked_expand_method,
-							'menu_icon_position'    => $this->args['icons_position'],
-							'arrows'                => $this->args['arrows'],
-							'arrow_border'          => $active_arrow_border,
-							'click_spacing'         => $click_mode_spacing,
+							'header_layout'            => 'v1',
+							'header_position'          => 'top',
+							'menu_highlight_style'     => 'background',
+							'disable_highlight_arrows' => true,
+							'fb_menu_element'          => true,
+							'transition_type'          => $this->args['transition_type'],
+							'expand_method'            => isset( $menu_args['method'] ) ? $menu_args['method'] : $this->args['expand_method'],
+							'submenu_mode'             => isset( $this->args['submenu_mode'] ) ? $this->args['submenu_mode'] : 'dropdown',
+							'menu_display_dropdown_indicator' => 'parent_child',
+							'menu_icon_position'       => $this->args['icons_position'],
 						]
 					),
 					'container'    => false,
@@ -528,79 +2349,60 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					'data-transition-time' => esc_attr( $this->args['transition_time'] ),
 				];
 
+				$has_active_border_bottom = ! $this->args['active_border_bottom'] || in_array( $this->args['active_border_bottom'], [ '', '0', '0px' ], true ) ? 'no' : 'yes';
+				$has_active_border_right  = ! $this->args['active_border_right'] || in_array( $this->args['active_border_right'], [ '', '0', '0px' ], true ) ? 'no' : 'yes';
+				$has_active_border_left   = ! $this->args['active_border_left'] || in_array( $this->args['active_border_left'], [ '', '0', '0px' ], true ) ? 'no' : 'yes';
+
 				$nav_classes = [
-					'awb-menu',
-					'awb-menu_' . $this->args['direction'],
-					'awb-menu_em-' . $this->args['expand_method'],
+					'fusion-menu-element-wrapper',
+					'direction-' . $this->args['direction'],
+					'mode-' . $this->args['collapsed_mode'],
+					'expand-method-' . $this->args['expand_method'],
+					'submenu-mode-' . $this->args['submenu_mode'],
 					'mobile-mode-' . $this->args['mobile_nav_mode'],
-					'awb-menu_icons-' . $this->args['icons_position'],
-					'awb-menu_dc-' . $this->args['dropdown_carets'],
+					'mobile-size-' . $this->args['mobile_nav_size'],
+					'icons-position-' . $this->args['icons_position'],
+					'dropdown-carets-' . $this->args['dropdown_carets'],
+					'has-active-border-bottom-' . $has_active_border_bottom,
+					'has-active-border-left-' . $has_active_border_left,
+					'has-active-border-right-' . $has_active_border_right,
 					'mobile-trigger-fullwidth-' . $this->args['mobile_nav_trigger_fullwidth'],
-					'awb-menu_mobile-' . $this->args['mobile_opening_mode'],
+					'mobile-indent-' . $this->args['mobile_indent_submenu'],
+					'mobile-justify-' . $this->args['mobile_justify_content'],
+					'main-justify-' . $this->args['main_justify_content'],
 				];
 
-				if ( 'on' === $this->args['mobile_indent_submenu'] ) {
-					$nav_classes[] = 'awb-menu_indent-' . $this->args['mobile_justify_content'];
-				}
-
-				if ( 'on' === $this->args['mobile_nav_trigger_fullwidth'] ) {
-					$nav_classes[] = 'awb-menu_mt-fullwidth';
-				}
-
-				$nav_classes[] = 'yes' === $this->args['close_on_outer_click_stacked'] || 'yes' === $this->args['close_on_outer_click'] ? 'close-on-outer-click-yes' : '';
-
-				// The size options are only relevant for collapse to button.
-				if ( 'collapse-to-button' === $this->args['mobile_nav_mode'] ) {
-					$nav_classes[] = 'mobile-size-' . $this->args['mobile_nav_size'];
-				}
-
-				// Don't add loading class in live builder, see Fusion-Builder #4365.
+				// Don't add loading class in live builder, see Fusion-Builder#4365.
 				if ( ! ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) ) {
-					$nav_classes[] = 'loading mega-menu-loading';
+					$nav_classes[] = 'loading';
 				}
 
-				// If we have a breakpoint and load is a mobile, set to default as collapse-enabled.
-				if ( 'never' !== $this->args['breakpoint'] && wp_is_mobile() ) {
-					$nav_classes[] = 'collapse-enabled';
-				} else {
-					$nav_classes[] = 'awb-menu_desktop';
-				}
 				if ( is_array( $this->args['arrows'] ) ) {
 					$this->args['arrows'] = implode( ',', $this->args['arrows'] );
 				}
 
 				if ( false !== strpos( $this->args['arrows'], 'active' ) ) {
-					$nav_classes[] = 'awb-menu_arrows-active';
+					$nav_classes[] = 'active-item-arrows-on';
 				}
 
 				if ( false !== strpos( $this->args['arrows'], 'main' ) ) {
-					$nav_classes[] = 'awb-menu_arrows-main';
+					$nav_classes[] = 'dropdown-arrows-parent';
 				}
 
 				if ( false !== strpos( $this->args['arrows'], 'submenu' ) ) {
-					$nav_classes[] = 'awb-menu_arrows-sub';
+					$nav_classes[] = 'dropdown-arrows-child';
 				}
 
 				if ( 'flyout' === $this->args['submenu_mode'] ) {
-					$nav_classes[] = 'awb-menu_flyout';
-					$nav_classes[] = 'awb-menu_flyout__' . $this->args['submenu_flyout_direction'];
-				} elseif ( 'stacked' === $this->args['submenu_mode'] && 'column' === $this->args['direction'] ) {
-					$nav_classes[] = 'awb-menu_v-stacked';
+					$nav_classes[] = 'submenu-flyout-direction-' . $this->args['submenu_flyout_direction'];
+				}
 
-					if ( 'always' === $this->args['stacked_expand_method'] ) {
-						$nav_classes[] = 'awb-menu_em-always';
-					}
-
-					if ( 'click' === $this->args['stacked_expand_method'] ) {
-						$nav_classes[] = 'awb-submenu_cm_' . $this->args['stacked_click_mode'];
-					}
-				} else {
-					$nav_classes[] = 'awb-menu_dropdown';
-					$nav_classes[] = 'awb-menu_expand-' . $this->args['expand_direction'];
+				if ( 'flyout' !== $this->args['submenu_mode'] ) {
+					$nav_classes[] = 'expand-' . $this->args['expand_direction'];
 				}
 
 				if ( 'dropdown' === $this->args['submenu_mode'] ) {
-					$nav_classes[] = 'awb-menu_transition-' . $this->args['expand_transition'];
+					$nav_classes[] = 'submenu-transition-' . $this->args['expand_transition'];
 				}
 
 				$attr['class'] .= implode( ' ', $nav_classes );
@@ -613,10 +2415,10 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 				$attr = fusion_builder_visibility_atts( $this->args['hide_on_mobile'], $attr );
 
 				if ( $this->args['menu'] ) {
-					$menu = wp_get_nav_menus( [ 'slug' => $this->args['menu'] ] );
+					$menu = wp_get_nav_menus( $this->args['menu'] );
 
-					if ( isset( $menu[0] ) && isset( $menu[0]->name ) ) {
-							$attr['aria-label'] = $menu[0]->name;
+					if ( is_object( $menu ) && isset( $menu->name ) ) {
+							$attr['aria-label'] = $menu->name;
 					}
 				}
 
@@ -638,155 +2440,7 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 					$attr['id'] = $this->args['id'];
 				}
 
-				$this->args['main_justify_content'] = str_replace( [ 'left', 'right' ], [ 'flex-start', 'flex-end' ], $this->args['main_justify_content'] );
-				$this->args['sub_justify_content']  = str_replace( [ 'left', 'right' ], [ 'flex-start', 'flex-end' ], $this->args['sub_justify_content'] );
-
-				$attr['style'] .= $this->get_style_variables();
-
 				return $attr;
-			}
-
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
-
-				// Mobile justification, does not match the option definition depending on rtl or not.
-				$custom_vars['mobile_justify']     = $this->args['mobile_justify_content'];
-				$custom_vars['mobile_caret_left']  = 'auto';
-				$custom_vars['mobile_caret_right'] = '0';
-
-				if ( is_rtl() ) {
-					$custom_vars['mobile_justify'] = str_replace( [ 'left', 'right' ], [ 'flex-end', 'flex-start' ], $custom_vars['mobile_justify'] );
-					if ( 'flex-end' !== $custom_vars['mobile_justify'] ) {
-						$custom_vars['mobile_caret_left']  = '0';
-						$custom_vars['mobile_caret_right'] = 'auto';
-					}
-				} else {
-					$custom_vars['mobile_justify'] = str_replace( [ 'left', 'right' ], [ 'flex-start', 'flex-end' ], $custom_vars['mobile_justify'] );
-					if ( 'flex-end' === $custom_vars['mobile_justify'] ) {
-						$custom_vars['mobile_caret_left']  = '0';
-						$custom_vars['mobile_caret_right'] = 'auto';
-					}
-				}
-
-				// Add box shadow as a full string.
-				if ( 'yes' === $this->args['box_shadow'] ) {
-					$custom_vars['box_shadow'] = Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles( $this->args );
-				}
-
-				$typography = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'typography', 'array' );
-				foreach ( $typography as $rule => $value ) {
-					$custom_vars[ 'fusion-' . $rule . '-typography' ] = $value;
-				}
-
-				$typography = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'submenu_typography', 'array' );
-				foreach ( $typography as $rule => $value ) {
-					$custom_vars[ 'fusion-' . $rule . '-submenu-typography' ] = $value;
-				}
-
-				$typography = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'mobile_typography', 'array' );
-				foreach ( $typography as $rule => $value ) {
-					$custom_vars[ 'fusion-' . $rule . '-mobile-typography' ] = $value;
-				}
-
-				$css_vars_options = [
-					'font_size'                          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'line_height',
-					'margin_top'                         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'                      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'transition_time',
-					'text_transform',
-					'min_height'                         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'bg'                                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_radius_top_left'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_top_right'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_bottom_right'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_radius_bottom_left'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'gap'                                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'align_items',
-					'justify_content',
-					'items_padding_top'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'items_padding_right'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'items_padding_bottom'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'items_padding_left'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_color'                       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_top'                         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_right'                       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_bottom'                      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_left'                        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'color'                              => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'letter_spacing'                     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'active_color'                       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'active_bg'                          => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'active_border_top'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'active_border_right'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'active_border_bottom'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'active_border_left'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'active_border_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'submenu_color'                      => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'submenu_bg'                         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'submenu_sep_color'                  => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'submenu_items_padding_top'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_items_padding_right'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_items_padding_bottom'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_items_padding_left'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_border_radius_top_left'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_border_radius_top_right'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_border_radius_bottom_right' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_border_radius_bottom_left'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_active_bg'                  => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'submenu_active_color'               => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'submenu_space',
-					'submenu_font_size'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_text_transform',
-					'submenu_line_height',
-					'submenu_letter_spacing'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'submenu_max_width'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'icons_size',
-					'icons_color'                        => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'icons_hover_color'                  => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'arrows_size_height'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'arrows_size_width'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'main_justify_content',
-					'sub_justify_content',
-					'mobile_nav_button_align_hor',
-					'mobile_bg'                          => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'mobile_color'                       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'mobile_nav_items_height'            => [ 'callback' => [ 'Fusion_Sanitize', 'number' ] ],
-					'mobile_active_bg'                   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'mobile_active_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'mobile_trigger_font_size'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'trigger_padding_top'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'trigger_padding_right'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'trigger_padding_bottom'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'trigger_padding_left'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'mobile_trigger_color'               => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'mobile_trigger_background_color'    => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'mobile_nav_trigger_bottom_margin'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'mobile_font_size'                   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'mobile_text_transform',
-					'mobile_line_height',
-					'mobile_letter_spacing'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'mobile_sep_color'                   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'flyout_close_color'                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'flyout_active_close_color'          => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'mobile_sticky_max_height'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'justify_title',
-					'thumbnail_size_width'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'thumbnail_size_height'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'sticky_min_height'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'stacked_submenu_indent'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
 			}
 
 			/**
@@ -797,37 +2451,14 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			 * @return void
 			 */
 			public function on_first_render() {
-				$fusion_settings = awb_get_fusion_settings();
-
 				Fusion_Dynamic_JS::enqueue_script(
 					'fusion-menu',
 					FusionBuilder::$js_folder_url . '/general/fusion-menu.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-menu.js',
 					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
-
-				Fusion_Dynamic_JS::enqueue_script(
-					'awb-mega-menu',
-					FusionBuilder::$js_folder_url . '/general/awb-mega-menu.js',
-					FusionBuilder::$js_folder_path . '/general/awb-mega-menu.js',
-					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
-					true
-				);
-
-				if ( $fusion_settings->get( 'disable_megamenu' ) ) {
-					Fusion_Dynamic_JS::enqueue_script(
-						'fusion-legacy-mega-menu',
-						FusionBuilder::$js_folder_url . '/general/fusion-legacy-mega-menu.js',
-						FusionBuilder::$js_folder_path . '/general/fusion-legacy-mega-menu.js',
-						[ 'jquery', 'fusion-menu' ],
-						FUSION_BUILDER_VERSION,
-						true
-					);
-				}
-
 				Fusion_Dynamic_JS::localize_script(
 					'fusion-menu',
 					'fusionMenuVars',
@@ -846,20 +2477,7 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 			 * @return void
 			 */
 			public function add_css_files() {
-				$fusion_settings = awb_get_fusion_settings();
 				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-arrows.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-vertical.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-stacked.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-mobile.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-woo.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-search.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-flyout.min.css' );
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-mega.min.css' );
-
-				if ( $fusion_settings->get( 'disable_megamenu' ) ) {
-					FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/menu-mega-legacy.min.css' );
-				}
 			}
 		}
 	}
@@ -875,33 +2493,31 @@ if ( fusion_is_element_enabled( 'fusion_menu' ) ) {
 function fusion_element_menu() {
 
 	// Whether we are actually on an edit screen.
-	$builder_status  = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
-	$menu_options    = [];
-	$menu_edit_items = [];
+	$builder_status = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
+	$menu_options   = [];
 
 	// If we are on edit screen, fetch menu options.
 	if ( $builder_status ) {
 		$menus = wp_get_nav_menus();
 		foreach ( $menus as $menu ) {
-			$menu_options[ $menu->slug ]    = $menu->name;
-			$menu_edit_items[ $menu->slug ] = $menu->term_id;
+			$menu_options[ $menu->slug ] = $menu->name;
 		}
 	}
 
 	$preview_active_root = [
-		'selector' => '.awb-menu__main-li_regular:nth-child(2)',
+		'selector' => '.fusion-menu-element-wrapper .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.fusion-megamenu-menu)',
 		'type'     => 'class',
 		'toggle'   => 'hover',
 	];
 
 	$preview_active_submenu = [
-		'selector' => '.awb-menu__main-li_regular.menu-item-has-children, .awb-menu__open-nav-submenu_click',
+		'selector' => '.fusion-menu-element-wrapper .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.fusion-megamenu-menu).menu-item-has-children,.fusion-menu-element-wrapper.expand-method-click .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.fusion-megamenu-menu) .fusion-open-nav-submenu',
 		'type'     => 'class',
 		'toggle'   => 'hover',
 	];
 
 	$preview_active_submenu_item = [
-		'selector' => '.awb-menu__sub-a, .awb-menu__sub-li',
+		'selector' => '.fusion-menu-element-wrapper .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.fusion-megamenu-menu).menu-item-has-children a,.fusion-menu-element-wrapper.expand-method-click .fusion-menu-element-list > li:not(.fusion-menu-item-button):not(.fusion-megamenu-menu) .fusion-open-nav-submenu',
 		'type'     => 'class',
 		'toggle'   => 'hover',
 	];
@@ -913,16 +2529,11 @@ function fusion_element_menu() {
 			'description' => esc_html__( 'Select the menu which you want to use.', 'fusion-builder' ),
 			'param_name'  => 'menu',
 			'value'       => $menu_options,
-			'default'     => array_key_first( $menu_options ), // phpcs:ignore PHPCompatibility.FunctionUse.NewFunctions.array_key_firstFound
+			'default'     => array_key_first( $menu_options ),
 			'callback'    => [
 				'function' => 'fusion_ajax',
 				'action'   => 'get_fusion_menu',
 				'ajax'     => true,
-			],
-			'quick_edit'  => [
-				'label' => esc_html__( 'Edit Menu', 'fusion-builder' ),
-				'type'  => 'menu',
-				'items' => $menu_edit_items,
 			],
 		],
 		[
@@ -944,11 +2555,6 @@ function fusion_element_menu() {
 			],
 			'default'     => 'row',
 			'description' => esc_html__( 'Choose to have a horizontal or a vertical menu.', 'fusion-builder' ),
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_menu',
-				'ajax'     => true,
-			],
 		],
 		'fusion_margin_placeholder'            => [
 			'param_name'  => 'margin',
@@ -982,14 +2588,6 @@ function fusion_element_menu() {
 			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'dependency'  => [
-				[
-					'element'  => 'submenu_mode',
-					'value'    => 'dropdown',
-					'operator' => '==',
-				],
-			],
-
 		],
 		[
 			'type'        => 'checkbox_button_set',
@@ -1002,18 +2600,6 @@ function fusion_element_menu() {
 			],
 			'default'     => [ '' ],
 			'description' => esc_html__( 'Choose if you want to show dropdown arrows on the main menu and submenus.', 'fusion-builder' ),
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_menu',
-				'ajax'     => true,
-			],
-			'dependency'  => [
-				[
-					'element'  => 'submenu_mode',
-					'value'    => 'dropdown',
-					'operator' => '==',
-				],
-			],
 		],
 		[
 			'type'        => 'dimension',
@@ -1150,25 +2736,44 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'             => 'typography',
-			'heading'          => esc_attr__( 'Main Menu Typography', 'fusion-builder' ),
-			'description'      => esc_html__( 'Controls the typography of the main menu item. Leave empty for the global font family.', 'fusion-builder' ),
-			'param_name'       => 'main_menu_fonts',
-			'choices'          => [
-				'font-family'    => 'typography',
-				'font-size'      => 'font_size',
-				'text-transform' => 'text_transform',
-				'line-height'    => 'line_height',
-				'letter-spacing' => 'letter_spacing',
+			'type'        => 'textfield',
+			'heading'     => esc_html__( 'Main Menu Font Size', 'fusion-builder' ),
+			'description' => esc_html__( 'The font-size for main menu item text. Use any valid CSS unit.', 'fusion-builder' ),
+			'param_name'  => 'font_size',
+			'value'       => '',
+			'default'     => '',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'callback'    => [
+				'function' => 'fusion_menu',
 			],
-			'default'          => [
-				'font-family' => '',
-				'variant'     => '400',
-			],
+		],
+		[
+			'type'             => 'font_family',
 			'remove_from_atts' => true,
-			'global'           => true,
-			'group'            => esc_attr__( 'Main', 'fusion-builder' ),
+			'heading'          => esc_html__( 'Main Menu Font Family', 'fusion-builder' ),
+			'description'      => esc_html__( 'Controls the font family of the main menu items. Leave empty to use the site default.', 'fusion-builder' ),
+			'param_name'       => 'typography',
+			'group'            => esc_html__( 'Main', 'fusion-builder' ),
+			'default'          => [
+				'font-family'  => '',
+				'font-variant' => '400',
+			],
 			'callback'         => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'radio_button_set',
+			'heading'     => esc_html__( 'Main Menu Item Text Transform', 'fusion-builder' ),
+			'description' => esc_html__( 'Choose how the text is displayed.', 'fusion-builder' ),
+			'param_name'  => 'text_transform',
+			'default'     => 'none',
+			'value'       => [
+				'none'      => esc_html__( 'Normal', 'fusion-builder' ),
+				'uppercase' => esc_html__( 'Uppercase', 'fusion-builder' ),
+			],
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
 		],
@@ -1301,127 +2906,210 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Main Menu Item Background Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the background-color for main menu items.', 'fusion-builder' ),
-			'param_name'    => 'bg',
-			'value'         => '',
-			'default'       => 'rgba(0,0,0,0)',
-			'group'         => esc_html__( 'Main', 'fusion-builder' ),
-			'callback'      => [
+			'type'        => 'dimension',
+			'heading'     => esc_html__( 'Mega Menu Thumbnail Size', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the width and height of the main menu mega-menu thumbnails. Use "auto" for automatic resizing if you added either width or height.', 'fusion-builder' ),
+			'param_name'  => 'thumbnail_size',
+			'value'       => [
+				'thumbnail_size_width'  => '',
+				'thumbnail_size_height' => '',
+			],
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'param_name' => 'active_bg',
-					'preview'    => $preview_active_root,
-				],
-			],
-			'connect-state' => [ 'color', 'border', 'border_color', 'icons_color' ],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Main Menu Item Text Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the color for main menu item text color.', 'fusion-builder' ),
-			'param_name'    => 'color',
-			'value'         => '',
-			'default'       => '#212934',
-			'group'         => esc_html__( 'Main', 'fusion-builder' ),
-			'callback'      => [
+			'type'             => 'subgroup',
+			'heading'          => esc_html__( 'Main Menu Item Styling', 'fusion-builder' ),
+			'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+			'param_name'       => 'main_styling',
+			'default'          => 'regular',
+			'group'            => esc_html__( 'Main', 'fusion-builder' ),
+			'remove_from_atts' => true,
+			'value'            => [
+				'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+				'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
+			],
+			'icons'            => [
+				'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+				'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Background Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the background-color for main menu items.', 'fusion-builder' ),
+			'param_name'  => 'bg',
+			'value'       => '',
+			'default'     => 'rgba(0,0,0,0)',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'regular',
+			],
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'default'    => '#65bc7b',
-					'param_name' => 'active_color',
-					'preview'    => $preview_active_root,
-				],
-			],
-			'connect-state' => [ 'bg', 'border', 'border_color', 'icons_color' ],
 		],
 		[
-			'type'          => 'dimension',
-			'heading'       => esc_html__( 'Main Menu Item Border Size', 'fusion-builder' ),
-			'description'   => esc_html__( 'Select the border size for main menu items. Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
-			'param_name'    => 'border',
-			'value'         => [
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Text Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the color for main menu item text color.', 'fusion-builder' ),
+			'param_name'  => 'color',
+			'value'       => '',
+			'default'     => '#212934',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'regular',
+			],
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Hover / Active Background Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the background-color for main menu items hover / active states.', 'fusion-builder' ),
+			'param_name'  => 'active_bg',
+			'value'       => '',
+			'default'     => 'rgba(0,0,0,0)',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'hover',
+			],
+			'preview'     => $preview_active_root,
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Hover / Active Text Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the color for main menu item text color hover / active states.', 'fusion-builder' ),
+			'param_name'  => 'active_color',
+			'value'       => '',
+			'default'     => '#65bc7b',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'hover',
+			],
+			'preview'     => $preview_active_root,
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'dimension',
+			'heading'     => esc_html__( 'Main Menu Item Border Size', 'fusion-builder' ),
+			'description' => esc_html__( 'Select the border size for main menu items. Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
+			'param_name'  => 'border',
+			'value'       => [
 				'border_top'    => '',
 				'border_right'  => '',
 				'border_bottom' => '',
 				'border_left'   => '',
 			],
-			'group'         => esc_html__( 'Main', 'fusion-builder' ),
-			'callback'      => [
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'regular',
+			],
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'param_name' => 'active_border',
-					'preview'    => $preview_active_root,
-					'value'      => [
-						'active_border_top'    => '',
-						'active_border_right'  => '',
-						'active_border_bottom' => '',
-						'active_border_left'   => '',
-					],
-					'callback'   => [
-						'function' => 'fusion_ajax',
-						'action'   => 'get_fusion_menu',
-						'ajax'     => true,
-					],
-				],
-			],
-			'connect-state' => [ 'bg', 'color', 'border_color', 'icons_color' ],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Main Menu Item Border Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the border-color for main menu items.', 'fusion-builder' ),
-			'param_name'    => 'border_color',
-			'value'         => '',
-			'default'       => 'rgba(0,0,0,0)',
-			'group'         => esc_html__( 'Main', 'fusion-builder' ),
-			'callback'      => [
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Border Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the border-color for main menu items.', 'fusion-builder' ),
+			'param_name'  => 'border_color',
+			'value'       => '',
+			'default'     => 'rgba(0,0,0,0)',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'regular',
+			],
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'param_name' => 'active_border_color',
-					'preview'    => $preview_active_root,
-					'callback'   => [
-						'function' => 'fusion_menu',
-					],
-				],
-			],
-			'connect-state' => [ 'bg', 'color', 'border', 'icons_color' ],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Main Menu Item Icon Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the main menu icon color.', 'fusion-builder' ),
-			'param_name'    => 'icons_color',
-			'value'         => '',
-			'default'       => '#212934',
-			'group'         => esc_html__( 'Main', 'fusion-builder' ),
-			'callback'      => [
+			'type'        => 'dimension',
+			'heading'     => esc_html__( 'Main Menu Item Hover / Active Border Size', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the border size for main menu items hover / active states. Enter values including any valid CSS unit, ex: 10px.', 'fusion-builder' ),
+			'param_name'  => 'active_border',
+			'value'       => [
+				'active_border_top'    => '',
+				'active_border_right'  => '',
+				'active_border_bottom' => '',
+				'active_border_left'   => '',
+			],
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'hover',
+			],
+			'preview'     => $preview_active_root,
+			'callback'    => [
+				'function' => 'fusion_ajax',
+				'action'   => 'get_fusion_menu',
+				'ajax'     => true,
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Hover / Active Border Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the border-color for main menu items hover / active states.', 'fusion-builder' ),
+			'param_name'  => 'active_border_color',
+			'value'       => '',
+			'default'     => 'rgba(0,0,0,0)',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'hover',
+			],
+			'preview'     => $preview_active_root,
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'param_name' => 'icons_hover_color',
-					'default'    => '',
-					'preview'    => $preview_active_root,
-					'callback'   => [
-						'function' => 'fusion_menu',
-					],
-				],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Icon Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the main menu icon color.', 'fusion-builder' ),
+			'param_name'  => 'icons_color',
+			'value'       => '',
+			'default'     => '#212934',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'regular',
 			],
-			'connect-state' => [ 'bg', 'color', 'border', 'border_color' ],
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Main Menu Item Hover / Active Icon Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the main menu icon hover / active color.', 'fusion-builder' ),
+			'param_name'  => 'icons_hover_color',
+			'value'       => '',
+			'default'     => '#65bc7b',
+			'group'       => esc_html__( 'Main', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'main_styling',
+				'tab'  => 'hover',
+			],
+			'preview'     => $preview_active_root,
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
 		],
 		[
 			'type'        => 'radio_button_set',
@@ -1447,23 +3135,10 @@ function fusion_element_menu() {
 			'value'       => [
 				'dropdown' => esc_html__( 'Dropdown', 'fusion-builder' ),
 				'flyout'   => esc_html__( 'Flyout', 'fusion-builder' ),
-				'stacked'  => [
-					'name'       => esc_html__( 'Stacked', 'fusion-builder' ),
-					'dependency' => [
-						'element'  => 'direction',
-						'value'    => 'column',
-						'operator' => '==',
-					],
-				],
 			],
 			'default'     => 'dropdown',
 			'description' => esc_html__( 'Select whether you want a classic dropdown, or a full-screen flyout.', 'fusion-builder' ),
 			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_menu',
-				'ajax'     => true,
-			],
 		],
 		[
 			'type'        => 'radio_button_set',
@@ -1479,150 +3154,14 @@ function fusion_element_menu() {
 			'dependency'  => [
 				[
 					'element'  => 'submenu_mode',
-					'value'    => 'dropdown',
-					'operator' => '==',
+					'value'    => 'flyout',
+					'operator' => '!=',
 				],
 			],
 			'callback'    => [
 				'function' => 'fusion_ajax',
 				'action'   => 'get_fusion_menu',
 				'ajax'     => true,
-			],
-		],
-		[
-			'type'        => 'radio_button_set',
-			'heading'     => esc_html__( 'Expand Method', 'fusion-builder' ),
-			'param_name'  => 'stacked_expand_method',
-			'value'       => [
-				'hover'  => esc_html__( 'Hover', 'fusion-builder' ),
-				'click'  => esc_html__( 'Click', 'fusion-builder' ),
-				'always' => esc_html__( 'Always', 'fusion-builder' ),
-			],
-			'default'     => 'click',
-			'description' => esc_html__( 'Select how submenus will expand. If carets are enabled, then they will become clickable.', 'fusion-builder' ),
-			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'dependency'  => [
-				[
-					'element'  => 'direction',
-					'value'    => 'column',
-					'operator' => '==',
-				],
-				[
-					'element'  => 'submenu_mode',
-					'value'    => 'stacked',
-					'operator' => '==',
-				],
-			],
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_menu',
-				'ajax'     => true,
-			],
-		],
-		[
-			'type'        => 'radio_button_set',
-			'heading'     => esc_html__( 'Close On Outer Click', 'fusion-builder' ),
-			'param_name'  => 'close_on_outer_click',
-			'value'       => [
-				'yes' => esc_html__( 'Yes', 'fusion-builder' ),
-				'no'  => esc_html__( 'No', 'fusion-builder' ),
-			],
-			'default'     => 'no',
-			'description' => esc_html__( 'Select if submenu should be closed on click outside the section.', 'fusion-builder' ),
-			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'dependency'  => [
-				[
-					'element'  => 'submenu_mode',
-					'value'    => 'dropdown',
-					'operator' => '==',
-				],
-				[
-					'element'  => 'expand_method',
-					'value'    => 'click',
-					'operator' => '==',
-				],
-			],
-		],
-		[
-			'type'        => 'radio_button_set',
-			'heading'     => esc_html__( 'Close On Outer Click', 'fusion-builder' ),
-			'param_name'  => 'close_on_outer_click_stacked',
-			'value'       => [
-				'yes' => esc_html__( 'Yes', 'fusion-builder' ),
-				'no'  => esc_html__( 'No', 'fusion-builder' ),
-			],
-			'default'     => 'no',
-			'description' => esc_html__( 'Select if submenu should be closed on click outside the section.', 'fusion-builder' ),
-			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'dependency'  => [
-				[
-					'element'  => 'direction',
-					'value'    => 'column',
-					'operator' => '==',
-				],
-				[
-					'element'  => 'submenu_mode',
-					'value'    => 'stacked',
-					'operator' => '==',
-				],
-				[
-					'element'  => 'stacked_expand_method',
-					'value'    => 'click',
-					'operator' => '==',
-				],
-			],
-		],
-		[
-			'type'        => 'radio_button_set',
-			'heading'     => esc_html__( 'Click Method Mode', 'fusion-builder' ),
-			'param_name'  => 'stacked_click_mode',
-			'value'       => [
-				'toggle'    => esc_html__( 'Toggle', 'fusion-builder' ),
-				'accordion' => esc_html__( 'Accordion', 'fusion-builder' ),
-			],
-			'default'     => 'toggle',
-			'description' => esc_html__( 'Select how the submenus should open. Toggle allows several items to be open at a time. Accordion only allows one item to be open at a time.', 'fusion-builder' ),
-			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'dependency'  => [
-				[
-					'element'  => 'direction',
-					'value'    => 'column',
-					'operator' => '==',
-				],
-				[
-					'element'  => 'submenu_mode',
-					'value'    => 'stacked',
-					'operator' => '==',
-				],
-				[
-					'element'  => 'stacked_expand_method',
-					'value'    => 'click',
-					'operator' => '==',
-				],
-			],
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_menu',
-				'ajax'     => true,
-			],
-		],
-		[
-			'type'        => 'textfield',
-			'heading'     => esc_html__( 'Submenu Indent', 'fusion-builder' ),
-			'param_name'  => 'stacked_submenu_indent',
-			'description' => esc_html__( 'Set submenu indent. Enter values including any valid CSS unit, ex: 10px or 10%.', 'fusion-builder' ),
-			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'dependency'  => [
-				[
-					'element'  => 'direction',
-					'value'    => 'column',
-					'operator' => '==',
-				],
-				[
-					'element'  => 'submenu_mode',
-					'value'    => 'stacked',
-					'operator' => '==',
-				],
 			],
 		],
 		[
@@ -1649,9 +3188,8 @@ function fusion_element_menu() {
 			'heading'     => esc_html__( 'Submenu Expand Transition', 'fusion-builder' ),
 			'param_name'  => 'expand_transition',
 			'value'       => [
-				'fade'       => esc_html__( 'Fade', 'fusion-builder' ),
-				'slide_up'   => esc_html__( 'Slide Up', 'fusion-builder' ),
-				'slide_down' => esc_html__( 'Slide Down', 'fusion-builder' ),
+				'fade'     => esc_html__( 'Fade', 'fusion-builder' ),
+				'slide_up' => esc_html__( 'Slide Up', 'fusion-builder' ),
 			],
 			'default'     => 'fade',
 			'description' => esc_html__( 'Changes the expand transition for submenus.', 'fusion-builder' ),
@@ -1711,49 +3249,47 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'             => 'typography',
-			'heading'          => esc_attr__( 'Submenu Typography', 'fusion-builder' ),
-			'description'      => esc_html__( 'Controls the typography of the submenu items. Leave empty for the global font family.', 'fusion-builder' ),
-			'param_name'       => 'submenu_fonts',
-			'choices'          => [
-				'font-family'    => 'submenu_typography',
-				'font-size'      => 'submenu_font_size',
-				'text-transform' => 'submenu_text_transform',
-				'line-height'    => 'submenu_line_height',
-				'letter-spacing' => 'submenu_letter_spacing',
+			'type'        => 'textfield',
+			'heading'     => esc_html__( 'Submenu Font Size', 'fusion-builder' ),
+			'description' => esc_html__( 'The font-size for submenu items. Use any valid CSS unit.', 'fusion-builder' ),
+			'param_name'  => 'submenu_font_size',
+			'value'       => '',
+			'default'     => '',
+			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'preview'     => $preview_active_submenu,
+			'callback'    => [
+				'function' => 'fusion_menu',
 			],
-			'default'          => [
-				'font-family' => '',
-				'variant'     => '400',
-			],
+		],
+		[
+			'type'             => 'font_family',
 			'remove_from_atts' => true,
-			'global'           => true,
-			'group'            => esc_attr__( 'Submenu', 'fusion-builder' ),
+			'heading'          => esc_html__( 'Submenu Font Family', 'fusion-builder' ),
+			'description'      => esc_html__( 'Controls the font family of the submenu items. Leave empty to use the site default.', 'fusion-builder' ),
+			'param_name'       => 'submenu_typography',
+			'group'            => esc_html__( 'Submenu', 'fusion-builder' ),
+			'default'          => [
+				'font-family'  => '',
+				'font-variant' => '400',
+			],
 			'callback'         => [
 				'function' => 'fusion_menu',
 			],
 		],
 		[
 			'type'        => 'radio_button_set',
-			'heading'     => esc_html__( 'Submenu Item Text Align', 'fusion-builder' ),
-			'description' => esc_html__( 'Select how the submenu text should be aligned.', 'fusion-builder' ),
-			'param_name'  => 'sub_justify_content',
-			'grid_layout' => true,
-			'back_icons'  => true,
+			'heading'     => esc_html__( 'Submenu Text Transform', 'fusion-builder' ),
+			'description' => esc_html__( 'Choose how the text is displayed.', 'fusion-builder' ),
+			'param_name'  => 'submenu_text_transform',
+			'default'     => 'none',
 			'value'       => [
-				'left'          => esc_html__( 'Flex Start', 'fusion-builder' ),
-				'center'        => esc_html__( 'Center', 'fusion-builder' ),
-				'right'         => esc_html__( 'Flex End', 'fusion-builder' ),
-				'space-between' => esc_html__( 'Space Between', 'fusion-builder' ),
+				'none'      => esc_html__( 'Normal', 'fusion-builder' ),
+				'uppercase' => esc_html__( 'Uppercase', 'fusion-builder' ),
 			],
-			'icons'       => [
-				'left'          => '<span class="fusiona-horizontal-flex-start"></span>',
-				'center'        => '<span class="fusiona-horizontal-flex-center"></span>',
-				'right'         => '<span class="fusiona-horizontal-flex-end"></span>',
-				'space-between' => '<span class="fusiona-horizontal-space-between"></span>',
-			],
-			'default'     => 'space-between',
 			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
 		],
 		[
 			'type'        => 'dimension',
@@ -1813,49 +3349,6 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'        => 'dimension',
-			'heading'     => esc_html__( 'Submenu Thumbnail Size', 'fusion-builder' ),
-			'description' => esc_html__( 'Controls the width and height of the submenu image thumbnails. Use "auto" for automatic resizing if you added either width or height.', 'fusion-builder' ),
-			'param_name'  => 'thumbnail_size',
-			'value'       => [
-				'thumbnail_size_width'  => '',
-				'thumbnail_size_height' => '',
-			],
-			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'callback'    => [
-				'function' => 'fusion_menu',
-			],
-		],
-		[
-			'type'        => 'radio_button_set',
-			'heading'     => esc_html__( 'Legacy Mega Menu Title Justification', 'fusion-builder' ),
-			'description' => esc_html__( 'Select how legacy mega menu titles will be justified.', 'fusion-builder' ),
-			'param_name'  => 'justify_title',
-			'default'     => 'center',
-			'grid_layout' => true,
-			'back_icons'  => true,
-			'icons'       => [
-				'flex-start'    => '<span class="fusiona-horizontal-flex-start"></span>',
-				'center'        => '<span class="fusiona-horizontal-flex-center"></span>',
-				'flex-end'      => '<span class="fusiona-horizontal-flex-end"></span>',
-				'space-between' => '<span class="fusiona-horizontal-space-between"></span>',
-				'space-around'  => '<span class="fusiona-horizontal-space-around"></span>',
-				'space-evenly'  => '<span class="fusiona-horizontal-space-evenly"></span>',
-			],
-			'value'       => [
-				'flex-start'    => esc_html__( 'Flex Start', 'fusion-builder' ),
-				'center'        => esc_html__( 'Center', 'fusion-builder' ),
-				'flex-end'      => esc_html__( 'Flex End', 'fusion-builder' ),
-				'space-between' => esc_html__( 'Space Between', 'fusion-builder' ),
-				'space-around'  => esc_html__( 'Space Around', 'fusion-builder' ),
-				'space-evenly'  => esc_html__( 'Space Evenly', 'fusion-builder' ),
-			],
-			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
-			'callback'    => [
-				'function' => 'fusion_menu',
-			],
-		],
-		[
 			'type'        => 'colorpickeralpha',
 			'heading'     => esc_html__( 'Submenu Separator Color', 'fusion-builder' ),
 			'description' => esc_html__( 'Controls the color for the submenu items separator. Set to transparent for no separator.', 'fusion-builder' ),
@@ -1869,76 +3362,135 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Submenu Background Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the background-color for submenu dropdowns.', 'fusion-builder' ),
-			'param_name'    => 'submenu_bg',
-			'value'         => '',
-			'default'       => '#ffffff',
-			'group'         => esc_html__( 'Submenu', 'fusion-builder' ),
-			'preview'       => $preview_active_submenu,
-			'callback'      => [
-				'function' => 'fusion_menu',
+			'type'             => 'subgroup',
+			'heading'          => esc_html__( 'Submenu Item Styling', 'fusion-builder' ),
+			'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+			'param_name'       => 'submenu_styling',
+			'default'          => 'regular',
+			'group'            => esc_html__( 'Submenu', 'fusion-builder' ),
+			'remove_from_atts' => true,
+			'value'            => [
+				'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+				'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'param_name' => 'submenu_active_bg',
-					'default'    => '#f9f9fb',
-					'preview'    => $preview_active_submenu_item,
-				],
+			'icons'            => [
+				'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+				'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
 			],
-			'connect-state' => [ 'submenu_color', 'flyout_close_color' ],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Submenu Text Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the text color for submenu dropdowns.', 'fusion-builder' ),
-			'param_name'    => 'submenu_color',
-			'value'         => '',
-			'default'       => '#212934',
-			'group'         => esc_html__( 'Submenu', 'fusion-builder' ),
-			'preview'       => $preview_active_submenu,
-			'callback'      => [
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Submenu Background Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the background-color for submenu dropdowns.', 'fusion-builder' ),
+			'param_name'  => 'submenu_bg',
+			'value'       => '',
+			'default'     => '#ffffff',
+			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'submenu_styling',
+				'tab'  => 'regular',
+			],
+			'preview'     => $preview_active_submenu,
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'param_name' => 'submenu_active_color',
-					'default'    => '#212934',
-					'preview'    => $preview_active_submenu_item,
-				],
-			],
-			'connect-state' => [ 'submenu_bg', 'flyout_close_color' ],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Close Icon Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the close icon color for flyout submenu.', 'fusion-builder' ),
-			'param_name'    => 'flyout_close_color',
-			'value'         => '',
-			'default'       => '#212934',
-			'group'         => esc_html__( 'Submenu', 'fusion-builder' ),
-			'dependency'    => [
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Submenu Text Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the text color for submenu dropdowns.', 'fusion-builder' ),
+			'param_name'  => 'submenu_color',
+			'value'       => '',
+			'default'     => '#212934',
+			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'submenu_styling',
+				'tab'  => 'regular',
+			],
+			'preview'     => $preview_active_submenu,
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Close Icon Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the close icon color for flyout submenu.', 'fusion-builder' ),
+			'param_name'  => 'flyout_close_color',
+			'value'       => '',
+			'default'     => '#212934',
+			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'submenu_styling',
+				'tab'  => 'regular',
+			],
+			'dependency'  => [
 				[
 					'element'  => 'submenu_mode',
 					'value'    => 'flyout',
 					'operator' => '==',
 				],
 			],
-			'callback'      => [
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'hover' => [
-					'label'      => __( 'Hover / Active', 'fusion-builder' ),
-					'param_name' => 'flyout_active_close_color',
-					'default'    => '#212934',
-					'preview'    => $preview_active_submenu_item,
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Submenu Hover / Active Background Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the background-color for submenu items hover / active states.', 'fusion-builder' ),
+			'param_name'  => 'submenu_active_bg',
+			'value'       => '',
+			'default'     => '#f9f9fb',
+			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'submenu_styling',
+				'tab'  => 'hover',
+			],
+			'preview'     => $preview_active_submenu_item,
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Submenu Hover / Active Text Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the text color for submenu items hover / active states', 'fusion-builder' ),
+			'param_name'  => 'submenu_active_color',
+			'value'       => '',
+			'default'     => '#212934',
+			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'submenu_styling',
+				'tab'  => 'hover',
+			],
+			'preview'     => $preview_active_submenu_item,
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Close Icon Hover Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the close icon hover color for flyout submenu.', 'fusion-builder' ),
+			'param_name'  => 'flyout_active_close_color',
+			'value'       => '',
+			'default'     => '#212934',
+			'group'       => esc_html__( 'Submenu', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'submenu_styling',
+				'tab'  => 'hover',
+			],
+			'dependency'  => [
+				[
+					'element'  => 'submenu_mode',
+					'value'    => 'flyout',
+					'operator' => '==',
 				],
 			],
-			'connect-state' => [ 'submenu_bg', 'submenu_color' ],
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
 		],
 		[
 			'type'        => 'radio_button_set',
@@ -2013,25 +3565,6 @@ function fusion_element_menu() {
 				'full-absolute'   => esc_html__( 'Full Width - Static', 'fusion-builder' ),
 			],
 			'default'     => 'full-absolute',
-			'dependency'  => [
-				[
-					'element'  => 'mobile_nav_mode',
-					'value'    => 'collapse-to-button',
-					'operator' => '==',
-				],
-			],
-			'group'       => esc_html__( 'Mobile', 'fusion-builder' ),
-		],
-		[
-			'type'        => 'radio_button_set',
-			'heading'     => esc_html__( 'Mobile Menu Opening Mode', 'fusion-builder' ),
-			'description' => esc_html__( 'Select how the submenus should open. Toggle allow several items to be open at a time. Accordion only allow one item to be open at a time.', 'fusion-builder' ),
-			'param_name'  => 'mobile_opening_mode',
-			'value'       => [
-				'toggle'    => esc_html__( 'Toggle', 'fusion-builder' ),
-				'accordion' => esc_html__( 'Accordion', 'fusion-builder' ),
-			],
-			'default'     => 'toggle',
 			'dependency'  => [
 				[
 					'element'  => 'mobile_nav_mode',
@@ -2267,25 +3800,6 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'        => 'textfield',
-			'heading'     => esc_html__( 'Mobile Menu Sticky Maximum Height', 'fusion-builder' ),
-			'description' => esc_html__( 'The maximum height for mobile main menu links when the container is sticky. Use any valid CSS unit. ', 'fusion-builder' ),
-			'param_name'  => 'mobile_sticky_max_height',
-			'value'       => '',
-			'dependency'  => [
-				[
-					'element'  => 'fusion_builder_container',
-					'param'    => 'sticky',
-					'value'    => 'on',
-					'operator' => '==',
-				],
-			],
-			'group'       => esc_html__( 'Mobile', 'fusion-builder' ),
-			'callback'    => [
-				'function' => 'fusion_menu',
-			],
-		],
-		[
 			'type'        => 'radio_button_set',
 			'heading'     => esc_html__( 'Mobile Menu Text Align', 'fusion-builder' ),
 			'description' => esc_html__( 'Select if mobile menu items should be aligned to the left, right or centered.', 'fusion-builder' ),
@@ -2314,24 +3828,28 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'             => 'typography',
-			'heading'          => esc_attr__( 'Mobile Menu Typography', 'fusion-builder' ),
-			'description'      => esc_html__( 'Controls the typography of the mobile menu. Leave empty for the global font family.', 'fusion-builder' ),
-			'param_name'       => 'mobile_fonts',
-			'choices'          => [
-				'font-family'    => 'mobile_typography',
-				'font-size'      => 'mobile_font_size',
-				'text-transform' => 'mobile_text_transform',
-				'line-height'    => 'mobile_line_height',
-				'letter-spacing' => 'mobile_letter_spacing',
+			'type'        => 'textfield',
+			'heading'     => esc_html__( 'Mobile Menu Font Size', 'fusion-builder' ),
+			'description' => esc_html__( 'The font-size for mobile menu items. Use any valid CSS unit.', 'fusion-builder' ),
+			'param_name'  => 'mobile_font_size',
+			'value'       => '',
+			'default'     => '',
+			'group'       => esc_html__( 'Mobile', 'fusion-builder' ),
+			'callback'    => [
+				'function' => 'fusion_menu',
 			],
-			'default'          => [
-				'font-family' => '',
-				'variant'     => '400',
-			],
+		],
+		[
+			'type'             => 'font_family',
 			'remove_from_atts' => true,
-			'global'           => true,
-			'group'            => esc_attr__( 'Mobile', 'fusion-builder' ),
+			'heading'          => esc_html__( 'Mobile Menu Font Family', 'fusion-builder' ),
+			'description'      => esc_html__( 'Controls the font family for mobile menu.', 'fusion-builder' ),
+			'param_name'       => 'mobile_typography',
+			'default'          => [
+				'font-family'  => '',
+				'font-variant' => '400',
+			],
+			'group'            => esc_html__( 'Mobile', 'fusion-builder' ),
 			'callback'         => [
 				'function' => 'fusion_menu',
 			],
@@ -2349,47 +3867,88 @@ function fusion_element_menu() {
 			],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Mobile Menu Background Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the background color for mobile menus.', 'fusion-builder' ),
-			'param_name'    => 'mobile_bg',
-			'value'         => '',
-			'default'       => '#ffffff',
-			'group'         => esc_html__( 'Mobile', 'fusion-builder' ),
-			'callback'      => [
-				'function' => 'fusion_menu',
+			'type'             => 'subgroup',
+			'heading'          => esc_html__( 'Mobile Menu Item Styling', 'fusion-builder' ),
+			'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+			'param_name'       => 'mobile_styling',
+			'default'          => 'regular',
+			'group'            => esc_html__( 'Mobile', 'fusion-builder' ),
+			'remove_from_atts' => true,
+			'value'            => [
+				'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+				'active'  => esc_html__( 'Active', 'fusion-builder' ),
 			],
-			'states'        => [
-				'active' => [
-					'label'      => __( 'Active', 'fusion-builder' ),
-					'param_name' => 'mobile_active_bg',
-					'default'    => '#f9f9fb',
-				],
+			'icons'            => [
+				'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+				'active'  => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
 			],
-			'connect-state' => [ 'mobile_color' ],
 		],
 		[
-			'type'          => 'colorpickeralpha',
-			'heading'       => esc_html__( 'Mobile Menu Text Color', 'fusion-builder' ),
-			'description'   => esc_html__( 'Controls the text color for mobile menus.', 'fusion-builder' ),
-			'param_name'    => 'mobile_color',
-			'value'         => '',
-			'default'       => '#4a4e57',
-			'group'         => esc_html__( 'Mobile', 'fusion-builder' ),
-			'callback'      => [
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Mobile Menu Background Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the background color for mobile menus.', 'fusion-builder' ),
+			'param_name'  => 'mobile_bg',
+			'value'       => '',
+			'default'     => '#ffffff',
+			'group'       => esc_html__( 'Mobile', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'mobile_styling',
+				'tab'  => 'regular',
+			],
+			'callback'    => [
 				'function' => 'fusion_menu',
 			],
-			'states'        => [
-				'active' => [
-					'label'      => __( 'Active', 'fusion-builder' ),
-					'param_name' => 'mobile_active_color',
-					'default'    => '#4a4e57',
-				],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Mobile Menu Text Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the text color for mobile menus.', 'fusion-builder' ),
+			'param_name'  => 'mobile_color',
+			'value'       => '',
+			'default'     => '#4a4e57',
+			'group'       => esc_html__( 'Mobile', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'mobile_styling',
+				'tab'  => 'regular',
 			],
-			'connect-state' => [ 'mobile_bg' ],
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Mobile Menu Active Item Background Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the background color for mobile menu hover / active states.', 'fusion-builder' ),
+			'param_name'  => 'mobile_active_bg',
+			'value'       => '',
+			'default'     => '#f9f9fb',
+			'group'       => esc_html__( 'Mobile', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'mobile_styling',
+				'tab'  => 'active',
+			],
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
+		],
+		[
+			'type'        => 'colorpickeralpha',
+			'heading'     => esc_html__( 'Mobile Menu Active Item Text Color', 'fusion-builder' ),
+			'description' => esc_html__( 'Controls the text color for mobile menu hover / active states.', 'fusion-builder' ),
+			'param_name'  => 'mobile_active_color',
+			'value'       => '',
+			'default'     => '#4a4e57',
+			'group'       => esc_html__( 'Mobile', 'fusion-builder' ),
+			'subgroup'    => [
+				'name' => 'mobile_styling',
+				'tab'  => 'active',
+			],
+			'callback'    => [
+				'function' => 'fusion_menu',
+			],
 		],
 		'fusion_animation_placeholder'         => [
-			'preview_selector' => '.awb-menu',
+			'preview_selector' => '.fusion-menu-element-wrapper',
 		],
 	];
 
@@ -2401,54 +3960,36 @@ function fusion_element_menu() {
 				'shortcode'    => 'fusion_menu',
 				'icon'         => 'fusiona-bars',
 				'params'       => $params,
-				'help_url'     => 'https://avada.com/documentation/menu-element/',
+				'help_url'     => 'https://theme-fusion.com/documentation/avada/elements/menu-element/',
 				'subparam_map' => [
-					'margin_top'                           => 'margin',
-					'margin_bottom'                        => 'margin',
-					'items_padding_top'                    => 'items_padding',
-					'items_padding_right'                  => 'items_padding',
-					'items_padding_bottom'                 => 'items_padding',
-					'items_padding_left'                   => 'items_padding',
-					'border_radius_top_left'               => 'border_radius',
-					'border_radius_top_right'              => 'border_radius',
-					'border_radius_bottom_right'           => 'border_radius',
-					'border_radius_bottom_left'            => 'border_radius',
-					'thumbnail_size_width'                 => 'thumbnail_size',
-					'thumbnail_size_height'                => 'thumbnail_size',
-					'border_top'                           => 'border',
-					'border_right'                         => 'border',
-					'border_bottom'                        => 'border',
-					'border_left'                          => 'border',
-					'submenu_items_padding_top'            => 'submenu_items_padding',
-					'submenu_items_padding_right'          => 'submenu_items_padding',
-					'submenu_items_padding_bottom'         => 'submenu_items_padding',
-					'submenu_items_padding_left'           => 'submenu_items_padding',
-					'submenu_border_radius_top_left'       => 'submenu_border_radius',
-					'submenu_border_radius_top_right'      => 'submenu_border_radius',
-					'submenu_border_radius_bottom_right'   => 'submenu_border_radius',
-					'submenu_border_radius_bottom_left'    => 'submenu_border_radius',
-					'trigger_padding_top'                  => 'trigger_padding',
-					'trigger_padding_right'                => 'trigger_padding',
-					'trigger_padding_bottom'               => 'trigger_padding',
-					'trigger_padding_left'                 => 'trigger_padding',
-					'font_size'                            => 'main_menu_fonts',
-					'fusion_font_family_typography'        => 'main_menu_fonts',
-					'fusion_font_variant_typography'       => 'main_menu_fonts',
-					'letter_spacing'                       => 'main_menu_fonts',
-					'text_transform'                       => 'main_menu_fonts',
-					'line_height'                          => 'main_menu_fonts',
-					'submenu_font_size'                    => 'submenu_fonts',
-					'fusion_font_family_submenu_typography' => 'submenu_fonts',
-					'fusion_font_variant_submenu_typography' => 'submenu_fonts',
-					'submenu_text_transform'               => 'submenu_fonts',
-					'submenu_line_height'                  => 'submenu_fonts',
-					'submenu_letter_spacing'               => 'submenu_fonts',
-					'mobile_font_size'                     => 'mobile_fonts',
-					'fusion_font_family_mobile_typography' => 'mobile_fonts',
-					'fusion_font_variant_mobile_typography' => 'mobile_fonts',
-					'mobile_text_transform'                => 'mobile_fonts',
-					'mobile_line_height'                   => 'mobile_fonts',
-					'mobile_letter_spacing'                => 'mobile_fonts',
+					'margin_top'                         => 'margin',
+					'margin_bottom'                      => 'margin',
+					'items_padding_top'                  => 'items_padding',
+					'items_padding_right'                => 'items_padding',
+					'items_padding_bottom'               => 'items_padding',
+					'items_padding_left'                 => 'items_padding',
+					'border_radius_top_left'             => 'border_radius',
+					'border_radius_top_right'            => 'border_radius',
+					'border_radius_bottom_right'         => 'border_radius',
+					'border_radius_bottom_left'          => 'border_radius',
+					'thumbnail_size_width'               => 'thumbnail_size',
+					'thumbnail_size_height'              => 'thumbnail_size',
+					'border_top'                         => 'border',
+					'border_right'                       => 'border',
+					'border_bottom'                      => 'border',
+					'border_left'                        => 'border',
+					'submenu_items_padding_top'          => 'submenu_items_padding',
+					'submenu_items_padding_right'        => 'submenu_items_padding',
+					'submenu_items_padding_bottom'       => 'submenu_items_padding',
+					'submenu_items_padding_left'         => 'submenu_items_padding',
+					'submenu_border_radius_top_left'     => 'submenu_border_radius',
+					'submenu_border_radius_top_right'    => 'submenu_border_radius',
+					'submenu_border_radius_bottom_right' => 'submenu_border_radius',
+					'submenu_border_radius_bottom_left'  => 'submenu_border_radius',
+					'trigger_padding_top'                => 'trigger_padding',
+					'trigger_padding_right'              => 'trigger_padding',
+					'trigger_padding_bottom'             => 'trigger_padding',
+					'trigger_padding_left'               => 'trigger_padding',
 				],
 				'callback'     => [
 					'function' => 'fusion_ajax',

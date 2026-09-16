@@ -20,7 +20,7 @@ function fusion_element_slider_revolution() {
 			'icon'       => 'fusiona-air',
 			'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-revolution-slider-preview.php',
 			'preview_id' => 'fusion-builder-block-module-revolution-slider-preview-template',
-			'help_url'   => 'https://avada.com/documentation/slider-revolution-element/',
+			'help_url'   => 'https://theme-fusion.com/documentation/fusion-builder/elements/slider-revolution-element/',
 			'params'     => [
 				[
 					'type'        => 'select',

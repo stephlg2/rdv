@@ -20,10 +20,6 @@ if ( ! class_exists( 'FusionReduxFramework_sortable' ) ) {
 	 */
 	class FusionReduxFramework_sortable {
 
-		public $parent;
-		public $field;
-		public $value;
-
 		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function

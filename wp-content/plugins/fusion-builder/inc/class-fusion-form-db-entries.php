@@ -73,15 +73,11 @@ class Fusion_Form_DB_Entries extends Fusion_Form_DB_Items {
 
 				// Check if it holds a file URL.
 				if ( $entry && isset( $entry->value ) && false !== strpos( $entry->value, $upload['url'] ) ) {
-					$values = explode( ' | ', $entry->value );
+					$file_path = str_replace( $upload['url'], $upload['path'], $entry->value );
 
-					foreach ( $values as $value ) {
-						$file_path = str_replace( $upload['url'], $upload['path'], $value );
-
-						// File exists, delete it.
-						if ( file_exists( $file_path ) ) {
-							wp_delete_file( $file_path );
-						}
+					// File exists, delete it.
+					if ( file_exists( $file_path ) ) {
+						wp_delete_file( $file_path );
 					}
 				}
 			}

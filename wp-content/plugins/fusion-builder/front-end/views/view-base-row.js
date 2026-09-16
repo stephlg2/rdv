@@ -564,41 +564,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				// Trigger change and add history event.
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.column + ' Order Changed' );
-			},
-
-			scrollHighlight: function( scroll = true, highlight = true ) {
-				var $trigger       = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( '.fusion-one-page-text-link' ),
-					$el            = this.$el,
-					elementIdAdded = false,
-					elId           = $el.attr( 'id' );
-
-				scroll = 'undefined' === typeof scroll ? true : scroll;
-
-				if ( ! elId ) {
-					$el.attr( 'id', 'fusion-temporary-id-' + this.cid );
-					elId = 'fusion-temporary-id-' + this.cid;
-					elementIdAdded = true;
-				}
-
-				setTimeout( function() {
-					if ( scroll && $trigger.length && 'function' === typeof $trigger.fusion_scroll_to_anchor_target ) {
-						$trigger.attr( 'href', '#' + elId ).fusion_scroll_to_anchor_target( 15 );
-					}
-
-					if ( elementIdAdded ) {
-						setTimeout( function() {
-							$el.removeAttr( 'id' );
-						}, 10 );
-					}
-
-					if ( highlight ) {
-						$el.addClass( 'fusion-active-highlight' );
-						setTimeout( function() {
-							$el.removeClass( 'fusion-active-highlight' );
-						}, 6000 );
-					}
-				}, 10 );
+				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.column + ' order changed' );
 			}
 
 		} );

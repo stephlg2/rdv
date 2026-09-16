@@ -26,10 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'FusionReduxFramework_palette' ) ) {
 	class FusionReduxFramework_palette {
 
-		public $parent;
-		public $field;
-		public $value;
-
 		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -46,7 +42,7 @@ if ( ! class_exists( 'FusionReduxFramework_palette' ) ) {
 
 		/**
 		 * Field Render Function.
-		 * Takes the vars and outputs the HTML for the field in the settings.
+		 * Takes the vars and outputs the HTML for the field in the settingss
 		 *
 		 * @since       1.0.0
 		 * @access      public

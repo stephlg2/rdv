@@ -4,6 +4,227 @@ jQuery( document ).ready( function() {
 
 	jQuery( '.fusionredux-action_bar .spinner' ).addClass( 'avada-db-loader' );
 
+	jQuery( '.custom_color_save_button' ).on( 'click', function( e ) {
+
+		var overlay,
+		    $colorName,
+		    $type,
+		    $notificationBar,
+		    $saveAction,
+		    $themeOptionsName,
+		    $customColors,
+		    $data;
+
+		e.preventDefault();
+
+		overlay    = jQuery( '#fusionredux_ajax_overlay' );
+		$colorName = '';
+		$type      = '';
+
+		overlay.fadeIn();
+		jQuery( '.fusionredux-action_bar .spinner' ).addClass( 'is-active' );
+
+		jQuery( '.fusionredux-action_bar input' ).attr( 'disabled', 'disabled' );
+		$notificationBar = jQuery( '#fusionredux_notification_bar' );
+		$notificationBar.slideUp();
+		jQuery( '.fusionredux-save-warn' ).slideUp();
+		jQuery( '.fusionredux_ajax_save_error' ).slideUp(
+			'medium', function() {
+				jQuery( this ).remove();
+			}
+		);
+
+		// Check the action to use used.
+		$saveAction = jQuery( this ).attr( 'id' );
+
+		// If save action is not an import, then use TO values.
+		if ( 'custom_color_import_submit' != $saveAction ) {
+
+			// Set the name to save as.
+			if ( 'custom_color_save_update' == $saveAction ) {
+
+				// If updating, use selected name.
+				$colorName = jQuery( '#color-scheme-update-name' ).val();
+				$type = 'update';
+			} else {
+
+				//  If saving as new, use input name.
+				$colorName = jQuery( '#color-scheme-new-name' ).val();
+				$type = 'save';
+			}
+			$themeOptionsName = fusionFusionreduxVars.theme_options_name;
+			$customColors = {
+				primary_color:                            jQuery( 'input[name="' + $themeOptionsName + '[primary_color]"]' ).val(),
+				pricing_box_color:                        '',
+				image_gradient_top_color:                 jQuery( 'input[name="' + $themeOptionsName + '[image_gradient_top_color]"]' ).val(),
+				image_gradient_bottom_color:              jQuery( 'input[name="' + $themeOptionsName + '[image_gradient_bottom_color]"]' ).val(),
+				button_gradient_top_color:                '',
+				button_gradient_bottom_color:             '',
+				button_gradient_top_color_hover:          '',
+				button_gradient_bottom_color_hover:       '',
+				button_accent_color:                      '',
+				button_accent_hover_color:                '',
+				button_bevel_color:                       '',
+				checklist_circle_color:                   '',
+				counter_box_color:                        '',
+				countdown_background_color:               '',
+				dropcap_color:                            '',
+				flip_boxes_back_bg:                       '',
+				progressbar_filled_color:                 '',
+				counter_filled_color:                     '',
+				ec_sidebar_widget_bg_color:               jQuery( 'input[name="' + $themeOptionsName + '[ec_sidebar_widget_bg_color]"]' ).val(),
+				menu_hover_first_color:                   jQuery( 'input[name="' + $themeOptionsName + '[menu_hover_first_color]"]' ).val(),
+				header_top_bg_color:                      jQuery( 'input[name="' + $themeOptionsName + '[header_top_bg_color]"]' ).val(),
+				content_box_hover_animation_accent_color: '',
+				map_overlay_color:                        jQuery( 'input[name="' + $themeOptionsName + '[map_overlay_color]"]' ).val(),
+				flyout_menu_icon_hover_color:             jQuery( 'input[name="' + $themeOptionsName + '[flyout_menu_icon_hover_color]"]' ).val(),
+				menu_highlight_background:                jQuery( 'input[name="' + $themeOptionsName + '[menu_highlight_background]"]' ).val(),
+				menu_icon_hover_color:                    jQuery( 'input[name="' + $themeOptionsName + '[menu_icon_hover_color]"]' ).val(),
+				logo_background_color:                    jQuery( 'input[name="' + $themeOptionsName + '[logo_background_color]"]' ).val(),
+				slidingbar_link_color_hover:              jQuery( 'input[name="' + $themeOptionsName + '[slidingbar_link_color_hover]"]' ).val(),
+				footer_link_color_hover:                  jQuery( 'input[name="' + $themeOptionsName + '[footer_link_color_hover]"]' ).val(),
+				copyright_link_color_hover:               jQuery( 'input[name="' + $themeOptionsName + '[copyright_link_color_hover]"]' ).val(),
+				privacy_bar_link_hover_color:             jQuery( 'input[name="' + $themeOptionsName + '[privacy_bar_link_hover_color]"]' ).val(),
+				faq_accordian_active_color:               '',
+				accordian_active_color:                   ''
+			};
+
+			$data = $customColors;
+		} else {
+
+			// Importing.
+			$data = jQuery( '#avada-import-custom-color-textarea' ).val();
+			$type = 'import';
+		}
+
+		jQuery.ajax({
+			type:     'post',
+			dataType: 'json',
+			url:       ajaxurl,
+			data: {
+				action: 'custom_colors_ajax_save',
+				data: { name: $colorName, values: $data, type: $type }
+			}
+		} )
+		.fail( function( response ) {
+			jQuery( '.fusionredux-action_bar input' ).removeAttr( 'disabled' );
+			overlay.fadeOut( 'fast' );
+			jQuery( '.fusionredux-action_bar .spinner' ).removeClass( 'is-active' );
+		} )
+		.done( function( response ) {
+			var $interval;
+			jQuery( '#fusionredux_save' ).trigger( 'click' );
+
+			$interval = setInterval( afterSave, 500 );
+			function afterSave() {
+				if ( ! overlay.is( ':visible' ) ) {
+					clearInterval( $interval );
+					location.reload( true );
+				}
+			}
+		} );
+		return false;
+	});
+
+	// Custom colors, toggle selection.
+	jQuery( '.custom-color-toggle' ).on( 'click', function( e ) {
+
+		var $toggleTarget;
+
+		e.preventDefault();
+
+		// If its the delete toggle, allow scheme selection by adding class to body of page.
+		if ( 'avada-delete-custom-color' == jQuery( this ).data( 'toggle' ) ) {
+			jQuery( 'body' ).toggleClass( 'color-scheme-selection' );
+		} else {
+			jQuery( 'body' ).removeClass( 'color-scheme-selection' );
+		}
+
+		// Toggle target content visibility.
+		$toggleTarget = '#' + jQuery( this ).data( 'toggle' );
+		jQuery( '.color-toggle:not(' + $toggleTarget + ')' ).addClass( 'color-hidden' );
+		jQuery( $toggleTarget ).toggleClass( 'color-hidden' );
+	});
+
+	// On click, toggle item for deletion.
+	jQuery( document ).on( 'click', '.color-scheme-selection .fusion_theme_options-color_scheme li:nth-child(n+11)', function( e ) {
+		e.preventDefault();
+		jQuery( this ).toggleClass( 'delete-selected' );
+	});
+
+	// Cancel deletion selection.
+	jQuery( '#custom_color_delete_cancel' ).on( 'click', function( e ) {
+		e.preventDefault();
+		jQuery( '.delete-selected' ).removeClass( 'delete-selected' );
+	});
+
+	// Send the deletion request.
+	jQuery( '#custom_color_delete_confirm' ).on( 'click', function( e ) {
+
+		var overlay,
+		    $schemeNames = [],
+		    $noSelection,
+		    $notificationBar;
+
+		e.preventDefault();
+
+		overlay      = jQuery( '#fusionredux_ajax_overlay' );
+		$noSelection = jQuery( '#avada-delete-custom-color .hidden' ).text();
+
+		overlay.fadeIn();
+		jQuery( '.fusionredux-action_bar .spinner' ).addClass( 'is-active' );
+
+		jQuery( '.fusionredux-action_bar input' ).attr( 'disabled', 'disabled' );
+		$notificationBar = jQuery( '#fusionredux_notification_bar' );
+		$notificationBar.slideUp();
+		jQuery( '.redux-save-warn' ).slideUp();
+		jQuery( '.redux_ajax_save_error' ).slideUp(
+			'medium', function() {
+				jQuery( this ).remove();
+			}
+		);
+
+		// Make an array of select scheme names to delete.
+		jQuery( '.delete-selected' ).each( function( i ) {
+			$schemeNames[i] = jQuery( this ).find( 'input' ).val();
+		});
+
+		// If there are some selected, then delete theme.
+		if ( jQuery( '.delete-selected' ).length ) {
+			jQuery.ajax({
+				type:     'post',
+				dataType: 'json',
+				url:       ajaxurl,
+				data: {
+					action: 'custom_colors_ajax_delete',
+					data: { names: $schemeNames }
+				}
+			} )
+			.fail( function( response ) {
+				jQuery( '.fusionredux-action_bar input' ).removeAttr( 'disabled' );
+				overlay.fadeOut( 'fast' );
+				jQuery( '.fusionredux-action_bar .spinner' ).removeClass( 'is-active' );
+			} )
+			.done( function( response ) {
+				var $interval;
+				jQuery( '#fusionredux_save' ).trigger( 'click' );
+
+				$interval = setInterval( afterSave, 500 );
+				function afterSave() {
+					if ( ! overlay.is( ':visible' ) ) {
+						clearInterval( $interval );
+						location.reload( true );
+					}
+				}
+			} );
+		} else {
+			alert( $noSelection );
+			jQuery( '.fusionredux-action_bar input' ).removeAttr( 'disabled' );
+			overlay.fadeOut( 'fast' );
+			jQuery( '.fusionredux-action_bar .spinner' ).removeClass( 'is-active' );
+		}
+	});
+
 	jQuery( '#fusionredux-import' ).on( 'click', function( e ) {
 
 		var loader = '<span class="spinner" style="visibility: visible;float: none;display: inline-block;"></span>';
@@ -93,7 +314,6 @@ jQuery( document ).ready( function() {
 		setTimeout( function() {
 			$parentElement = jQuery( '#' + fusionFusionreduxVars.option_name + '-social_media_icons .fusionredux-repeater-accordion' );
 			$parentElement.set_social_media_repeater_custom_field_logic();
-			fusionredux.field_objects.iconpicker.init( $parentElement.eq(0).find('.fusionredux-repeater-accordion-repeater').last() );
 		}, 50 );
 	});
 
@@ -124,6 +344,22 @@ jQuery( document ).ready( function() {
 	jQuery( '.fusion_theme_options-bg_pattern' ).find( 'ul li img' ).on( 'click', function() {
 		var $background = 'url("' + jQuery( this ).attr( 'src' ) + '") repeat';
 		jQuery( '.fusion-pattern-preview' ).css( 'background', $background );
+	});
+
+	// Setup tooltips on color presets
+	jQuery( '.fusion_theme_options-scheme_type li, .fusion_theme_options-color_scheme li' ).qtip({
+		content: {
+			text: function( event, api ) {
+				return jQuery( this ).find( 'img' ).attr( 'alt' );
+			}
+		},
+		position: {
+			my: 'bottom center',
+			at: 'top center'
+		},
+		style: {
+			classes: 'fusion-tooltip qtip-light qtip-rounded qtip-shadow'
+		}
 	});
 
 	// Color picker fallback for pre WP 4.4 versions
@@ -464,21 +700,3 @@ jQuery( document ).ready( function() {
 		});
 	}
 });
-
-function awbValidateStripeApiKey( e ) { // jshint ignore:line
-	var $el = jQuery( e.target ).closest( '.fusion_options' );
-		mode = jQuery( e.target ).data( 'mode' ),
-		secretKey = 'live' === mode ? jQuery( '#stripe_button_live_secret_key' ).val() : jQuery( '#stripe_button_test_secret_key' ).val(),
-		data = {
-			action: 'awb_validate_stripe_api_key',
-			secretkey: secretKey
-		};
-
-	e.preventDefault();
-
-	$el.find( '.spinner.fusion-spinner' ).addClass( 'is-active' );
-	jQuery.post( ajaxurl, data, function( resp ) {
-		$el.find( '.spinner.fusion-spinner' ).removeClass( 'is-active' );
-		alert( resp.data ); // jshint ignore: line
-	} );
-}

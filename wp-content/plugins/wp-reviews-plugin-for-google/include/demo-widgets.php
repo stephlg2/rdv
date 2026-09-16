@@ -10,7 +10,7 @@ defined('ABSPATH') or die('No script kiddies please!');
 <strong><?php echo esc_html($pluginManager::$widget_templates['templates'][4]['name']); ?></strong>
  (<?php echo esc_html($pluginManager::$widget_styles['light-background']['name']); ?>)
 </div>
-<div class="preview"><?php echo wp_kses($pluginManagerInstance->renderWidgetFrontend('2d9bf9019f8d93ad1430e9135'), $pluginManager::$allowedAttributesForWidget); ?></div>
+<div class="preview"><?php echo wp_kses($pluginManagerInstance->renderWidgetFrontend('2d9bf9019f8d93ad1430e9135', true), $pluginManager::$allowedAttributesForWidget); ?></div>
 </div>
 </div>
 </div>
@@ -69,7 +69,8 @@ $className = 'ti-half-width';
 <strong><?php echo esc_html($template['name']); ?></strong>
  (<?php echo esc_html($pluginManager::$widget_styles[ $style ]['name']); ?>)
 </div>
-<div class="preview"><?php echo wp_kses($pluginManagerInstance->renderWidgetAdmin(true, true, ['style-id' => esc_attr($layout), 'set-id' => esc_attr($style)]), $pluginManager::$allowedAttributesForWidget); ?></div>
+<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderWidgetAdmin() escapes its own markup ?>
+<div class="preview"><?php echo $pluginManagerInstance->renderWidgetAdmin(true, true, ['style-id' => esc_attr($layout), 'set-id' => esc_attr($style)]); ?></div>
 </div>
 </div>
 </div>

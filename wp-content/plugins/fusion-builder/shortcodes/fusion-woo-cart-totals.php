@@ -17,6 +17,15 @@ if ( class_exists( 'WooCommerce' ) ) {
 		class FusionSC_WooCartTotals extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -33,6 +42,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
+				add_filter( 'fusion_attr_woo-cart-totals-shortcode', [ $this, 'attr' ] );
 				add_filter( 'fusion_attr_woo-cart-totals-shortcode-wrapper', [ $this, 'wrapper_attr' ] );
 				add_shortcode( 'fusion_woo_cart_totals', [ $this, 'render' ] );
 
@@ -52,8 +62,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 			public function ajax_query( $defaults ) {
 				check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
 				$this->args = $_POST['model']['params']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-
-				$html = $this->generate_element_content();
+				$html       = $this->generate_element_content();
 
 				echo wp_json_encode( $html );
 				wp_die();
@@ -69,8 +78,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
-
+				global $fusion_settings;
 				return [
 					// Element margin.
 					'margin_top'                       => '',
@@ -98,30 +106,21 @@ if ( class_exists( 'WooCommerce' ) ) {
 					'fusion_font_family_heading_font'  => '',
 					'fusion_font_variant_heading_font' => '',
 					'heading_font_size'                => '',
-					'heading_text_transform'           => '',
-					'heading_line_height'              => '',
-					'heading_letter_spacing'           => '',
 
 					// Text styles.
 					'text_color'                       => '',
 					'fusion_font_family_text_font'     => '',
 					'fusion_font_variant_text_font'    => '',
 					'text_font_size'                   => '',
-					'text_text_transform'              => '',
-					'text_line_height'                 => '',
-					'text_letter_spacing'              => '',
 
 					'border_color'                     => '',
 
-					'hide_on_mobile'                   => fusion_builder_default_visibility( 'string' ),
 					'class'                            => '',
 					'id'                               => '',
 					'animation_type'                   => '',
 					'animation_direction'              => 'down',
 					'animation_speed'                  => '0.1',
-					'animation_delay'                  => '',
 					'animation_offset'                 => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                  => '',
 
 					'buttons_visibility'               => '',
 					'buttons_layout'                   => '',
@@ -142,13 +141,24 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 * @return string          HTML output
 			 */
 			public function render( $args, $content = '' ) {
-				if ( ! is_object( WC()->cart ) || ( WC()->cart->is_empty() && ! fusion_is_preview_frame() ) ) {
+				if ( WC()->cart->is_empty() && ! fusion_is_preview_frame() ) {
 					return;
 				}
 				$this->defaults = self::get_element_defaults();
 				$this->args     = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_tb_woo_cart_totals' );
+				WC()->cart->calculate_totals();
+				ob_start();
+				?>
 
-				$html = '<div ' . FusionBuilder::attributes( 'woo-cart-totals-shortcode-wrapper' ) . '>' . $this->generate_element_content() . '</div>';
+
+				<div <?php echo FusionBuilder::attributes( 'woo-cart-totals-shortcode-wrapper' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+				<table cellspacing="0" <?php echo FusionBuilder::attributes( 'woo-cart-totals-shortcode' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+					<?php echo $this->generate_element_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</div>
+
+				<?php
+				$html  = ob_get_clean();
+				$html .= $this->get_styles();
 
 				$this->on_render();
 				$this->counter++;
@@ -162,73 +172,352 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 * @return string
 			 */
 			public function generate_element_content() {
-
-				if ( ! is_object( WC()->cart ) || WC()->cart->is_empty() ) {
-					return '';
-				}
-
-				// Check cart items are valid.
-				do_action( 'woocommerce_check_cart_items' );
-
-				// Calc totals.
-				WC()->cart->calculate_totals();
-
+				// phpcs:disable WordPress.Security
 				ob_start();
-				woocommerce_cart_totals();
+				?>
+				<?php echo $this->get_table_subtotal(); ?>
+
+				<?php echo $this->get_table_coupons(); ?>
+
+				<?php echo $this->get_table_shipping(); ?>
+
+				<?php echo $this->get_table_fee(); ?>
+
+				<?php echo $this->get_table_tax(); ?>
+
+				<?php echo $this->get_table_total(); ?>
+
+				</table>
+				<div class="wc-proceed-to-checkout">
+						<?php echo $this->get_button_update_cart(); ?>
+						<?php echo $this->get_button_checkout(); ?>
+				</div>
+
+				<?php
+				// phpcs:enable WordPress.Security
 				return ob_get_clean();
 			}
 
 			/**
-			 * Get the style variables.
+			 * Generates subtotal row
 			 *
-			 * @access protected
-			 * @since 3.9
 			 * @return string
 			 */
-			public function get_style_variables() {
-				$custom_vars      = [];
-				$css_vars_options = [
-					'heading_cell_backgroundcolor' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'heading_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'table_cell_backgroundcolor'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_color'                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'margin_top'                   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_top'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_bottom'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_left'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_right'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'heading_font_size'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'heading_letter_spacing'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_font_size'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_letter_spacing'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_margin_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_margin_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_margin_left'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_margin_right'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'fusion_font_family_heading_font',
-					'fusion_font_variant_heading_font',
-					'heading_line_height',
-					'heading_text_transform',
-					'fusion_font_family_text_font',
-					'fusion_font_variant_text_font',
-					'text_line_height',
-					'text_text_transform',
-					'floated_buttons_alignment',
-					'stacked_buttons_alignment',
-				];
+			public function get_table_subtotal() {
+				ob_start();
+				?>
+					<tr class="cart-subtotal">
+						<th><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
+						<td data-title="<?php esc_attr_e( 'Subtotal', 'woocommerce' ); ?>"><?php wc_cart_totals_subtotal_html(); ?></td>
+					</tr>
+				<?php
+				return ob_get_clean();
+			}
 
-				if ( ! $this->is_default( 'text_color' ) ) {
-					$custom_vars['text_color']   = $this->args['text_color'];
-					$custom_vars['button_color'] = $this->args['text_color'];
-					$custom_vars['amount_color'] = $this->args['text_color'];
+
+			/**
+			 * Generates coupons row
+			 *
+			 * @return string
+			 */
+			public function get_table_coupons() {
+				ob_start();
+				foreach ( WC()->cart->get_coupons() as $code => $coupon ) :
+					?>
+					<tr class="cart-discount coupon-<?php echo esc_attr( sanitize_title( $code ) ); ?>">
+						<th><?php wc_cart_totals_coupon_label( $coupon ); ?></th>
+						<td data-title="<?php echo esc_attr( wc_cart_totals_coupon_label( $coupon, false ) ); ?>"><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
+					</tr>
+					<?php
+				endforeach;
+				return ob_get_clean();
+			}
+
+
+			/**
+			 * Generates shipping row
+			 *
+			 * @return string
+			 */
+			public function get_table_shipping() {
+
+				ob_start();
+
+				if ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() ) :
+					if ( empty( WC()->shipping()->get_packages() ) ) {
+						WC()->cart->calculate_totals();
+					}
+					do_action( 'woocommerce_cart_totals_before_shipping' );
+					echo wc_cart_totals_shipping_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					do_action( 'woocommerce_cart_totals_after_shipping' );
+
+				elseif ( WC()->cart->needs_shipping() && 'yes' === get_option( 'woocommerce_enable_shipping_calc' ) ) :
+					?>
+					<tr class="shipping">
+						<th><?php esc_html_e( 'Shipping', 'woocommerce' ); ?></th>
+						<td data-title="<?php esc_attr_e( 'Shipping', 'woocommerce' ); ?>"><?php woocommerce_shipping_calculator(); ?></td>
+					</tr>
+					<?php
+				endif;
+				return ob_get_clean();
+			}
+
+
+			/**
+			 * Generates fee row
+			 *
+			 * @return string
+			 */
+			public function get_table_fee() {
+				ob_start();
+				foreach ( WC()->cart->get_fees() as $fee ) :
+					?>
+					<tr class="fee">
+						<th><?php echo esc_html( $fee->name ); ?></th>
+						<td data-title="<?php echo esc_attr( $fee->name ); ?>"><?php wc_cart_totals_fee_html( $fee ); ?></td>
+					</tr>
+					<?php
+				endforeach;
+				return ob_get_clean();
+			}
+
+
+			/**
+			 * Generates tax row
+			 *
+			 * @return string
+			 */
+			public function get_table_tax() {
+				ob_start();
+				if ( wc_tax_enabled() && ! WC()->cart->display_prices_including_tax() ) {
+					$taxable_address = WC()->customer->get_taxable_address();
+					$estimated_text  = '';
+
+					if ( WC()->customer->is_customer_outside_base() && ! WC()->customer->has_calculated_shipping() ) {
+						/* translators: %s location. */
+						$estimated_text = sprintf( ' <small>' . esc_html__( '(estimated for %s)', 'woocommerce' ) . '</small>', WC()->countries->estimated_for_prefix( $taxable_address[0] ) . WC()->countries->countries[ $taxable_address[0] ] );
+					}
+
+					if ( 'itemized' === get_option( 'woocommerce_tax_total_display' ) ) {
+						foreach ( WC()->cart->get_tax_totals() as $code => $tax ) { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+							?>
+							<tr class="tax-rate tax-rate-<?php echo esc_attr( sanitize_title( $code ) ); ?>">
+								<th><?php echo esc_html( $tax->label ) . $estimated_text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
+								<td data-title="<?php echo esc_attr( $tax->label ); ?>"><?php echo wp_kses_post( $tax->formatted_amount ); ?></td>
+							</tr>
+							<?php
+						}
+					} else {
+						?>
+						<tr class="tax-total">
+							<th><?php echo esc_html( WC()->countries->tax_or_vat() ) . $estimated_text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
+							<td data-title="<?php echo esc_attr( WC()->countries->tax_or_vat() ); ?>"><?php wc_cart_totals_taxes_total_html(); ?></td>
+						</tr>
+						<?php
+					}
+				}
+				return ob_get_clean();
+			}
+
+
+			/**
+			 * Generates the 'Total' row
+			 *
+			 * @sisnce 3.3
+			 * @return string
+			 */
+			public function get_table_total() {
+				ob_start();
+				do_action( 'woocommerce_cart_totals_before_order_total' );
+				?>
+					<tr class="order-total">
+						<th><?php esc_html_e( 'Total', 'woocommerce' ); ?></th>
+						<td data-title="<?php esc_attr__( 'Total', 'woocommerce' ); ?>"><?php wc_cart_totals_order_total_html(); ?></td>
+					</tr>
+				<?php
+				do_action( 'woocommerce_cart_totals_after_order_total' );
+				$html = ob_get_clean();
+				return $html;
+			}
+
+
+			/**
+			 * Generates the 'Update Card' button
+			 *
+			 * @sisnce 3.3
+			 * @return string
+			 */
+			public function get_button_update_cart() {
+				return 'show' === $this->args['buttons_visibility'] ?
+						'<a href="" class="fusion-button button-default fusion-button-default-size button fusion-update-cart">
+							' . esc_attr__( 'Update cart', 'woocommerce' ) . '
+						</a>' : '';
+			}
+
+
+			/**
+			 * Generates the 'Procced to Checkout' button
+			 *
+			 * @since 3.3
+			 * @return string
+			 */
+			public function get_button_checkout() {
+				return 'show' === $this->args['buttons_visibility'] ?
+						'<a href="' . esc_url( wc_get_checkout_url() ) . '" class="fusion-button button-default fusion-button-default-size button checkout-button button alt wc-forward">
+							' . esc_html__( 'Proceed to checkout', 'woocommerce' ) . '
+						</a>' : '';
+			}
+
+
+			/**
+			 * Generates the element styles
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @return string
+			 */
+			public function get_styles() {
+				$this->base_selector = '.fusion-woo-cart-totals-' . $this->counter;
+				$this->dynamic_css   = [];
+
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-top', $this->args['margin_top'] );
 				}
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-bottom', $this->args['margin_bottom'] );
+				}
 
-				return $styles;
+				if ( ! $this->is_default( 'margin_left' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-left', $this->args['margin_left'] );
+				}
+
+				if ( ! $this->is_default( 'margin_right' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-right', $this->args['margin_right'] );
+				}
+
+				$selector = $this->base_selector . ' tbody tr td, ' . $this->base_selector . ' tbody tr th';
+				if ( ! $this->is_default( 'cell_padding_top' ) ) {
+					$this->add_css_property( $selector, 'padding-top', $this->args['cell_padding_top'], true );
+				}
+
+				if ( ! $this->is_default( 'cell_padding_bottom' ) ) {
+					$this->add_css_property( $selector, 'padding-bottom', $this->args['cell_padding_bottom'], true );
+				}
+
+				if ( ! $this->is_default( 'cell_padding_left' ) ) {
+					$this->add_css_property( $selector, 'padding-left', $this->args['cell_padding_left'], true );
+				}
+
+				if ( ! $this->is_default( 'cell_padding_right' ) ) {
+					$this->add_css_property( $selector, 'padding-right', $this->args['cell_padding_right'], true );
+				}
+
+				$selector = $this->base_selector . ' tbody tr th';
+				if ( ! $this->is_default( 'heading_cell_backgroundcolor' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['heading_cell_backgroundcolor'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_family_heading_font' ) ) {
+					$this->add_css_property( $selector, 'font-family', $this->args['fusion_font_family_heading_font'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_variant_heading_font' ) ) {
+					$this->add_css_property( $selector, 'font-weight', $this->args['fusion_font_variant_heading_font'] );
+				}
+
+				if ( ! $this->is_default( 'heading_font_size' ) ) {
+					$this->add_css_property( $selector, 'font-size', $this->args['heading_font_size'] );
+				}
+
+				$selector = $this->base_selector . ' tbody tr td';
+				if ( ! $this->is_default( 'table_cell_backgroundcolor' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['table_cell_backgroundcolor'] );
+				}
+
+				$text_selector = $selector . ', ' . $this->base_selector . ' a, ' . $this->base_selector . ' .amount';
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $text_selector, 'color', $this->args['text_color'], true );
+				}
+
+				if ( ! $this->is_default( 'heading_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' tbody tr th', 'color', $this->args['heading_color'], true );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_family_text_font' ) ) {
+					$this->add_css_property( $selector, 'font-family', $this->args['fusion_font_family_text_font'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_variant_text_font' ) ) {
+					$this->add_css_property( $selector, 'font-weight', $this->args['fusion_font_variant_text_font'] );
+				}
+
+				if ( ! $this->is_default( 'text_font_size' ) ) {
+					$this->add_css_property( $selector, 'font-size', $this->args['text_font_size'] );
+				}
+
+				$selector = $this->base_selector . ' tr, ' . $this->base_selector . ' tr td, ' . $this->base_selector . ' tr th';
+				if ( ! $this->is_default( 'border_color' ) ) {
+					$this->add_css_property( $selector, 'border-color', $this->args['border_color'], true );
+				}
+
+				$selector = '.fusion-woo-cart-totals-wrapper-' . $this->counter . ' div.wc-proceed-to-checkout';
+				if ( 'floated' === $this->args['buttons_layout'] ) {
+					$this->add_css_property( $selector, 'flex-direction', 'row' );
+
+					if ( 'yes' === $this->args['button_span'] ) {
+						$this->add_css_property( $selector, 'justify-content', 'stretch', true );
+						$this->add_css_property( $selector . ' a', 'flex', '1' );
+					} else {
+						$this->add_css_property( $selector, 'justify-content', $this->args['floated_buttons_alignment'], true );
+					}
+				} else {
+					$this->add_css_property( $selector, 'flex-direction', 'column', true );
+					$this->add_css_property( $selector, 'align-items', $this->args['stacked_buttons_alignment'], true );
+					if ( 'yes' === $this->args['button_span'] ) {
+						$this->add_css_property( $selector, 'align-items', 'stretch', true );
+					} else {
+						$this->add_css_property( $selector, 'align-items', $this->args['stacked_buttons_alignment'], true );
+					}
+				}
+
+				if ( ! $this->is_default( 'button_margin_top' ) ) {
+					$this->add_css_property( $selector . ' a', 'margin-top', $this->args['button_margin_top'] );
+				}
+
+				if ( ! $this->is_default( 'button_margin_bottom' ) ) {
+					$this->add_css_property( $selector . ' a', 'margin-bottom', $this->args['button_margin_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'button_margin_left' ) ) {
+					$this->add_css_property( $selector . ' a', 'margin-left', $this->args['button_margin_left'] );
+				}
+
+				if ( ! $this->is_default( 'button_margin_right' ) ) {
+					$this->add_css_property( $selector . ' a', 'margin-right', $this->args['button_margin_right'] );
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
+			}
+
+
+			/**
+			 * Builds the attributes array.
+			 *
+			 * @access public
+			 * @since 3.3
+			 * @return array
+			 */
+			public function attr() {
+
+				$attr = [
+					'class' => 'shop_table shop_table_responsive fusion-woo-cart-totals fusion-woo-cart-totals-' . $this->counter,
+					'style' => '',
+				];
+
+				return $attr;
 			}
 
 			/**
@@ -240,32 +529,17 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 */
 			public function wrapper_attr() {
 
-				$attr = fusion_builder_visibility_atts(
-					$this->args['hide_on_mobile'],
-					[
-						'class' => 'fusion-woo-cart-totals-wrapper fusion-woo-cart-totals-wrapper-' . $this->counter,
-						'style' => '',
-					]
-				);
-
+				$attr = [
+					'class' => 'cart_totals fusion-woo-cart-totals-wrapper fusion-woo-cart-totals-wrapper-' . $this->counter,
+					'style' => '',
+				];
 				if ( WC()->customer->has_calculated_shipping() ) {
 					$attr['class'] .= ' calculated_shipping';
-				}
-
-				if ( 'show' === $this->args['buttons_visibility'] ) {
-					$attr['class'] .= ' show-buttons';
-					$attr['class'] .= ' buttons-' . $this->args['buttons_layout'];
-
-					if ( 'yes' === $this->args['button_span'] ) {
-						$attr['class'] .= ' buttons-span-yes';
-					}
 				}
 
 				if ( $this->args['animation_type'] ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -279,28 +553,6 @@ if ( class_exists( 'WooCommerce' ) ) {
 
 			}
 
-			/**
-			 * Sets the necessary scripts.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return void
-			 */
-			public function on_first_render() {
-				// Skip if empty.
-				if ( null === $this->args || empty( $this->args ) ) {
-					return;
-				}
-
-				Fusion_Dynamic_JS::enqueue_script(
-					'awb-cart-totals',
-					FusionBuilder::$js_folder_url . '/general/awb-cart-totals.js',
-					FusionBuilder::$js_folder_path . '/general/awb-cart-totals.js',
-					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
-					true
-				);
-			}
 
 			/**
 			 * Load base CSS.
@@ -333,22 +585,6 @@ function fusion_element_woo_cart_totals() {
 					'icon'          => 'fusiona-cart-totals',
 					'help_url'      => '',
 					'inline_editor' => true,
-					'subparam_map'  => [
-						'fusion_font_family_heading_font'  => 'heading_fonts',
-						'fusion_font_variant_heading_font' => 'heading_fonts',
-						'heading_font_size'                => 'heading_fonts',
-						'heading_text_transform'           => 'heading_fonts',
-						'heading_line_height'              => 'heading_fonts',
-						'heading_letter_spacing'           => 'heading_fonts',
-						'heading_color'                    => 'heading_fonts',
-						'fusion_font_variant_text_font'    => 'text_fonts',
-						'fusion_font_family_text_font'     => 'text_fonts',
-						'text_font_size'                   => 'text_fonts',
-						'text_text_transform'              => 'text_fonts',
-						'text_line_height'                 => 'text_fonts',
-						'text_letter_spacing'              => 'text_fonts',
-						'text_color'                       => 'text_fonts',
-					],
 					'params'        => [
 						[
 							'type'        => 'radio_button_set',
@@ -359,6 +595,11 @@ function fusion_element_woo_cart_totals() {
 							'value'       => [
 								'show' => esc_html__( 'Show', 'fusion-builder' ),
 								'hide' => esc_html__( 'Hide', 'fusion-builder' ),
+							],
+							'callback'    => [
+								'function' => 'fusion_ajax',
+								'action'   => 'fusion_get_woo_cart_totals',
+								'ajax'     => true,
 							],
 						],
 						[
@@ -555,70 +796,78 @@ function fusion_element_woo_cart_totals() {
 							],
 						],
 						[
-							'type'             => 'typography',
-							'heading'          => esc_attr__( 'Heading Cell Typography', 'fusion-builder' ),
-							'description'      => esc_html__( 'Controls the typography of the heading. Leave empty for the global font family.', 'fusion-builder' ),
-							'param_name'       => 'heading_fonts',
-							'choices'          => [
-								'font-family'    => 'heading_font',
-								'font-size'      => 'heading_font_size',
-								'text-transform' => 'heading_text_transform',
-								'line-height'    => 'heading_line_height',
-								'letter-spacing' => 'heading_letter_spacing',
-								'color'          => 'heading_color',
+							'type'        => 'colorpickeralpha',
+							'heading'     => esc_attr__( 'Heading Cell Text Color', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the color of the heading text, ex: #000.' ),
+							'param_name'  => 'heading_color',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
 							],
-							'default'          => [
-								'font-family'    => '',
-								'variant'        => '400',
-								'font-size'      => '',
-								'text-transform' => '',
-								'line-height'    => '',
-								'letter-spacing' => '',
-								'color'          => '',
-							],
+						],
+						[
+							'type'             => 'font_family',
 							'remove_from_atts' => true,
-							'global'           => true,
+							'heading'          => esc_attr__( 'Heading Cell Font Family', 'fusion-builder' ),
+							'description'      => esc_html__( 'Controls the font family of the heading.', 'fusion-builder' ),
+							'param_name'       => 'heading_font',
+							'default'          => [
+								'font-family'  => '',
+								'font-variant' => '',
+							],
 							'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 							'callback'         => [
 								'function' => 'fusion_style_block',
 							],
 						],
 						[
-							'type'             => 'typography',
-							'heading'          => esc_attr__( 'Content Typography', 'fusion-builder' ),
-							'description'      => esc_html__( 'Controls the typography of the content text. Leave empty for the global font family.', 'fusion-builder' ),
-							'param_name'       => 'text_fonts',
-							'choices'          => [
-								'font-family'    => 'text_font',
-								'font-size'      => 'text_font_size',
-								'text-transform' => 'text_text_transform',
-								'line-height'    => 'text_line_height',
-								'letter-spacing' => 'text_letter_spacing',
-								'color'          => 'text_color',
+							'type'        => 'textfield',
+							'heading'     => esc_attr__( 'Heading Cell Font Size', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+							'param_name'  => 'heading_font_size',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
 							],
-							'default'          => [
-								'font-family'    => '',
-								'variant'        => '400',
-								'font-size'      => '',
-								'text-transform' => '',
-								'line-height'    => '',
-								'letter-spacing' => '',
-								'color'          => '',
+						],
+						[
+							'type'        => 'colorpickeralpha',
+							'heading'     => esc_attr__( 'Text Color', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the color of the text, ex: #000.' ),
+							'param_name'  => 'text_color',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
 							],
+						],
+						[
+							'type'             => 'font_family',
 							'remove_from_atts' => true,
-							'global'           => true,
+							'heading'          => esc_attr__( 'Text Font Family', 'fusion-builder' ),
+							'description'      => esc_html__( 'Controls the font family of the text.', 'fusion-builder' ),
+							'param_name'       => 'text_font',
+							'default'          => [
+								'font-family'  => '',
+								'font-variant' => '',
+							],
 							'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 							'callback'         => [
 								'function' => 'fusion_style_block',
 							],
 						],
 						[
-							'type'        => 'checkbox_button_set',
-							'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
-							'param_name'  => 'hide_on_mobile',
-							'value'       => fusion_builder_visibility_options( 'full' ),
-							'default'     => fusion_builder_default_visibility( 'array' ),
-							'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
+							'type'        => 'textfield',
+							'heading'     => esc_attr__( 'Text Font Size', 'fusion-builder' ),
+							'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+							'param_name'  => 'text_font_size',
+							'value'       => '',
+							'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+							'callback'    => [
+								'function' => 'fusion_style_block',
+							],
 						],
 						[
 							'type'        => 'textfield',
@@ -646,4 +895,4 @@ function fusion_element_woo_cart_totals() {
 		);
 	}
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_woo_cart_totals' );
+add_action( 'wp_loaded', 'fusion_element_woo_cart_totals' );

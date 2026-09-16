@@ -22,7 +22,7 @@ function load_builder_class() {
 
 	$app = Fusion_App::get_instance();
 
-	if ( apply_filters( 'fusion_load_live_editor', is_user_logged_in() ) && apply_filters( 'awb_dashboard_menu_cpt', is_user_logged_in(), null ) && ( $app->get_builder_status() || $app->get_preview_status() || $app->get_ajax_status() ) ) {
+	if ( apply_filters( 'fusion_load_live_editor', is_user_logged_in() ) && ( $app->get_builder_status() || $app->get_preview_status() || $app->get_ajax_status() ) ) {
 
 		// Load internal modules ( panel, fusion builder ).
 		do_action( 'fusion_load_internal_module' );

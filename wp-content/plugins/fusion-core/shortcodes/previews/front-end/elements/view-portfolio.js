@@ -78,10 +78,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			validateValues: function( values, extras ) {
 				values.column_spacing = _.fusionValidateAttrValue( values.column_spacing, '' );
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
+
 				if ( '0' === values.column_spacing ) {
 					values.column_spacing = '0.0';
 				}
@@ -159,8 +156,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			buildPortfolioAttr: function( values, extras, queryData ) {
 				var portfolioShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-recent-works fusion-portfolio fusion-portfolio-cid' + this.model.get( 'cid' ) + ' fusion-portfolio-' + values.layout + ' fusion-portfolio-paging-' + values.pagination_type,
-					style: ''
+					class: 'fusion-recent-works fusion-portfolio fusion-portfolio-cid' + this.model.get( 'cid' ) + ' fusion-portfolio-' + values.layout + ' fusion-portfolio-paging-' + values.pagination_type
 				} );
 
 				portfolioShortcode = _.fusionAnimations( values, portfolioShortcode );
@@ -215,22 +211,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					portfolioShortcode.id = values.id;
 				}
 
-				if ( '' !== values.margin_top ) {
-					portfolioShortcode.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_right ) {
-					portfolioShortcode.style += 'margin-right:' + values.margin_right + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					portfolioShortcode.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
-
-				if ( '' !== values.margin_left ) {
-					portfolioShortcode.style += 'margin-left:' + values.margin_left + ';';
-				}
-
 				return portfolioShortcode;
 			},
 
@@ -254,7 +234,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			buildCarouselAttr: function( values ) {
 				var portfolioShortcodeCarousel = {
-					class: 'awb-carousel awb-swiper awb-swiper-carousel'
+					class: 'fusion-carousel'
 				};
 
 				if ( 'title_below_image' === values.carousel_layout ) {
@@ -525,7 +505,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 								image = _.fusionFeaturedImage( imageData );
 							}
 
-							portfolioPosts += '<div class="swiper-slide"><div class="fusion-carousel-item-wrapper">' + portfolio.rich_snippets[ 'false' ] + image + titleTerms + '</div></div>';
+							portfolioPosts += '<li class="fusion-carousel-item"><div class="fusion-carousel-item-wrapper">' + portfolio.rich_snippets[ 'false' ] + image + titleTerms + '</div></li>';
 
 						} else {
 
@@ -599,11 +579,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 									style: ''
 								};
 								if ( 'boxed' === values.text_layout && '' !== singlePostContent && 'masonry' !== values.layout ) {
-									color = jQuery.AWB_Color( values.grid_separator_color );
-									colorCSS = color.toVarOrRgbaString();
+									color = jQuery.Color( values.grid_separator_color );
+									colorCSS = color.toRgbaString();
 									if ( 0 === color.alpha() ) {
-										colorCSS = color.alpha( 1 );
-										colorCSS = color.toVarOrRgbaString();
+										colorCSS = color.toHexString();
 									}
 
 									if ( 0 === color.alpha() || 'transparent' === values.grid_separator_color ) {
@@ -683,7 +662,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					colorCSS;
 
 				if ( 'grid' === values.layout || 'masonry' === values.layout ) {
-					elementColor = jQuery.AWB_Color( values.grid_element_color );
+					elementColor = jQuery.Color( values.grid_element_color );
 					if ( 'boxed' !== values.text_layout || 0 === elementColor.alpha() || 'transparent' === values.grid_element_color ) {
 						fusionPortfolioContentWrapper.style += 'border:none;';
 					} else {
@@ -692,8 +671,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( 'grid' === values.layout && 'boxed' === values.text_layout ) {
-					color    = jQuery.AWB_Color( values.grid_box_color );
-					colorCSS = color.toVarOrRgbaString();
+					color    = jQuery.Color( values.grid_box_color );
+					colorCSS = color.toRgbaString();
 					fusionPortfolioContentWrapper.style += 'background-color:' + colorCSS + ';';
 				}
 				return fusionPortfolioContentWrapper;
@@ -720,11 +699,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						fusionPortfolioContent.style += 'right:0px;';
 					}
 
-					color    = jQuery.AWB_Color( values.grid_box_color );
-					colorCSS = color.toVarOrRgbaString();
+					color    = jQuery.Color( values.grid_box_color );
+					colorCSS = color.toRgbaString();
 					if ( 0 === color.alpha() ) {
-						colorCSS = color.alpha( 1 );
-						colorCSS = color.toVarOrRgbaString();
+						colorCSS = color.toHexString();
 					}
 					fusionPortfolioContent.style += 'background-color:' + colorCSS + ';';
 					fusionPortfolioContent.style += 'z-index:1;';
@@ -732,8 +710,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					fusionPortfolioContent.style += 'margin:0;';
 
 				} else if ( 'grid' === values.layout && 'boxed' === values.text_layout ) {
-					color    = jQuery.AWB_Color( values.grid_box_color );
-					colorCSS = color.toVarOrRgbaString();
+					color    = jQuery.Color( values.grid_box_color );
+					colorCSS = color.toRgbaString();
 					fusionPortfolioContent.style += 'background-color:' + colorCSS + ';';
 				}
 				return fusionPortfolioContent;

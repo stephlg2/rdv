@@ -75,8 +75,6 @@ class Fusion_Redux_Addons {
 			'ace_editor',
 			'sortable',
 			'color_palette',
-			'iconpicker',
-			'typography_sets',
 		];
 		// An array of all our extensions.
 		$this->extensions = [
@@ -178,26 +176,5 @@ class Fusion_Redux_Addons {
 	 */
 	public function register_color_palette() {
 		return $this->path . '/custom-fields/color_palette/field_color_palette.php';
-	}
-
-	/**
-	 * Register the custom color pallete field
-	 *
-	 * @access public
-	 * @since 2.0
-	 */
-	public function register_typography_sets() {
-		return $this->path . '/custom-fields/typography_sets/field_typography_sets.php';
-	}
-
-
-	/**
-	 * Register the custom color pallete field
-	 *
-	 * @access public
-	 * @since 3.4
-	 */
-	public function register_iconpicker() {
-		return $this->path . '/custom-fields/iconpicker/field_iconpicker.php';
 	}
 }

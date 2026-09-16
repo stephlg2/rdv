@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -69,7 +78,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'show_count'          => 'yes',
 					'placeholder'         => 'yes',
@@ -78,7 +87,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
 					'icon_color'          => $fusion_settings->get( 'primary_color' ),
 					'count_font_size'     => '',
 					'count_color'         => $fusion_settings->get( 'body_typography', 'color' ),
-					'count_hover_color'   => $fusion_settings->get( 'link_hover_color' ),
+					'count_hover_color'   => $fusion_settings->get( 'primary_color' ),
 					'margin_bottom'       => '',
 					'margin_left'         => '',
 					'margin_right'        => '',
@@ -89,9 +98,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
 					'animation_type'      => '',
 					'animation_direction' => 'down',
 					'animation_speed'     => '0.1',
-					'animation_delay'     => '',
 					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'     => '',
 				];
 			}
 
@@ -155,7 +162,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
 					return;
 				}
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_rating-shortcode' ) . '>' . $this->get_woo_rating_content() . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_rating-shortcode' ) . '>' . $this->get_woo_rating_content() . '</div>';
 
 				$this->restore_product();
 
@@ -191,29 +199,56 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.2
 			 * @return string
 			 */
-			protected function get_style_variables() {
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-rating-tb.fusion-woo-rating-tb-' . $this->counter;
+				$this->dynamic_css   = [];
 
-				$css_vars_options = [
-					'margin_bottom'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_top'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'icon_size'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'count_font_size'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'icon_color'        => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'count_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'count_hover_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
+				$selectors = [
+					$this->base_selector . ' .woocommerce-product-rating .star-rating',
 				];
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options );
+				if ( ! $this->is_default( 'icon_size' ) ) {
+					$this->add_css_property( $selectors, 'font-size', $this->args['icon_size'] );
+				}
 
-				return $styles;
+				$selectors = [
+					$this->base_selector . ' .woocommerce-product-rating .star-rating:before',
+					$this->base_selector . ' .woocommerce-product-rating .star-rating span:before',
+				];
+
+				if ( ! $this->is_default( 'icon_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['icon_color'] );
+				}
+
+				$selectors = [
+					$this->base_selector . ' .woocommerce-product-rating a.woocommerce-review-link',
+				];
+
+				if ( ! $this->is_default( 'count_font_size' ) ) {
+					$this->add_css_property( $selectors, 'font-size', $this->args['count_font_size'] );
+				}
+
+				if ( ! $this->is_default( 'count_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['count_color'] );
+				}
+
+				$selectors = [
+					$this->base_selector . ' .woocommerce-product-rating a.woocommerce-review-link:hover',
+				];
+
+				if ( ! $this->is_default( 'count_hover_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['count_hover_color'] );
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -235,7 +270,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( 'yes' !== $this->args['show_count'] ) {
 					$attr['class'] .= ' hide-count';
@@ -279,7 +314,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_rating' ) ) {
  */
 function fusion_component_woo_rating() {
 
-	$fusion_settings = awb_get_fusion_settings();
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -379,16 +414,20 @@ function fusion_component_woo_rating() {
 								'operator' => '!=',
 							],
 						],
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'default'    => $fusion_settings->get( 'link_hover_color' ),
-								'param_name' => 'count_hover_color',
-								'preview'    => [
-									'selector' => 'a',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Reviews Count Hover Text Color', 'fusion-builder' ),
+						'param_name'  => 'count_hover_color',
+						'value'       => '',
+						'description' => esc_html__( 'Choose color for reviews count hover text.', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'primary_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'show_count',
+								'value'    => 'no',
+								'operator' => '!=',
 							],
 						],
 					],

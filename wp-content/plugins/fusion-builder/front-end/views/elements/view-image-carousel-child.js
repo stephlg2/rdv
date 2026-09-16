@@ -1,4 +1,3 @@
-/* global FusionPageBuilderViewManager */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -37,17 +36,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			beforePatch: function() {
-				var parentView = window.FusionPageBuilderViewManager.getView( this.model.get( 'parent' ) ),
-					queryData = this.model.get( 'query_data' );
+				var parentView = window.FusionPageBuilderViewManager.getView( this.model.get( 'parent' ) );
 
 				if ( true === parentView.model.attributes.showPlaceholder && 'undefined' !== this.model.attributes.params.image && '' !== this.model.attributes.params.image ) {
 					this.$el.closest( '.fusion-image-carousel' ).removeClass( 'fusion-show-placeholder' );
 					parentView.model.attributes.showPlaceholder = false;
-				}
-
-				// Update the parent image map with latest query data images.
-				if ( 'undefined' !== typeof queryData ) {
-					parentView.updateImageMap( queryData );
 				}
 
 			},
@@ -121,8 +114,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.attrImageWrapper = this.buildImageWrapperAttr( atts );
 				attributes.attrItemWrapper  = this.buildItemWrapperAttr( atts );
 				attributes.imageElement     = this.buildImageElement( atts );
-				attributes.parentValues     = atts.parentValues;
-				attributes.captionHtml      = this.generateCaption( atts.parentValues, atts.values, atts.query_data );
 
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
@@ -131,8 +122,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.mouseScroll = atts.values.mouse_scroll;
 				attributes.link        = atts.values.link;
 				attributes.lightbox    = atts.parentValues.lightbox;
-
-				attributes.usingDynamicParent = this.isParentHasDynamicContent( atts.parentValues );
 
 				return attributes;
 			},
@@ -161,7 +150,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildAttr: function() {
 				var attr = {
-					class: 'swiper-slide'
+					class: 'fusion-carousel-item'
 				};
 
 				this.model.set( 'selectors', attr );
@@ -171,18 +160,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Builds attributes.
 			 *
 			 * @since 2.0
-			 * @param {Object} values - The values object.
 			 * @return {Object}
 			 */
-			buildItemWrapperAttr: function( atts ) {
+			buildItemWrapperAttr: function() {
 				var attr = {
-						class: 'fusion-carousel-item-wrapper'
-					},
-					parentValues = atts.parentValues;
-
-				if ( -1 !== jQuery.inArray( parentValues.caption_style, [ 'off', 'above', 'below' ] ) ) {
-					attr[ 'class' ] +=  ' awb-imageframe-style awb-imageframe-style-' + parentValues.caption_style;
-				}
+					class: 'fusion-carousel-item-wrapper'
+				};
 
 				return attr;
 			},
@@ -217,10 +200,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					html = '<img src="' + values.image + '" alt="' + values.alt + '"/>';
 				}
 
-				if ( -1 === jQuery.inArray( parentValues.caption_style, [ 'off', 'above', 'below' ] ) ) {
-					html += this.generateCaption( parentValues, values, queryData );
-				}
-
 				return html;
 			},
 
@@ -233,7 +212,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			wrapperSelector: function() {
 				var wrapperSelector = {
-					class: 'swiper-slide'
+					class: 'fusion-carousel-item'
 				};
 
 				this.model.set( 'selectors', wrapperSelector );
@@ -290,71 +269,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					},
 					parentValues = atts.parentValues;
 
-				if ( parentValues.hover_type && -1 !== jQuery.inArray( parentValues.caption_style, [ 'off', 'above', 'below' ] ) ) {
+				if ( parentValues.hover_type ) {
 					attr[ 'class' ] += ' hover-type-' + parentValues.hover_type;
 				}
 
-				// Caption style.
-				if ( -1 === jQuery.inArray( parentValues.caption_style, [ 'off', 'above', 'below' ] ) ) {
-					attr[ 'class' ] += ' awb-imageframe-style awb-imageframe-style-' + parentValues.caption_style;
-				}
-
 				return attr;
-			},
-
-			/**
-			 * Generate caption markup.
-			 *
-			 * @since 3.5
-			 * @param {string} values - The values object.
-			 * @return {string}
-			 */
-			generateCaption: function( values, childValues, queryData ) { // eslint-disable-line no-unused-vars
-				var content = '<div class="awb-imageframe-caption-container"><div class="awb-imageframe-caption">',
-					parentView,
-					image,
-					title = '',
-					caption = '',
-					title_tag = '';
-
-				if ( 'off' === values.caption_style ) {
-					return '';
-				}
-
-				parentView = FusionPageBuilderViewManager.getView( this.model.get( 'parent' ) ),
-				image      = parentView.imageMap[ childValues.image ];
-
-				if ( 'undefined' === typeof image || 'undefined' === typeof image.image_data ) {
-					return '';
-				}
-
-				// from image data.
-				if ( image.image_data.title ) {
-					title = image.image_data.title;
-				}
-				if ( image.image_data.caption ) {
-					caption = image.image_data.caption;
-				}
-
-				// from element data.
-				if ( '' !== childValues.image_title ) {
-					title = childValues.image_title;
-				}
-				if ( '' !== childValues.image_caption ) {
-					caption = childValues.image_caption;
-				}
-
-				if ( '' !== title ) {
-					title_tag = 'div' === values.caption_title_tag ? 'div' : 'h' + values.caption_title_tag;
-					content += '<' + title_tag + ' class="awb-imageframe-caption-title">' + title + '</' + title_tag + '>';
-				}
-
-				if ( '' !== caption ) {
-					content += '<p class="awb-imageframe-caption-text">' + caption + '</p>';
-				}
-				content += '</div></div>';
-
-				return content;
 			}
 		} );
 	} );

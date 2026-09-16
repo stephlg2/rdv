@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -68,7 +77,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					// Element margin.
 					'margin_top'                     => '',
@@ -101,18 +110,12 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 					'fusion_font_family_text_font'   => '',
 					'fusion_font_variant_text_font'  => '',
 					'text_font_size'                 => '',
-					'text_text_transform'            => '',
-					'text_line_height'               => '',
-					'text_letter_spacing'            => '',
 
 					// Title styling.
 					'title_color'                    => '',
 					'fusion_font_family_title_font'  => '',
 					'fusion_font_variant_title_font' => '',
 					'title_font_size'                => '',
-					'title_text_transform'           => '',
-					'title_line_height'              => '',
-					'title_letter_spacing'           => '',
 
 					'stars_color'                    => '',
 					'backgroundcolor'                => '',
@@ -125,11 +128,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 					'animation_type'                 => '',
 					'animation_direction'            => 'down',
 					'animation_speed'                => '0.1',
-					'animation_delay'                => '',
 					'animation_offset'               => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                => '',
-
-					'responsive_typography'          => 0.0 < $fusion_settings->get( 'typography_sensitivity' ),
 				];
 			}
 
@@ -171,16 +170,16 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 
 					$this->emulate_product();
 
-					if ( ! $this->is_product() ) {
-						echo wp_json_encode( $return_data );
-						wp_die();
-					}
-
 					// Needed in order to bypass early exit in comments_template function.
 					$withcomments = true;
 
 					// We need to set global $post because Woo template expects it.
 					$post = get_post( $product->get_id() );
+
+					if ( ! $this->is_product() ) {
+						echo wp_json_encode( $return_data );
+						wp_die();
+					}
 
 					// Ensure legacy templates are not used.
 					if ( function_exists( 'Fusion_Builder_WooCommerce' ) ) {
@@ -223,7 +222,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 					return;
 				}
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_tabs-shortcode' ) . '>' . $this->get_woo_tabs_content( $this->args ) . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_tabs-shortcode' ) . '>' . $this->get_woo_tabs_content( $this->args ) . '</div>';
 
 				$this->restore_product();
 
@@ -272,16 +272,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 					$content = str_replace( [ '<script', '</script>' ], [ '<!--<script', '</script>-->' ], $content );
 				}
 
-				if ( $this->args['responsive_typography'] && ! $this->is_default( 'title_font_size' ) ) {
-					$font_size = fusion_library()->sanitize->get_value_with_unit( $this->args['title_font_size'] );
-					$data      = awb_get_responsive_type_data( 'h3', $font_size, $font_size );
-					$content   = str_replace(
-						'class="fusion-woocommerce-tab-title"',
-						'class="fusion-woocommerce-tab-title ' . $data['class'] . '" style="' . $data['font_size'] . $data['line_height'] . '"',
-						$content
-					);
-				}
-
 				return apply_filters( 'fusion_woo_component_content', $content, $this->shortcode_handle, $this->args );
 			}
 
@@ -311,70 +301,128 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.2
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-tabs-tb.fusion-woo-tabs-tb-' . $this->counter;
+				$this->dynamic_css   = [];
+
+				$sides = [ 'top', 'right', 'bottom', 'left' ];
+
+				foreach ( $sides as $side ) {
+
+					// Element margin.
+					$margin_name = 'margin_' . $side;
+
+					if ( '' !== $this->args[ $margin_name ] ) {
+						$this->add_css_property( $this->base_selector, 'margin-' . $side, fusion_library()->sanitize->get_value_with_unit( $this->args[ $margin_name ] ) );
+					}
+				}
+
+				if ( ! $this->is_default( 'backgroundcolor' ) ) {
+					$this->add_css_property( $this->base_selector . ' .wc-tabs > li.active > a', 'background-color', $this->args['backgroundcolor'] );
+					$this->add_css_property( $this->base_selector . ' .wc-tabs > li > a:hover', 'background-color', $this->args['backgroundcolor'] );
+					$this->add_css_property( $this->base_selector . ' .woocommerce-Tabs-panel', 'background-color', $this->args['backgroundcolor'] );
+				}
+
+				if ( ! $this->is_default( 'inactivebackgroundcolor' ) ) {
+					$this->add_css_property( $this->base_selector . ' .wc-tabs > li > a', 'background-color', $this->args['inactivebackgroundcolor'] );
+				}
+
+				if ( ! $this->is_default( 'active_nav_text_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .wc-tabs > li.active > a', 'color', $this->args['active_nav_text_color'] );
+					$this->add_css_property( $this->base_selector . ' .wc-tabs > li > a:hover', 'color', $this->args['active_nav_text_color'] );
+				}
+
+				if ( ! $this->is_default( 'inactive_nav_text_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .wc-tabs > li > a', 'color', $this->args['inactive_nav_text_color'] );
+				}
+
+				if ( ! $this->is_default( 'bordercolor' ) ) {
+
+					if ( 'horizontal' === $this->args['layout'] ) {
+						$this->add_css_property( $this->base_selector . '.woo-tabs-horizontal .woocommerce-tabs > .tabs .active', 'border-color', $this->args['bordercolor'] );
+						$this->add_css_property( $this->base_selector . '.woo-tabs-horizontal .woocommerce-tabs > .tabs', 'border-color', $this->args['bordercolor'] );
+					} else {
+						$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .tabs li a', 'border-color', $this->args['bordercolor'] );
+					}
+
+					$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel', 'border-color', $this->args['bordercolor'] );
+					$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel .shop_attributes tr', 'border-color', $this->args['bordercolor'] );
+				}
 
 				// Text styles.
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel', 'color', $this->args['text_color'] );
+					$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel .shop_attributes th', 'color', $this->args['text_color'] );
+					$this->add_css_property( '#wrapper ' . $this->base_selector . ' .meta', 'color', $this->args['text_color'] );
+					$this->add_css_property( [ $this->base_selector . ' .stars a', $this->base_selector . ' .stars a:after' ], 'color', $this->args['text_color'] );
+				}
+
+				if ( ! $this->is_default( 'text_font_size' ) ) {
+					$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel', 'font-size', fusion_library()->sanitize->get_value_with_unit( $this->args['text_font_size'] ) );
+				}
+
+				// Text typography styles.
 				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font', 'array' );
 				foreach ( $text_styles as $rule => $value ) {
-					$custom_vars[ 'text-' . $rule ] = $value;
+					$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel', $rule, $value );
+				}
+
+				// Title styles.
+				$title_selectors = [
+					'#wrapper ' . $this->base_selector . ' #tab-reviews #reviews .woocommerce-Reviews-title',
+					'#wrapper ' . $this->base_selector . ' .woocommerce-Tabs-panel .fusion-woocommerce-tab-title',
+				];
+				if ( ! $this->is_default( 'title_color' ) ) {
+					$this->add_css_property( $title_selectors, 'color', $this->args['title_color'] );
+				}
+
+				if ( ! $this->is_default( 'title_font_size' ) ) {
+					$this->add_css_property( $title_selectors, 'font-size', fusion_library()->sanitize->get_value_with_unit( $this->args['title_font_size'] ) );
 				}
 
 				// Heading typography styles.
 				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'title_font', 'array' );
 				foreach ( $text_styles as $rule => $value ) {
-					$custom_vars[ 'title-' . $rule ] = $value;
+					$this->add_css_property( $title_selectors, $rule, $value );
 				}
 
 				if ( 'vertical' === $this->args['layout'] && ! $this->is_default( 'nav_content_space' ) ) {
-					$custom_vars['nav_content_space'] = 'calc(220px + ' . fusion_library()->sanitize->get_value_with_unit( $this->args['nav_content_space'] ) . ')';
+					$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel', 'margin-left', 'calc(220px + ' . fusion_library()->sanitize->get_value_with_unit( $this->args['nav_content_space'] ) . ')' );
 				}
 
-				if ( isset( $this->params['text_color'] ) && '' !== $this->params['text_color'] ) {
-					$custom_vars['stars_default_color'] = Fusion_Sanitize::color( $this->params['text_color'] );
+				// Stars color.
+				if ( ! $this->is_default( 'stars_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .comment-text .star-rating:before', 'color', $this->args['stars_color'] );
+					$this->add_css_property( $this->base_selector . ' .comment-text .star-rating span:before', 'color', $this->args['stars_color'] );
 				}
 
-				$css_vars_options = [
-					'margin_top'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_font_size'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_letter_spacing'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'title_font_size'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'title_letter_spacing'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'content_padding_top'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'content_padding_right'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'content_padding_bottom'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'content_padding_left'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'nav_padding_top'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'nav_padding_right'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'nav_padding_bottom'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'nav_padding_left'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'backgroundcolor'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'inactivebackgroundcolor' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'active_nav_text_color'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'inactive_nav_text_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'bordercolor'             => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_color'              => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'title_color'             => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'stars_color'             => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_line_height',
-					'text_text_transform',
-					'title_line_height',
-					'title_text_transform',
+				// Get padding.
+				$paddings = [ 'top', 'right', 'bottom', 'left' ];
 
-				];
+				foreach ( $paddings as $padding ) {
+					$content_padding_name = 'content_padding_' . $padding;
+					$nav_padding_name     = 'nav_padding_' . $padding;
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+					// Add content padding to style.
+					if ( '' !== $this->args[ $content_padding_name ] ) {
+						$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .panel', 'padding-' . $padding, fusion_library()->sanitize->get_value_with_unit( $this->args[ $content_padding_name ] ) );
+					}
 
-				return $styles;
+					// Add nav padding to style.
+					if ( '' !== $this->args[ $nav_padding_name ] ) {
+						$this->add_css_property( $this->base_selector . ' .woocommerce-tabs .tabs li a', 'padding-' . $padding, fusion_library()->sanitize->get_value_with_unit( $this->args[ $nav_padding_name ] ) );
+					}
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -396,14 +444,12 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
-
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
 
-				if ( '' !== $this->args['layout'] ) {
-					$attr['class'] .= ' woo-tabs-' . $this->args['layout'];
+				if ( 'horizontal' === $this->args['layout'] ) {
+					$attr['class'] .= ' woo-tabs-horizontal';
 				}
 
 				if ( 'no' === $this->args['show_tab_titles'] ) {
@@ -440,8 +486,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
 						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-sh-cbp' ),
 					];
 				}
-
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/woo-tabs.min.css' );
 			}
 		}
 	}
@@ -455,33 +499,19 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_tabs' ) ) {
  * @since 3.2
  */
 function fusion_component_woo_tabs() {
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Woo_Tabs',
 			[
-				'name'         => esc_html__( 'Woo Tabs', 'fusion-builder' ),
-				'shortcode'    => 'fusion_tb_woo_tabs',
-				'icon'         => 'fusiona-woo-tabs',
-				'component'    => true,
-				'templates'    => [ 'content' ],
-				'subparam_map' => [
-					'fusion_font_family_title_font'  => 'title_fonts',
-					'fusion_font_variant_title_font' => 'title_fonts',
-					'title_font_size'                => 'title_fonts',
-					'title_text_transform'           => 'title_fonts',
-					'title_line_height'              => 'title_fonts',
-					'title_letter_spacing'           => 'title_fonts',
-					'title_color'                    => 'title_fonts',
-					'fusion_font_family_text_font'   => 'text_fonts',
-					'fusion_font_variant_text_font'  => 'text_fonts',
-					'text_font_size'                 => 'text_fonts',
-					'text_text_transform'            => 'text_fonts',
-					'text_line_height'               => 'text_fonts',
-					'text_letter_spacing'            => 'text_fonts',
-					'text_color'                     => 'text_fonts',
-				],
-				'params'       => [
+				'name'                    => esc_html__( 'Woo Tabs', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_woo_tabs',
+				'icon'                    => 'fusiona-woo-tabs',
+				'component'               => true,
+				'templates'               => [ 'content' ],
+				'components_per_template' => 1,
+				'params'                  => [
 					[
 						'type'        => 'checkbox_button_set',
 						'heading'     => esc_html__( 'Display Tabs', 'fusion-builder' ),
@@ -560,6 +590,13 @@ function fusion_component_woo_tabs() {
 						'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
 						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
 						'param_name'       => 'margin',
+						'callback'         => [
+							'function' => 'fusion_style_block',
+							'args'     => [
+
+								'dimension' => true,
+							],
+						],
 						'value'            => [
 							'margin_top'    => '',
 							'margin_right'  => '',
@@ -572,40 +609,48 @@ function fusion_component_woo_tabs() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_html__( 'Background Color', 'fusion-builder' ),
-						'description'   => esc_html__( 'Controls the tab background color. ', 'fusion-builder' ),
-						'param_name'    => 'inactivebackgroundcolor',
-						'value'         => '',
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'callback'      => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Background Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the background tab color. ', 'fusion-builder' ),
+						'param_name'  => 'backgroundcolor',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'active' => [
-								'label'      => __( 'Active', 'fusion-builder' ),
-								'param_name' => 'backgroundcolor',
-							],
-						],
-						'connect-state' => [ 'inactive_nav_text_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_html__( 'Title Color', 'fusion-builder' ),
-						'description'   => esc_html__( 'Controls the color of the tab title color, ex: #000.' ),
-						'param_name'    => 'inactive_nav_text_color',
-						'value'         => '',
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'callback'      => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Inactive Background Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the inactive tab background color. ', 'fusion-builder' ),
+						'param_name'  => 'inactivebackgroundcolor',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'active' => [
-								'label'      => __( 'Active', 'fusion-builder' ),
-								'param_name' => 'active_nav_text_color',
-							],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Inactive Nav Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the inactive nav text color, ex: #000.' ),
+						'param_name'  => 'inactive_nav_text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
-						'connect-state' => [ 'inactivebackgroundcolor' ],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Active Nav Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the active nav text color, ex: #000.' ),
+						'param_name'  => 'active_nav_text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
 					],
 					[
 						'type'        => 'colorpickeralpha',
@@ -654,29 +699,33 @@ function fusion_component_woo_tabs() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Content Heading Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the content heading. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'title_fonts',
-						'choices'          => [
-							'font-family'    => 'title_font',
-							'font-size'      => 'title_font_size',
-							'text-transform' => 'title_text_transform',
-							'line-height'    => 'title_line_height',
-							'letter-spacing' => 'title_letter_spacing',
-							'color'          => 'title_color',
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Content Heading Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the content heading, ex: #000.' ),
+						'param_name'  => 'title_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'show_tab_titles',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_html__( 'Content Heading Font Family', 'fusion-builder' ),
+						'description'      => esc_html__( 'Controls the font family of the content heading.', 'fusion-builder' ),
+						'param_name'       => 'title_font',
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '',
+						],
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'       => [
 							[
@@ -690,31 +739,57 @@ function fusion_component_woo_tabs() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Content Text Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the content text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'text_fonts',
-						'choices'          => [
-							'font-family'    => 'text_font',
-							'font-size'      => 'text_font_size',
-							'text-transform' => 'text_text_transform',
-							'line-height'    => 'text_line_height',
-							'letter-spacing' => 'text_letter_spacing',
-							'color'          => 'text_color',
+						'type'        => 'textfield',
+						'heading'     => esc_html__( 'Content Heading Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the content heading. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'title_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'show_tab_titles',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Content Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the content text, ex: #000.' ),
+						'param_name'  => 'text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_html__( 'Content Text Font Family', 'fusion-builder' ),
+						'description'      => esc_html__( 'Controls the font family of the content text.', 'fusion-builder' ),
+						'param_name'       => 'text_font',
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '',
+						],
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'callback'         => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_html__( 'Content Text Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the content text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'text_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
 					],
@@ -755,7 +830,7 @@ function fusion_component_woo_tabs() {
 						'preview_selector' => '.fusion-woo-tabs-tb',
 					],
 				],
-				'callback'     => [
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_woo_tabs',
 					'ajax'     => true,

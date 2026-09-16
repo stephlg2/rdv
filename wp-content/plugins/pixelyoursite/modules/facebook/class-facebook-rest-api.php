@@ -1,0 +1,326 @@
+<?php
+
+namespace PixelYourSite;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly.
+}
+
+/**
+ * Facebook REST API handler
+ */
+class Facebook_REST_API {
+
+    /**
+     * Register REST API routes
+     */
+    public function register_routes() {
+        add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+    }
+
+    /**
+     * Register REST API routes
+     */
+    public function register_rest_routes() {
+        register_rest_route( 'pys-facebook/v1', '/event', array(
+            'methods'             => 'POST',
+            'callback'            => array( $this, 'handle_facebook_event' ),
+            'permission_callback' => array( $this, 'check_permission' ),
+            'args'                => $this->get_event_args(),
+        ) );
+    }
+
+    /**
+     * Handle Facebook event
+     */
+    public function handle_facebook_event( $request ) {
+        $event = $request->get_param( 'event' );
+        $data = $request->get_param( 'data' );
+        $ids = $request->get_param( 'ids' );
+        $eventID = $request->get_param( 'eventID' );
+        $woo_order = $request->get_param( 'woo_order' );
+        $edd_order = $request->get_param( 'edd_order' );
+        $referrer_url = $request->get_param( 'referrer_url' );
+        $event_source_url = $request->get_param( 'event_source_url' );
+
+        // Variant B fallback: when the browser did not send an explicit page
+        // URL, use this REST request's Referer header. For a fetch/sendBeacon
+        // fired from the visitor's page, Referer IS that page URL — which is
+        // what Meta expects for event_source_url (never the REST endpoint).
+        if ( empty( $event_source_url ) ) {
+            $referer = $request->get_header( 'referer' );
+            if ( ! empty( $referer ) ) {
+                $event_source_url = esc_url_raw( $referer );
+            }
+        }
+
+        $singleEvent = $this->data_to_single_event( $event, $data, $eventID, $ids, $woo_order, $edd_order, $referrer_url, $event_source_url );
+
+        // Send event using existing Facebook server logic
+        FacebookServer()->sendEventsNow( array( $singleEvent ) );
+
+        return new \WP_REST_Response( array( 'success' => true ), 200 );
+    }
+
+    /**
+     * Check access permissions
+     *
+     * This is a public tracking endpoint: it must be reachable by anonymous
+     * visitors and from aggressively cached HTML, so wp_verify_nonce() and
+     * capability checks are intentionally NOT used here (REST nonces are
+     * session-bound and roll every 12h, which breaks cached pages).
+     *
+     * Defense in Depth applied at this layer:
+     *   1) Same-origin enforcement via Origin / Referer headers blocks the
+     *      most common cross-site abuse vector.
+     *   2) Payload data is sanitized in sanitize_data() / get_event_args().
+     *   3) The `pys_rest_event_permission` filter lets site owners harden
+     *      this further (rate limits, bot rules) or relax it on environments
+     *      where Origin/Referer is stripped by proxies.
+     *
+     * @param \WP_REST_Request $request The request object.
+     * @return bool
+     */
+    public function check_permission( $request ) {
+        $origin    = $request->get_header( 'origin' );
+        $referer   = $request->get_header( 'referer' );
+        $site      = wp_parse_url( home_url() );
+        $site_host = isset( $site['host'] ) ? strtolower( $site['host'] ) : '';
+
+        $is_same_origin = false;
+
+        if ( ! empty( $origin ) ) {
+            $origin_parts = wp_parse_url( $origin );
+            $is_same_origin = ! empty( $site_host )
+                && isset( $origin_parts['host'] )
+                && strtolower( $origin_parts['host'] ) === $site_host;
+        } elseif ( ! empty( $referer ) ) {
+            $referer_parts = wp_parse_url( $referer );
+            $is_same_origin = ! empty( $site_host )
+                && isset( $referer_parts['host'] )
+                && strtolower( $referer_parts['host'] ) === $site_host;
+        }
+
+        // Per-IP rate limiting: max requests per minute per namespace.
+        // The limit is configured via the 'pys_check_permission_rate_limit'
+        // option (Global Settings > Ajax options). Default is 60 (1 req/sec).
+        if ( $is_same_origin ) {
+            $ip    = PYS()->get_user_ip();
+            $key   = 'pys_rl_' . md5( $ip . '_pys-facebook/v1' );
+            $count = (int) get_transient( $key );
+
+            // Maximum allowed requests per minute, per IP, per pixel namespace.
+            $limit = max( 1, (int) PYS()->getOption( 'pys_check_permission_rate_limit' ) );
+
+            if ( $count >= $limit ) {
+                return new \WP_Error( 'rate_limited', 'Too many requests', [ 'status' => 429 ] );
+            }
+            set_transient( $key, $count + 1, 60 );
+        }
+
+        /**
+         * Filters whether a REST tracking request is allowed.
+         *
+         * Default: true if the request is same-origin (matching Origin or
+         * Referer host), false otherwise. Return true to fully open the
+         * endpoint, or implement custom rate limiting / bot filtering.
+         *
+         * @param bool             $allowed Whether the request is allowed.
+         * @param \WP_REST_Request $request The current request object.
+         */
+        return (bool) apply_filters(
+            'pys_rest_event_permission',
+            $is_same_origin,
+            $request
+        );
+    }
+
+    /**
+     * Get event arguments for REST API
+     */
+    private function get_event_args() {
+        return array(
+            'event'      => array(
+                'required'          => true,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'data'       => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '{}',
+                'sanitize_callback' => array( $this, 'sanitize_data' ),
+            ),
+            'ids'        => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '[]',
+                'sanitize_callback' => array( $this, 'sanitize_ids' ),
+            ),
+            'eventID'    => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'woo_order'  => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '0',
+                'sanitize_callback' => array( $this, 'sanitize_order_id' ),
+            ),
+            'edd_order'  => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '0',
+                'sanitize_callback' => array( $this, 'sanitize_order_id' ),
+            ),
+            'event_slug' => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'order_key'  => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'referrer_url' => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '',
+                'sanitize_callback' => 'esc_url_raw',
+            ),
+            'event_source_url' => array(
+                'required'          => false,
+                'type'              => 'string',
+                'default'           => '',
+                'sanitize_callback' => 'esc_url_raw',
+            ),
+        );
+    }
+
+
+
+    /**
+     * Sanitize event data
+     *
+     * Recursively sanitizes every scalar value inside the decoded payload
+     * with `sanitize_text_field()` to prevent injection via nested keys/values.
+     *
+     * @param mixed $data Data to sanitize.
+     * @return array
+     */
+    public function sanitize_data( $data ) {
+        if ( is_string( $data ) ) {
+            $decoded = json_decode( $data, true );
+            if ( is_array( $decoded ) ) {
+                return map_deep( $decoded, 'sanitize_text_field' );
+            }
+        }
+        if ( is_array( $data ) ) {
+            return map_deep( $data, 'sanitize_text_field' );
+        }
+        return [];
+    }
+
+    /**
+     * Sanitize ids parameter
+     */
+    public function sanitize_ids( $ids ) {
+        if ( is_string( $ids ) ) {
+            $decoded = json_decode( $ids, true );
+            return is_array( $decoded ) ? $decoded : array();
+        }
+        return is_array( $ids ) ? $ids : array();
+    }
+
+    /**
+     * Sanitize order ID
+     */
+    public function sanitize_order_id( $order_id ) {
+        if ( empty( $order_id ) || $order_id === '0' || $order_id === 'null' || $order_id === 'undefined' ) {
+            return 0;
+        }
+        return (int) $order_id;
+    }
+
+    /**
+     * Convert data to SingleEvent object
+     */
+    private function data_to_single_event( $event_name, $params, $event_id, $ids, $woo_order, $edd_order, $referrer_url = '', $event_source_url = '' ) {
+        $singleEvent = new SingleEvent( "", "" );
+
+        $payload = array(
+            'name'      => $event_name,
+            'eventID'   => $event_id,
+            'woo_order' => $woo_order,
+            'edd_order' => $edd_order,
+            'pixelIds'  => $ids
+        );
+
+        if ( ! empty( $referrer_url ) && pys_is_valid_public_url( $referrer_url ) ) {
+            $payload['referrer_url'] = $referrer_url;
+        }
+
+        if ( ! empty( $event_source_url ) && pys_is_valid_public_url( $event_source_url ) ) {
+            $payload['event_source_url'] = $event_source_url;
+        }
+
+        $singleEvent->addParams( $params );
+        $singleEvent->addPayload( $payload );
+
+        return $singleEvent;
+    }
+
+    /**
+     * Enqueue scripts for frontend
+     */
+    public function enqueue_scripts() {
+        if ( ! Facebook()->isServerApiEnabled() ) {
+            return;
+        }
+
+        wp_localize_script( 'jquery', 'pysFacebookRest', array(
+            'restApiUrl' => rest_url( 'pys-facebook/v1/event' ),
+            'debug'      => PYS()->getOption( 'debug_enabled' )
+        ) );
+    }
+
+    /**
+     * Enqueue admin scripts
+     */
+    public function enqueue_admin_scripts() {
+        if ( ! Facebook()->isServerApiEnabled() ) {
+            return;
+        }
+
+        wp_localize_script( 'jquery', 'pysFacebookRest', array(
+            'restApiUrl' => rest_url( 'pys-facebook/v1/event' ),
+            'debug'      => PYS()->getOption( 'debug_enabled' )
+        ) );
+    }
+
+    /**
+     * Initialize hooks
+     */
+    public function init() {
+        $this->register_routes();
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+    }
+}
+
+/**
+ * Accessor function for Facebook REST API
+ */
+function Facebook_REST_API() {
+    static $instance = null;
+    if ( $instance === null ) {
+        $instance = new Facebook_REST_API();
+        $instance->init();
+    }
+    return $instance;
+}

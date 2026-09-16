@@ -3,7 +3,7 @@
  * Plugin Name: Devis Pro - Gestion Avancée des Devis
  * Plugin URI: https://rdvasie.com
  * Description: Gestion professionnelle des demandes de devis avec dashboard, statistiques, exports, relances automatiques et paiement sécurisé.
- * Version: 2.1.0
+ * Version: 2.1.1
  * Author: RDV Asie
  * Author URI: https://rdvasie.com
  * Text Domain: devis-pro
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Constantes du plugin
-define('DEVIS_PRO_VERSION', '2.0.0');
+define('DEVIS_PRO_VERSION', '2.1.1');
 define('DEVIS_PRO_PATH', plugin_dir_path(__FILE__));
 define('DEVIS_PRO_URL', plugin_dir_url(__FILE__));
 define('DEVIS_PRO_TABLE', 'devis_pro');
@@ -1314,6 +1314,22 @@ class Devis_Pro
      */
     private function process_old_form($post, $atts)
     {
+        $security_check = Devis_Pro_Security::validate_form_submission($post);
+        if (!$security_check['valid']) {
+            if (!empty($security_check['is_bot'])) {
+                return array('success' => true, 'id' => 0);
+            }
+            return array('success' => false, 'error' => $security_check['error']);
+        }
+
+        $settings = get_option('devis_pro_settings');
+        $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
+                return array('success' => false, 'error' => __('Vérification de sécurité échouée.', 'devis-pro'));
+            }
+        }
+
         // Mapper les anciens noms de champs vers les nouveaux
         $mapped = array(
                 'voyage' => $post['voyage'] ?? $atts['voyage'] ?? '',
@@ -1345,19 +1361,32 @@ class Devis_Pro
         // Ajouter newsletter 
         $mapped['newsletter'] = isset($post['newsletter']) && $post['newsletter'] == '1' ? 1 : 0;
 
-        // Validation
-        if (empty($mapped['email']) || !is_email($mapped['email'])) {
+        $email = Devis_Pro_Security::validate_email($mapped['email']);
+        if ($email === false) {
             return array('success' => false, 'error' => 'Email invalide');
         }
+        $mapped['email'] = $email;
 
-        if (empty($mapped['tel'])) {
+        $tel = Devis_Pro_Security::validate_phone($mapped['tel']);
+        if ($tel === false) {
             return array('success' => false, 'error' => 'Téléphone requis');
         }
+        $mapped['tel'] = $tel;
+
+        $nom = Devis_Pro_Security::validate_name($mapped['nom']);
+        $prenom = Devis_Pro_Security::validate_name($mapped['prenom']);
+        if ($nom === false || $prenom === false) {
+            return array('success' => false, 'error' => 'Nom ou prénom invalide');
+        }
+        $mapped['nom'] = $nom;
+        $mapped['prenom'] = $prenom;
 
         // Insérer dans la base de données
         $id = $this->db->insert_devis($mapped);
 
         if ($id) {
+            Devis_Pro_Security::record_submission('form_submit');
+
             // Récupérer le titre de la page actuelle
             $page_title = get_the_title();
             $history_message = $page_title
@@ -1403,6 +1432,22 @@ class Devis_Pro
      */
     private function process_old_form_ajax($post, $atts)
     {
+        $security_check = Devis_Pro_Security::validate_form_submission($post);
+        if (!$security_check['valid']) {
+            if (!empty($security_check['is_bot'])) {
+                return array('success' => true, 'id' => 0);
+            }
+            return array('success' => false, 'error' => $security_check['error']);
+        }
+
+        $settings = get_option('devis_pro_settings');
+        $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
+                return array('success' => false, 'error' => __('Vérification de sécurité échouée.', 'devis-pro'));
+            }
+        }
+
         // Mapper les anciens noms de champs vers les nouveaux
         $mapped = array(
                 'voyage' => $post['voyage'] ?? $atts['voyage'] ?? '',
@@ -1447,10 +1492,20 @@ class Devis_Pro
         }
         $mapped['tel'] = $tel;
 
+        $nom = Devis_Pro_Security::validate_name($mapped['nom']);
+        $prenom = Devis_Pro_Security::validate_name($mapped['prenom']);
+        if ($nom === false || $prenom === false) {
+            return array('success' => false, 'error' => __('Nom ou prénom invalide', 'devis-pro'));
+        }
+        $mapped['nom'] = $nom;
+        $mapped['prenom'] = $prenom;
+
         // Insérer dans la base de données
         $id = $this->db->insert_devis($mapped);
 
         if ($id) {
+            Devis_Pro_Security::record_submission('form_submit');
+
             // Historique avec le titre de la page
             $page_title = $atts['page_title'] ?: 'Formulaire';
             $history_message = sprintf(__('Demande reçue via le formulaire de la page "%s"', 'devis-pro'), $page_title);
@@ -1505,8 +1560,8 @@ class Devis_Pro
         $settings = get_option('devis_pro_settings');
         $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
 
-        if (!empty($recaptcha_secret) && !empty($post['recaptcha_token'])) {
-            if (!Devis_Pro_Security::verify_recaptcha($post['recaptcha_token'], $recaptcha_secret)) {
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
                 return array('success' => false, 'error' => __('Vérification de sécurité échouée. Veuillez réessayer.', 'devis-pro'));
             }
         }
@@ -1554,6 +1609,8 @@ class Devis_Pro
         $id = $this->db->insert_devis($data);
 
         if ($id) {
+            Devis_Pro_Security::record_submission('form_submit');
+
             // Récupérer le titre de la page actuelle
             $page_title = get_the_title();
             $history_message = $page_title
@@ -1585,16 +1642,17 @@ class Devis_Pro
 
         // Vérifier honeypot
         if (!Devis_Pro_Security::check_honeypot($_POST)) {
-            // Bot détecté - faux succès
-            ob_start();
-            include DEVIS_PRO_PATH . 'views/form-success.php';
-            $html = ob_get_clean();
-            wp_send_json_success(array('html' => $html));
+            wp_send_json_error(__('Blocage anti-spam détecté. Désactivez l’auto-remplissage puis réessayez.', 'devis-pro'));
         }
 
-        // Vérifier rate limit
+        // Vérifier rate limit (sans compter : le compteur n'est incrémenté qu'après un succès)
         if (!Devis_Pro_Security::check_rate_limit('form_submit')) {
             wp_send_json_error(__('Trop de demandes. Veuillez réessayer plus tard.', 'devis-pro'));
+        }
+
+        // Les admins en test ne restent pas bloqués par d'anciens compteurs
+        if (is_user_logged_in() && current_user_can('edit_posts')) {
+            Devis_Pro_Security::reset_rate_limit('form_submit');
         }
 
         // Préparer les attributs
@@ -1659,8 +1717,8 @@ class Devis_Pro
         $settings = get_option('devis_pro_settings');
         $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
 
-        if (!empty($recaptcha_secret) && !empty($post['recaptcha_token'])) {
-            if (!Devis_Pro_Security::verify_recaptcha($post['recaptcha_token'], $recaptcha_secret)) {
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
                 return array('success' => false, 'error' => __('Vérification de sécurité échouée.', 'devis-pro'));
             }
         }
@@ -1696,6 +1754,8 @@ class Devis_Pro
         $id = $this->db->insert_devis($data);
 
         if ($id) {
+            Devis_Pro_Security::record_submission('form_submit');
+
             // Historique avec le titre de la page
             $page_title = $atts['page_title'] ?: 'Formulaire';
             $history_message = sprintf(__('Demande reçue via le formulaire de la page "%s"', 'devis-pro'), $page_title);
@@ -1946,6 +2006,7 @@ class Devis_Pro
             if ($email) {
                 $email_handler = new Devis_Pro_Email();
                 $email_sent = $email_handler->send_client_access_link($email);
+                Devis_Pro_Security::record_submission('client_login');
 
                 // Log pour debug
                 if (defined('WP_DEBUG') && WP_DEBUG) {

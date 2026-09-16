@@ -17,13 +17,13 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 		class FusionTB_Meta extends Fusion_Component {
 
 			/**
-			 * The word counter.
+			 * An array of the shortcode arguments.
 			 *
-			 * @access private
-			 * @since 5.9
-			 * @var int
+			 * @access protected
+			 * @since 2.4
+			 * @var array
 			 */
-			private $word_count = 0;
+			protected $args;
 
 			/**
 			 * The internal container counter.
@@ -58,8 +58,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 			 * @return boolean
 			 */
 			public function should_render() {
-				return is_singular() || wp_is_json_request();
-
+				return is_singular();
 			}
 
 			/**
@@ -87,22 +86,19 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
 					'meta'                     => 'author,published_date,categories,comments,tags',
 					'layout'                   => 'floated',
-					'display_element_labels'   => 'yes',
 					'separator'                => '',
 					'font_size'                => $fusion_settings->get( 'meta_font_size' ),
 					'text_color'               => $fusion_settings->get( 'link_color' ),
 					'link_color'               => '',
-					'text_hover_color'         => $fusion_settings->get( 'link_hover_color' ),
+					'text_hover_color'         => $fusion_settings->get( 'primary_color' ),
 					'border_size'              => null,
 					'border_color'             => $fusion_settings->get( 'sep_color' ),
 					'alignment'                => 'flex-start',
-					'alignment_medium'         => '',
-					'alignment_small'          => '',
 					'stacked_vertical_align'   => 'flex-start',
 					'stacked_horizontal_align' => 'flex-start',
 					'height'                   => '33',
@@ -116,9 +112,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 					'animation_type'           => '',
 					'animation_direction'      => 'down',
 					'animation_speed'          => '0.1',
-					'animation_delay'          => '',
 					'animation_offset'         => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'          => '',
 					'padding_bottom'           => '',
 					'padding_left'             => '',
 					'padding_right'            => '',
@@ -128,7 +122,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 					'border_right'             => '0px',
 					'border_top'               => '1px',
 					'read_time'                => 200,
-					'reading_time_decimal'     => 'yes',
 					'background_color'         => '',
 					'item_background_color'    => '',
 					'item_border_color'        => $fusion_settings->get( 'sep_color' ),
@@ -207,19 +200,136 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 
 				$this->emulate_post();
 
-				$html = $this->get_meta_elements( $this->args, false );
+				$content = $this->get_meta_elements( $this->args, false );
 
 				$this->restore_post();
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_meta-shortcode' ) . '>' . $html . '</div>';
+				$content = '<div ' . FusionBuilder::attributes( 'fusion_tb_meta-shortcode' ) . '>' . $content . '</div>';
 
-				$this->word_count = 0;
+				$html = $content . $this->get_styles();
 
 				$this->counter++;
 
 				$this->on_render();
 
 				return apply_filters( 'fusion_component_' . $this->shortcode_handle . '_content', $html, $args );
+			}
+
+			/**
+			 * Get the styles.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @return string
+			 */
+			protected function get_styles() {
+				$this->base_selector = '.fusion-meta-tb.fusion-meta-tb-' . $this->counter;
+				$this->dynamic_css   = [];
+
+				$selectors = [
+					$this->base_selector,
+					$this->base_selector . ' a',
+				];
+
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['text_color'] );
+				}
+
+				if ( ! $this->is_default( 'link_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' span a', 'color', $this->args['link_color'] );
+				}
+
+				$selectors = [
+					$this->base_selector . ' a:hover',
+					$this->base_selector . ' span a:hover',
+				];
+
+				if ( ! $this->is_default( 'text_hover_color' ) ) {
+					$this->add_css_property( [ $this->base_selector . ' a:hover' ], 'color', $this->args['text_hover_color'] );
+				}
+
+				if ( ! $this->is_default( 'border_color' ) ) {
+					$this->add_css_property( [ $this->base_selector ], 'border-color', $this->args['border_color'] );
+				}
+
+				if ( ! $this->is_default( 'border_bottom' ) ) {
+					$this->add_css_property( [ $this->base_selector ], 'border-bottom-width', $this->args['border_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'border_top' ) ) {
+					$this->add_css_property( [ $this->base_selector ], 'border-top-width', $this->args['border_top'] );
+				}
+
+				if ( ! $this->is_default( 'border_left' ) ) {
+					$this->add_css_property( [ $this->base_selector ], 'border-left-width', $this->args['border_left'] );
+				}
+
+				if ( ! $this->is_default( 'border_right' ) ) {
+					$this->add_css_property( [ $this->base_selector ], 'border-right-width', $this->args['border_right'] );
+				}
+
+				$selectors = [
+					$this->base_selector . '  > span:not(.fusion-meta-tb-sep)',
+				];
+
+				if ( ! $this->is_default( 'item_border_color' ) ) {
+					$this->add_css_property( $selectors, 'border-color', $this->args['item_border_color'] );
+				}
+
+				if ( ! $this->is_default( 'item_border_bottom' ) ) {
+					$this->add_css_property( $selectors, 'border-bottom-width', $this->args['item_border_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'item_border_top' ) ) {
+					$this->add_css_property( $selectors, 'border-top-width', $this->args['item_border_top'] );
+				}
+
+				if ( ! $this->is_default( 'item_border_left' ) ) {
+					$this->add_css_property( $selectors, 'border-left-width', $this->args['item_border_left'] );
+				}
+
+				if ( ! $this->is_default( 'item_border_right' ) ) {
+					$this->add_css_property( $selectors, 'border-right-width', $this->args['item_border_right'] );
+				}
+
+				if ( ! $this->is_default( 'item_background_color' ) ) {
+					$this->add_css_property( $selectors, 'background-color', $this->args['item_background_color'] );
+				}
+
+				if ( ! $this->is_default( 'item_padding_top' ) ) {
+					$this->add_css_property( $selectors, 'padding-top', $this->args['item_padding_top'] );
+				}
+
+				if ( ! $this->is_default( 'item_padding_bottom' ) ) {
+					$this->add_css_property( $selectors, 'padding-bottom', $this->args['item_padding_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'item_padding_left' ) ) {
+					$this->add_css_property( $selectors, 'padding-left', $this->args['item_padding_left'] );
+				}
+
+				if ( ! $this->is_default( 'item_padding_right' ) ) {
+					$this->add_css_property( $selectors, 'padding-right', $this->args['item_padding_right'] );
+				}
+
+				if ( ! $this->is_default( 'item_margin_top' ) ) {
+					$this->add_css_property( $selectors, 'margin-top', $this->args['item_margin_top'] );
+				}
+
+				if ( ! $this->is_default( 'item_margin_bottom' ) ) {
+					$this->add_css_property( $selectors, 'margin-bottom', $this->args['item_margin_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'item_margin_left' ) ) {
+					$this->add_css_property( $selectors, 'margin-left', $this->args['item_margin_left'] );
+				}
+
+				if ( ! $this->is_default( 'item_margin_right' ) ) {
+					$this->add_css_property( $selectors, 'margin-right', $this->args['item_margin_right'] );
+				}
+
+				$css = $this->parse_css();
+				return $css ? '<style type="text/css">' . $css . '</style>' : '';
 			}
 
 			/**
@@ -241,7 +351,33 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
+
+				$attr['style'] .= Fusion_Builder_Padding_Helper::get_paddings_style( $this->args );
+
+				if ( $this->args['height'] ) {
+					$attr['style'] .= 'min-height:' . $this->args['height'] . ';';
+				}
+
+				if ( '' !== $this->args['alignment'] && 'stacked' !== $this->args['layout'] ) {
+					$attr['style'] .= 'justify-content:' . $this->args['alignment'] . ';';
+				}
+
+				if ( '' !== $this->args['stacked_vertical_align'] && 'floated' !== $this->args['layout'] ) {
+					$attr['style'] .= 'justify-content:' . $this->args['stacked_vertical_align'] . ';';
+				}
+
+				if ( '' !== $this->args['stacked_horizontal_align'] && 'floated' !== $this->args['layout'] ) {
+					$attr['style'] .= 'align-items:' . $this->args['stacked_horizontal_align'] . ';';
+				}
+
+				if ( $this->args['font_size'] ) {
+					$attr['style'] .= 'font-size:' . $this->args['font_size'] . ';';
+				}
+
+				if ( $this->args['background_color'] ) {
+					$attr['style'] .= 'background-color:' . $this->args['background_color'] . ';';
+				}
 
 				if ( '' !== $this->args['layout'] ) {
 					$attr['class'] .= ' ' . $this->args['layout'];
@@ -259,70 +395,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
-
-				foreach ( [ 'medium', 'small' ] as $size ) {
-					$key = 'alignment_' . $size;
-
-					if ( '' === $this->args[ $key ] ) {
-						continue;
-					}
-
-					$custom_vars[ $key ] = $this->args[ $key ];
-				}
-
-				$css_vars_options = [
-					'border_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_left'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_right'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_border_bottom'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_border_top'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_border_left'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_border_right'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_padding_top'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_padding_bottom'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_padding_left'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_padding_right'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_margin_top'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_margin_bottom'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_margin_left'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'item_margin_right'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'height'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'font_size'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_bottom'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_left'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_right'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'padding_top'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_color'            => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'link_color'            => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_hover_color'      => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_color'          => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'item_border_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'item_background_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'background_color'      => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'alignment',
-					'stacked_vertical_align',
-					'stacked_horizontal_align',
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
-			}
-
-			/**
 			 * Maps settings to param variables.
 			 *
 			 * @static
@@ -331,29 +403,12 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 			 * @return array
 			 */
 			public static function settings_to_params() {
-				// Todo: border_color should also probably be changed by sep_color,
-				// but because wqe can change only one, item_border_color is changed only.
 				return [
-					'sep_color'        => 'item_border_color',
-					'link_color'       => 'text_color',
-					'link_hover_color' => 'text_hover_color',
-					'meta_font_size'   => 'font_size',
-				];
-			}
-
-			/**
-			 * Used to set any other variables for use on front-end editor template.
-			 *
-			 * @static
-			 * @access public
-			 * @since 3.6
-			 * @return array
-			 */
-			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
-				return [
-					'visibility_medium' => $fusion_settings->get( 'visibility_medium' ),
-					'visibility_small'  => $fusion_settings->get( 'visibility_small' ),
+					'sep_color'      => 'border_color',
+					'sep_color'      => 'item_border_color',
+					'link_color'     => 'text_color',
+					'primary_color'  => 'text_hover_color',
+					'meta_font_size' => 'font_size',
 				];
 			}
 
@@ -371,13 +426,12 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 				global $product;
 
 				$options     = explode( ',', $args['meta'] );
-				$post_id     = $this->get_post_id();
 				$content     = '';
 				$date_format = fusion_library()->get_option( 'date_format' );
 				$date_format = $date_format ? $date_format : get_option( 'date_format' );
 				$separator   = '<span class="fusion-meta-tb-sep">' . $args['separator'] . '</span>';
-				$post_type   = get_post_type( $post_id );
-				$author_id   = -99 === $post_id ? get_post_field( 'post_author' ) : get_post_field( 'post_author', $post_id );
+				$post_type   = get_post_type();
+				$author_id   = -99 === $this->get_post_id() ? get_post_field( 'post_author' ) : get_post_field( 'post_author', $this->get_post_id() );
 				$is_builder  = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
 
 				foreach ( $options as $index => $option ) {
@@ -391,18 +445,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 								get_the_author_meta( 'display_name', $author_id )
 							);
 							/* Translators: %s: The author. */
-							$element  = 'no' === $args['display_element_labels'] ? '<span>' . $link . '</span>' : sprintf( esc_html__( 'By %s', 'fusion-builder' ), '<span>' . $link . '</span>' );
-							$content .= '<span class="fusion-tb-author">' . $element . '</span>' . $separator;
+							$content .= '<span class="fusion-tb-author">' . sprintf( esc_html__( 'By %s', 'fusion-builder' ), '<span>' . $link . '</span>' ) . '</span>' . $separator;
 							break;
 						case 'published_date':
 							/* Translators: %s: Date. */
-							$element  = 'no' === $args['display_element_labels'] ? get_the_time( $date_format ) : sprintf( esc_html__( 'Published On: %s', 'fusion-builder' ), get_the_time( $date_format ) );
-							$content .= '<span class="fusion-tb-published-date">' . $element . '</span>' . $separator;
+							$content .= '<span class="fusion-tb-published-date">' . sprintf( esc_html__( 'Published On: %s', 'fusion-builder' ), get_the_time( $date_format ) ) . '</span>' . $separator;
 							break;
 						case 'modified_date':
 							/* Translators: %s: Date. */
-							$element  = 'no' === $args['display_element_labels'] ? get_the_modified_date( $date_format ) : sprintf( esc_html__( 'Last Updated: %s', 'fusion-builder' ), get_the_modified_date( $date_format ) );
-							$content .= '<span class="fusion-tb-modified-date">' . $element . '</span>' . $separator;
+							$content .= '<span class="fusion-tb-modified-date">' . sprintf( esc_html__( 'Last Updated: %s', 'fusion-builder' ), get_the_modified_date( $date_format ) ) . '</span>' . $separator;
 							break;
 						case 'categories':
 							$categories = '';
@@ -414,23 +465,14 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 							];
 
 							if ( 'post' === $post_type || isset( $taxonomies[ $post_type ] ) ) {
-								$categories = 'post' === $post_type ? get_the_category_list( ', ', '', $post_id ) : get_the_term_list( $post_id, $taxonomies[ $post_type ], '', ', ' );
+								$categories = 'post' === $post_type ? get_the_category_list( ', ', '', false ) : get_the_term_list( $this->get_post_id(), $taxonomies[ $post_type ], '', ', ' );
 							}
 							/* Translators: %s: List of categories. */
-							$element  = 'no' === $args['display_element_labels'] ? $categories : sprintf( esc_html__( 'Categories: %s', 'fusion-builder' ), $categories );
-							$content .= $categories && ! is_wp_error( $categories ) ? '<span class="fusion-tb-categories">' . $element . '</span>' . $separator : '';
+							$content .= $categories && ! is_wp_error( $categories ) ? '<span class="fusion-tb-categories">' . sprintf( esc_html__( 'Categories: %s', 'fusion-builder' ), $categories ) . '</span>' . $separator : '';
 							break;
 						case 'comments':
-							$screen_reader          = '<span class="screen-reader-text"> ' . esc_html__( 'on', 'fusion-builder' ) . ' ' . get_the_title( $post_id ) . '</span>';
-							$screen_reader_singular = '<span class="screen-reader-text"> ' . esc_html__( 'comment on', 'fusion-builder' ) . ' ' . get_the_title( $post_id ) . '</span>';
-							$screen_reader_plural   = '<span class="screen-reader-text"> ' . esc_html__( 'comments on', 'fusion-builder' ) . ' ' . get_the_title( $post_id ) . '</span>';
-							$screen_reader_off      = '<span class="screen-reader-text"> ' . esc_html__( 'Comments off on', 'fusion-builder' ) . ' ' . get_the_title( $post_id ) . '</span>';
 							ob_start();
-							if ( 'no' === $args['display_element_labels'] ) {
-								comments_popup_link( '<i class="awb-icon-bubbles"></i> 0' . $screen_reader_plural, '<i class="awb-icon-bubbles"></i> 1' . $screen_reader_singular, '<i class="awb-icon-bubbles"></i> %' . $screen_reader_plural, '', '<i class="awb-icon-bubbles"></i> ' . esc_html__( 'Off', 'fusoin-builder' ) . $screen_reader_off );
-							} else {
-								comments_popup_link( esc_html__( '0 Comments', 'fusion-builder' ) . $screen_reader, esc_html__( '1 Comment', 'fusion-builder' ) . $screen_reader, esc_html__( '% Comments', 'fusion-builder' ) . $screen_reader );
-							}
+							comments_popup_link( esc_html__( '0 Comments', 'fusion-builder' ), esc_html__( '1 Comment', 'fusion-builder' ), esc_html__( '% Comments', 'fusion-builder' ) );
 							$comments = ob_get_clean();
 							$content .= '<span class="fusion-tb-comments">' . $comments . '</span>' . $separator;
 							break;
@@ -442,96 +484,35 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 							];
 
 							if ( 'post' === $post_type || isset( $taxonomies[ $post_type ] ) ) {
-								$tags = isset( $taxonomies[ $post_type ] ) ? get_the_term_list( $post_id, $taxonomies[ $post_type ], '', ', ', '' ) : get_the_tag_list( '', ', ', '' );
+								$tags = isset( $taxonomies[ $post_type ] ) ? get_the_term_list( $this->get_post_id(), $taxonomies[ $post_type ], '', ', ', '' ) : get_the_tag_list( '', ', ', '' );
 							}
 
 							/* Translators: %s: List of tags. */
-							$element  = 'no' === $args['display_element_labels'] ? $tags : sprintf( esc_html__( 'Tags: %s', 'fusion-builder' ), $tags );
-							$content .= $tags && ! is_wp_error( $tags ) ? '<span class="fusion-tb-tags">' . $element . '</span>' . $separator : '';
+							$content .= $tags && ! is_wp_error( $tags ) ? '<span class="fusion-tb-tags">' . sprintf( esc_html__( 'Tags: %s', 'fusion-builder' ), $tags ) . '</span>' . $separator : '';
 							break;
 						case 'skills':
 							$skills = '';
 							if ( 'avada_portfolio' === $post_type ) {
-								$skills = get_the_term_list( $post_id, 'portfolio_skills', '', ', ', '' );
+								$skills = get_the_term_list( $this->get_post_id(), 'portfolio_skills', '', ', ', '' );
 							}
 
 							/* Translators: %s: List of skills. */
-							$element  = 'no' === $args['display_element_labels'] ? $skills : sprintf( esc_html__( 'Skills Needed: %s', 'fusion-builder' ), $skills );
-							$content .= $skills ? apply_filters( 'fusion_portfolio_post_skills_label', '<span class="fusion-tb-skills">' . $skills . '</span>' ) . $separator : '';
+							$content .= $skills ? apply_filters( 'fusion_portfolio_post_skills_label', '<span class="fusion-tb-skills">' . sprintf( esc_html__( 'Skills Needed: %s', 'fusion-builder' ), $skills ) . '</span>' ) . $separator : '';
 							break;
 						case 'sku':
-							$sku_can_be_displayed = ( function_exists( 'wc_product_sku_enabled' ) && wc_product_sku_enabled() && is_object( $product ) && ( '' !== $product->get_sku() || $product->is_type( 'variable' ) ) );
-
-							if ( $sku_can_be_displayed || $is_live || $is_builder ) {
-								$sku_is_not_empty            = ( is_object( $product ) && $product->get_sku() );
-								$need_random_sku_for_builder = ( ( $is_live || $is_builder ) && ! $sku_is_not_empty );
-
-								$sku      = ( $sku_is_not_empty ? $product->get_sku() : esc_html__( 'N/A', 'fusion-builder' ) );
-								$sku      = $need_random_sku_for_builder ? wp_rand( 10000, 99999 ) : $sku;
-								$element  = 'no' === $args['display_element_labels'] ? '<span class="sku">' . $sku . '</span>' : esc_html__( 'SKU:', 'fusion-builder' ) . ' <span class="sku">' . $sku . '</span>';
-								$content .= '<span class="fusion-tb-sku product_meta">' . $element . '</span>' . $separator;
-							}
-							break;
-						case 'event_date':
-							$event_date = $this->get_event_date();
-							if ( $event_date ) {
-								$content .= '<span class="fusion-tb-event-date">' . $event_date . '</span>' . $separator;
-							}
-							break;
-						case 'event_start_date':
-							$event_start_date = $this->get_event_start_date();
-							if ( $event_start_date ) {
-								$content .= '<span class="fusion-tb-event-start-date">' . $event_start_date . '</span>' . $separator;
-							}
-							break;
-						case 'event_end_date':
-							$event_end_date = $this->get_event_end_date();
-							if ( $event_end_date ) {
-								$content .= '<span class="fusion-tb-event-end-date">' . $event_end_date . '</span>' . $separator;
+							if ( ( is_object( $product ) && '' !== $product->get_sku() ) || ( $is_live || $is_builder ) ) {
+								$sku = ( ( $is_live || $is_builder ) && ( ! is_object( $product ) || '' === $product->get_sku() ) ) ? wp_rand( 10000, 99999 ) : $product->get_sku();
+								/* Translators: %s: SKU. */
+								$content .= '<span class="fusion-tb-published-date">' . sprintf( esc_html__( 'SKU: %s', 'fusion-builder' ), $sku ) . '</span>' . $separator;
 							}
 							break;
 						case 'word_count':
-							$this->set_word_count();
-
-							/* Translators: %s: number of words. */
-							$element  = 'no' === $args['display_element_labels'] ? $this->word_count : sprintf( esc_html__( '%s words', 'fusion-builder' ), $this->word_count );
-							$content .= '<span class="fusion-tb-published-word-count">' . $element . '</span>' . $separator;
+								/* Translators: %s words */
+								$content .= '<span class="fusion-tb-published-word-count">' . sprintf( esc_html__( '%s words', 'fusion-builder' ), $this->count_post_words() ) . '</span>' . $separator;
 							break;
 						case 'read_time':
-							$this->set_word_count();
-
-							$reading_time_args = [
-								'reading_speed'         => $this->args['read_time'],
-								'use_decimal_precision' => $this->args['reading_time_decimal'],
-							];
-
-							$reading_time = awb_get_reading_time_for_display( $post_id, $reading_time_args, $this->word_count );
-							/* Translators: %s: minutes of read. */
-							$element  = 'no' === $args['display_element_labels'] ? sprintf( esc_html__( '%s min', 'fusion-builder' ), $reading_time ) : sprintf( esc_html__( '%s min read', 'fusion-builder' ), $reading_time );
-							$content .= '<span class="fusion-tb-published-read-time">' . $element . '</span>' . $separator;
-							break;
-						case 'total_views':
-							$total_views_num = avada_get_post_views( $post_id );
-
-							$both_views_are_displayed = in_array( 'today_views', $options, true );
-							if ( $both_views_are_displayed ) {
-								/* Translators: %s: number of total views of a post. */
-								$element     = 'no' === $args['display_element_labels'] ? $total_views_num : sprintf( esc_html__( 'Total Views: %s', 'fusion-builder' ), $total_views_num );
-								$total_views = $element;
-							} else {
-								/* Translators: %s: number of total views of a post. */
-								$element     = 'no' === $args['display_element_labels'] ? $total_views_num : sprintf( esc_html__( 'Views: %s', 'fusion-builder' ), $total_views_num );
-								$total_views = $element;
-							}
-
-							$content .= '<span class="fusion-tb-total-views">' . $total_views . '</span>' . $separator;
-							break;
-						case 'today_views':
-							$today_views_num = avada_get_today_post_views( $post_id );
-							/* Translators: %s: number of daily views. */
-							$element     = 'no' === $args['display_element_labels'] ? $today_views : sprintf( esc_html__( 'Daily Views: %s', 'fusion-builder' ), $today_views_num );
-							$today_views = $element;
-							$content    .= '<span class="fusion-tb-today-views">' . $today_views . '</span>' . $separator;
+								/* Translators: %s min read */
+								$content .= '<span class="fusion-tb-published-read-time">' . sprintf( esc_html__( '%s min read', 'fusion-builder' ), $this->count_reading_time() ) . '</span>' . $separator;
 							break;
 					}
 				}
@@ -540,105 +521,67 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 			}
 
 			/**
-			 * Set the word count.
+			 * Count time needed to read a post
 			 *
-			 * @since 3.9
-			 * @access private
-			 * @return void
+			 * @since 3.1.1
+			 * @return float
 			 */
-			private function set_word_count() {
-				if ( ! $this->word_count ) {
-					$post_id = $this->get_post_id();
-					$post    = ( -99 === $post_id || '-99' === $post_id ) ? Fusion_Dummy_Post::get_dummy_post() : get_post( $post_id );
+			public function count_reading_time() {
+				$word_count              = $this->count_post_words();
+				$this->args['read_time'] = intval( $this->args['read_time'] );
+				if ( 0 === $word_count || 0 === $this->args['read_time'] ) {
+					return 0;
+				}
+				$additional_time = $this->get_image_read_time();
+				return round( $word_count / $this->args['read_time'] + $additional_time, 1 );
+			}
 
-					$this->word_count = awb_get_post_content_word_count( $post );
+
+			/**
+			 * Count post images and count reading time
+			 *
+			 * @since 3.1.1
+			 * @return float|int
+			 */
+			public function get_image_read_time() {
+				$time            = 0;
+				$image_read_time = 0.05;
+				$post_content    = $this->get_post_content( false );
+				preg_match_all( '~<img~i', $post_content, $result );
+				if ( count( $result[0] ) > 0 ) {
+					$time = count( $result[0] ) * $image_read_time;
 				}
 
+				return $time;
 			}
 
 			/**
-			 * Get the event date.
+			 * Gets total words from the current post
 			 *
-			 * @since 3.5
-			 * @return string Empty string if the post is not an event.
+			 * @since 3.1.1
+			 * @return int
 			 */
-			public function get_event_date() {
-				$event_id = $this->get_post_id();
-				$event    = get_post( $event_id );
-
-				if ( ! $event instanceof WP_Post ) {
-					return '';
-				}
-
-				$post_is_event_type = ( 'tribe_events' === $event->post_type ? true : false );
-				if ( ! $post_is_event_type ) {
-					return '';
-				}
-
-				add_filter( 'tribe_events_recurrence_tooltip', [ $this, 'remove_event_recurring_info' ], 999 );
-				$date = tribe_events_event_schedule_details( $event_id );
-				remove_filter( 'tribe_events_recurrence_tooltip', [ $this, 'remove_event_recurring_info' ], 999 );
-
-				return $date;
+			public function count_post_words() {
+				return str_word_count( $this->get_post_content() );
 			}
 
-			/**
-			 * Remove the recurring event after the meta, since it will take a
-			 * lot of space.
-			 *
-			 * @param string $tooltip The recurring tooltip.
-			 * @return string Empty string, containing no tooltip.
-			 */
-			public static function remove_event_recurring_info( $tooltip ) {
-				return '';
-			}
 
 			/**
-			 * Get the event start date.
+			 * Get current post content without shortcodes and text.
 			 *
-			 * @since 3.5
-			 * @return string Empty string if the post is not an event.
+			 * @param bool $strip_tags should we strip tags or not.
+			 * @since 3.2
+			 * @return string|null
 			 */
-			public function get_event_start_date() {
-				$event_id = $this->get_post_id();
-				$event    = get_post( $event_id );
+			public function get_post_content( $strip_tags = true ) {
+				global $post;
 
-				if ( ! $event instanceof WP_Post ) {
-					return '';
+				$content      = $post->post_content;
+				$post_content = preg_replace( '~(?:\[/?)[^/\]]+/?\]~s', '', $content );
+				if ( $strip_tags ) {
+					$post_content = wp_strip_all_tags( $post_content );
 				}
-
-				$post_is_event_type = ( 'tribe_events' === $event->post_type ? true : false );
-				if ( ! $post_is_event_type ) {
-					return '';
-				}
-
-				/* translators: %s: a date, representing the start date of an event. */
-				$element = 'no' === $this->args['display_element_labels'] ? tribe_get_start_date( $event_id ) : sprintf( __( 'Start Date: %s', 'fusion-builder' ), tribe_get_start_date( $event_id ) );
-				return $element;
-			}
-
-			/**
-			 * Get the event end date.
-			 *
-			 * @since 3.5
-			 * @return string Empty string if the post is not an event.
-			 */
-			public function get_event_end_date() {
-				$event_id = $this->get_post_id();
-				$event    = get_post( $event_id );
-
-				if ( ! $event instanceof WP_Post ) {
-					return '';
-				}
-
-				$post_is_event_type = ( 'tribe_events' === $event->post_type ? true : false );
-				if ( ! $post_is_event_type ) {
-					return '';
-				}
-
-				/* translators: %s: a date, representing the end date of an event. */
-				$element = 'no' === $this->args['display_element_labels'] ? tribe_get_end_date( $event_id ) : sprintf( __( 'End Date: %s', 'fusion-builder' ), tribe_get_end_date( $event_id ) );
-				return $element;
+				return $post_content;
 			}
 
 			/**
@@ -650,25 +593,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
 			 */
 			public function add_css_files() {
 				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/meta.min.css' );
-
-				if ( class_exists( 'Avada' ) ) {
-					$version = Avada::get_theme_version();
-
-					Fusion_Media_Query_Scripts::$media_query_assets[] = [
-						'awb-meta-md',
-						FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/meta-md.min.css',
-						[],
-						$version,
-						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-medium' ),
-					];
-					Fusion_Media_Query_Scripts::$media_query_assets[] = [
-						'awb-meta-sm',
-						FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/meta-sm.min.css',
-						[],
-						$version,
-						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-small' ),
-					];
-				}
 			}
 		}
 	}
@@ -682,18 +606,20 @@ if ( fusion_is_element_enabled( 'fusion_tb_meta' ) ) {
  * @since 2.4
  */
 function fusion_component_meta() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Meta',
 			[
-				'name'      => esc_attr__( 'Post Meta', 'fusion-builder' ),
-				'shortcode' => 'fusion_tb_meta',
-				'icon'      => 'fusiona-meta-data',
-				'component' => true,
-				'templates' => [ 'content', 'post_cards', 'page_title_bar' ],
-				'params'    => [
+				'name'                    => esc_attr__( 'Meta', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_meta',
+				'icon'                    => 'fusiona-meta-data',
+				'component'               => true,
+				'templates'               => [ 'content', 'post_cards', 'page_title_bar' ],
+				'components_per_template' => 1,
+				'params'                  => [
 					[
 						'type'        => 'connected_sortable',
 						'heading'     => esc_attr__( 'Meta Elements', 'fusion-builder' ),
@@ -701,21 +627,16 @@ function fusion_component_meta() {
 						'param_name'  => 'meta',
 						'default'     => 'author,published_date,categories,comments,tags',
 						'choices'     => [
-							'author'           => esc_attr__( 'Author', 'fusion-builder' ),
-							'published_date'   => esc_attr__( 'Published Date', 'fusion-builder' ),
-							'modified_date'    => esc_attr__( 'Modified Date', 'fusion-builder' ),
-							'categories'       => esc_attr__( 'Categories', 'fusion-builder' ),
-							'comments'         => esc_attr__( 'Comments', 'fusion-builder' ),
-							'tags'             => esc_attr__( 'Tags', 'fusion-builder' ),
-							'skills'           => esc_attr__( 'Portfolio Skills', 'fusion-builder' ),
-							'sku'              => esc_attr__( 'Product SKU', 'fusion-builder' ),
-							'event_date'       => esc_attr__( 'Event Full Date', 'fusion-builder' ),
-							'event_start_date' => esc_attr__( 'Event Start Date', 'fusion-builder' ),
-							'event_end_date'   => esc_attr__( 'Event End Date', 'fusion-builder' ),
-							'word_count'       => esc_attr__( 'Word Count', 'fusion-builder' ),
-							'read_time'        => esc_attr__( 'Reading Time', 'fusion-builder' ),
-							'total_views'      => esc_attr__( 'Total Views', 'fusion-builder' ),
-							'today_views'      => esc_attr__( 'Daily Views', 'fusion-builder' ),
+							'author'         => esc_attr__( 'Author', 'fusion-builder' ),
+							'published_date' => esc_attr__( 'Published Date', 'fusion-builder' ),
+							'modified_date'  => esc_attr__( 'Modified Date', 'fusion-builder' ),
+							'categories'     => esc_attr__( 'Categories', 'fusion-builder' ),
+							'comments'       => esc_attr__( 'Comments', 'fusion-builder' ),
+							'tags'           => esc_attr__( 'Tags', 'fusion-builder' ),
+							'skills'         => esc_attr__( 'Portfolio Skills', 'fusion-builder' ),
+							'sku'            => esc_attr__( 'Product SKU', 'fusion-builder' ),
+							'word_count'     => esc_attr__( 'Word Count', 'fusion-builder' ),
+							'read_time'      => esc_attr__( 'Reading Time', 'fusion-builder' ),
 						],
 						'callback'    => [
 							'function' => 'fusion_ajax',
@@ -732,22 +653,6 @@ function fusion_component_meta() {
 						'value'       => [
 							'stacked' => esc_html__( 'Stacked', 'fusion-builder' ),
 							'floated' => esc_html__( 'Floated', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Display Element Labels', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls whether the labels of chosen elements should be displayed.', 'fusion-builder' ),
-						'param_name'  => 'display_element_labels',
-						'value'       => [
-							'yes' => esc_html__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_html__( 'No', 'fusion-builder' ),
-						],
-						'default'     => 'yes',
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_tb_meta',
-							'ajax'     => true,
 						],
 					],
 					[
@@ -773,7 +678,7 @@ function fusion_component_meta() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Reading Time', 'fusion-builder' ),
-						'description' => esc_attr__( 'Average words read per minute. The default value is 200.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Average Words Read / Min', 'fusion-builder' ),
 						'param_name'  => 'read_time',
 						'value'       => '200',
 						'default'     => '200',
@@ -781,36 +686,6 @@ function fusion_component_meta() {
 							'function' => 'fusion_ajax',
 							'action'   => 'get_fusion_tb_meta',
 							'ajax'     => true,
-						],
-						'dependency'  => [
-							[
-								'element'  => 'meta',
-								'value'    => 'read_time',
-								'operator' => 'contains',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Reading Time Decimal Precision', 'fusion-builder' ),
-						'description' => esc_attr__( 'Whether to use(Ex: 2.3 min) or not(Ex: 2 min) decimal precision in reading time.', 'fusion-builder' ),
-						'param_name'  => 'reading_time_decimal',
-						'value'       => [
-							'yes' => esc_html__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_html__( 'No', 'fusion-builder' ),
-						],
-						'default'     => 'yes',
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_tb_meta',
-							'ajax'     => true,
-						],
-						'dependency'  => [
-							[
-								'element'  => 'meta',
-								'value'    => 'read_time',
-								'operator' => 'contains',
-							],
 						],
 					],
 					[
@@ -844,9 +719,6 @@ function fusion_component_meta() {
 								'value'    => 'stacked',
 								'operator' => '!=',
 							],
-						],
-						'responsive'  => [
-							'state' => 'large',
 						],
 					],
 					[
@@ -944,18 +816,15 @@ function fusion_component_meta() {
 						'param_name'  => 'link_color',
 						'value'       => '',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'param_name' => 'text_hover_color',
-								'default'    => $fusion_settings->get( 'link_hover_color' ),
-								'preview'    => [
-									'selector' => 'a',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Link Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the link hover color of the meta section text.', 'fusion-builder' ),
+						'param_name'  => 'text_hover_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'primary_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
 						'type'        => 'colorpickeralpha',
@@ -964,6 +833,43 @@ function fusion_component_meta() {
 						'param_name'  => 'background_color',
 						'value'       => '',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'             => 'dimension',
+						'remove_from_atts' => true,
+						'heading'          => esc_attr__( 'Border Size', 'fusion-builder' ),
+						'description'      => esc_attr__( 'Controls the border size of the element wrapper. In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
+						'param_name'       => 'border_sizes',
+						'value'            => [
+							'border_top'    => '',
+							'border_right'  => '',
+							'border_bottom' => '',
+							'border_left'   => '',
+						],
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the element wrapper.', 'fusion-builder' ),
+						'param_name'  => 'border_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'sep_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'             => 'dimension',
+						'remove_from_atts' => true,
+						'heading'          => esc_attr__( 'Padding', 'fusion-builder' ),
+						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
+						'param_name'       => 'padding',
+						'value'            => [
+							'padding_top'    => '',
+							'padding_right'  => '',
+							'padding_bottom' => '',
+							'padding_left'   => '',
+						],
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
 						'type'             => 'dimension',
@@ -1101,7 +1007,7 @@ function fusion_component_meta() {
 						'preview_selector' => '.fusion-meta-tb',
 					],
 				],
-				'callback'  => [
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_meta',
 					'ajax'     => true,

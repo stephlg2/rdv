@@ -5,9 +5,9 @@
  * @package fusion-builder
  */
 
-$fusion_settings  = awb_get_fusion_settings();
+$fusion_settings  = fusion_get_fusion_settings();
 $sep_style_type   = $fusion_settings->get( 'separator_style_type' );
-$sep_border_color = Fusion_Color::new_color( $fusion_settings->get( 'sep_color' ) )->is_needs_adjustment() ? '#dddddd' : $fusion_settings->get( 'sep_color' );
+$sep_border_color = fusion_color_needs_adjustment( $fusion_settings->get( 'sep_color' ) ) ? '#dddddd' : $fusion_settings->get( 'sep_color' );
 $sep_border_size  = $fusion_settings->get( 'separator_border_size' );
 
 ?>

@@ -7,7 +7,7 @@
 
 ?>
 <script type="text/template" id="fusion-checkout-form-template">
-	<div class="fusion-builder-section-header fusion-builder-special-section">
+	<div class="fusion-builder-section-header">
 		<div class="fusion-builder-special-item-title">
 			{{ fusionBuilderText.checkout_form }}
 		</div>

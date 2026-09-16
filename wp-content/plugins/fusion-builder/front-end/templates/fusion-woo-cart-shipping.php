@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_woo_cart_shipping-shortcode">
+	{{{styles}}}
 	<form {{{ _.fusionGetAttributes( wooCartShippingAttr ) }}} method="post" action="#">
 		{{{ cart_shipping_content }}}
 	</form>

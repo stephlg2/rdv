@@ -33,7 +33,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values, atts.params );
-				this.values = atts.values;
 
 				countersBoxShortcode = this.buildAtts( atts.values );
 
@@ -61,11 +60,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				values.icon_size  = _.fusionValidateAttrValue( values.icon_size, '' );
 				values.body_size  = _.fusionValidateAttrValue( values.body_size, '' );
 				values.columns    = Math.min( 6, values.columns );
-
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -76,23 +70,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			buildAtts: function( values ) {
-				var cssVarsOptions = [
-						'margin_top',
-						'margin_right',
-						'margin_bottom',
-						'margin_left',
-						'body_color',
-						'body_size',
-						'border_color',
-						'color',
-						'title_size',
-						'icon_size',
-						'border_color'
-					],
-					countersBoxShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-counters-box counters-box row fusion-clearfix fusion-columns-' + values.columns,
-						style: this.getCssVarsForOptions( cssVarsOptions )
-					} );
+				var countersBoxShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
+					class: 'fusion-counters-box counters-box row fusion-clearfix fusion-columns-' + values.columns
+				} );
 
 				if ( '' !== values[ 'class' ] ) {
 					countersBoxShortcode[ 'class' ] += ' ' + values[ 'class' ];

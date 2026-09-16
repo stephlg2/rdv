@@ -21,11 +21,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Validate values.
 				this.validateValues( atts.values );
 
-				this.values = atts.values;
-
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -55,7 +54,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
-				attr.style += this.getStyleVariables();
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
@@ -91,23 +104,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function() {
-				var cssVarsOptions = [];
+			buildStyleBlock: function( values ) {
+				var styles = '<style type="text/css">';
 
-				cssVarsOptions = [ 'stock_color' ];
+				if ( '' !== values.stock_font_size ) {
+					styles += '.fusion-woo-stock-tb.fusion-woo-stock-tb-' + this.model.get( 'cid' ) + ' p.stock{ font-size: ' + values.stock_font_size + '}';
+				}
 
-				cssVarsOptions.margin_top      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.stock_font_size = { 'callback': _.fusionGetValueWithUnit };
+				if ( '' !== values.stock_color ) {
+					styles += '.fusion-woo-stock-tb.fusion-woo-stock-tb-' + this.model.get( 'cid' ) + ' p.stock{ color: ' + values.stock_color + '}';
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions );
+				styles += '</style>';
+
+				return styles;
 			}
 		} );
 	} );

@@ -35,6 +35,16 @@ class Fusion_Patcher {
 	private static $bundled = [];
 
 	/**
+	 * All the instances of this object (array of objects).
+	 *
+	 * @static
+	 * @access private
+	 * @since 1.0.0
+	 * @var mixed
+	 */
+	private static $instances = [];
+
+	/**
 	 * An instance of the Fusion_Patcher_Apply_Patch class.
 	 *
 	 * @access private
@@ -69,7 +79,12 @@ class Fusion_Patcher {
 	 * @param array $args The arguments we want to pass-on to the patcher.
 	 */
 	public function __construct( $args = [] ) {
+
 		$this->args = $args;
+
+		if ( ! isset( self::$instances[ $args['context'] ] ) ) {
+			self::$instances[ $args['context'] ] = $this;
+		}
 
 		// Only instantiate the sub-classes if we're on the admin page.
 		$slug            = $args['context'] . '-patcher';
@@ -94,6 +109,26 @@ class Fusion_Patcher {
 
 		// Checks for patches periodically.
 		$this->patcher_checker = new Fusion_Patcher_Checker( $this );
+
+	}
+
+	/**
+	 * Get all instances of this object, or a specific instance.
+	 *
+	 * @access public
+	 * @since 1.0.0
+	 * @param string|false $context If set to false, get all instances.
+	 * @return mixed
+	 */
+	public function get_instance( $context = false ) {
+
+		if ( false === $context ) {
+			return (array) self::$instances;
+		}
+		if ( ! isset( self::$instances[ $context ] ) ) {
+			return null;
+		}
+		return self::$instances[ $context ];
 
 	}
 
@@ -147,31 +182,6 @@ class Fusion_Patcher {
 	}
 
 	/**
-	 * Get bundled plugin version.
-	 *
-	 * @access public
-	 * @since 3.4.0
-	 * @param string $bundled Bundled plugin slug.
-	 * @return mixed null|float
-	 */
-	public function get_bundled_version( $bundled ) {
-
-		if ( 'fusion-builder' === $bundled && defined( 'FUSION_BUILDER_VERSION' ) ) {
-			return FUSION_BUILDER_VERSION;
-		}
-
-		if ( 'fusion-core' === $bundled && defined( 'FUSION_CORE_VERSION' ) ) {
-			return FUSION_CORE_VERSION;
-		}
-
-		if ( 'fusion-white-label-branding' === $bundled && defined( 'FUSION_WHITE_LABEL_BRANDING_VERSION' ) ) {
-			return FUSION_WHITE_LABEL_BRANDING_VERSION;
-		}
-
-		return null;
-	}
-
-	/**
 	 * Enqueue any scripts & stylesheets needed.
 	 *
 	 * @access public
@@ -182,7 +192,7 @@ class Fusion_Patcher {
 
 		if ( class_exists( 'Avada' ) ) {
 			wp_enqueue_style( 'avada_admin_css', trailingslashit( Avada::$template_dir_url ) . 'assets/admin/css/avada-admin.css', [], AVADA_VERSION );
-		}
+		}       
 
 	}
 

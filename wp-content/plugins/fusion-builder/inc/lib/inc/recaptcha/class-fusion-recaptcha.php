@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Avada Core
  * @subpackage Core
  * @since      3.9.2

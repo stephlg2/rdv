@@ -8,11 +8,12 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_sharing-shortcode">
+{{{styles}}}
 <div {{{ _.fusionGetAttributes( shortcodeAttr ) }}}>
 	<# if ( 'show' === taglineVisibility && '' !== tagline ) { #>
-	<{{ taglineTag }} {{{ _.fusionGetAttributes( taglineAttr ) }}}>
+	<h4 {{{ _.fusionGetAttributes( taglineAttr ) }}}>
 		{{{ tagline }}}
-	</{{ taglineTag }}>
+	</h4>
 	<# } #>
 	<div {{{ _.fusionGetAttributes( socialNetworksAttr ) }}}>
 		{{{ icons }}}

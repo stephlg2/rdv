@@ -8,10 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'FusionReduxFramework_select' ) ) {
 	class FusionReduxFramework_select {
 
-		public $parent;
-		public $field;
-		public $value;
-
 		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -47,14 +43,14 @@ if ( ! class_exists( 'FusionReduxFramework_select' ) ) {
 					/**
 					 * filter 'fusionredux-font-icons-file}'
 					 *
-					 * @param  string $icon_file File for the icons
+					 * @param  array $icon_file File for the icons
 					 */
 					$icons_file = apply_filters( 'fusionredux-font-icons-file', $icons_file );
 
 					/**
 					 * filter 'fusionredux/{opt_name}/field/font/icons/file'
 					 *
-					 * @param  string $icon_file File for the icons
+					 * @param  array $icon_file File for the icons
 					 */
 					$icons_file = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/field/font/icons/file", $icons_file );
 					if ( file_exists( $icons_file ) ) {

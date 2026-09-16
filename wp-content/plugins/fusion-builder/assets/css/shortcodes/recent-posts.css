@@ -1,11 +1,7 @@
 /* stylelint-disable length-zero-no-unit */
 /* stylelint-enable length-zero-no-unit */
 .fusion-recent-posts {
-  --awb-margin-top: 0;
-  --awb-margin-right: 0;
-  --awb-margin-bottom: 50px;
-  --awb-margin-left: 0;
-  margin: var(--awb-margin-top) var(--awb-margin-right) var(--awb-margin-bottom) var(--awb-margin-left);
+  margin-bottom: 50px;
 }
 .fusion-recent-posts .columns {
   overflow: hidden;
@@ -28,7 +24,7 @@
 .fusion-recent-posts .columns .column .fusion-flexslider .slides {
   width: 100%;
 }
-.fusion-recent-posts .columns .column .entry-title {
+.fusion-recent-posts .columns .column h4 {
   margin: 15px 0 3px;
   clear: none;
 }
@@ -67,7 +63,7 @@
   margin: 0 20px 5px 0;
   width: 144px;
 }
-.fusion-recent-posts.layout-thumbnails-on-side .columns .column .entry-title {
+.fusion-recent-posts.layout-thumbnails-on-side .columns .column h4 {
   margin-top: 0;
 }
 .fusion-recent-posts.layout-date-on-side .date-and-formats {
@@ -93,6 +89,6 @@
 .fusion-recent-posts.layout-date-on-side .columns .column {
   margin-bottom: 20px;
 }
-.fusion-recent-posts.layout-date-on-side .columns .column .entry-title {
+.fusion-recent-posts.layout-date-on-side .columns .column h4 {
   margin-top: 0;
 }

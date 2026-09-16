@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 		class FusionTB_Content extends Fusion_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * An array of the different status checks.
 			 *
 			 * @access protected
@@ -24,15 +33,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 			 * @var array
 			 */
 			protected $status;
-
-			/**
-			 * Backup array of the different status checks for nested content elements..
-			 *
-			 * @access protected
-			 * @since 3.3
-			 * @var array
-			 */
-			protected $backup_status = [];
 
 			/**
 			 * Have we paused live editor filters.
@@ -87,7 +87,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'margin_bottom'                 => '',
 					'margin_left'                   => '',
@@ -99,9 +99,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 					'animation_type'                => '',
 					'animation_direction'           => 'down',
 					'animation_speed'               => '0.1',
-					'animation_delay'               => '',
 					'animation_offset'              => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'               => '',
 					'excerpt'                       => 'no',
 					'excerpt_length'                => '55',
 					'strip_html'                    => 'yes',
@@ -114,13 +112,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 					'line_height'                   => '',
 					'letter_spacing'                => '',
 					'text_color'                    => '',
-					'text_transform'                => '',
-
-					'dropcap'                       => 'no',
-					'dropcap_boxed'                 => 'no',
-					'dropcap_boxed_radius'          => '',
-					'dropcap_color'                 => '',
-					'dropcap_text_color'            => '',
 				];
 			}
 
@@ -174,16 +165,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 						$this->restore_post();
 					}
 
-					if ( 'yes' === $args['dropcap'] ) {
-						if ( is_array( $content ) ) {
-								$content['excerpt']          = $this->set_drop_cap( $content['excerpt'], $args );
-								$content['excerpt_stripped'] = $this->set_drop_cap( $content['excerpt_stripped'], $args );
-								$content['full_content']     = $this->set_drop_cap( $content['full_content'], $args );
-						} else {
-							$content = $this->set_drop_cap( $content, $args );
-						}
-					}
-
 					$return_data['content'] = $content;
 
 					echo wp_json_encode( $return_data );
@@ -203,8 +184,9 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 			public function render( $args, $content = '' ) {
 				global $global_column_array, $global_column_inner_array, $global_container_count;
 
+				$this->params   = $args;
 				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_content' );
+				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $this->params, 'fusion_tb_content' );
 
 				$this->set_status();
 
@@ -233,21 +215,16 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 				$this->pre_render();
 				do_action( 'fusion_content_pre_render' );
 
-				// Emulate post if it is studio preview.
-				if ( isset( $_GET['awb-studio-content'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$this->emulate_post();
-				}
-
 				// Full content, retrieve like we did before, no emulation needed.
 				if ( 'no' === $this->args['excerpt'] ) {
-					$content = false !== $this->status['target_post'] && ! $this->status['post_card_rendering'] ? $this->status['target_post']->post_content : get_the_content();
+					$content = false !== $this->status['target_post'] ? $this->status['target_post']->post_content : get_the_content();
 					$content = apply_filters( 'the_content', $content );
 					$content = str_replace( ']]>', ']]&gt;', $content );
 
 				} else {
 
 					// We want excerpt, emulate target post if needed.
-					if ( false !== $this->status['target_post'] && ! $this->status['post_card_rendering'] ) {
+					if ( false !== $this->status['target_post'] ) {
 						$this->emulate_post();
 					}
 
@@ -255,14 +232,9 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 					$content = fusion_builder_get_post_content( '', $this->args['excerpt'], $this->args['excerpt_length'], $this->args['strip_html'] );
 
 					// Content retrieved, restore post if needed.
-					if ( false !== $this->status['target_post'] && ! $this->status['post_card_rendering'] ) {
+					if ( false !== $this->status['target_post'] ) {
 						$this->restore_post();
 					}
-				}
-
-				// Restore post if it is studio preview.
-				if ( isset( $_GET['awb-studio-content'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$this->restore_post();
 				}
 
 				$this->post_render();
@@ -273,11 +245,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 				$global_column_inner_array = $template_global_column_inner_array;
 				$global_container_count    = $template_global_container_count;
 
-				if ( 'yes' === $this->args['dropcap'] ) {
-					$content = $this->set_drop_cap( $content );
-				}
-
-				$content = '<div ' . FusionBuilder::attributes( 'fusion_tb_content-shortcode' ) . '>' . $content . '</div>';
+				$content = '<div ' . FusionBuilder::attributes( 'fusion_tb_content-shortcode' ) . '>' . $content . $this->get_styles() . '</div>';
 
 				$this->counter++;
 
@@ -285,40 +253,46 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 
 				return apply_filters( 'fusion_component_' . $this->shortcode_handle . '_content', $content, $args );
 			}
+				/**
+				 * Get the styles.
+				 *
+				 * @access protected
+				 * @since 3.0
+				 * @return string
+				 */
+			protected function get_styles() {
+				$this->base_selector = '.fusion-content-tb-' . $this->counter;
+				$this->dynamic_css   = [];
 
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
-
-				// Content typography.
-				$content_typography = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font', 'array' );
-
-				foreach ( $content_typography as $rule => $value ) {
-					$custom_vars[ 'text-' . $rule ] = $value;
+				if ( ! $this->is_default( 'content_alignment' ) ) {
+					$this->add_css_property( $this->base_selector, 'text-align', $this->args['content_alignment'] );
 				}
 
-				$css_vars_options = [
-					'text_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'font_size'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'letter_spacing' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_top'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'content_alignment',
-					'line_height',
-					'text_transform',
-				];
+				if ( ! $this->is_default( 'font_size' ) ) {
+					$this->add_css_property( $this->base_selector, 'font-size', fusion_library()->sanitize->get_value_with_unit( $this->args['font_size'] ) );
+				}
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				// Font family and weight.
+				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font', 'array' );
+				foreach ( $text_styles as $rule => $value ) {
+					$this->add_css_property( $this->base_selector, $rule, $value );
+				}
 
-				return $styles;
+				if ( ! $this->is_default( 'line_height' ) ) {
+					$this->add_css_property( $this->base_selector, 'line-height', fusion_library()->sanitize->get_value_with_unit( $this->args['line_height'] ) );
+				}
+
+				if ( ! $this->is_default( 'letter_spacing' ) ) {
+					$this->add_css_property( $this->base_selector, 'letter-spacing', fusion_library()->sanitize->get_value_with_unit( $this->args['letter_spacing'] ) );
+				}
+
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $this->base_selector, 'color', fusion_library()->sanitize->color( $this->args['text_color'] ) );
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -355,14 +329,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 			 */
 			public function post_render() {
 
-				$empty_status = false;
-				if ( ! empty( $this->backup_status ) ) {
-					$this->status        = $this->backup_status;
-					$this->backup_status = [];
-				} else {
-					$empty_status = true;
-				}
-
 				// We are within post card, switch it back for later elements in post card.
 				if ( $this->status['post_card_rendering'] ) {
 					FusionBuilder()->post_card_data['is_rendering'] = true;
@@ -376,11 +342,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 						do_action( 'fusion_pause_live_editor_filter' );
 					}
 				}
-
-				// We had no backup, reset status so next doesn't set as backup.
-				if ( $empty_status ) {
-					$this->status = [];
-				}
 			}
 
 			/**
@@ -391,9 +352,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 			 * @return void
 			 */
 			public function set_status() {
-				if ( empty( $this->backup_status ) ) {
-					$this->backup_status = $this->status;
-				}
 				$this->status = [
 
 					// Current page.
@@ -448,7 +406,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -459,64 +417,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
 				}
 
 				return $attr;
-			}
-
-			/**
-			 * Set dropcap.
-			 *
-			 * @param string      $content The content.
-			 * @param false|array $args The arguments, defaults to false.
-			 * @since 3.9.2
-			 * @return array
-			 */
-			public function set_drop_cap( $content, $args = false ) {
-
-				$args             = $args ? $args : $this->args;
-				$dropcap_settings = [];
-
-				if ( 'yes' === $args['dropcap_boxed'] ) {
-					$dropcap_settings['boxed'] = 'yes';
-				}
-				if ( '' !== $args['dropcap_boxed_radius'] ) {
-					$dropcap_settings['boxed_radius'] = $args['dropcap_boxed_radius'];
-				}
-				if ( '' !== $args['dropcap_color'] ) {
-					$dropcap_settings['color'] = $args['dropcap_color'];
-				}
-				if ( '' !== $args['dropcap_text_color'] ) {
-					$dropcap_settings['text_color'] = $args['dropcap_text_color'];
-				}
-
-				$dropcap_settings['class'] = 'fusion-content-tb-dropcap';
-
-				$params = [];
-				foreach ( $dropcap_settings as $key => $value ) {
-					$params[] = $key . '="' . $value . '"';
-				}
-				$space   = count( $params ) ? ' ' : '';
-				$content = trim( $content );
-
-				preg_match( '/(<p .*?>|<p>)(.*?)<\/p>/', $content, $matches );
-
-				if ( isset( $matches[0] ) ) {
-					$content = preg_replace( '/(<p .*?>|<p>)(.*?)<\/p>/', '~~FIRSTPARAGRAPHTAG~~', $content, 1 );
-					$first_p = $matches[0];
-					$first_p = preg_replace( '/>([a-zA-Z0-9])/', '>[fusion_dropcap' . $space . join( ' ', $params ) . ']$1[/fusion_dropcap]', $first_p, 1 );
-					$content = preg_replace( '/~~FIRSTPARAGRAPHTAG~~/', $first_p, $content, 1 );
-				}
-
-				return do_shortcode( $content );
-			}
-
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/content.min.css' );
 			}
 		}
 	}
@@ -531,7 +431,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_content' ) ) {
  */
 function fusion_component_content() {
 
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 
 	$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
 	$to_link    = '';
@@ -551,16 +451,7 @@ function fusion_component_content() {
 				'icon'                    => 'fusiona-content',
 				'component'               => true,
 				'templates'               => [ 'content', 'post_cards' ],
-				'components_per_template' => false,
-				'subparam_map'            => [
-					'fusion_font_family_text_font'  => 'main_typography',
-					'fusion_font_variant_text_font' => 'main_typography',
-					'font_size'                     => 'main_typography',
-					'line_height'                   => 'main_typography',
-					'letter_spacing'                => 'main_typography',
-					'text_transform'                => 'main_typography',
-					'color'                         => 'main_typography',
-				],
+				'components_per_template' => 1,
 				'params'                  => [
 					[
 						'type'        => 'radio_button_set',
@@ -606,22 +497,6 @@ function fusion_component_content() {
 								'value'    => 'yes',
 								'operator' => '==',
 							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Dropcap', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set the first letter of first paragraph as a dropcap.', 'fusion-builder' ),
-						'param_name'  => 'dropcap',
-						'default'     => 'no',
-						'value'       => [
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'callback'    => [
-							'function' => 'fusion_ajax',
-							'action'   => 'get_fusion_content',
-							'ajax'     => true,
 						],
 					],
 					[
@@ -676,120 +551,50 @@ function fusion_component_content() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'remove_from_atts' => true,
-						'global'           => true,
-						'heading'          => esc_attr__( 'Typography', 'fusion-builder' ),
-						/* translators: URL for the link. */
-						'description'      => sprintf( esc_html__( 'Controls the title text typography.  Leave empty if the global typography for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
-						'param_name'       => 'main_typography',
-						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-						'choices'          => [
-							'font-family'    => 'text_font',
-							'font-size'      => 'font_size',
-							'line-height'    => 'line_height',
-							'letter-spacing' => 'letter_spacing',
-							'text-transform' => 'text_transform',
-							'color'          => 'text_color',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '',
-							'font-size'      => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'text-transform' => 'none',
-							'color'          => $fusion_settings->get( 'body_typography', 'color' ),
-						],
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Boxed Dropcap', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose to get a boxed dropcap.' ),
-						'param_name'  => 'dropcap_boxed',
-						'value'       => [
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'default'     => 'no',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'dropcap',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'    => [
-							'function' => 'content_dropcap_style',
+						'type'             => 'font_family',
+						'remove_from_atts' => true,
+						'heading'          => esc_attr__( 'Font Family', 'fusion-builder' ),
+						/* translators: URL for the link. */
+						'description'      => sprintf( esc_html__( 'Controls the font family of the text.  Leave empty if the global font family for the text should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'       => 'text_font',
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '400',
 						],
 					],
 					[
 						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Dropcap Border Radius', 'fusion-builder' ),
-						'param_name'  => 'dropcap_boxed_radius',
+						'heading'     => esc_attr__( 'Line Height', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the line height of the text. Enter value including any valid CSS unit, ex: 28px.', 'fusion-builder' ),
+						'param_name'  => 'line_height',
 						'value'       => '',
-						'description' => esc_attr__( 'Choose the radius of the boxed dropcap. In pixels (px), ex: 1px, or "round".', 'fusion-builder' ),
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'dropcap',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'dropcap_boxed',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'    => [
-							'function' => 'content_dropcap_style',
-						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Letter Spacing', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the letter spacing of the text. Enter value including any valid CSS unit, ex: 2px.', 'fusion-builder' ),
+						'param_name'  => 'letter_spacing',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
 						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Dropcap Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the color of the dropcap. Leave blank for Global Options selection.', 'fusion-builder' ),
-						'param_name'  => 'dropcap_color',
+						'heading'     => esc_attr__( 'Font Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the text, ex: #000.', 'fusion-builder' ),
+						'param_name'  => 'text_color',
 						'value'       => '',
-						'default'     => $fusion_settings->get( 'dropcap_color' ),
+						'default'     => $fusion_settings->get( 'body_typography', 'color' ),
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'dropcap',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'    => [
-							'function' => 'content_dropcap_style',
-						],
-
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Dropcap Text Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the color of the dropcap letter when using a box. Leave blank for Global Options selection.', 'fusion-builder' ),
-						'param_name'  => 'dropcap_text_color',
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'dropcap_text_color' ),
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'dropcap',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'dropcap_boxed',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-						'callback'    => [
-							'function' => 'content_dropcap_style',
-						],
 					],
 					'fusion_animation_placeholder' => [
 						'preview_selector' => '.fusion-content-tb',

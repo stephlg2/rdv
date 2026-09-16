@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_code' ) ) {
 		class FusionSC_Code_Block extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -63,7 +72,7 @@ function fusion_element_code_block() {
 			'shortcode'   => 'fusion_code',
 			'icon'        => 'fusiona-code',
 			'escape_html' => true,
-			'help_url'    => 'https://avada.com/documentation/code-block-element/',
+			'help_url'    => 'https://theme-fusion.com/documentation/fusion-builder/elements/code-block-element/',
 			'params'      => [
 				[
 					'type'        => 'code',

@@ -26,6 +26,7 @@ class Fusion_Builder_Padding_Helper {
 	 * @return string
 	 */
 	public static function get_paddings_style( $args ) {
+
 		$style         = '';
 		$padding_sides = [
 			'padding_top',
@@ -37,31 +38,6 @@ class Fusion_Builder_Padding_Helper {
 		foreach ( $padding_sides as $padding_side ) {
 			if ( isset( $args[ $padding_side ] ) && $args[ $padding_side ] ) {
 				$style .= str_replace( '_', '-', $padding_side ) . ':' . fusion_library()->sanitize->get_value_with_unit( $args[ $padding_side ] ) . ';';
-			}
-		}
-
-		return $style;
-	}
-
-	/**
-	 * Generates padding CSS vars properties.
-	 *
-	 * @since 3.9
-	 * @param array $args Element arguments.
-	 * @return string
-	 */
-	public static function get_padding_vars( $args ) {
-		$style         = '';
-		$padding_sides = [
-			'padding_top',
-			'padding_right',
-			'padding_bottom',
-			'padding_left',
-		];
-
-		foreach ( $padding_sides as $padding_side ) {
-			if ( isset( $args[ $padding_side ] ) && $args[ $padding_side ] ) {
-				$style .= '--awb-' . str_replace( '_', '-', $padding_side ) . ':' . fusion_library()->sanitize->get_value_with_unit( $args[ $padding_side ] ) . ';';
 			}
 		}
 

@@ -10,7 +10,7 @@
 <#
 	var fieldId         = 'undefined' === typeof param.param_name ? param.id : param.param_name,
 		option_value    = 'undefined' === typeof option_value ? '' : option_value,
-		widthValue      = option_value || param.default,
+		rangeValue      = option_value || param.default,
 		responsiveState = param.responsive && param.responsive.state;
 #>
 <div class="fusion-form-column-width fusion-option-{{ fieldId }}">
@@ -35,9 +35,11 @@
 	<div class="ui-input">
 		<input
 			type="text"
-			value="{{ widthValue }}"
-			class="custom-width-input fusion-always-update fusion-hide-from-atts"
+			value="{{ rangeValue }}"
+			class="custom-width-input fusion-hide-from-atts fusion-dont-update"
 		/>
+		<div class="custom-width-range-slider" data-direction="<?php echo ( is_rtl() ) ? 'rtl' : 'ltr'; ?>">
+		</div>
 	</div>
 	<div class="column-width-toggle-container">
 		<a href="#" class="column-width-toggle">

@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_menu_anchor' ) ) {
 		class FusionSC_MenuAnchor extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -114,7 +123,7 @@ function fusion_element_menu_anchor() {
 				'icon'       => 'fusiona-anchor',
 				'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-menu-anchor-preview.php',
 				'preview_id' => 'fusion-builder-block-module-menu-anchor-preview-template',
-				'help_url'   => 'hhttps://avada.com/documentation/menu-anchor-element/',
+				'help_url'   => 'https://theme-fusion.com/documentation/fusion-builder/elements/menu-anchor-element/',
 				'params'     => [
 					[
 						'type'        => 'textfield',

@@ -13,6 +13,14 @@
 class FusionCore_Plugin {
 
 	/**
+	* Plugin version, used for cache-busting of style and script file references.
+	*
+	* @since   1.0.0
+	* @var  string
+	*/
+	const VERSION = FUSION_CORE_VERSION;
+
+	/**
 	 * Instance of the class.
 	 *
 	 * @static
@@ -92,6 +100,9 @@ class FusionCore_Plugin {
 		// Check if Avada Core has been updated.  Delay until after theme is available.
 		add_action( 'after_setup_theme', [ $this, 'versions_compare' ] );
 
+		// Init Widgets.
+		add_action( 'widgets_init', [ $this, 'widget_init' ] );
+
 		// Exclude post type from Events Calendar.
 		add_filter( 'tribe_tickets_settings_post_types', [ $this, 'fusion_core_exclude_post_type' ] );
 
@@ -118,23 +129,29 @@ class FusionCore_Plugin {
 		if ( ! class_exists( 'Avada' ) || ! class_exists( 'Fusion_Builder' ) ) {
 			require_once FUSION_CORE_PATH . '/shortcodes/fusion-contact-form.php';
 		}
+
+		// Load widget classes.
+		$filenames = glob( FUSION_CORE_PATH . '/includes/widget/*.php', GLOB_NOSORT );
+		foreach ( $filenames as $filename ) {
+			require_once wp_normalize_path( $filename );
+		}
 	}
 
 	/**
 	 * Include CPT files.
 	 *
 	 * @access public
-	 * @since 5.1.2
+s	 * @since 5.1.2
 	 * @return void
 	 */
 	public function include_cpt_dependencies() {
-		$fusion_settings = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+		$fusion_settings = self::get_fusion_settings();
 
-		if ( ! $fusion_settings || '0' !== $fusion_settings->get( 'status_fusion_portfolio' ) ) {
+		if ( ! class_exists( 'Fusion_Settings' ) || '0' !== $fusion_settings->get( 'status_fusion_portfolio' ) ) {
 			require_once FUSION_CORE_PATH . '/includes/class-fusion-portfolio.php';
 		}
 
-		if ( ! $fusion_settings || '0' !== $fusion_settings->get( 'status_fusion_faqs' ) ) {
+		if ( ! class_exists( 'Fusion_Settings' ) || '0' !== $fusion_settings->get( 'status_fusion_faqs' ) ) {
 			require_once FUSION_CORE_PATH . '/includes/class-fusion-faqs.php';
 		}
 	}
@@ -156,14 +173,36 @@ class FusionCore_Plugin {
 	 * @static
 	 * @access public
 	 * @since 1.0.0
-	 * @return object A single instance of the class.
+	 * @return object  A single instance of the class.
 	 */
 	public static function get_instance() {
+
 		// If the single instance hasn't been set yet, set it now.
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
+
+	}
+
+	/**
+	 * Get the $fusion_settings global.
+	 *
+	 * @static
+	 * @access public
+	 * @since 2.0
+	 * @return Fusion_Settings
+	 */
+	public static function get_fusion_settings() {
+		if ( class_exists( 'Fusion_Settings' ) ) {
+			global $fusion_settings;
+			if ( ! $fusion_settings ) {
+				$fusion_settings = Fusion_Settings::get_instance();
+			}
+			return $fusion_settings;
+		}
+
+		return false;
 	}
 
 	/**
@@ -178,7 +217,7 @@ class FusionCore_Plugin {
 	 * @return string|mixed The correct default value.
 	 */
 	public static function get_option_default_value( $option_name, $default_values, $sanitation_function = false ) {
-		$fusion_settings = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+		$fusion_settings = self::get_fusion_settings();
 		$option_value    = '';
 
 		if ( $fusion_settings ) {
@@ -212,8 +251,7 @@ class FusionCore_Plugin {
 		$value = '';
 		// If Fusion_Settings is available, use it to get the theme-option.
 		if ( class_exists( 'Fusion_Settings' ) ) {
-			$fusion_settings = awb_get_fusion_settings();
-			$value           = $fusion_settings->get( $option, $subset );
+			$value = self::get_fusion_settings()->get( $option, $subset );
 		}
 		return apply_filters( 'fusion_core_get_option', $value, $option, $subset );
 
@@ -281,7 +319,7 @@ class FusionCore_Plugin {
 	 * @access public
 	 */
 	public function scripts() {
-		$fusion_settings = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+		$fusion_settings = self::get_fusion_settings();
 
 		// If we're using a CSS to file compiler there's no need to enqueue separate file.
 		// It will be added directly to the compiled CSS (@see scripts_dynamic_css method).
@@ -291,16 +329,7 @@ class FusionCore_Plugin {
 			}
 		}
 
-		wp_enqueue_style( 'fusion-core-comment-form', FUSION_CORE_URL . 'css/comment-form.min.css', [], FUSION_CORE_VERSION );
-		wp_enqueue_style( 'fusion-core-privacy', FUSION_CORE_URL . 'css/privacy.min.css', [], FUSION_CORE_VERSION );
-
-		if ( false === $fusion_settings || '0' !== $fusion_settings->get( 'status_fusion_faqs' ) ) {
-			wp_enqueue_style( 'fusion-core-faqs', FUSION_CORE_URL . 'css/faqs.min.css', [], FUSION_CORE_VERSION );
-		}
-
-		if ( false === $fusion_settings || '0' !== $fusion_settings->get( 'status_fusion_portfolio' ) ) {
-			wp_enqueue_style( 'fusion-core-portfolio', FUSION_CORE_URL . 'css/portfolio.min.css', [], FUSION_CORE_VERSION );
-		}
+		wp_enqueue_style( 'fusion-core-style', FUSION_CORE_URL . 'css/style.min.css', [], FUSION_CORE_VERSION );
 	}
 
 	/**
@@ -310,12 +339,11 @@ class FusionCore_Plugin {
 	 * @since 4.0
 	 */
 	public function live_scripts() {
-
-		wp_enqueue_script( 'fusion_builder_portfolio_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-portfolio.js', [], FUSION_CORE_VERSION, true );
-		wp_enqueue_script( 'fusion_builder_faq_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-faq.js', [], FUSION_CORE_VERSION, true );
-		wp_enqueue_script( 'fusion_builder_fusionslider_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-fusionslider.js', [], FUSION_CORE_VERSION, true );
-		wp_enqueue_script( 'fusion_builder_privacy_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-privacy.js', [], FUSION_CORE_VERSION, true );
-		wp_enqueue_script( 'fusion_builder_project_details_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-project-details.js', [], FUSION_CORE_VERSION, true );
+		wp_enqueue_script( 'fusion_builder_portfolio_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-portfolio.js', [], self::VERSION, true );
+		wp_enqueue_script( 'fusion_builder_faq_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-faq.js', [], self::VERSION, true );
+		wp_enqueue_script( 'fusion_builder_fusionslider_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-fusionslider.js', [], self::VERSION, true );
+		wp_enqueue_script( 'fusion_builder_privacy_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-privacy.js', [], self::VERSION, true );
+		wp_enqueue_script( 'fusion_builder_project_details_element', FUSION_CORE_URL . 'shortcodes/previews/front-end/elements/view-project-details.js', [], self::VERSION, true );
 	}
 
 	/**
@@ -327,25 +355,13 @@ class FusionCore_Plugin {
 	 * @return string The dynamic-css with extra css apended if needed.
 	 */
 	public function scripts_dynamic_css( $original_styles ) {
-		$fusion_settings = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+		$fusion_settings = self::get_fusion_settings();
 
 		if ( $fusion_settings ) {
 			if ( 'off' !== $fusion_settings->get( 'css_cache_method' ) ) {
 				$wp_filesystem = Fusion_Helper::init_filesystem();
-
-				$original_styles = $wp_filesystem->get_contents( FUSION_CORE_PATH . '/css/comment-form.min.css' ) . $original_styles;
-				$original_styles = $wp_filesystem->get_contents( FUSION_CORE_PATH . '/css/privacy.min.css' ) . $original_styles;
-
-				if ( '0' !== $fusion_settings->get( 'status_fusion_portfolio' ) ) {
-					$original_styles = $wp_filesystem->get_contents( FUSION_CORE_PATH . '/css/portfolio.min.css' ) . $original_styles;
-				}
-
-				if ( '0' !== $fusion_settings->get( 'status_fusion_faqs' ) ) {
-					$original_styles = $wp_filesystem->get_contents( FUSION_CORE_PATH . '/css/faqs.min.css' ) . $original_styles;
-				}
-
 				// Stylesheet ID: fusion-core-style.
-				return $original_styles;
+				return $wp_filesystem->get_contents( FUSION_CORE_PATH . '/css/style.min.css' ) . $original_styles;
 			}
 		}
 
@@ -359,7 +375,7 @@ class FusionCore_Plugin {
 	 * @since 3.1.0
 	 */
 	public function register_post_types() {
-		$fusion_settings = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+		$fusion_settings = self::get_fusion_settings();
 
 		if ( ! $fusion_settings ) {
 			$fusion_settings_array = [
@@ -404,15 +420,12 @@ class FusionCore_Plugin {
 					],
 					'public'       => true,
 					'has_archive'  => true,
-					'show_ui'      => apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_portfolio' ),
-					'show_in_menu' => apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_portfolio' ),
 					'rewrite'      => [
 						'slug' => $fusion_settings_array['portfolio_slug'],
 					],
 					'show_in_rest' => true,
 					'supports'     => [ 'title', 'editor', 'excerpt', 'author', 'thumbnail', 'comments', 'revisions', 'custom-fields', 'page-attributes', 'post-formats' ],
 					'can_export'   => true,
-					'menu_icon'    => 'dashicons-awb-portfolio',
 				]
 			);
 
@@ -483,15 +496,12 @@ class FusionCore_Plugin {
 					],
 					'public'       => true,
 					'has_archive'  => true,
-					'show_ui'      => apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_faq' ),
-					'show_in_menu' => apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_faq' ),
 					'rewrite'      => [
 						'slug' => $fusion_settings_array['faq_slug'],
 					],
 					'show_in_rest' => true,
 					'supports'     => [ 'title', 'editor', 'excerpt', 'author', 'thumbnail', 'comments', 'revisions', 'custom-fields', 'page-attributes', 'post-formats' ],
 					'can_export'   => true,
-					'menu_icon'    => 'dashicons-awb-faq',
 				]
 			);
 
@@ -654,7 +664,12 @@ class FusionCore_Plugin {
 	 * @return array  dependency checks.
 	 */
 	public function set_builder_dependencies( $dependencies, $shortcode, $option ) {
-		$fusion_settings      = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+
+		global $fusion_settings;
+		if ( ! $fusion_settings ) {
+			$fusion_settings = Fusion_Settings::get_instance();
+		}
+
 		$shortcode_option_map = [];
 
 		// Portfolio.
@@ -846,7 +861,7 @@ class FusionCore_Plugin {
 		];
 
 		// If has TO related dependency, do checks.
-		if ( $fusion_settings && isset( $shortcode_option_map[ $option ][ $shortcode ] ) && is_array( $shortcode_option_map[ $option ][ $shortcode ] ) ) {
+		if ( isset( $shortcode_option_map[ $option ][ $shortcode ] ) && is_array( $shortcode_option_map[ $option ][ $shortcode ] ) ) {
 			foreach ( $shortcode_option_map[ $option ][ $shortcode ] as $option_check ) {
 				$option_value = $fusion_settings->get( $option_check['check']['element-global'] );
 				$pass         = false;
@@ -951,114 +966,94 @@ class FusionCore_Plugin {
 		];
 
 		// FAQs.
-		$shortcode_option_map['featured_image']['fusion_faq']             = [
+		$shortcode_option_map['featured_image']['fusion_faq']            = [
 			'theme-option' => 'faq_featured_image',
 			'type'         => 'yesno',
 		];
-		$shortcode_option_map['filters']['fusion_faq']                    = [
+		$shortcode_option_map['filters']['fusion_faq']                   = [
 			'theme-option' => 'faq_filters',
 			'type'         => 'select',
 		];
-		$shortcode_option_map['type']['fusion_faq']                       = [
+		$shortcode_option_map['type']['fusion_faq']                      = [
 			'theme-option' => 'faq_accordion_type',
 			'type'         => 'select',
 		];
-		$shortcode_option_map['divider_line']['fusion_faq']               = [
+		$shortcode_option_map['divider_line']['fusion_faq']              = [
 			'theme-option' => 'faq_accordion_divider_line',
 			'type'         => 'yesno',
 		];
-		$shortcode_option_map['divider_color']['fusion_faq']              = [
-			'theme-option' => 'faq_accordion_divider_color',
-			'reset'        => true,
-		];
-		$shortcode_option_map['divider_hover_color']['fusion_faq']        = [
-			'theme-option' => 'faq_accordion_divider_hover_color',
-			'reset'        => true,
-		];
-		$shortcode_option_map['title_font']['fusion_faq']                 = [
-			'theme-option' => 'faq_accordion_title_typography',
-			'subset'       => 'font-family',
-			'type'         => 'select',
-		];
-		$shortcode_option_map['title_font_size']['fusion_faq']            = [
-			'theme-option' => 'faq_accordion_title_typography',
-			'subset'       => 'font-size',
-			'type'         => 'select',
-		];
-		$shortcode_option_map['title_color']['fusion_faq']                = [
-			'theme-option' => 'faq_accordion_title_typography',
-			'subset'       => 'color',
-			'reset'        => true,
-		];
-		$shortcode_option_map['content_font']['fusion_faq']               = [
-			'theme-option' => 'faq_accordion_content_typography',
-			'subset'       => 'font-family',
-			'type'         => 'select',
-		];
-		$shortcode_option_map['content_font_size']['fusion_faq']          = [
-			'theme-option' => 'faq_accordion_content_typography',
-			'subset'       => 'font-size',
-			'type'         => 'select',
-		];
-		$shortcode_option_map['content_color']['fusion_faq']              = [
-			'theme-option' => 'faq_accordion_content_typography',
-			'subset'       => 'color',
-			'reset'        => true,
-		];
-		$shortcode_option_map['boxed_mode']['fusion_faq']                 = [
+		$shortcode_option_map['boxed_mode']['fusion_faq']                = [
 			'theme-option' => 'faq_accordion_boxed_mode',
 			'type'         => 'yesno',
 		];
-		$shortcode_option_map['border_size']['fusion_faq']                = [
+		$shortcode_option_map['border_size']['fusion_faq']               = [
 			'theme-option' => 'faq_accordion_border_size',
 			'type'         => 'range',
 		];
-		$shortcode_option_map['border_color']['fusion_faq']               = [
+		$shortcode_option_map['border_color']['fusion_faq']              = [
 			'theme-option' => 'faq_accordian_border_color',
 			'reset'        => true,
 		];
-		$shortcode_option_map['background_color']['fusion_faq']           = [
+		$shortcode_option_map['background_color']['fusion_faq']          = [
 			'theme-option' => 'faq_accordian_background_color',
 			'reset'        => true,
 		];
-		$shortcode_option_map['hover_color']['fusion_faq']                = [
+		$shortcode_option_map['hover_color']['fusion_faq']               = [
 			'theme-option' => 'faq_accordian_hover_color',
 			'reset'        => true,
 		];
-		$shortcode_option_map['title_font_size']['fusion_faq']            = [
-			'theme-option' => 'faq_accordion_title_typography',
-			'subset'       => 'font-size',
+		$shortcode_option_map['title_font_size']['fusion_faq']           = [
+			'theme-option' => 'faq_accordion_title_font_size',
 		];
-		$shortcode_option_map['icon_size']['fusion_faq']                  = [
+		$shortcode_option_map['icon_size']['fusion_faq']                 = [
 			'theme-option' => 'faq_accordion_icon_size',
 			'type'         => 'range',
 		];
-		$shortcode_option_map['icon_color']['fusion_faq']                 = [
+		$shortcode_option_map['icon_color']['fusion_faq']                = [
 			'theme-option' => 'faq_accordian_icon_color',
 			'reset'        => true,
 		];
-		$shortcode_option_map['icon_boxed_mode']['fusion_faq']            = [
+		$shortcode_option_map['icon_boxed_mode']['fusion_faq']           = [
 			'theme-option' => 'faq_accordion_icon_boxed',
 			'type'         => 'yesno',
 		];
-		$shortcode_option_map['icon_box_color']['fusion_faq']             = [
+		$shortcode_option_map['icon_box_color']['fusion_faq']            = [
 			'theme-option' => 'faq_accordian_inactive_color',
 			'reset'        => true,
 		];
-		$shortcode_option_map['icon_alignment']['fusion_faq']             = [
+		$shortcode_option_map['icon_alignment']['fusion_faq']            = [
 			'theme-option' => 'faq_accordion_icon_align',
 			'type'         => 'select',
 		];
-		$shortcode_option_map['toggle_hover_accent_color']['fusion_faq']  = [
+		$shortcode_option_map['toggle_hover_accent_color']['fusion_faq'] = [
 			'theme-option' => 'faq_accordian_active_color',
-			'reset'        => true,
-		];
-		$shortcode_option_map['toggle_active_accent_color']['fusion_faq'] = [
-			'theme-option' => 'faq_accordian_active_accent_color',
 			'reset'        => true,
 		];
 
 		return $shortcode_option_map;
+	}
+
+	/**
+	 * Register widgets.
+	 *
+	 * @since 4.0
+	 * @access public
+	 * @return void
+	 */
+	public function widget_init() {
+
+		register_widget( 'Fusion_Widget_Ad_125_125' );
+		register_widget( 'Fusion_Widget_Author' );
+		register_widget( 'Fusion_Widget_Contact_Info' );
+		register_widget( 'Fusion_Widget_Tabs' );
+		register_widget( 'Fusion_Widget_Recent_Works' );
+		register_widget( 'Fusion_Widget_Tweets' );
+		register_widget( 'Fusion_Widget_Flickr' );
+		register_widget( 'Fusion_Widget_Social_Links' );
+		register_widget( 'Fusion_Widget_Facebook_Page' );
+		register_widget( 'Fusion_Widget_Menu' );
+		register_widget( 'Fusion_Widget_Vertical_Menu' );
+		register_widget( 'Fusion_Widget_Form' );
 	}
 
 	/**
@@ -1071,7 +1066,7 @@ class FusionCore_Plugin {
 	public function add_dashboard_widget() {
 
 		// Create the widget.
-		wp_add_dashboard_widget( 'themefusion-news', apply_filters( 'avada_dashboard_widget_title', esc_attr__( 'Avada News', 'Avada' ) ), [ $this, 'display_news_dashboard_widget' ] );
+		wp_add_dashboard_widget( 'themefusion-news', apply_filters( 'avada_dashboard_widget_title', esc_attr__( 'ThemeFusion News', 'Avada' ) ), [ $this, 'display_news_dashboard_widget' ] );
 
 		// Make sure our widget is on top off all others.
 		global $wp_meta_boxes;
@@ -1111,9 +1106,9 @@ class FusionCore_Plugin {
 		// Create two feeds, the first being just a leading article with data and summary, the second being a normal news feed.
 		$feeds = [
 			'news' => [
-				'link'         => 'https://avada.com/blog/',
-				'url'          => 'https://avada.com/feed/',
-				'title'        => esc_attr__( 'Avada News', 'fusion-core' ),
+				'link'         => 'https://theme-fusion.com/blog/',
+				'url'          => 'https://theme-fusion.com/feed/',
+				'title'        => esc_attr__( 'ThemeFusion News', 'fusion-core' ),
 				'items'        => 4,
 				'show_summary' => 1,
 				'show_author'  => 0,
@@ -1124,6 +1119,7 @@ class FusionCore_Plugin {
 		<div class="fusion-dbw-wrapper">
 			<div class="fusion-dbw-header">
 				<div class="fusion-dbw-logo">
+					<i class="fusiona-avada-logo"></i>
 					<span class="fusion-dbw-image-wrapper">
 						<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo@2x.png' ); ?>" width="115" height="25" alt="<?php esc_attr_e( 'Avada Logo', 'fusion-core' ); ?>">
 					</span>
@@ -1152,8 +1148,8 @@ class FusionCore_Plugin {
 
 			<div class="fusion-dbw-footer">
 				<ul>
-					<li class="fusion-dbw-footer-blog>"><a href="<?php echo esc_url( 'https://avada.com/blog/' ); ?>" target="_blank"><?php esc_html_e( 'Blog', 'fusion-core' ); ?> <span class="screen-reader-text"><?php esc_html_e( '(opens in a new window)', 'fusion-core' ); ?></span><span aria-hidden="true" class="dashicons dashicons-external"></span></a></li>
-					<li class="fusion-dbw-footer-docs>"><a href="<?php echo esc_url( 'https://avada.com/help-center/' ); ?>" target="_blank"><?php esc_html_e( 'Docs', 'fusion-core' ); ?> <span class="screen-reader-text"><?php esc_html_e( '(opens in a new window)', 'fusion-core' ); ?></span><span aria-hidden="true" class="dashicons dashicons-external"></span></a></li>
+					<li class="fusion-dbw-footer-blog>"><a href="<?php echo esc_url( 'https://theme-fusion.com/blog/' ); ?>" target="_blank"><?php esc_html_e( 'Blog', 'fusion-core' ); ?> <span class="screen-reader-text"><?php esc_html_e( '(opens in a new window)', 'fusion-core' ); ?></span><span aria-hidden="true" class="dashicons dashicons-external"></span></a></li>
+					<li class="fusion-dbw-footer-docs>"><a href="<?php echo esc_url( 'https://theme-fusion.com/support/' ); ?>" target="_blank"><?php esc_html_e( 'Docs', 'fusion-core' ); ?> <span class="screen-reader-text"><?php esc_html_e( '(opens in a new window)', 'fusion-core' ); ?></span><span aria-hidden="true" class="dashicons dashicons-external"></span></a></li>
 					<li class="fusion-dbw-footer-ticket>"><a href="<?php echo esc_url( 'https://theme-fusion.com/support/submit-a-ticket/' ); ?>" target="_blank"><?php esc_html_e( 'Ticket', 'fusion-core' ); ?> <span class="screen-reader-text"><?php esc_html_e( '(opens in a new window)', 'fusion-core' ); ?></span><span aria-hidden="true" class="dashicons dashicons-external"></span></a></li>
 				</ul>
 			</div>
@@ -1172,7 +1168,7 @@ class FusionCore_Plugin {
 	 */
 	public function feed_user_agent( $feed, $url ) {
 
-		if ( 'https://avada.com.com/feed/' === $url ) {
+		if ( 'https://theme-fusion.com/feed/' === $url ) {
 			$feed->set_useragent( 'Avada RSS Feed' );
 		}
 	}

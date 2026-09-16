@@ -16,7 +16,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			initialize: function() {
+
 				this.$el.attr( 'data-cid', this.model.get( 'cid' ) );
+
+				this.listenTo( FusionEvents, 'fusion-wireframe-toggle', this.wireFrameToggled );
 			},
 
 			render: function() {
@@ -83,24 +86,79 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					hoverClass: 'ui-droppable-active',
 					accept: '.fusion-builder-container, .fusion-checkout-form',
 					drop: function( event, ui ) {
-						self.handleDropContainer( ui.draggable, $el, jQuery( event.target ) );
+
+						// Move the actual html.
+						if ( jQuery( event.target ).hasClass( 'target-after' ) ) {
+							$el.after( ui.draggable );
+						} else {
+							$el.before( ui.draggable );
+						}
+
+						FusionEvents.trigger( 'fusion-content-changed' );
+
+						FusionPageBuilderApp.scrollingContainers();
+
+						FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.checkout_form + ' Element order changed' );
 					}
 				} );
+
+				// If we are in wireframe mode, then disable.
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableContainer();
+				}
 			},
 
-			handleDropContainer( $column, $targetEl, $dropTarget ) {
-				// Move the actual html.
-				if ( jQuery( $dropTarget ).hasClass( 'target-after' ) ) {
-					$targetEl.after( $column );
+			/**
+			 * Enable the droppable and draggable.
+			 *
+			 * @since 3.3
+			 * @return {void}
+			 */
+			enableDroppableContainer: function() {
+				var $el = this.$el;
+
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) && 'undefined' !== typeof $el.find( '.fusion-container-target' ).droppable( 'instance' ) ) {
+					$el.draggable( 'enable' );
+					$el.find( '.fusion-container-target' ).droppable( 'enable' );
 				} else {
-					$targetEl.before( $column );
+
+					// No sign of init, then need to call it.
+					this.droppableContainer();
+				}
+			},
+
+			/**
+			 * Destroy or disable the droppable and draggable.
+			 *
+			 * @since 3.3
+			 * @return {void}
+			 */
+			disableDroppableContainer: function() {
+				var $el = this.$el;
+
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) ) {
+					$el.draggable( 'disable' );
 				}
 
-				FusionEvents.trigger( 'fusion-content-changed' );
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.find( '.fusion-container-target' ).droppable( 'instance' ) ) {
+					$el.find( '.fusion-container-target' ).droppable( 'disable' );
+				}
+			},
 
-				FusionPageBuilderApp.scrollingContainers();
-
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.checkout_form + ' Order Changed' );
+			/**
+			 * Fired when wireframe mode is toggled.
+			 *
+			 * @since 3.3
+			 * @return {void}
+			 */
+			wireFrameToggled: function() {
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableContainer();
+				} else {
+					this.enableDroppableContainer();
+				}
 			},
 
 			/**

@@ -35,7 +35,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Fix for the hashed widget php class names
 				_.each( widgetData, function( value, key ) {
 
-					if ( 'undefined' !== typeof fusionAllElements.fusion_widget && 'undefined' === typeof fusionAllElements.fusion_widget.params.type.value[ key ] ) {
+					if ( 'undefined' === typeof fusionAllElements.fusion_widget.params.type.value[ key ] ) {
 
 						// Try to find a corresponding class name by widget name
 						jQuery.map( fusionAllElements.fusion_widget.params.type.value, function( val, i ) {
@@ -334,7 +334,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						wp.mediaWidgets.handleWidgetAdded( event, $el );
 					}
 
-					this.$el.find( '.widget-inside' ).css( 'display', 'block' );
+					this.$el.find( '.widget-inside' ).show();
+
 					if ( this.$el.find( '.wp-editor-area' ).length ) {
 						setTimeout( function() {
 							wp.textWidgets.widgetControls[ 'text-' + self.cid ].initializeEditor();
@@ -364,7 +365,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					this.setFormValues( widgetClassName );
 					setTimeout( function() {
-						$el.find( '.widget-inside' ).css( 'display', 'block' );
+						$el.find( '.widget-inside' ).show();
 					}, 100 );
 				}
 			},

@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			protected $title_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -53,15 +62,14 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				return [
 					'animation_direction'            => 'left',
 					'animation_offset'               => $fusion_settings->get( 'animation_offset' ),
 					'animation_speed'                => '',
-					'animation_delay'                => '',
 					'animation_type'                 => '',
-					'animation_color'                => '',
 					'hide_on_mobile'                 => fusion_builder_default_visibility( 'string' ),
 					'sticky_display'                 => '',
 					'class'                          => '',
@@ -80,7 +88,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 					'link_url'                       => '',
 					'link_target'                    => '_self',
 					'link_color'                     => $fusion_settings->get( 'link_color' ),
-					'link_hover_color'               => $fusion_settings->get( 'link_hover_color' ),
+					'link_hover_color'               => $fusion_settings->get( 'primary_color' ),
 					'fusion_font_family_title_font'  => '',
 					'fusion_font_variant_title_font' => '',
 					'after_text'                     => '',
@@ -91,7 +99,6 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 					'animated_font_size'             => '',
 					'letter_spacing'                 => '',
 					'line_height'                    => '',
-					'link_attributes'                => '',
 					'margin_bottom'                  => $fusion_settings->get( 'title_margin', 'bottom' ),
 					'margin_bottom_medium'           => '',
 					'margin_bottom_mobile'           => '',
@@ -116,22 +123,8 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 					'text_shadow_color'              => '',
 					'text_shadow_horizontal'         => '',
 					'text_shadow_vertical'           => '',
-					'text_transform'                 => $fusion_settings->get( 'title_text_transform' ),
 					'animated_text_color'            => '',
 					'highlight_color'                => '',
-					'responsive_typography'          => 0.0 < $fusion_settings->get( 'typography_sensitivity' ),
-					'gradient_font'                  => 'no',
-					'gradient_start_color'           => '',
-					'gradient_end_color'             => '',
-					'gradient_start_position'        => '0',
-					'gradient_end_position'          => '100',
-					'gradient_type'                  => 'linear',
-					'radial_direction'               => 'center center',
-					'linear_angle'                   => '180',
-					'text_stroke'                    => '',
-					'text_stroke_size'               => '1',
-					'text_stroke_color'              => 'var(--primary_color)',
-					'text_overflow'                  => 'none',
 				];
 			}
 
@@ -167,7 +160,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'content_break_point' => $fusion_settings->get( 'content_break_point' ),
 					'visibility_large'    => $fusion_settings->get( 'visibility_large' ),
@@ -212,34 +205,6 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			}
 
 			/**
-			 * Validate args.
-			 *
-			 * @access public
-			 * @since 1.0
-			 * @return void
-			 */
-			public function validate_args() {
-				$this->args['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_top'], 'px' );
-				$this->args['margin_right']  = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_right'], 'px' );
-				$this->args['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_bottom'], 'px' );
-				$this->args['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_left'], 'px' );
-
-				$this->args['margin_top_medium']    = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_top_medium'], 'px' );
-				$this->args['margin_right_medium']  = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_right_medium'], 'px' );
-				$this->args['margin_bottom_medium'] = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_bottom_medium'], 'px' );
-				$this->args['margin_left_medium']   = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_left_medium'], 'px' );
-
-				$this->args['margin_top_small']    = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_top_small'], 'px' );
-				$this->args['margin_right_small']  = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_right_small'], 'px' );
-				$this->args['margin_bottom_small'] = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_bottom_small'], 'px' );
-				$this->args['margin_left_small']   = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_left_small'], 'px' );
-
-				// BC.
-				$this->args['margin_top_mobile']    = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_top_mobile'], 'px' );
-				$this->args['margin_bottom_mobile'] = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_bottom_mobile'], 'px' );
-			}
-
-			/**
 			 * Render the shortcode
 			 *
 			 * @access public
@@ -249,46 +214,68 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
 
-				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_title' );
-				$this->args     = apply_filters( 'fusion_builder_default_args', $this->args, 'fusion_title', $args );
-				$content        = apply_filters( 'fusion_shortcode_content', $content, 'fusion_title', $args );
+				global $fusion_settings;
 
-				$this->validate_args();
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_title' );
+				$defaults = apply_filters( 'fusion_builder_default_args', $defaults, 'fusion_title', $args );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_title', $args );
+
+				$defaults['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_top'], 'px' );
+				$defaults['margin_right']  = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_right'], 'px' );
+				$defaults['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_bottom'], 'px' );
+				$defaults['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_left'], 'px' );
+
+				$defaults['margin_top_medium']    = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_top_medium'], 'px' );
+				$defaults['margin_right_medium']  = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_right_medium'], 'px' );
+				$defaults['margin_bottom_medium'] = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_bottom_medium'], 'px' );
+				$defaults['margin_left_medium']   = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_left_medium'], 'px' );
+
+				$defaults['margin_top_small']    = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_top_small'], 'px' );
+				$defaults['margin_right_small']  = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_right_small'], 'px' );
+				$defaults['margin_bottom_small'] = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_bottom_small'], 'px' );
+				$defaults['margin_left_small']   = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_left_small'], 'px' );
+
+				// BC.
+				$defaults['margin_top_mobile']    = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_top_mobile'], 'px' );
+				$defaults['margin_bottom_mobile'] = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_bottom_mobile'], 'px' );
 
 				$is_flex_container = fusion_element_rendering_is_flex();
 
+				extract( $defaults );
+
+				$this->args = $defaults;
+
 				$this->set_text_shadow_style();
 
+				if ( 1 === count( explode( ' ', $this->args['style_type'] ) ) ) {
+					$style_type .= ' solid';
+				}
+
 				if ( ! $this->args['style_type'] || 'default' === $this->args['style_type'] ) {
-					$this->args['style_type'] = $fusion_settings->get( 'title_style_type' );
+					$this->args['style_type'] = $style_type = $fusion_settings->get( 'title_style_type' );
 				}
 
 				if ( 'text' !== $this->args['title_type'] ) {
-					$this->args['style_type'] = 'none';
-				}
-
-				if ( 1 === count( explode( ' ', $this->args['style_type'] ) ) ) {
-					$this->args['style_type'] .= ' solid';
+					$this->args['style_type'] = $style_type = 'none';
 				}
 
 				// Make sure the title text is not wrapped with an unattributed p tag.
-				$content        = preg_replace( '!^<p>(.*?)</p>$!i', '$1', trim( $content ) );
-				$rotation_texts = [];
+				$content           = preg_replace( '!^<p>(.*?)</p>$!i', '$1', trim( $content ) );
+				$rotation_texts    = [];
+				$bottom_highlights = [ 'underline', 'double_underline', 'underline_zigzag', 'underline_zigzag', 'curly' ];
 
-				if ( 'rotating' === $this->args['title_type'] && $this->args['rotation_text'] ) {
-					$rotation_texts = explode( '|', trim( $this->args['rotation_text'] ) );
+				if ( 'rotating' === $this->args['title_type'] && $rotation_text ) {
+					$rotation_texts = explode( '|', trim( $rotation_text ) );
 				}
 
-				$title_tag = 'div' === $this->args['size'] || 'p' === $this->args['size'] ? $this->args['size'] : 'h' . $this->args['size'];
+				$title_tag = 'div' === $size ? 'div' : 'h' . $size;
 
 				if ( 'rotating' === $this->args['title_type'] ) {
 
 					$html  = '<div ' . FusionBuilder::attributes( 'title-shortcode' ) . '>';
 					$html .= '<' . $title_tag . ' ' . FusionBuilder::attributes( 'title-shortcode-heading' ) . '>';
-					$html .= '<span class="fusion-animated-text-prefix">' . $this->args['before_text'] . '</span> ';
+					$html .= '<span class="fusion-animated-text-prefix">' . $before_text . '</span> ';
 
 					if ( 0 < count( $rotation_texts ) ) {
 						$html .= '<span ' . FusionBuilder::attributes( 'animated-text-wrapper' ) . '>';
@@ -303,7 +290,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 						$html .= '</span></span>';
 					}
 
-					$html .= ' <span class="fusion-animated-text-postfix">' . $this->args['after_text'] . '</span>';
+					$html .= ' <span class="fusion-animated-text-postfix">' . $after_text . '</span>';
 					$html .= '</' . $title_tag . '>';
 					$html .= '</div>';
 
@@ -311,40 +298,42 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 
 					$html  = '<div ' . FusionBuilder::attributes( 'title-shortcode' ) . '>';
 					$html .= '<' . $title_tag . ' ' . FusionBuilder::attributes( 'title-shortcode-heading' ) . '>';
-					$html .= '<span class="fusion-highlighted-text-prefix">' . $this->args['before_text'] . '</span> ';
+					$html .= '<span class="fusion-highlighted-text-prefix">' . $before_text . '</span> ';
 
-					if ( $this->args['highlight_text'] ) {
+					if ( $highlight_text ) {
 						$html .= '<span class="fusion-highlighted-text-wrapper">';
-						$html .= '<span ' . FusionBuilder::attributes( 'animated-text-wrapper' ) . '>' . $this->args['highlight_text'] . '</span>';
+						$html .= '<span ' . FusionBuilder::attributes( 'animated-text-wrapper' ) . '>' . $highlight_text . '</span>';
 						$html .= '</span>';
 					}
 
-					$html .= ' <span class="fusion-highlighted-text-postfix">' . $this->args['after_text'] . '</span>';
+					$html .= ' <span class="fusion-highlighted-text-postfix">' . $after_text . '</span>';
 					$html .= '</' . $title_tag . '>';
 					$html .= '</div>';
 
-				} elseif ( false !== strpos( $this->args['style_type'], 'underline' ) || false !== strpos( $this->args['style_type'], 'none' ) ) {
-					$html  = '<div ' . FusionBuilder::attributes( 'title-shortcode' ) . '>';
-					$html .= '<' . $title_tag . ' ' . FusionBuilder::attributes( 'title-shortcode-heading' ) . '>';
-					$html .= $this->render_content( $content );
-					$html .= '</' . $title_tag . '>';
-					$html .= '</div>';
+				} elseif ( false !== strpos( $style_type, 'underline' ) || false !== strpos( $style_type, 'none' ) ) {
+					$html = sprintf(
+						'<div %s><%s %s>%s</%s></div>',
+						FusionBuilder::attributes( 'title-shortcode' ),
+						$title_tag,
+						FusionBuilder::attributes( 'title-shortcode-heading' ),
+						$this->render_content( $content ),
+						$title_tag
+					);
 				} else {
 					if ( 'right' === $this->args['content_align'] && ! $is_flex_container ) {
-						$html  = '<div ' . FusionBuilder::attributes( 'title-shortcode' ) . '>';
-						$html .= '<div ' . FusionBuilder::attributes( 'title-sep-container' ) . '>';
-						$html .= '<div ' . FusionBuilder::attributes( 'title-shortcode-sep' ) . '></div>';
-						$html .= '</div>';
-						$html .= '<span ' . FusionBuilder::attributes( 'awb-title-spacer' ) . '></span>';
-						$html .= '<' . $title_tag . ' ' . FusionBuilder::attributes( 'title-shortcode-heading' ) . '>';
-						$html .= $this->render_content( $content );
-						$html .= '</' . $title_tag . '>';
-						$html .= '</div>';
+						$html = sprintf(
+							'<div %s><div %s><div %s></div></div><%s %s>%s</%s></div>',
+							FusionBuilder::attributes( 'title-shortcode' ),
+							FusionBuilder::attributes( 'title-sep-container' ),
+							FusionBuilder::attributes( 'title-shortcode-sep' ),
+							$title_tag,
+							FusionBuilder::attributes( 'title-shortcode-heading' ),
+							$this->render_content( $content ),
+							$title_tag
+						);
 					} elseif ( 'center' === $this->args['content_align'] || $is_flex_container ) {
-						$left_classes             = 'title-sep-container title-sep-container-left';
-						$right_classes            = 'title-sep-container title-sep-container-right';
-						$additional_left_classes  = '';
-						$additional_right_classes = '';
+						$left_classes  = 'title-sep-container title-sep-container-left';
+						$right_classes = 'title-sep-container title-sep-container-right';
 
 						if ( $is_flex_container ) {
 							foreach ( [ 'large', 'medium', 'small' ] as $responsive_size ) {
@@ -352,42 +341,99 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 								$value = isset( $this->args[ $key ] ) && '' !== $this->args[ $key ] ? $this->args[ $key ] : $this->args['content_align'];
 
 								if ( 'left' === $value ) {
-									$additional_left_classes .= ' fusion-no-' . $responsive_size . '-visibility';
+									$left_classes .= ' fusion-no-' . $responsive_size . '-visibility';
 								} elseif ( 'right' === $value ) {
-									$additional_right_classes .= ' fusion-no-' . $responsive_size . '-visibility';
+									$right_classes .= ' fusion-no-' . $responsive_size . '-visibility';
 								}
 							}
-
-							$left_classes  .= $additional_left_classes;
-							$right_classes .= $additional_right_classes;
 						}
 
-						$html  = '<div ' . FusionBuilder::attributes( 'title-shortcode' ) . '>';
-						$html .= '<div ' . FusionBuilder::attributes( $left_classes ) . '>';
-						$html .= '<div ' . FusionBuilder::attributes( 'title-shortcode-sep' ) . '></div>';
-						$html .= '</div>';
-						$html .= '<span ' . FusionBuilder::attributes( 'awb-title-spacer' . $additional_left_classes ) . '></span>';
-						$html .= '<' . $title_tag . ' ' . FusionBuilder::attributes( 'title-shortcode-heading' ) . '>';
-						$html .= $this->render_content( $content );
-						$html .= '</' . $title_tag . '>';
-						$html .= '<span ' . FusionBuilder::attributes( 'awb-title-spacer' . $additional_right_classes ) . '></span>';
-						$html .= '<div ' . FusionBuilder::attributes( $right_classes ) . '>';
-						$html .= '<div ' . FusionBuilder::attributes( 'title-shortcode-sep' ) . '>';
-						$html .= '</div></div></div>';
+						$html = sprintf(
+							'<div %s><div %s><div %s></div></div><%s %s>%s</%s><div %s><div %s></div></div></div>',
+							FusionBuilder::attributes( 'title-shortcode' ),
+							FusionBuilder::attributes( $left_classes ),
+							FusionBuilder::attributes( 'title-shortcode-sep' ),
+							$title_tag,
+							FusionBuilder::attributes( 'title-shortcode-heading' ),
+							$this->render_content( $content ),
+							$title_tag,
+							FusionBuilder::attributes( $right_classes ),
+							FusionBuilder::attributes( 'title-shortcode-sep' )
+						);
 					} else {
-						$html  = '<div ' . FusionBuilder::attributes( 'title-shortcode' ) . '>';
-						$html .= '<' . $title_tag . ' ' . FusionBuilder::attributes( 'title-shortcode-heading' ) . '>';
-						$html .= $this->render_content( $content );
-						$html .= '</' . $title_tag . '>';
-						$html .= '<span ' . FusionBuilder::attributes( 'awb-title-spacer' ) . '></span>';
-						$html .= '<div ' . FusionBuilder::attributes( 'title-sep-container' ) . '>';
-						$html .= '<div ' . FusionBuilder::attributes( 'title-shortcode-sep' ) . '></div>';
-						$html .= '</div>';
-						$html .= '</div>';
-
+						$html = sprintf(
+							'<div %s><%s %s>%s</%s><div %s><div %s></div></div></div>',
+							FusionBuilder::attributes( 'title-shortcode' ),
+							$title_tag,
+							FusionBuilder::attributes( 'title-shortcode-heading' ),
+							$this->render_content( $content ),
+							$title_tag,
+							FusionBuilder::attributes( 'title-sep-container' ),
+							FusionBuilder::attributes( 'title-shortcode-sep' )
+						);
 						fusion_element_rendering_elements( false );
 					}
 				}
+
+				$style = '<style type="text/css">';
+
+				if ( 'highlight' === $title_type ) {
+					if ( $highlight_color ) {
+						$style .= '.fusion-title.fusion-title-' . $this->title_counter . ' svg path{stroke:' . fusion_library()->sanitize->color( $highlight_color ) . '!important}';
+					}
+
+					if ( $highlight_top_margin && in_array( $highlight_effect, $bottom_highlights, true ) ) {
+						$style .= '.fusion-title.fusion-title-' . $this->title_counter . ' svg{margin-top:' . $highlight_top_margin . 'px!important}';
+					}
+
+					if ( $highlight_width ) {
+						$style .= '.fusion-title.fusion-title-' . $this->title_counter . ' svg path{stroke-width:' . fusion_library()->sanitize->number( $highlight_width ) . '!important}';
+					}
+				}
+
+				if ( 'rotating' === $title_type && $text_color && ( 'clipIn' === $rotation_effect || 'typeIn' === $rotation_effect ) ) {
+					$style .= '.fusion-title.fusion-title-' . $this->title_counter . ' .fusion-animated-texts-wrapper::before{background-color:' . fusion_library()->sanitize->color( $text_color ) . '!important}';
+				}
+
+				if ( ! $is_flex_container ) {
+					if ( ! ( '' === $this->args['margin_top_mobile'] && '' === $this->args['margin_bottom_mobile'] ) ) {
+						$style .= '@media only screen and (max-width:' . $fusion_settings->get( 'content_break_point' ) . 'px) {';
+						$style .= '.fusion-title.fusion-title-' . $this->title_counter . '{margin-top:' . $this->args['margin_top_mobile'] . '!important;margin-bottom:' . $this->args['margin_bottom_mobile'] . '!important;}';
+						$style .= '}';
+					}
+				} else {
+					// If medium element values are set, use them.
+					if ( ! ( '' === $this->args['margin_top_medium'] && '' === $this->args['margin_right_medium'] && '' === $this->args['margin_bottom_medium'] && '' === $this->args['margin_left_medium'] ) ) {
+						$style .= '@media only screen and (max-width:' . $fusion_settings->get( 'visibility_medium' ) . 'px) {';
+						$style .= '.fusion-title.fusion-title-' . $this->title_counter . '{margin-top:' . $this->args['margin_top_medium'] . '!important;margin-right:' . $this->args['margin_right_medium'] . '!important;margin-bottom:' . $this->args['margin_bottom_medium'] . '!important; margin-left:' . $this->args['margin_left_medium'] . '!important;}';
+						$style .= '}';
+					} elseif ( ! ( '' === $this->args['margin_top'] && '' === $this->args['margin_right'] && '' === $this->args['margin_bottom'] && '' === $this->args['margin_left'] ) ) {
+						// If no medium element values are set, inherit large ones to make sure that not the content breakpoint media query takes over with mobile values.
+						$style .= '@media only screen and (max-width:' . $fusion_settings->get( 'visibility_medium' ) . 'px) {';
+						$style .= '.fusion-title.fusion-title-' . $this->title_counter . '{margin-top:' . $this->args['margin_top'] . '!important; margin-right:' . $this->args['margin_right'] . '!important;margin-bottom:' . $this->args['margin_bottom'] . '!important;margin-left:' . $this->args['margin_left'] . '!important;}';
+						$style .= '}';
+					}
+
+					if ( ! ( '' === $this->args['margin_top_small'] && '' === $this->args['margin_right_small'] && '' === $this->args['margin_bottom_small'] && '' === $this->args['margin_left_small'] ) && ! ( '0px' === $this->args['margin_top_small'] && '20px' === $this->args['margin_bottom_small'] && '' === $this->args['margin_right_small'] && '' === $this->args['margin_left_small'] ) ) {
+						$style .= '@media only screen and (max-width:' . $fusion_settings->get( 'visibility_small' ) . 'px) {';
+						$style .= '.fusion-title.fusion-title-' . $this->title_counter . '{margin-top:' . $this->args['margin_top_small'] . '!important; margin-right:' . $this->args['margin_right_small'] . '!important;margin-bottom:' . $this->args['margin_bottom_small'] . '!important; margin-left:' . $this->args['margin_left_small'] . '!important;}';
+						$style .= '}';
+					}
+				}
+
+				if ( 'text' === $title_type && 'on' === $title_link ) {
+					if ( $link_color ) {
+						$style .= '.fusion-title.fusion-title-text.fusion-title-' . $this->title_counter . ' a{color:' . fusion_library()->sanitize->color( $link_color ) . '}';
+					}
+
+					if ( $link_hover_color ) {
+						$style .= '.fusion-title.fusion-title-text.fusion-title-' . $this->title_counter . ' a:hover{color:' . fusion_library()->sanitize->color( $link_hover_color ) . '}';
+					}
+				}
+
+				$style .= '</style>';
+
+				$html = $style . $html;
 
 				$this->title_counter++;
 
@@ -395,68 +441,6 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 
 				return apply_filters( 'fusion_element_title_content', $html, $args );
 
-			}
-
-			/**
-			 * Get CSS variables for options.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_css_vars() {
-				$bottom_highlights = [ 'underline', 'double_underline', 'underline_zigzag', 'underline_zigzag', 'curly' ];
-				$css_vars          = [
-					'text_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-				];
-
-				if ( 'highlight' === $this->args['title_type'] ) {
-					if ( $this->args['highlight_color'] ) {
-						$css_vars['highlight_color'] = [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ];
-					}
-
-					if ( $this->args['highlight_top_margin'] && in_array( $this->args['highlight_effect'], $bottom_highlights, true ) ) {
-						$css_vars['highlight_top_margin'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-					}
-
-					if ( $this->args['highlight_width'] ) {
-						$css_vars['highlight_width'] = [ 'callback' => [ 'Fusion_Sanitize', 'number' ] ];
-					}
-				}
-
-				if ( ! fusion_element_rendering_is_flex() && ! ( '' === $this->args['margin_top_mobile'] && '' === $this->args['margin_bottom_mobile'] ) ) {
-					$this->args['margin_top_small']    = $this->args['margin_top_mobile'];
-					$this->args['margin_bottom_small'] = $this->args['margin_bottom_mobile'];
-				}
-
-				$css_vars['margin_top']           = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_right']         = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_bottom']        = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_left']          = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_top_small']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_right_small']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_bottom_small']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_left_small']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_top_medium']    = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_right_medium']  = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_bottom_medium'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['margin_left_medium']   = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['text_stroke_size']     = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-				$css_vars['text_stroke_color']    = [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ];
-
-				if ( 'text' === $this->args['title_type'] && 'on' === $this->args['title_link'] ) {
-					$css_vars['link_color']       = [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ];
-					$css_vars['link_hover_color'] = [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ];
-				}
-
-				$css_vars['sep_color'] = [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ];
-				$css_vars['font_size'] = [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ];
-
-				if ( 'none' !== $this->args['text_overflow'] ) {
-					$css_vars[] = 'text_overflow';
-				}
-
-				return $this->get_css_vars_for_options( $css_vars );
 			}
 
 			/**
@@ -470,7 +454,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 				$this->args['text_shadow_styles'] = '';
 
 				if ( 'yes' === $this->args['text_shadow'] ) {
-					$text_shadow_styles = Fusion_Builder_Text_Shadow_Helper::get_text_shadow_styles(
+					$text_shadow_styles               = Fusion_Builder_Text_Shadow_Helper::get_text_shadow_styles(
 						[
 							'text_shadow_horizontal' => $this->args['text_shadow_horizontal'],
 							'text_shadow_vertical'   => $this->args['text_shadow_vertical'],
@@ -478,12 +462,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 							'text_shadow_color'      => $this->args['text_shadow_color'],
 						]
 					);
-
-					if ( 'yes' === $this->args['gradient_font'] ) {
-						$this->args['text_shadow_styles'] = 'filter:drop-shadow(' . esc_attr( trim( $text_shadow_styles ) ) . ');';
-					} else {
-						$this->args['text_shadow_styles'] = 'text-shadow:' . esc_attr( trim( $text_shadow_styles ) ) . ';';
-					}
+					$this->args['text_shadow_styles'] = 'text-shadow:' . esc_attr( trim( $text_shadow_styles ) ) . ';';
 				}
 			}
 
@@ -500,7 +479,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 					$this->args['hide_on_mobile'],
 					[
 						'class'          => 'fusion-title title fusion-title-' . $this->title_counter,
-						'style'          => $this->get_css_vars(),
+						'style'          => '',
 						'data-highlight' => '',
 					]
 				);
@@ -512,6 +491,10 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 
 					foreach ( $styles as $style ) {
 						$attr['class'] .= ' sep-' . $style;
+					}
+
+					if ( $this->args['sep_color'] ) {
+						$attr['style'] = 'border-bottom-color:' . $this->args['sep_color'] . ';';
 					}
 				} elseif ( false !== strpos( $this->args['style_type'], 'none' ) ) {
 					$attr['class'] .= ' fusion-sep-none';
@@ -536,9 +519,10 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 				if ( 'highlight' === $this->args['title_type'] && $this->args['highlight_effect'] ) {
 					$attr['data-highlight'] .= $this->args['highlight_effect'];
 					$attr['class']          .= ' fusion-highlight-' . $this->args['highlight_effect'];
+
 				}
 
-				$title_size = 'div';
+				$title_size = 'two';
 				if ( '1' == $this->args['size'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons
 					$title_size = 'one';
 				} elseif ( '2' == $this->args['size'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons
@@ -551,22 +535,28 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 					$title_size = 'five';
 				} elseif ( '6' == $this->args['size'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons
 					$title_size = 'six';
-				} elseif ( 'p' == $this->args['size'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons
-					$title_size = 'paragraph';
 				}
 
 				$attr['class'] .= ' fusion-title-size-' . $title_size;
 
+				if ( $this->args['font_size'] ) {
+					$attr['style'] .= 'font-size:' . fusion_library()->sanitize->get_value_with_unit( $this->args['font_size'] ) . ';';
+				}
+
+				// Text shadow.
+				if ( '' !== $this->args['text_shadow_styles'] ) {
+					$attr['style'] .= $this->args['text_shadow_styles'];
+				}
+
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
+
+				if ( '' === $this->args['margin_top'] && '' === $this->args['margin_bottom'] ) {
+					$attr['style'] .= ' margin-top:0px; margin-bottom:0px';
+					$attr['class'] .= ' fusion-title-default-margin';
+				}
+
 				if ( $this->args['animation_type'] ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
-				}
-
-				if ( 'yes' === $this->args['text_stroke'] ) {
-					$attr['class'] .= ' fusion-text-has-stroke';
-				}
-
-				if ( 'none' !== $this->args['text_overflow'] ) {
-					$attr['class'] .= ' fusion-has-text-overflow';
 				}
 
 				if ( $this->args['class'] ) {
@@ -589,14 +579,13 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			 * @return array
 			 */
 			public function heading_attr() {
-				$fusion_settings = awb_get_fusion_settings();
 
 				$attr = [
-					'class' => 'fusion-title-heading title-heading-' . $this->args['content_align'],
+					'class' => 'title-heading-' . $this->args['content_align'],
 					'style' => '',
 				];
 
-				if ( 'div' === $this->args['size'] || 'p' === $this->args['size'] ) {
+				if ( 'div' === $this->args['size'] ) {
 					$attr['class'] .= ' title-heading-tag';
 				}
 
@@ -620,36 +609,20 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 					$attr['style'] .= 'font-size:1em;';
 				}
 
+				if ( $this->args['line_height'] ) {
+					$attr['style'] .= 'line-height:' . fusion_library()->sanitize->size( $this->args['line_height'] ) . ';';
+				}
+
 				if ( $this->args['letter_spacing'] ) {
 					$attr['style'] .= 'letter-spacing:' . fusion_library()->sanitize->get_value_with_unit( $this->args['letter_spacing'] ) . ';';
 				}
 
-				if ( ! empty( $this->args['text_transform'] ) ) {
-					$attr['style'] .= 'text-transform:' . $this->args['text_transform'] . ';';
-				}
-
-				if ( 'text' === $this->args['title_type'] && 'yes' === $this->args['gradient_font'] ) {
-					$attr['style'] .= Fusion_Builder_Gradient_Helper::get_gradient_font_string( $this->args );
-					$attr['class'] .= ' awb-gradient-text';
+				if ( $this->args['text_color'] ) {
+					$attr['style'] .= 'color:' . fusion_library()->sanitize->color( $this->args['text_color'] ) . ';';
 				}
 
 				if ( $this->args['style_tag'] ) {
 					$attr['style'] .= $this->args['style_tag'];
-				}
-
-				if ( $this->args['responsive_typography'] ) {
-					$data           = awb_get_responsive_type_data( $this->args['size'], $this->args['font_size'], $this->args['line_height'] );
-					$attr['class'] .= ' ' . $data['class'];
-					$attr['style'] .= $data['font_size'];
-					$attr['style'] .= $data['min_font_size'];
-					$attr['style'] .= $data['line_height'];
-				} elseif ( $this->args['line_height'] ) {
-					$attr['style'] .= 'line-height:' . fusion_library()->sanitize->size( $this->args['line_height'] ) . ';';
-				}
-
-				// Text shadow.
-				if ( '' !== $this->args['text_shadow_styles'] ) {
-					$attr['style'] .= $this->args['text_shadow_styles'];
 				}
 
 				return $attr;
@@ -696,13 +669,6 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 				}
 
 				if ( $this->args['animated_font_size'] ) {
-					if ( $this->args['responsive_typography'] ) {
-						$data           = awb_get_responsive_type_data( $this->args['size'], $this->args['animated_font_size'], $this->args['line_height'] );
-						$attr['class'] .= ' ' . $data['class'];
-						$attr['style'] .= $data['font_size'];
-						$attr['style'] .= $data['min_font_size'];
-					}
-
 					$attr['style'] .= 'font-size:' . fusion_library()->sanitize->get_value_with_unit( $this->args['animated_font_size'] ) . ';';
 				}
 
@@ -796,30 +762,46 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			public function href_attr() {
 
 				$attr = [
-					'href'  => $this->args['link_url'],
-					'class' => '',
+					'href' => $this->args['link_url'],
 				];
 
-				if ( FusionBuilder()->post_card_data['is_rendering'] && empty( $attr['href'] ) ) {
+				if ( FusionBuilder()->post_card_data['is_rendering'] ) {
 					$attr['href'] = get_permalink( get_the_ID() );
 				}
 
 				$attr['target'] = $this->args['link_target'];
 
-				if ( 'text' === $this->args['title_type'] && 'on' === $this->args['title_link'] ) {
-					if ( $this->args['link_color'] ) {
-						$attr['class'] .= 'awb-custom-text-color';
-					}
-
-					if ( $this->args['link_hover_color'] ) {
-						$attr['class'] .= ' awb-custom-text-hover-color';
-					}
-				}
-
-				// Add additional, custom link attributes correctly formatted to the anchor.
-				$attr = fusion_get_link_attributes( $this->args, $attr );
-
 				return $attr;
+
+			}
+
+			/**
+			 * Builds the dynamic styling.
+			 *
+			 * @access public
+			 * @since 1.1
+			 * @return array
+			 */
+			public function add_styling() {
+
+				global $wp_version, $content_media_query, $six_fourty_media_query, $three_twenty_six_fourty_media_query, $ipad_portrait_media_query, $fusion_settings, $dynamic_css_helpers;
+
+				$main_elements = apply_filters( 'fusion_builder_element_classes', [ '.fusion-title' ], '.fusion-title' );
+				$top_margin    = fusion_library()->sanitize->size( $fusion_settings->get( 'title_margin_mobile', 'top' ) ) . '!important';
+				$bottom_margin = fusion_library()->sanitize->size( $fusion_settings->get( 'title_margin_mobile', 'bottom' ) ) . '!important';
+
+				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $main_elements ) ]['margin-top']          = $top_margin;
+				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $main_elements ) ]['margin-bottom']       = $bottom_margin;
+				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $main_elements ) ]['margin-top']    = $top_margin;
+				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $main_elements ) ]['margin-bottom'] = $bottom_margin;
+
+				$elements = array_merge(
+					$dynamic_css_helpers->map_selector( $main_elements, ' .title-sep' ),
+					$dynamic_css_helpers->map_selector( $main_elements, '.sep-underline' )
+				);
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['border-color'] = fusion_library()->sanitize->color( $fusion_settings->get( 'title_border_color' ) );
+
+				return $css;
 
 			}
 
@@ -840,30 +822,11 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 						'type'        => 'accordion',
 						'icon'        => 'fusiona-H',
 						'fields'      => [
-							'title_text_transform' => [
-								'label'       => esc_attr__( 'Text Transform', 'fusion-builder' ),
-								'description' => esc_attr__( 'Choose how the text is displayed.', 'fusion-builder' ),
-								'id'          => 'title_text_transform',
-								'default'     => '',
-								'type'        => 'select',
-								'choices'     => [
-									''           => esc_attr__( 'Default', 'fusion-builder' ),
-									'none'       => esc_attr__( 'None', 'fusion-builder' ),
-									'uppercase'  => esc_attr__( 'Uppercase', 'fusion-builder' ),
-									'lowercase'  => esc_attr__( 'Lowercase', 'fusion-builder' ),
-									'capitalize' => esc_attr__( 'Capitalize', 'fusion-builder' ),
-								],
-								'css_vars'    => [
-									[
-										'name' => '--title_text_transform',
-									],
-								],
-							],
-							'title_style_type'     => [
+							'title_style_type'    => [
 								'label'       => esc_html__( 'Title Separator', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the type of title separator that will display.', 'fusion-builder' ),
 								'id'          => 'title_style_type',
-								'default'     => 'none',
+								'default'     => 'double solid',
 								'type'        => 'select',
 								'transport'   => 'postMessage',
 								'choices'     => [
@@ -879,11 +842,11 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 									'none'             => esc_html__( 'None', 'fusion-builder' ),
 								],
 							],
-							'title_border_color'   => [
+							'title_border_color'  => [
 								'label'       => esc_html__( 'Title Separator Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the title separators.', 'fusion-builder' ),
 								'id'          => 'title_border_color',
-								'default'     => 'var(--awb-color3)',
+								'default'     => '#e2e2e2',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -893,7 +856,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 									],
 								],
 							],
-							'title_margin'         => [
+							'title_margin'        => [
 								'label'       => esc_html__( 'Title Margins', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the margin of the titles. Leave empty to use corresponding heading margins.', 'fusion-builder' ),
 								'id'          => 'title_margin',
@@ -911,26 +874,8 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 									'bottom' => true,
 									'left'   => true,
 								],
-								'css_vars'    => [
-									[
-										'name'   => '--title_margin-top',
-										'choice' => 'top',
-									],
-									[
-										'name'   => '--title_margin-right',
-										'choice' => 'right',
-									],
-									[
-										'name'   => '--title_margin-bottom',
-										'choice' => 'bottom',
-									],
-									[
-										'name'   => '--title_margin-left',
-										'choice' => 'left',
-									],
-								],
 							],
-							'title_margin_mobile'  => [
+							'title_margin_mobile' => [
 								'label'       => esc_html__( 'Title Mobile Margins', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the margin of the titles on mobiles. Leave empty together with desktop margins to use corresponding heading margins.', 'fusion-builder' ),
 								'id'          => 'title_margin_mobile',
@@ -947,24 +892,6 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 									'right'  => true,
 									'bottom' => true,
 									'left'   => true,
-								],
-								'css_vars'    => [
-									[
-										'name'   => '--title_margin_mobile-top',
-										'choice' => 'top',
-									],
-									[
-										'name'   => '--title_margin_mobile-right',
-										'choice' => 'right',
-									],
-									[
-										'name'   => '--title_margin_mobile-bottom',
-										'choice' => 'bottom',
-									],
-									[
-										'name'   => '--title_margin_mobile-left',
-										'choice' => 'left',
-									],
 								],
 							],
 						],
@@ -986,7 +913,7 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 					FusionBuilder::$js_folder_url . '/library/jquery.textillate.js',
 					FusionBuilder::$js_folder_path . '/library/jquery.textillate.js',
 					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
+					'2.0',
 					true
 				);
 
@@ -1002,21 +929,6 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
 			 */
 			public function add_css_files() {
 				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/title.min.css' );
-
-				Fusion_Media_Query_Scripts::$media_query_assets[] = [
-					'awb-title-md',
-					FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/title-md.min.css',
-					[],
-					FUSION_BUILDER_VERSION,
-					Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-medium' ),
-				];
-				Fusion_Media_Query_Scripts::$media_query_assets[] = [
-					'awb-title-sm',
-					FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/title-sm.min.css',
-					[],
-					FUSION_BUILDER_VERSION,
-					Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-small' ),
-				];
 			}
 		}
 	}
@@ -1031,7 +943,8 @@ if ( fusion_is_element_enabled( 'fusion_title' ) ) {
  * @since 1.0
  */
 function fusion_element_title() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
 	$to_link    = '';
@@ -1053,15 +966,7 @@ function fusion_element_title() {
 				'preview_id'      => 'fusion-builder-block-module-title-preview-template',
 				'allow_generator' => true,
 				'inline_editor'   => true,
-				'help_url'        => 'https://avada.com/documentation/title-element/',
-				'subparam_map'    => [
-					'fusion_font_family_title_font'  => 'main_typography',
-					'fusion_font_variant_title_font' => 'main_typography',
-					'font_size'                      => 'main_typography',
-					'line_height'                    => 'main_typography',
-					'letter_spacing'                 => 'main_typography',
-					'text_transform'                 => 'main_typography',
-				],
+				'help_url'        => 'https://theme-fusion.com/documentation/fusion-builder/elements/title-element/',
 				'params'          => [
 					[
 						'type'        => 'radio_button_set',
@@ -1323,7 +1228,7 @@ function fusion_element_title() {
 					[
 						'type'         => 'link_selector',
 						'heading'      => esc_attr__( 'Link URL', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Add an URL for the link. E.g: https://example.com.', 'fusion-builder' ),
+						'description'  => esc_attr__( 'Add a url for the link. E.g: http://example.com.', 'fusion-builder' ),
 						'param_name'   => 'link_url',
 						'value'        => '',
 						'dynamic_data' => true,
@@ -1343,11 +1248,11 @@ function fusion_element_title() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window<br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'link_target',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => '_self',
 						'dependency'  => [
@@ -1387,8 +1292,8 @@ function fusion_element_title() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'HTML Heading Tag', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the heading, either div, p or the heading tag, h1-h6.', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'HTML Heading Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose HTML tag of the heading, either div or the heading tag, h1-h6.', 'fusion-builder' ),
 						'param_name'  => 'size',
 						'value'       => [
 							'1'   => 'H1',
@@ -1398,9 +1303,17 @@ function fusion_element_title() {
 							'5'   => 'H5',
 							'6'   => 'H6',
 							'div' => 'DIV',
-							'p'   => 'P',
 						],
 						'default'     => '1',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Font Size', 'fusion-builder' ),
+						/* translators: URL for the link. */
+						'description' => sprintf( esc_html__( 'Controls the font size of the title. Enter value including any valid CSS unit, ex: 20px. Leave empty if the global font size for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'  => 'font_size',
+						'value'       => '',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
@@ -1420,122 +1333,37 @@ function fusion_element_title() {
 						],
 					],
 					[
-						'type'             => 'typography',
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
-						'heading'          => esc_attr__( 'Typography', 'fusion-builder' ),
+						'heading'          => esc_attr__( 'Font Family', 'fusion-builder' ),
 						/* translators: URL for the link. */
-						'description'      => sprintf( esc_html__( 'Controls the title text typography.  Leave empty if the global typography for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
-						'param_name'       => 'main_typography',
+						'description'      => sprintf( esc_html__( 'Controls the font family of the title text.  Leave empty if the global font family for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'       => 'title_font',
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-						'choices'          => [
-							'font-family'    => 'title_font',
-							'font-size'      => 'font_size',
-							'line-height'    => 'line_height',
-							'letter-spacing' => 'letter_spacing',
-							'text-transform' => 'text_transform',
-						],
 						'default'          => [
-							'font-family'    => '',
-							'variant'        => '',
-							'font-size'      => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'text-transform' => '',
+							'font-family'  => '',
+							'font-variant' => '400',
 						],
 					],
 					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Font Color', 'fusion-builder' ),
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Line Height', 'fusion-builder' ),
 						/* translators: URL for the link. */
-						'description' => sprintf( esc_html__( 'Controls the color of the title, ex: #000. Leave empty if the global color for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
-						'param_name'  => 'text_color',
+						'description' => sprintf( esc_html__( 'Controls the line height of the title. Enter value including any valid CSS unit, ex: 28px. Leave empty if the global line height for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'  => 'line_height',
 						'value'       => '',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Animated Text Font Color', 'fusion-builder' ),
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Letter Spacing', 'fusion-builder' ),
 						/* translators: URL for the link. */
-						'description' => sprintf( esc_html__( 'Controls the color of the animated title, ex: #000. Leave empty if the global color for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
-						'param_name'  => 'animated_text_color',
+						'description' => sprintf( esc_html__( 'Controls the letter spacing of the title. Enter value including any valid CSS unit, ex: 2px. Leave empty if the global letter spacing for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'  => 'letter_spacing',
 						'value'       => '',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'title_type',
-								'value'    => 'text',
-								'operator' => '!=',
-							],
-						],
 					],
 					'fusion_text_shadow_placeholder'       => [],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Text Stroke', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set to "Yes" to enable text stroke.', 'fusion-builder' ),
-						'param_name'  => 'text_stroke',
-						'default'     => 'no',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'value'       => [
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Text Stroke Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set text stroke size. In pixels.', 'fusion-builder' ),
-						'param_name'  => 'text_stroke_size',
-						'value'       => '1',
-						'min'         => '0',
-						'max'         => '10',
-						'step'        => '1',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'text_stroke',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Text Stroke Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the color of the text stroke.', 'fusion-builder' ),
-						'param_name'  => 'text_stroke_color',
-						'value'       => '',
-						'default'     => 'var(--primary_color)',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'text_stroke',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Text Overflow', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the text overflow for longer texts.', 'fusion-builder' ),
-						'param_name'  => 'text_overflow',
-						'default'     => 'none',
-						'group'       => esc_html__( 'Design', 'fusion-builder' ),
-						'value'       => [
-							'none'     => esc_attr__( 'Default', 'fusion-builder' ),
-							'ellipsis' => esc_attr__( 'Ellipsis', 'fusion-builder' ),
-							'clip'     => esc_attr__( 'Clip', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'title_type',
-								'value'    => 'text',
-								'operator' => '==',
-							],
-						],
-					],
 					'fusion_margin_placeholder'            => [
 						'param_name' => 'dimensions',
 						'value'      => [
@@ -1565,13 +1393,28 @@ function fusion_element_title() {
 							],
 						],
 					],
-					'fusion_gradient_text_placeholder'     => [
-						'selector'   => '.fusion-title',
-						'dependency' => [
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Font Color', 'fusion-builder' ),
+						/* translators: URL for the link. */
+						'description' => sprintf( esc_html__( 'Controls the color of the title, ex: #000. Leave empty if the global color for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'  => 'text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Animated Text Font Color', 'fusion-builder' ),
+						/* translators: URL for the link. */
+						'description' => sprintf( esc_html__( 'Controls the color of the animated title, ex: #000. Leave empty if the global color for the corresponding heading size (h1-h6) should be used: %s.', 'fusion-builder' ), $to_link ),
+						'param_name'  => 'animated_text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
 							[
 								'element'  => 'title_type',
 								'value'    => 'text',
-								'operator' => '==',
+								'operator' => '!=',
 							],
 						],
 					],
@@ -1581,7 +1424,7 @@ function fusion_element_title() {
 						'description' => esc_html__( 'Controls the color of the highlight shape, ex: #000.', 'fusion-builder' ),
 						'param_name'  => 'highlight_color',
 						'value'       => '',
-						'default'     => 'var(--primary_color)',
+						'default'     => '',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'  => [
 							[
@@ -1680,7 +1523,7 @@ function fusion_element_title() {
 								'operator' => '==',
 							],
 						],
-						'default'     => $fusion_settings->get( 'link_hover_color' ),
+						'default'     => $fusion_settings->get( 'primary_color' ),
 					],
 					'fusion_animation_placeholder'         => [
 						'preview_selector' => '.fusion-title',

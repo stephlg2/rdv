@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_author' ) ) {
 		class FusionTB_Author extends Fusion_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -59,14 +68,12 @@ if ( fusion_is_element_enabled( 'fusion_tb_author' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'animation_direction' => 'down',
 					'animation_speed'     => '0.1',
-					'animation_delay'     => '',
 					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
 					'animation_type'      => '',
-					'animation_color'     => '',
 					'avatar'              => 'square',
 					'biography'           => 'show',
 					'class'               => '',
@@ -123,11 +130,25 @@ if ( fusion_is_element_enabled( 'fusion_tb_author' ) ) {
 				$content .= '</div>';
 				$content .= '</section>';
 
+				$styles = '<style type="text/css">';
+
+				if ( 'circle' === $this->args['avatar'] ) {
+					$styles .= ".fusion-author-tb-{$this->counter}.circle .about-author-container .avatar{border-radius: 50%;}";
+				}
+
+				if ( 'square' === $this->args['avatar'] ) {
+					$styles .= ".fusion-author-tb-{$this->counter}.square .about-author-container .avatar{border-radius: 0;}";
+				}
+
+				$styles .= '</style>';
+
+				$html = $styles . $content;
+
 				$this->counter++;
 
 				$this->on_render();
 
-				return apply_filters( 'fusion_component_' . $this->shortcode_handle . '_content', $content, $args );
+				return apply_filters( 'fusion_component_' . $this->shortcode_handle . '_content', $html, $args );
 			}
 
 			/**
@@ -187,7 +208,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_author' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'title_margin'       => $fusion_settings->get( 'title_margin' ),
 					'title_border_color' => $fusion_settings->get( 'title_border_color' ),
@@ -247,17 +268,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_author' ) ) {
 
 				return $attr;
 			}
-
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/author.min.css' );
-			}
 		}
 	}
 
@@ -271,16 +281,19 @@ if ( fusion_is_element_enabled( 'fusion_tb_author' ) ) {
  */
 function fusion_component_author() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Author',
 			[
-				'name'      => esc_attr__( 'Author', 'fusion-builder' ),
-				'shortcode' => 'fusion_tb_author',
-				'icon'      => 'fusiona-author',
-				'component' => true,
-				'templates' => [ 'content', 'page_title_bar' ],
-				'params'    => [
+				'name'                    => esc_attr__( 'Author', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_author',
+				'icon'                    => 'fusiona-author',
+				'component'               => true,
+				'templates'               => [ 'content', 'page_title_bar' ],
+				'components_per_template' => 1,
+				'params'                  => [
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Show Headings', 'fusion-builder' ),
@@ -294,18 +307,16 @@ function fusion_component_author() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'HTML Heading Tag', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the heading, either div, p or the heading tag, h1-h6.', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'HTML Heading Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the size of the HTML heading that should be used, h1-h6.', 'fusion-builder' ),
 						'param_name'  => 'heading_size',
 						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-							'p'   => 'P',
+							'1' => 'H1',
+							'2' => 'H2',
+							'3' => 'H3',
+							'4' => 'H4',
+							'5' => 'H5',
+							'6' => 'H6',
 						],
 						'default'     => '2',
 						'dependency'  => [
@@ -378,7 +389,7 @@ function fusion_component_author() {
 						'preview_selector' => '.fusion-author-tb',
 					],
 				],
-				'callback'  => [
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_author',
 					'ajax'     => true,

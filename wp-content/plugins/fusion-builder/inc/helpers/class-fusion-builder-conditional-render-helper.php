@@ -39,52 +39,12 @@ class Fusion_Builder_Conditional_Render_Helper {
 	 */
 	public static function get_params( $args ) {
 
-		// Post Categories.
-		$post_categories_field   = 'text';
-		$post_categories_options = '';
-
-		if ( 25 > wp_count_terms( 'category' ) ) {
-			$post_categories = [];
-			$categories      = get_terms(
-				'category',
-				[
-					'hide_empty' => false,
-				]
-			);
-			foreach ( $categories as $category ) {
-				$post_categories[ $category->term_id ] = $category->name;
-			}
-
-			$post_categories_field   = 'select';
-			$post_categories_options = $post_categories;
-		}
-
-		// Post Tags.
-		$post_tags_field   = 'text';
-		$post_tags_options = '';
-
-		if ( 25 > wp_count_terms( 'post_tag' ) ) {
-			$post_tags = [];
-			$tags      = get_terms(
-				'post_tag',
-				[
-					'hide_empty' => false,
-				]
-			);
-			foreach ( $tags as $tag ) {
-				$post_tags[ $tag->term_id ] = $tag->name;
-			}
-
-			$post_tags_field   = 'select';
-			$post_tags_options = $post_tags;
-		}
-
 		$params = [
 			[
 				'type'        => 'fusion_logics',
 				'heading'     => esc_html__( 'Rendering Logic', 'fusion-builder' ),
 				'param_name'  => 'render_logics',
-				'description' => __( 'Add conditional rendering logic for the element. The element will only be part of the post / page contents, if the set conditions are met. <strong>NOTE:</strong> Server cache can interfere with results.', 'fusion-builder' ),
+				'description' => __( 'Add conditional rendering logic for the element. The element will only be part of the post / page contents, if the set conditions are met. <strong>Note:</strong> Server cache can interfere with results.', 'fusion-builder' ),
 				'group'       => esc_attr__( 'Extras', 'fusion-builder' ),
 				'placeholder' => [
 					'id'          => 'placeholder',
@@ -103,8 +63,6 @@ class Fusion_Builder_Conditional_Render_Helper {
 						'options'     => [
 							'desktop'       => esc_html__( 'Desktop', 'fusion-builder' ),
 							'mobile_tablet' => __( 'Mobile & Tablet', 'fusion-builder' ),
-							'mobile'        => __( 'Mobile', 'fusion-builder' ),
-							'tablet'        => __( 'Tablet', 'fusion-builder' ),
 						],
 						'comparisons' => [
 							'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
@@ -113,11 +71,11 @@ class Fusion_Builder_Conditional_Render_Helper {
 					],
 					[
 						'id'          => 'get_var',
-						'title'       => esc_html__( 'GET Variable', 'fusion-builder' ),
+						'title'       => esc_html__( 'Get Variable', 'fusion-builder' ),
 						'type'        => 'text',
 						'additionals' => [
 							'type'        => 'text',
-							'title'       => esc_html__( 'GET', 'fusion-builder' ),
+							'title'       => esc_html__( 'Get', 'fusion-builder' ),
 							'placeholder' => esc_html__( 'Variable Name', 'fusion-builder' ),
 						],
 						'comparisons' => [
@@ -163,129 +121,12 @@ class Fusion_Builder_Conditional_Render_Helper {
 							'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
 						],
 					],
-					[
-						'id'          => 'custom_field',
-						'title'       => esc_html__( 'Custom Field', 'fusion-builder' ),
-						'type'        => 'text',
-						'additionals' => [
-							'type'        => 'text',
-							'title'       => esc_html__( 'Field Name', 'fusion-builder' ),
-							'placeholder' => esc_html__( 'Field Name', 'fusion-builder' ),
-						],
-						'comparisons' => [
-							'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-							'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-							'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-							'contains'     => esc_attr__( 'Contains', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'post_category',
-						'title'       => esc_html__( 'Post Category', 'fusion-builder' ),
-						'type'        => $post_categories_field,
-						'options'     => $post_categories_options,
-						'placeholder' => esc_attr__( 'Category Name, Slug or ID', 'fusion-builder' ),
-						'comparisons' => [
-							'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'post_tag',
-						'title'       => esc_html__( 'Post Tag', 'fusion-builder' ),
-						'type'        => $post_tags_field,
-						'options'     => $post_tags_options,
-						'placeholder' => esc_attr__( 'Tag Name, Slug or ID', 'fusion-builder' ),
-						'comparisons' => [
-							'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'post_term',
-						'title'       => esc_html__( 'Post Term', 'fusion-builder' ),
-						'type'        => 'text',
-						'placeholder' => esc_attr__( 'Term ID', 'fusion-builder' ),
-						'comparisons' => [
-							'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'post_count',
-						'title'       => esc_html__( 'Post Count', 'fusion-builder' ),
-						'type'        => 'text',
-						'comparisons' => [
-							'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-							'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-							'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'term_count',
-						'title'       => esc_html__( 'Term Count', 'fusion-builder' ),
-						'type'        => 'text',
-						'comparisons' => [
-							'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-							'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-							'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'comments_status',
-						'title'       => esc_html__( 'Comments Status', 'fusion-builder' ),
-						'type'        => 'select',
-						'options'     => [
-							'open'   => esc_html__( 'Open', 'fusion-builder' ),
-							'closed' => esc_html__( 'Closed', 'fusion-builder' ),
-						],
-						'comparisons' => [
-							'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'comments_count',
-						'title'       => esc_html__( 'Comments Count', 'fusion-builder' ),
-						'type'        => 'text',
-						'comparisons' => [
-							'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-							'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-							'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-						],
-					],
-					[
-						'id'          => 'heading_number',
-						'title'       => esc_html__( 'Number Of Headings', 'fusion-builder' ),
-						'type'        => 'text',
-						'comparisons' => [
-							'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-							'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-							'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-							'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-						],
-					],
 				],
 			],
 		];
 
 		$params = self::maybe_add_woo_options( $params );
 		$params = self::maybe_add_ec_options( $params );
-		$params = self::maybe_add_acf_options( $params );
-
-		// Add in custom params if they are set.
-		$custom_conditions = FusionBuilder()->get_custom_conditions();
-		if ( ! empty( $custom_conditions ) ) {
-			foreach ( $custom_conditions as $condition ) {
-				if ( isset( $condition['param'] ) && is_array( $condition['param'] ) ) {
-					$params[0]['choices'][] = $condition['param'];
-				}
-			}
-		}
 
 		// Override params.
 		foreach ( $args as $key => $value ) {
@@ -331,54 +172,6 @@ class Fusion_Builder_Conditional_Render_Helper {
 			return $params;
 		}
 
-		// Product categories.
-		$product_categories_field   = 'text';
-		$product_categories_options = '';
-
-		if ( 25 > wp_count_terms( 'product_cat' ) ) {
-			$product_categories = [];
-			$categories         = get_terms(
-				'product_cat',
-				[
-					'hide_empty' => false,
-				]
-			);
-			foreach ( $categories as $category ) {
-				$product_categories[ $category->term_id ] = $category->name;
-			}
-
-			$product_categories_field   = 'select';
-			$product_categories_options = $product_categories;
-		}
-
-		// Product tags.
-		$product_tags_field   = 'text';
-		$product_tags_options = '';
-
-		if ( 25 > wp_count_terms( 'product_tag' ) ) {
-			$product_tags = [];
-			$tags         = get_terms(
-				'product_tag',
-				[
-					'hide_empty' => false,
-				]
-			);
-			foreach ( $tags as $tag ) {
-				$product_tags[ $tag->term_id ] = $tag->name;
-			}
-
-			$product_tags_field   = 'select';
-			$product_tags_options = $product_tags;
-		}
-
-		// Order statuses.
-		$statuses    = wc_get_order_statuses();
-		$wc_statuses = [];
-		foreach ( $statuses as $status_id => $status_name ) {
-			$status_id                 = ( 'wc-' === substr( $status_id, 0, 3 ) ? substr( $status_id, 3 ) : $status_id );
-			$wc_statuses[ $status_id ] = $status_name;
-		}
-
 		$woo_options = [
 			[
 				'id'          => 'cart_status',
@@ -417,136 +210,6 @@ class Fusion_Builder_Conditional_Render_Helper {
 					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
 				],
 			],
-			[
-				'id'          => 'stock_status',
-				'title'       => esc_html__( 'Stock Status', 'fusion-builder' ),
-				'type'        => 'select',
-				'options'     => [
-					'in'  => esc_html__( 'In Stock', 'fusion-builder' ),
-					'out' => esc_html__( 'Out of Stock', 'fusion-builder' ),
-				],
-				'comparisons' => [
-					'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'product_type',
-				'title'       => esc_html__( 'Product Type', 'fusion-builder' ),
-				'type'        => 'select',
-				'options'     => [
-					'simple'   => esc_html__( 'Simple Product', 'fusion-builder' ),
-					'grouped'  => esc_html__( 'Grouped Product', 'fusion-builder' ),
-					'external' => esc_html__( 'External/Affiliate Product', 'fusion-builder' ),
-					'variable' => esc_html__( 'Variable Product', 'fusion-builder' ),
-				],
-				'comparisons' => [
-					'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'product_category',
-				'title'       => esc_html__( 'Product Category', 'fusion-builder' ),
-				'type'        => $product_categories_field,
-				'options'     => $product_categories_options,
-				'placeholder' => esc_html__( 'Category Name, Slug or ID', 'fusion-builder' ),
-				'comparisons' => [
-					'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'product_tag',
-				'title'       => esc_html__( 'Product Tag', 'fusion-builder' ),
-				'type'        => $product_tags_field,
-				'options'     => $product_tags_options,
-				'placeholder' => esc_html__( 'Tag Name, Slug or ID', 'fusion-builder' ),
-				'comparisons' => [
-					'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'related_products_count',
-				'title'       => esc_html__( 'Related Products', 'fusion-builder' ),
-				'type'        => 'text',
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'up_sells_products_count',
-				'title'       => esc_html__( 'Up-Sells Products', 'fusion-builder' ),
-				'type'        => 'text',
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'cross_sells_products_count',
-				'title'       => esc_html__( 'Cross-Sells Products', 'fusion-builder' ),
-				'type'        => 'text',
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'product_variations',
-				'title'       => esc_html__( 'Product Variations', 'fusion-builder' ),
-				'type'        => 'text',
-				'placeholder' => esc_html__( 'Attribute Name eg. color or size.', 'fusion-builder' ),
-				'comparisons' => [
-					'equal'     => esc_attr__( 'Has', 'fusion-builder' ),
-					'not-equal' => esc_attr__( 'Has Not', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'order_received_status',
-				'title'       => esc_html__( 'Order Received Status', 'fusion-builder' ),
-				'type'        => 'select',
-				'placeholder' => esc_html__( 'If the order received page(after user checks out), is successful(payment successful) or not(payment denied by bank for example).', 'fusion-builder' ),
-				'options'     => $wc_statuses,
-				'comparisons' => [
-					'equal'     => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal' => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'order_received_total_value',
-				'title'       => esc_html__( 'Order Received Total Value', 'fusion-builder' ),
-				'type'        => 'text',
-				'placeholder' => esc_html__( 'The total value of the order. Works only in order received page(after user checks out).', 'fusion-builder' ),
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-				],
-			],
-
-			[
-				'id'          => 'order_received_downloads',
-				'title'       => esc_html__( 'Order Received Download Count', 'fusion-builder' ),
-				'type'        => 'text',
-				'placeholder' => esc_html__( 'How many items that can be download the order received page(after user checks out) has.', 'fusion-builder' ),
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-				],
-			],
-
 		];
 
 		$params[0]['choices'] = array_merge( $params[0]['choices'], $woo_options );
@@ -588,115 +251,11 @@ class Fusion_Builder_Conditional_Render_Helper {
 	}
 
 	/**
-	 * Adds ACF Options.
-	 *
-	 * @since 3.5
-	 * @param array $params The existing params.
-	 * @return array.
-	 */
-	public static function maybe_add_acf_options( $params ) {
-		if ( ! class_exists( 'ACF' ) ) {
-			return $params;
-		}
-
-		$options = [
-			[
-				'id'          => 'acf_field',
-				'title'       => esc_html__( 'ACF Field', 'fusion-builder' ),
-				'type'        => 'text',
-				'additionals' => [
-					'type'        => 'text',
-					'title'       => esc_html__( 'Field Name', 'fusion-builder' ),
-					'placeholder' => esc_html__( 'Field Name', 'fusion-builder' ),
-				],
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-					'contains'     => esc_attr__( 'Contains', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'acf_repeater_count',
-				'title'       => esc_html__( 'ACF Repeater Count', 'fusion-builder' ),
-				'type'        => 'text',
-				'additionals' => [
-					'type'        => 'text',
-					'title'       => esc_html__( 'Field Name', 'fusion-builder' ),
-					'placeholder' => esc_html__( 'Field Name', 'fusion-builder' ),
-				],
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'acf_repeater_single_value',
-				'title'       => esc_html__( 'ACF Repeater Single Value', 'fusion-builder' ),
-				'type'        => 'text',
-				'additionals' => [
-					'type'        => 'text',
-					'title'       => esc_html__( 'Field', 'fusion-builder' ),
-					'placeholder' => 'field[1][name]',
-				],
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-					'contains'     => esc_attr__( 'Contains', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'acf_repeater_sub_field',
-				'title'       => esc_html__( 'ACF Repeater Sub Field', 'fusion-builder' ),
-				'description' => esc_html__( 'Enter repeater sub field name. This option only works on post cards within the ACF repeater loop.', 'fusion-builder' ),
-				'type'        => 'text',
-				'additionals' => [
-					'type'        => 'text',
-					'title'       => esc_html__( 'Sub Field name', 'fusion-builder' ),
-					'placeholder' => esc_html__( 'Sub Field name', 'fusion-builder' ),
-				],
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-					'contains'     => esc_attr__( 'Contains', 'fusion-builder' ),
-				],
-			],
-			[
-				'id'          => 'acf_relationship_count',
-				'title'       => esc_html__( 'ACF Relationship Count', 'fusion-builder' ),
-				'type'        => 'text',
-				'additionals' => [
-					'type'        => 'text',
-					'title'       => esc_html__( 'Field Name', 'fusion-builder' ),
-					'placeholder' => esc_html__( 'Field Name', 'fusion-builder' ),
-				],
-				'comparisons' => [
-					'equal'        => esc_attr__( 'Equal To', 'fusion-builder' ),
-					'not-equal'    => esc_attr__( 'Not Equal To', 'fusion-builder' ),
-					'greater-than' => esc_attr__( 'Greater Than', 'fusion-builder' ),
-					'less-than'    => esc_attr__( 'Less Than', 'fusion-builder' ),
-				],
-			],
-		];
-
-		$params[0]['choices'] = array_merge( $params[0]['choices'], $options );
-
-		return $params;
-	}
-
-	/**
 	 * Checks if element should render or not.
 	 *
 	 * @since 3.3
 	 * @param array $atts The attributes.
-	 * @return bool
+	 * @return bool.
 	 */
 	public static function should_render( $atts ) {
 		$logics = ( isset( $atts['render_logics'] ) && '' !== $atts['render_logics'] ) ? json_decode( base64_decode( $atts['render_logics'] ) ) : [];
@@ -732,8 +291,6 @@ class Fusion_Builder_Conditional_Render_Helper {
 		if ( count( $checks ) ) {
 			return self::match_conditions( $checks );
 		}
-
-		return true;
 	}
 
 	/**
@@ -746,16 +303,10 @@ class Fusion_Builder_Conditional_Render_Helper {
 	 * @return mixed.
 	 */
 	public static function get_value( $name, $value, $additionals ) {
-		$woo_options       = [ 'cart_status', 'sale_status', 'stock_quantity' ];
-		$event_options     = [ 'event_status' ];
-		$acf_options       = [ 'acf_field' ];
-		$custom_conditions = FusionBuilder()->get_custom_conditions();
+		$woo_options   = [ 'cart_status', 'sale_status', 'stock_quantity' ];
+		$event_options = [ 'event_status' ];
 
-		if ( isset( $custom_conditions[ $name ]['callback'] ) ) {
-			return call_user_func_array( $custom_conditions[ $name ]['callback'], [ $value, $additionals ] );
-		}
-
-		if ( in_array( $name, $woo_options, true ) && ! class_exists( 'WooCommerce' ) || in_array( $name, $event_options, true ) && ! class_exists( 'Tribe__Events__Main' ) || in_array( $name, $acf_options, true ) && ! class_exists( 'ACF' ) ) {
+		if ( in_array( $name, $woo_options, true ) && ! class_exists( 'WooCommerce' ) || in_array( $name, $event_options, true ) && ! class_exists( 'Tribe__Events__Main' ) ) {
 			return '';
 		}
 
@@ -771,17 +322,15 @@ class Fusion_Builder_Conditional_Render_Helper {
 					$parent_id  = wp_get_post_parent_id( $product_id );
 					$product_id = $parent_id > 0 ? $parent_id : $product_id;
 
-					if ( is_object( WC()->cart ) ) {
-						foreach ( WC()->cart->get_cart() as $cart_item ) {
-							if ( $cart_item['product_id'] === $product_id ) {
-								$is_in_cart = true;
-							}
+					foreach ( WC()->cart->get_cart() as $cart_item ) {
+						if ( $cart_item['product_id'] === $product_id ) {
+							$is_in_cart = true;
 						}
 					}
 
 					return $is_in_cart ? 'in' : null;
 				} else {
-					return is_object( WC()->cart ) && 0 === WC()->cart->get_cart_contents_count() ? 'empty' : null;
+					return 0 === WC()->cart->get_cart_contents_count() ? 'empty' : null;
 				}
 
 			case 'sale_status':
@@ -806,86 +355,6 @@ class Fusion_Builder_Conditional_Render_Helper {
 
 				return $product->get_stock_quantity();
 
-			case 'stock_status':
-				$product = wc_get_product( get_the_ID() );
-
-				if ( false === $product ) {
-					return 0;
-				}
-
-				return $product->is_in_stock() ? 'in' : 'out';
-
-			case 'product_type':
-				$product = wc_get_product( get_the_ID() );
-
-				if ( false === $product ) {
-					return 0;
-				}
-
-				return $product->get_type();
-
-			case 'product_category':
-				return has_term( $value, 'product_cat' ) ? $value : null;
-			case 'product_tag':
-				return has_term( $value, 'product_tag' ) ? $value : null;
-			case 'related_products_count':
-				$product = wc_get_product( get_the_ID() );
-
-				if ( false === $product ) {
-					return 0;
-				}
-				$related_products = wc_get_related_products( get_the_ID(), intval( $value ) + 1 );
-				return count( $related_products );
-			case 'up_sells_products_count':
-				$product = wc_get_product( get_the_ID() );
-
-				if ( false === $product ) {
-					return 0;
-				}
-				return count( $product->get_upsell_ids() );
-			case 'cross_sells_products_count':
-				$product = wc_get_product( get_the_ID() );
-
-				if ( false === $product ) {
-					return 0;
-				}
-				return count( $product->get_cross_sell_ids() );
-			case 'product_variations':
-				$product = wc_get_product( get_the_ID() );
-
-				if ( false === $product ) {
-					return 0;
-				}
-				if ( ! $product->is_type( 'variable' ) ) {
-					return 0;
-				}
-
-				$atts = $product->get_variation_attributes();
-				return ! empty( $product->get_attributes() ) && is_array( $atts ) && array_key_exists( 'pa_' . strtolower( $value ), $atts ) ? $value : null;
-			case 'post_category':
-				return has_term( $value, 'category' ) ? $value : null;
-			case 'post_tag':
-				return has_term( $value, 'post_tag' ) ? $value : null;
-			case 'post_count':
-				$count = is_archive() || is_search() ? get_queried_object()->count : null;
-				return $count;
-			case 'term_count':
-				if ( is_archive() || is_tax() ) {
-					return count(
-						get_terms(
-							[
-								'taxonomy' => get_queried_object()->taxonomy,
-								'child_of' => get_queried_object()->term_id,
-							]
-						)
-					);
-				} else {
-					return null;
-				}
-			case 'comments_status':
-				return comments_open() ? 'open' : 'closed';
-			case 'comments_count':
-				return intval( get_comments_number() );
 			case 'event_status':
 				$id = get_the_ID();
 
@@ -904,16 +373,7 @@ class Fusion_Builder_Conditional_Render_Helper {
 				}
 
 			case 'device_type':
-				if ( fusion_library()->device_detection->is_mobile() && 'mobile_tablet' !== $value ) {
-					return 'mobile';
-				} elseif ( fusion_library()->device_detection->is_tablet() && 'mobile_tablet' !== $value ) {
-					return 'tablet';
-				} elseif ( ! wp_is_mobile() ) {
-					return 'desktop';
-				} elseif ( wp_is_mobile() ) {
-					return 'mobile_tablet';
-				}
-				return '';
+				return wp_is_mobile() ? 'mobile_tablet' : 'desktop';
 
 			case 'user_agent':
 				return isset( $_SERVER['HTTP_USER_AGENT'] ) ? wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -923,132 +383,7 @@ class Fusion_Builder_Conditional_Render_Helper {
 				return 0 !== $user->ID ? $user->roles : [];
 
 			case 'get_var':
-				if ( ! isset( $_GET[ $additionals ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					return null;
-				}
-				if ( is_array( $_GET[ $additionals ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					return array_map( 'sanitize_text_field', $_GET[ $additionals ] ); // phpcs:ignore WordPress.Security
-				}
-
-				return sanitize_text_field( wp_unslash( $_GET[ $additionals ] ) ); // phpcs:ignore WordPress.Security.NonceVerification
-			case 'custom_field':
-				$post_meta = get_post_meta( get_the_ID(), $additionals, true );
-				return ! empty( $post_meta ) ? $post_meta : null;
-
-			case 'acf_field':
-				$acf_field = ! is_archive() ? get_field( $additionals ) : get_field( $additionals, get_queried_object() );
-				return ! empty( $acf_field ) ? $acf_field : null;
-
-			case 'acf_repeater_count':
-				$count = 0;
-				if ( class_exists( 'ACF' ) && $additionals && have_rows( $additionals ) ) {
-					$count = count( get_field( $additionals ) );
-				}
-				return $count;
-
-			case 'acf_repeater_single_value':
-				if ( ! $additionals ) {
-					return '';
-				}
-				preg_match( '/.+?(?=\[)/', $additionals, $field );
-				$field = $field[0];
-
-				preg_match_all( '/\[(.*?)\]/', $additionals, $keys );
-
-				$keys  = $keys[1];
-				$index = isset( $keys[0] ) ? $keys[0] : '';
-				$key   = isset( $keys[1] ) ? $keys[1] : '';
-
-				$value = Fusion_Dynamic_Data_Callbacks::acf_get_repeater_single_field(
-					[
-						'field' => $field,
-						'index' => $index,
-						'key'   => $key,
-					]
-				);
-
-				return $value;
-
-			case 'acf_repeater_sub_field':
-				if ( ! $additionals ) {
-					return '';
-				}
-
-				$value = Fusion_Dynamic_Data_Callbacks::acf_get_repeater_sub_field( [ 'sub_field' => $additionals ] );
-
-				return $value;
-			case 'acf_relationship_count':
-				$count = 0;
-				if ( class_exists( 'ACF' ) && $additionals && have_rows( $additionals ) ) {
-					$count = count( get_field( $additionals, false, false ) );
-				}
-				return $count;
-			case 'heading_number':
-				return awb_get_approx_nr_of_headings( (int) get_the_ID() );
-
-			case 'order_received_status':
-				global $wp;
-
-				if ( is_object( $wp ) && property_exists( $wp, 'query_vars' ) && isset( $wp->query_vars['order-received'] ) ) {
-					$wc_order = wc_get_order( apply_filters( 'woocommerce_thankyou_order_id', absint( $wp->query_vars['order-received'] ) ) );
-				} else {
-					return '';
-				}
-				return $wc_order->get_status();
-
-			case 'order_received_total_value':
-				global $wp;
-
-				if ( is_object( $wp ) && property_exists( $wp, 'query_vars' ) && isset( $wp->query_vars['order-received'] ) ) {
-					$wc_order = wc_get_order( apply_filters( 'woocommerce_thankyou_order_id', absint( $wp->query_vars['order-received'] ) ) );
-				} else {
-					return false;
-				}
-
-				return $wc_order->get_total();
-
-			case 'order_received_downloads':
-				global $wp;
-
-				if ( is_object( $wp ) && property_exists( $wp, 'query_vars' ) && isset( $wp->query_vars['order-received'] ) ) {
-					$wc_order = wc_get_order( apply_filters( 'woocommerce_thankyou_order_id', absint( $wp->query_vars['order-received'] ) ) );
-				} else {
-					return false;
-				}
-
-				if ( $wc_order->has_downloadable_item() && $wc_order->is_download_permitted() ) {
-					return count( $wc_order->get_downloadable_items() );
-				}
-
-				return false;
-
-			case 'post_term':
-				global $post;
-				$taxonomy_ids = [];
-
-				if ( ! $post ) {
-					return $taxonomy_ids;
-				}
-
-				$post_taxonomies = get_object_taxonomies( $post, 'objects' );
-
-				if ( ! is_array( $post_taxonomies ) ) {
-					return $taxonomy_ids;
-				}
-
-				foreach ( $post_taxonomies as $taxonomy ) {
-					$terms = get_the_terms( $post, $taxonomy->name );
-					if ( ! is_array( $terms ) ) {
-						continue;
-					}
-
-					foreach ( $terms as $term ) {
-						array_push( $taxonomy_ids, $term->term_id );
-					}
-				}
-
-				return $taxonomy_ids;
-
+				return isset( $_GET[ $additionals ] ) ? sanitize_text_field( wp_unslash( $_GET[ $additionals ] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 	}
 
@@ -1059,7 +394,7 @@ class Fusion_Builder_Conditional_Render_Helper {
 	 * @param mixed  $current_value The current value.
 	 * @param string $desired_value The desired value.
 	 * @param string $comparison    The desired comparison.
-	 * @return bool
+	 * @return bool.
 	 */
 	public static function is_match( $current_value, $desired_value, $comparison ) {
 		$current_value = is_array( $current_value ) ? $current_value : strtolower( $current_value );
@@ -1080,10 +415,7 @@ class Fusion_Builder_Conditional_Render_Helper {
 
 			case 'contains':
 				return false !== strpos( $current_value, $desired_value );
-
 		}
-
-		return false;
 	}
 
 	/**

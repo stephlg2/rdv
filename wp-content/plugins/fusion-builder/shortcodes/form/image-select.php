@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
 		class FusionForm_ImageSelect extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -24,13 +42,6 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
 			 * @var int
 			 */
 			public $child_counter = 0;
-
-			/**
-			 * Element data.
-			 *
-			 * @var array
-			 */
-			private $element_data = [];
 
 			/**
 			 * Constructor.
@@ -49,16 +60,16 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
 			 * @static
 			 * @access public
 			 * @since 3.1
-			 * @param 'parent'|'child' $context Whether we want parent or child.
+			 * @param string $context Whether we want parent or child.
 			 * @return array
 			 */
 			public static function get_element_defaults( $context = 'parent' ) {
+				global $fusion_settings;
 
 				$parent = [
 					'label'              => '',
 					'name'               => '',
 					'required'           => '',
-					'empty_notice'       => '',
 					'multiple_select'    => '',
 					'placeholder'        => 'no',
 					'form_field_layout'  => '',
@@ -138,8 +149,6 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
 
 				$html .= ' data-form-id="' . $this->params['form_number'] . '"';
 
-				$html .= ' style="' . $this->get_style_variables() . '"';
-
 				$html .= '>';
 
 				return $html;
@@ -159,6 +168,7 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
 				$type    = 'radio';
 				$options = '';
 				$html    = '';
+				$styles  = '';
 
 				$element_data       = $this->create_element_data( $this->args );
 				$this->element_data = $element_data;
@@ -181,49 +191,58 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
 					$html .= $element_html . $element_data['label'];
 				}
 
-				return $html;
-			}
+				// Build styles.
+				$base_selector = '.fusion-form-form-wrapper.fusion-form-' . $this->params['form_number'] . ' .fusion-form-field-fusion-form-image-select-' . $this->counter;
 
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_style_variables() {
-				$custom_vars = [];
-				$paddings    = [ 'top', 'right', 'bottom', 'left' ];
+				if ( '' !== $this->args['width'] ) {
+					$styles .= $base_selector . ' .fusion-form-image-select label .fusion-form-image-wrapper{width:' . Fusion_Sanitize::get_value_with_unit( $this->args['width'] ) . ';}';
+				}
+
+				if ( '' !== $this->args['height'] ) {
+					$styles .= $base_selector . ' .fusion-form-image-select label .fusion-form-image-wrapper{height:' . Fusion_Sanitize::get_value_with_unit( $this->args['height'] ) . ';}';
+				}
+
+				foreach ( [ 'top', 'right', 'bottom', 'left' ] as $direction ) {
+					if ( '' !== $this->args[ 'border_size_' . $direction ] ) {
+						$styles .= $base_selector . ' .fusion-form-image-select label{border-' . $direction . '-width:' . Fusion_Sanitize::get_value_with_unit( $this->args[ 'border_size_' . $direction ] ) . ';}';
+					}
+				}
+
+				if ( '' !== $this->args['border_radius'] ) {
+					$styles .= $base_selector . ' .fusion-form-image-select label{border-radius:' . Fusion_Sanitize::get_value_with_unit( $this->args['border_radius'] ) . ';}';
+				}
+
+				if ( '' !== $this->args['inactive_color'] ) {
+					$styles .= $base_selector . ' .fusion-form-image-select label{border-color:' . $this->args['inactive_color'] . ';}';
+				}
+
+				if ( '' !== $this->args['active_color'] ) {
+					$styles .= $base_selector . ' .fusion-form-image-select .fusion-form-input:checked + label{border-color:' . $this->args['active_color'] . ';}';
+					$styles .= $base_selector . ' .fusion-form-image-select .fusion-form-input:hover:not(:checked) + label{border-color:' . Fusion_Color::new_color( $this->args['active_color'] )->get_new( 'alpha', '0.5' )->to_css( 'rgba' ) . ';}';
+				}
+
+				// Padding.
+				$paddings       = [ 'top', 'right', 'bottom', 'left' ];
+				$padding_styles = '';
 
 				foreach ( $paddings as $padding ) {
 					$padding_name = 'padding_' . $padding;
 
 					if ( '' !== $this->args[ $padding_name ] ) {
-						$custom_vars[ 'padding-' . $padding ] = fusion_library()->sanitize->get_value_with_unit( $this->args[ $padding_name ] );
+
+						$padding_styles .= 'padding-' . $padding . ':' . fusion_library()->sanitize->get_value_with_unit( $this->args[ $padding_name ] ) . ';';
 					}
 				}
 
-				foreach ( [ 'top', 'right', 'bottom', 'left' ] as $direction ) {
-					if ( '' !== $this->args[ 'border_size_' . $direction ] ) {
-						$custom_vars[ 'border-size-' . $direction ] = Fusion_Sanitize::get_value_with_unit( $this->args[ 'border_size_' . $direction ] );
-					}
+				if ( '' !== $padding_styles ) {
+					$styles .= $base_selector . ' label{' . $padding_styles . ';}';
 				}
 
-				if ( '' !== $this->args['active_color'] ) {
-					$custom_vars['hover-color'] = Fusion_Color::new_color( $this->args['active_color'] )->get_new( 'alpha', '0.5' )->to_css_var_or_rgba();
+				if ( '' !== $styles ) {
+					$html .= '<style type="text/css">' . $styles . '</style>';
 				}
 
-				$css_vars_options = [
-					'active_color'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'inactive_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_radius'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'height'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'width'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
+				return $html;
 			}
 
 			/**
@@ -261,9 +280,7 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
 				$label_id       = $type . '-' . str_replace( ' ', '-', strtolower( $value ) ) . $this->child_counter;
 
 				$html .= '<div class="' . $checkbox_class . '">';
-				$html .= '<input ';
-				$html .= '' !== $element_data['empty_notice'] ? 'data-empty-notice="' . $element_data['empty_notice'] . '" ' : '';
-				$html .= 'tabindex="' . $this->args['tab_index'] . '" id="' . esc_attr( $label_id ) . '" type="' . $input_type . '" value="' . esc_attr( $value ) . '" name="' . esc_attr( $element_name ) . '"' . $element_data['class'] . $element_data['required'] . $checked . $element_data['holds_private_data'] . '/>';
+				$html .= '<input tabindex="' . $this->args['tab_index'] . '" id="' . esc_attr( $label_id ) . '" type="' . $input_type . '" value="' . esc_attr( $value ) . '" name="' . esc_attr( $element_name ) . '"' . $element_data['class'] . $element_data['required'] . $checked . $element_data['holds_private_data'] . '/>';
 				$html .= '<label for="' . esc_attr( $label_id ) . '">';
 
 				// Perhaps an option whether to show label or not.
@@ -352,6 +369,8 @@ if ( fusion_is_element_enabled( 'fusion_form_image_select' ) ) {
  */
 function fusion_form_image_select() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_ImageSelect',
@@ -396,7 +415,7 @@ function fusion_form_image_select() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,
@@ -421,20 +440,6 @@ function fusion_form_image_select() {
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Empty Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter text validation notice that should display if data input is empty.', 'fusion-builder' ),
-						'param_name'  => 'empty_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'required',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
 						],
 					],
 					[

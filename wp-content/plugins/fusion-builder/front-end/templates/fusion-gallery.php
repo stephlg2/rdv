@@ -11,10 +11,7 @@
 	<# if ( 'undefined' !== typeof usingDynamic && usingDynamic ) { #>
 		<div class="fusion-builder-placeholder"><?php esc_html_e( 'This gallery element is set to use dynamic data.  For a preview please check the front-end.', 'fusion-builder' ); ?></div>
 	<# } else { #>
-		<div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
-			<div {{{ _.fusionGetAttributes( attr ) }}}></div>
-			{{{paginationHTML}}}
-		</div>
+		<div {{{ _.fusionGetAttributes( attr ) }}}></div>
 	<# } #>
 	<div class="fusion-clearfix"></div>
 </script>
@@ -35,28 +32,14 @@
 	}
 
 	images_html += '<div ' + _.fusionGetAttributes( imagesAttr.images ) + '>';
-
-	if ( 'above' === parentValues.caption_style && 'undefined' !== typeof captionHtml ) {
-		images_html += captionHtml;
-	}
-
 	images_html += '<div ' + _.fusionGetAttributes( imageWrapperAttr ) + '>';
 
-	if ( -1 === jQuery.inArray( parentValues.caption_style, [ 'off', 'above', 'below' ] ) && 'undefined' !== typeof captionHtml ) {
-		image_html += captionHtml;
-	}
-
-	if ( galleryLightbox && 'no' !== galleryLightbox && 'undefined' !== typeof imageData ) {
+	if ( galleryLightbox && 'no' !== galleryLightbox ) {
 		images_html += '<a ' + _.fusionGetAttributes( imagesAttr.link ) + '>' + image_html + '</a>';
 	} else {
 		images_html += image_html;
 	}
 	images_html += '</div>';
-
-	if ( 'below' === parentValues.caption_style && 'undefined' !== typeof captionHtml ) {
-		images_html += captionHtml;
-	}
-
 	images_html += '</div>';
 
 	// TODO: between child views ?
@@ -64,12 +47,5 @@
 		images_html += '<div class="clearfix"></div>';
 	}
 #>
-
-	<# if ( 'undefined' !== typeof usingDynamicParent && usingDynamicParent ) {	#>
-		<div class="fusion-builder-placeholder">
-			<?php esc_html_e( 'This gallery element is set to use dynamic data.  For a preview please check the front-end.', 'fusion-builder' ); ?>
-		</div>
-	<# } else { #>
-		{{{ images_html }}}
-	<# } #>
+	{{{ images_html }}}
 </script>

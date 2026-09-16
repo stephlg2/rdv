@@ -82,9 +82,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				// Validate values.
-				this.validateValues( atts.values );
-
 				// Create attribute objects
 				attributes.sliderAttr = this.buildSliderAttr( atts.values );
 				if ( 'undefined' !== typeof atts.query_data ) {
@@ -101,20 +98,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Modify the values.
-			 *
-			 * @since 3.8
-			 * @param {Object} values - The values object.
-			 * @return {void}
-			 */
-			validateValues: function( values ) {
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
-			},
-
-			/**
 			 * Builds attributes.
 			 *
 			 * @since 2.0
@@ -125,30 +108,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// FlexsliderShortcode Attributes.
 				var flexsliderShortcode = {
-					class: 'fusion-flexslider fusion-post-slider fusion-flexslider-loading flexslider-' + values.layout,
-					style: ''
+					class: 'fusion-flexslider fusion-post-slider fusion-flexslider-loading flexslider-' + values.layout
 				};
 
 				flexsliderShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, flexsliderShortcode );
 
 				if ( 'yes' === values.lightbox && 'attachments' === values.layout ) {
 					flexsliderShortcode[ 'class' ] += ' flexslider-lightbox';
-				}
-
-				if ( '' !== values.margin_top ) {
-					flexsliderShortcode.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_right ) {
-					flexsliderShortcode.style += 'margin-right:' + values.margin_right + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					flexsliderShortcode.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
-
-				if ( '' !== values.margin_left ) {
-					flexsliderShortcode.style += 'margin-left:' + values.margin_left + ';';
 				}
 
 				if ( '' !== values[ 'class' ] ) {

@@ -38,13 +38,6 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 	public $shortcode_handle = '';
 
 	/**
-	 * The number of elements.
-	 *
-	 * @var int
-	 */
-	public $counter = 0;
-
-	/**
 	 * Constructor.
 	 *
 	 * @since 3.1
@@ -55,13 +48,6 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 		$this->shortcode_handle = $shortcode_handle;
 		add_shortcode( $this->shortcode_handle, [ $this, 'render' ] );
 	}
-
-	/**
-	 * Get the element default arguments.
-	 *
-	 * @return array
-	 */
-	abstract public static function get_element_defaults();
 
 	/**
 	 * Render the shortcode
@@ -100,8 +86,6 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 			'checked'              => '',
 			'disabled'             => '',
 			'required'             => '',
-			'invalid_notice'       => '',
-			'empty_notice'         => '',
 			'required_label'       => '',
 			'required_placeholder' => '',
 			'placeholder'          => '',
@@ -124,24 +108,18 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 			$data['checked'] = ' checked="checked"';
 		}
 
+		if ( 'fusion_form_phone_number' === $this->shortcode_handle ) {
+			$data['pattern'] = ' pattern="[0-9()#&+*-=.]+" title="' . esc_attr( __( 'Only numbers and phone characters are accepted.', 'fusion-builder' ) ) . '"';
+		}
+
 		if ( 'fusion_form_upload' === $this->shortcode_handle && isset( $args['upload_size'] ) && $args['upload_size'] ) {
 			$data['upload_size'] = ' data-size="' . esc_attr( $args['upload_size'] ) . '"';
 		}
 
-		if ( isset( $args['required'] ) && ( 'yes' === $args['required'] || 'selection' === $args['required'] ) ) {
-			if ( 'selection' !== $args['required'] ) {
-				$data['required'] = ' required="true" aria-required="true"';
-			}
-			$data['required_label_text'] = __( 'required', 'fusion-builder' );
-			if ( ! empty( $args['required_label_text'] ) ) {
-				$data['required_label_text'] = $args['required_label_text'];
-			}
-			$data['required_label']       = ' <abbr class="fusion-form-element-required" title="' . esc_attr( $data['required_label_text'] ) . '">*</abbr>';
+		if ( isset( $args['required'] ) && 'yes' === $args['required'] ) {
+			$data['required']             = ' required="true" aria-required="true"';
+			$data['required_label']       = ' <abbr class="fusion-form-element-required" title="' . esc_attr( __( 'required', 'fusion-builder' ) ) . '">*</abbr>';
 			$data['required_placeholder'] = '*';
-
-			if ( isset( $args['empty_notice'] ) && '' !== $args['empty_notice'] ) {
-				$data['empty_notice'] = $args['empty_notice'];
-			}
 		}
 
 		if ( isset( $args['disabled'] ) && 'yes' === $args['disabled'] ) {
@@ -196,20 +174,12 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 			$data['input_attributes'] .= ' max="' . $args['max'] . '"';
 		}
 
-		if ( isset( $args['must_match'] ) && '' !== $args['must_match'] ) {
-			$data['input_attributes'] = ' data-must-match="' . $args['must_match'] . '"';
-		}
-
 		// Text field minlength and maxlength.
 		if ( isset( $args['minlength'] ) && is_numeric( $args['minlength'] ) ) {
 			$data['input_attributes'] .= ' minlength="' . $args['minlength'] . '"';
 		}
 		if ( isset( $args['maxlength'] ) && ! empty( $args['maxlength'] ) ) {
 			$data['input_attributes'] .= ' maxlength="' . $args['maxlength'] . '"';
-		}
-
-		if ( isset( $args['invalid_notice'] ) && '' !== $args['invalid_notice'] ) {
-			$data['invalid_notice'] = $args['invalid_notice'];
 		}
 
 		return $data;
@@ -229,7 +199,7 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 
 		if ( '' !== $args['tooltip'] ) {
 			$html .= '<div class="fusion-form-tooltip">';
-			$html .= '<i class="awb-icon-question-circle"></i>';
+			$html .= '<i class="fusion-icon-question-circle"></i>';
 			$html .= '<span class="fusion-form-tooltip-content">' . $args['tooltip'] . '</span>';
 			$html .= '</div>';
 		}
@@ -264,33 +234,14 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 			$element_html .= 'tabindex="' . $this->args['tab_index'] . '" ';
 		}
 
-		$args['name']  = esc_attr( $args['name'] );
-		$args['value'] = esc_attr( $args['value'] );
-
-		$element_html .= 'text' === $type && isset( $args['pattern'] ) && '' !== $args['pattern'] ? $this->add_pattern( $args ) : '';
-		$element_html .= in_array( $type, [ 'email', 'password', 'tel' ], true ) && isset( $args['pattern'] ) && '' !== $args['pattern'] ? ' pattern="' . fusion_decode_if_needed( $args['pattern'] ) . '" ' : '';
-		$element_html .= '' !== $element_data['invalid_notice'] ? ' data-invalid-notice="' . $element_data['invalid_notice'] . '" ' : '';
-		$element_html .= '' !== $element_data['empty_notice'] ? ' data-empty-notice="' . $element_data['empty_notice'] . '" ' : '';
 		$element_html .= 'name="' . $args['name'] . '" id="' . $args['name'] . '" value="' . $args['value'] . '" ' . $element_data['class'] . $element_data['required'] . $element_data['disabled'] . $element_data['placeholder'] . $element_data['style'] . $element_data['holds_private_data'] . $element_data['input_attributes'] . $element_data['pattern'] . '/>';
 
-		$icon_wrapper_open = '';
 		if ( isset( $args['input_field_icon'] ) && '' !== $args['input_field_icon'] ) {
-			$icon_wrapper_open = '<div class="fusion-form-input-with-icon">';
-			$icon_html         = '<i class="awb-form-icon ' . fusion_font_awesome_name_handler( $args['input_field_icon'] ) . '"></i>';
-			$element_html      = $icon_html . $element_html;
+			$icon_html     = '<div class="fusion-form-input-with-icon">';
+			$icon_html    .= '<i class="' . fusion_font_awesome_name_handler( $args['input_field_icon'] ) . '"></i>';
+			$element_html  = $icon_html . $element_html;
+			$element_html .= '</div>';
 		}
-
-		if ( 'password' === $type && 'yes' === $this->args['reveal_password'] ) {
-			if ( '' === $icon_wrapper_open ) {
-				$icon_wrapper_open = '<div class="fusion-form-input-with-icon awb-form-pw-reveal">';
-			} else {
-				$icon_wrapper_open = str_replace( 'fusion-form-input-with-icon', 'fusion-form-input-with-icon awb-form-pw-reveal awb-form-both-icons', $icon_wrapper_open );
-			}
-			$element_html .= '<i class="awb-form-pw-reveal-icon awb-icon-eye-slash" id="' . $args['name'] . '_' . $this->counter . '"></i>';
-		}
-
-		$element_html  = $icon_wrapper_open . $element_html;
-		$element_html .= '' === $icon_wrapper_open ? '' : '</div>';
 
 		if ( '' !== $element_data['label'] ) {
 			$element_data['label'] = '<div class="fusion-form-label-wrapper">' . $element_data['label'] . '</div>';
@@ -303,27 +254,6 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 		}
 
 		return $html;
-	}
-
-	/**
-	 * Adds pattern attribute to text field.
-	 *
-	 * @since 3.8
-	 * @access public
-	 * @param array $args All needed values for the form field.
-	 * @return string The updated HTML.
-	 */
-	public function add_pattern( $args ) {
-		$patterns = [
-			'letters'            => '[a-zA-Z]+',
-			'alpha_numeric'      => '[a-zA-Z0-9]+',
-			'number'             => '[0-9]+',
-			'credit_card_number' => '[0-9]{13,16}',
-			'phone'              => '[0-9()#&+*-=.]+',
-			'url'                => '(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)',
-		];
-
-		return isset( $patterns[ $args['pattern'] ] ) ? ' pattern="' . $patterns[ $args['pattern'] ] . '" ' : ' pattern="' . fusion_decode_if_needed( $args['custom_pattern'] ) . '" ';
 	}
 
 	/**
@@ -352,7 +282,7 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 		foreach ( $args['options'] as $key => $option ) {
 			$checked = $option[0] ? ' checked ' : '';
 			$label   = trim( $option[1] );
-			$value   = isset( $option[2] ) && '' !== $option[2] ? trim( $option[2] ) : $label;
+			$value   = ! empty( $option[2] ) ? trim( $option[2] ) : $label;
 
 			$name         = empty( $args['name'] ) ? $args['label'] : $args['name'];
 			$element_name = ( 'checkbox' === $type ) ? $name . '[]' : $name;
@@ -360,19 +290,13 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 			$checkbox_class = ( 'floated' === $args['form_field_layout'] ) ? 'fusion-form-' . $type . ' option-inline' : 'fusion-form-' . $type;
 			$label_id       = $type . '-' . str_replace( ' ', '-', strtolower( $name ) ) . '-' . $this->counter . '-' . $key;
 			$options       .= '<div class="' . $checkbox_class . '">';
-			$options       .= '<input ';
-			$options       .= '' !== $element_data['empty_notice'] ? 'data-empty-notice="' . $element_data['empty_notice'] . '" ' : '';
-			$options       .= 'tabindex="' . $args['tab_index'] . '" id="' . $label_id . '" type="' . $type . '" value="' . $value . '" name="' . $element_name . '"' . $element_data['class'] . $element_data['required'] . $checked . $element_data['holds_private_data'] . '/>';
+			$options       .= '<input tabindex="' . $args['tab_index'] . '" id="' . $label_id . '" type="' . $type . '" value="' . $value . '" name="' . $element_name . '"' . $element_data['class'] . $element_data['required'] . $checked . $element_data['holds_private_data'] . '/>';
 			$options       .= '<label for="' . $label_id . '">';
 			$options       .= $label . '</label>';
 			$options       .= '</div>';
 		}
 
-		$fieldset_attr_string = '';
-		if ( isset( $args['fieldset_attr_string'] ) && $args['fieldset_attr_string'] ) {
-			$fieldset_attr_string = ' ' . $args['fieldset_attr_string'];
-		}
-		$element_html  = '<fieldset' . $fieldset_attr_string . '>';
+		$element_html  = '<fieldset>';
 		$element_html .= $options;
 		$element_html .= '</fieldset>';
 
@@ -413,13 +337,9 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 			$fusion_form['field_labels'][ $this->args['name'] ] = $this->args['label'];
 		}
 
-		$field_name = str_replace( 'fusion_form_', '', $this->shortcode_handle );
-		$name       = isset( $this->args['name'] ) ? $this->args['name'] : $field_name . '_' . $this->counter;
-
 		if ( isset( $this->args['logics'] ) ) {
-			$fusion_form['field_logics'][ $name ] = base64_decode( $this->args['logics'] );
+			$fusion_form['field_logics'][ $this->args['name'] ] = base64_decode( $this->args['logics'] );
 		}
-		$fusion_form['field_types'][ $name ] = $field_name;
 	}
 
 	/**
@@ -459,22 +379,9 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 		// Close class quotes.
 		$html .= '"';
 
-		$html .= ' style="' . $this->get_style_variables() . '"';
-
 		$html .= ' data-form-id="' . $this->params['form_number'] . '">';
 
 		return $html;
-	}
-
-	/**
-	 * Get the style variables.
-	 *
-	 * @access protected
-	 * @since 3.9
-	 * @return string
-	 */
-	public function get_style_variables() {
-		return '';
 	}
 
 	/**
@@ -492,10 +399,6 @@ abstract class Fusion_Form_Component extends Fusion_Element {
 				$fusion_form = Fusion_Builder_Form_Helper::fusion_form_set_form_data( (int) sanitize_text_field( wp_unslash( $_POST['post_id'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification, WordPress.PHP.StrictComparisons.LooseComparison
 			} elseif ( ! fusion_doing_ajax() && isset( $_POST['post_ID'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 				$fusion_form = Fusion_Builder_Form_Helper::fusion_form_set_form_data( (int) sanitize_text_field( wp_unslash( $_POST['post_ID'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification, WordPress.PHP.StrictComparisons.LooseComparison
-			} elseif ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-
-				// We need default form params, otherwise REST request triggers PHP notices when content is rendered.
-				$fusion_form = Fusion_Builder_Form_Helper::fusion_form_set_form_data( 0 );
 			}
 		}
 

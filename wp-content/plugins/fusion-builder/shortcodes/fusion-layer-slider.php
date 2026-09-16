@@ -22,7 +22,7 @@ function fusion_element_layer_slider() {
 			'icon'       => 'fusiona-stack',
 			'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-layer-slider-preview.php',
 			'preview_id' => 'fusion-builder-block-module-layer-slider-preview-template',
-			'help_url'   => 'https://avada.com/documentation/layer-slider-element/',
+			'help_url'   => 'https://theme-fusion.com/documentation/fusion-builder/elements/layer-slider-element/',
 			'params'     => [
 				[
 					'type'        => 'select',

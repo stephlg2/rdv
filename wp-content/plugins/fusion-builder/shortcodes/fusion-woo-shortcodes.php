@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_woo_shortcodes' ) && class_exists( 'WooC
 		class FusionSC_FusionWooShortcodes extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -67,7 +76,7 @@ function fusion_element_woo_shortcodes() {
 				'icon'                              => 'fusiona-tag',
 				'admin_enqueue_js'                  => FUSION_BUILDER_PLUGIN_URL . 'shortcodes/js/fusion-woo-shortcodes.js',
 				'front_end_custom_settings_view_js' => FUSION_BUILDER_PLUGIN_URL . 'inc/templates/custom/front-end/js/fusion-woo-shortcodes-settings.js',
-				'help_url'                          => 'https://avada.com/documentation/woocommerce-shortcodes-element/',
+				'help_url'                          => 'https://theme-fusion.com/documentation/fusion-builder/elements/woocommerce-shortcodes-element/',
 				'params'                            => [
 					[
 						'type'             => 'select',

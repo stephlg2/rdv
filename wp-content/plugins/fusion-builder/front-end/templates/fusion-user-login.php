@@ -11,7 +11,7 @@
 <#
 var placeholder;
 
-var html = '<div ' + _.fusionGetAttributes( loginShortCodeAttr ) + '>';
+var html = '<div ' + _.fusionGetAttributes( loginShortCodeAttr ) + '>' + styles;
 
 if ( loggedIn ) {
 
@@ -19,11 +19,11 @@ if ( loggedIn ) {
 	html += '<div class="fusion-login-caption">' + values.caption + '</div>';
 	html += '<' + values.main_container + ' ' + _.fusionGetAttributes( loginShortcodeFormAttr ) + '>';
 
-	placeholder  = 'yes' === values.show_placeholders  ? 'placeholder="' + extras.useroremail_text + '"' : '';
+	placeholder  = 'yes' === values.show_placeholders  ? 'placeholder="' + extras.username_text + '"' : '';
 	html += '<div class="fusion-login-fields">';
 
 	html += '<div class="fusion-login-input-wrapper">';
-	html += '<label class="' + values.label_class + '" for="user_login">' + extras.useroremail_text + '</label>';
+	html += '<label class="' + values.label_class + '" for="user_login">' + extras.username_text + '</label>';
 	html += '<input type="text" name="log" ' + placeholder + ' value="" size="20" class="fusion-login-username input-text" id="user_login" />';
 	html += '</div>';
 
@@ -85,7 +85,7 @@ var html = '';
 
 if ( loggedIn ) {
 
-	html = '<div ' + _.fusionGetAttributes( loginShortCodeAttr ) + '>';
+	html = '<div ' + _.fusionGetAttributes( loginShortCodeAttr ) + '>' + styles;
 	html += '<h3 class="fusion-login-heading">' + values.heading + '</h3>';
 	html += '<div class="fusion-login-caption">' + values.caption + '</div>';
 	html += '<' + values.main_container + ' ' + _.fusionGetAttributes( loginShortcodeFormAttr ) + '>';
@@ -116,7 +116,7 @@ if ( loggedIn ) {
 <#
 var html = register_note = '';
 if ( loggedIn ) {
-	html = '<div ' + _.fusionGetAttributes( loginShortCodeAttr ) + '>';
+	html = '<div ' + _.fusionGetAttributes( loginShortCodeAttr ) + '>' + styles;
 	html += '<h3 class="fusion-login-heading">' + values.heading + '</h3>';
 	html += '<div class="fusion-login-caption">' + values.caption + '</div>';
 	html += '<' + values.main_container + ' ' + _.fusionGetAttributes( loginShortcodeFormAttr ) + '>';

@@ -1,4 +1,4 @@
-/* global fusionAllElements, FusionApp, FusionPageBuilderApp, fusionAppConfig */
+/* global FusionPageBuilderApp */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -84,121 +84,70 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
+				// Validate values.
 				this.validateValues( atts.values );
-				this.isRTL         = jQuery( 'body' ).hasClass( 'rtl' ),
-				attributes.attr    = this.buildAttr( atts.values );
-				attributes.cid     = this.model.get( 'cid' );
-				attributes.output  = atts.values.element_content;
-				attributes.hasLink = 'string' === typeof atts.values.link && '' !==  atts.values.link;
+
+				// Create attribute objects
+				attributes.attr      = this.buildAttr( atts.values );
+
+				// Any extras that need passed on.
+				attributes.cid        = this.model.get( 'cid' );
+				attributes.alignment  = atts.values.alignment;
+				attributes.output     = atts.values.element_content;
+				attributes.hasLink    = 'string' === typeof atts.values.link && '' !==  atts.values.link;
+				attributes.styleBlock = this.styleBlock( atts.values );
 
 				return attributes;
 			},
 
-			get_style_vars: function( values ) {
-				var cssVars = [
-						'iconcolor',
-						'iconcolor_hover'
-					],
-					legacyIcon = false,
-					customCSSVars = {};
+			/**
+			 * Builds style block.
+			 *
+			 * @access public
+			 * @since 2.2
+			 * @param array values Element values.
+			 * @return string
+			 */
+			styleBlock: function( values ) {
+				var backgroundColor = '',
+					borderColor = '',
+					backgroundHover = '',
+					borderHover = '',
+					tag = '',
+					html,
+					cid = this.model.get( 'cid' );
 
-				values.circle_yes_font_size = 'undefined' !== values.bg_size && '-1' !== values.bg_size ? values.font_size : values.font_size * 0.88;
-				values.height               = 'undefined' !== values.bg_size && '-1' !== values.bg_size ? parseInt( values.bg_size ) : values.font_size * 1.76;
-				values.line_height          = values.height - ( 2 * parseInt( values.circlebordersize ) );
-				values.icon_margin          = values.font_size * 0.5;
-				values.circlebordersize     = _.fusionValidateAttrValue( values.circlebordersize, 'px' );
-				this.values = values;
+				tag = 'string' === typeof values.link && '' !==  values.link ? 'a' : 'i';
 
 				if ( 'yes' === values.circle ) {
-					cssVars.push( 'circlecolor' );
-					cssVars.push( 'circlecolor_hover' );
-					cssVars.push( 'circlebordercolor' );
-					cssVars.push( 'circlebordercolor_hover' );
-					cssVars.push( 'circlebordersize' );
-
-					customCSSVars.font_size = values.circle_yes_font_size + 'px';
-
-					customCSSVars.width  = values.height + 'px';
-					customCSSVars.height = values.height + 'px';
-					customCSSVars.line_height = values.line_height + 'px';
-
-					if ( ! this.isDefault( 'border_radius_top_left' ) ) {
-						customCSSVars.border_radius_top_l = values.border_radius_top_left;
+					if ( values.circlecolor ) {
+						backgroundColor = ' background-color: ' + values.circlecolor + ';';
 					}
-					if ( ! this.isDefault( 'border_radius_top_right' ) ) {
-						customCSSVars.border_radius_top_r = values.border_radius_top_right;
+					if ( values.circlecolor_hover ) {
+						backgroundHover = ' background-color: ' + values.circlecolor_hover + ';';
 					}
-					if ( ! this.isDefault( 'border_radius_bottom_right' ) ) {
-						customCSSVars.border_radius_bot_r = values.border_radius_bottom_right;
+					if ( values.circlebordercolor ) {
+						borderColor = ' border-color: ' + values.circlebordercolor + ';';
 					}
-					if ( ! this.isDefault( 'border_radius_bottom_left' ) ) {
-						customCSSVars.border_radius_bot_l = values.border_radius_bottom_left;
+					if ( values.circlebordercolor_hover ) {
+						borderHover = ' border-color: ' + values.circlebordercolor_hover + ';';
 					}
-				} else {
-					customCSSVars.font_size = values.font_size + 'px';
 				}
 
-				// Check if an old icon shortcode is used, where no margin option is present, or if all margins were left empty.
-				if ( 'undefined' === typeof values.margin_left || ( '' === values.margin_top && '' === values.margin_right && '' === values.margin_bottom && '' === values.margin_left ) ) {
-					legacyIcon = true;
+				html  = '<style>';
+				html += tag + '.fontawesome-icon.fb-icon-element-' + cid + '{ color: ' + values.iconcolor + ';' + backgroundColor + borderColor + '}';
+				html += tag + '.fontawesome-icon.fb-icon-element-' + cid + ':hover, .fontawesome-icon.fb-icon-element-' + cid + '.hover { color: ' + values.iconcolor_hover + ';' + backgroundHover + borderHover + '}';
+
+				// Pulsate effect color for outershadow.
+				if ( 'pulsate' === values.icon_hover_type ) {
+					html += tag + '.fontawesome-icon.fb-icon-element-' + cid + '.icon-hover-animation-pulsate:after {';
+					html += '-webkit-box-shadow:0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' + values.circlecolor_hover + ', 0 0 0 10px rgba(255,255,255,0.5);';
+					html += '-moz-box-shadow:0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' + values.circlecolor_hover + ', 0 0 0 10px rgba(255,255,255,0.5);';
+					html += 'box-shadow: 0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' + values.circlecolor_hover + ', 0 0 0 10px rgba(255,255,255,0.5);';
+					html += '}';
 				}
-				if ( legacyIcon ) {
-					if ( 'left' === values.alignment ) {
-						values.icon_margin_position = 'right';
-					} else if ( 'right' === values.alignment ) {
-						values.icon_margin_position = 'left';
-					} else {
-						values.icon_margin_position = FusionPageBuilderApp.$el.hasClass( 'rtl' ) ? 'left' : 'right';
-					}
-
-					if ( 'center' === values.alignment ) {
-						customCSSVars.margin_top    = 0;
-						customCSSVars.margin_right  = 0;
-						customCSSVars.margin_bottom = 0;
-						customCSSVars.margin_left   = 0;
-					} else {
-						customCSSVars[ 'margin_' + values.icon_margin_position ] = values.icon_margin + 'px';
-					}
-				} else {
-					cssVars.push( 'margin_top' );
-					cssVars.push( 'margin_right' );
-					cssVars.push( 'margin_bottom' );
-					cssVars.push( 'margin_left' );
-				}
-
-				// Responsive Alignment.
-				[ 'large', 'medium', 'small' ].forEach( function( size ) {
-					var alignStyles = '',
-						alignKey    = ( 'large' === size ? 'alignment' : 'alignment_' + size );
-
-					if ( '' !== values[ alignKey ] ) {
-						// RTL adjust.
-						if ( this.isRTL && 'center' !== values[ alignKey ] ) {
-							values[ alignKey ] = ( 'left' === values[ alignKey ] ? 'right' : 'left' );
-						}
-						if ( 'left' === values[ alignKey ] ) {
-							alignStyles = 'flex-start';
-						} else if ( 'right' === values[ alignKey ] ) {
-							alignStyles = 'flex-end';
-						} else {
-							alignStyles = 'center';
-						}
-					}
-
-					if ( '' === alignStyles ) {
-						return;
-					}
-
-					if ( 'large' === size ) {
-						customCSSVars[ 'align-self' ] = alignStyles;
-					} else if ( 'medium' === size ) {
-						customCSSVars[ 'md-align-self' ] = alignStyles;
-					} else if ( 'small' === size ) {
-						customCSSVars[ 'sm-align-self' ] = alignStyles;
-					}
-				} );
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCSSVars );
+				html += '</style>';
+				return html;
 			},
 
 			/**
@@ -209,22 +158,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			validateValues: function( values ) {
-				var corners = [
-					'top_left',
-					'top_right',
-					'bottom_right',
-					'bottom_left'
-				];
-
 				values.font_size = _.fusionValidateAttrValue( this.convertDeprecatedSizes( values.size ), '' );
-
-				_.each( corners, function( corner ) {
-					if ( 'undefined' !== typeof values[ 'border_radius_' + corner ] && '' !== values[ 'border_radius_' + corner ] ) {
-						values[ 'border_radius_' + corner ] = _.fusionGetValueWithUnit( values[ 'border_radius_' + corner ] );
-					} else {
-						values[ 'border_radius_' + corner ] = '0px';
-					}
-				} );
 			},
 
 			/**
@@ -235,15 +169,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {string}
 			 */
 			convertDeprecatedSizes: function( size ) {
+
 				switch ( size ) {
-					case 'small':
-						return '10px';
-					case 'medium':
-						return '18px';
-					case 'large':
-						return '40px';
-					default:
-						return size;
+				case 'small':
+					return '10px';
+				case 'medium':
+					return '18px';
+				case 'large':
+					return '40px';
+				default:
+					return size;
 				}
 			},
 
@@ -255,20 +190,71 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			buildAttr: function( values ) {
+				var legacyIcon              =  false;
 				var attr                    = {};
+				values.circle_yes_font_size = 'undefined' !== values.bg_size && '-1' !== values.bg_size ? values.font_size : values.font_size * 0.88;
+				values.height               = 'undefined' !== values.bg_size && '-1' !== values.bg_size ? parseInt( values.bg_size ) : values.font_size * 1.76;
+				values.line_height          = values.height - ( 2 * parseInt( values.circlebordersize ) );
+				values.icon_margin          = values.font_size * 0.5;
+				values.circlebordersize     = _.fusionValidateAttrValue( values.circlebordersize, 'px' );
 
+				// Check if an old icon shortcode is used, where no margin option is present, or if all margins were left empty.
+				if ( 'undefined' === typeof values.margin_left || ( '' === values.margin_top && '' === values.margin_right && '' === values.margin_bottom && '' === values.margin_left ) ) {
+					legacyIcon = true;
+				}
 				attr = {
-					class: 'fb-icon-element-live-' + this.model.get( 'cid' ) + ' fb-icon-element fontawesome-icon ' + _.fusionFontAwesome( values.icon ) + ' circle-' + values.circle,
+					class: 'fb-icon-element-' + this.model.get( 'cid' ) + ' fb-icon-element fontawesome-icon ' + _.fusionFontAwesome( values.icon ) + ' circle-' + values.circle,
 					'aria-hidden': 'true'
 				};
 				attr = _.fusionVisibilityAtts( values.hide_on_mobile, attr );
 
 				attr[ 'class' ] += _.fusionGetStickyClass( values.sticky_display );
 
-				attr.style = this.get_style_vars( values );
+				attr.style = '';
+
+				if ( 'yes' === values.circle ) {
+
+					attr.style += 'font-size:' + values.circle_yes_font_size + 'px;';
+					attr.style += 'line-height:' + values.line_height + 'px;height:' + values.height + 'px;width:' + values.height + 'px;';
+					attr.style += 'border-width:' + values.circlebordersize + ';';
+				} else {
+					attr.style += 'font-size:' + values.font_size + 'px;';
+				}
 
 				if ( '' === values.alignment ) {
 					attr[ 'class' ] += ' fusion-text-flow';
+				}
+
+				if ( legacyIcon ) {
+					if ( 'left' === values.alignment ) {
+						values.icon_margin_position = 'right';
+					} else if ( 'right' === values.alignment ) {
+						values.icon_margin_position = 'left';
+					} else {
+						values.icon_margin_position = FusionPageBuilderApp.$el.hasClass( 'rtl' ) ? 'left' : 'right';
+					}
+
+					if ( 'center' === values.alignment ) {
+						attr.style += 'margin-left:0;margin-right:0;';
+					} else {
+						attr.style += 'margin-' + values.icon_margin_position + ':' + values.icon_margin + 'px;';
+					}
+				} else {
+					if ( values.margin_top ) {
+						attr.style += 'margin-top:' + values.margin_top + ';';
+					}
+
+					if ( values.margin_right ) {
+						attr.style += 'margin-right:' + values.margin_right + ';';
+					}
+
+					if ( values.margin_bottom ) {
+						attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+					}
+
+					if ( values.margin_left ) {
+						attr.style += 'margin-left:' + values.margin_left + ';';
+					}
 				}
 
 				if ( values.rotate ) {
@@ -309,43 +295,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attr = _.fusionAnimations( values, attr );
 
 				return attr;
-			},
-
-			/**
-			 * Runs just after render on cancel.
-			 *
-			 * @since 3.5
-			 * @return null
-			 */
-			beforeGenerateShortcode: function() {
-				var elementType = this.model.get( 'element_type' ),
-					options     = fusionAllElements[ elementType ].params,
-					values      = jQuery.extend( true, {}, fusionAllElements[ elementType ].defaults, _.fusionCleanParameters( this.model.get( 'params' ) ) ),
-					iconWithoutFusionPrefix;
-
-				if ( 'object' !== typeof options ) {
-					return;
-				}
-
-				// If images needs replaced lets check element to see if we have media being used to add to object.
-				if ( 'undefined' !== typeof FusionApp.data.replaceAssets && FusionApp.data.replaceAssets && ( 'undefined' !== typeof FusionApp.data.fusion_element_type || 'fusion_template' === FusionApp.getPost( 'post_type' ) ) ) {
-
-					this.mapStudioImages( options, values );
-
-				if ( '' !== values.icon && 'fusion-prefix-' === values.icon.substr( 0, 14 ) ) {
-						if ( 'undefined' !== typeof fusionAppConfig.customIcons ) {
-							iconWithoutFusionPrefix = values.icon.substr( 14 );
-
-							// TODO: try to optimize this check.
-							jQuery.each( fusionAppConfig.customIcons, function( iconPostName, iconSet ) {
-								if ( 0 === iconWithoutFusionPrefix.indexOf( iconSet.css_prefix ) ) {
-									FusionPageBuilderApp.mediaMap.icons[ iconSet.post_id ] = iconSet.css_prefix;
-									return false;
-								}
-							} );
-						}
-					}
-				}
 			}
 		} );
 	} );

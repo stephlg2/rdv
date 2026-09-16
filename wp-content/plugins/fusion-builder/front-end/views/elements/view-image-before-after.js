@@ -1,4 +1,4 @@
-/* global FusionEvents */
+/* global FusionEvents, FusionPageBuilderApp */
 
 var FusionPageBuilder = FusionPageBuilder || {};
 
@@ -10,13 +10,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		FusionPageBuilder.fusion_image_before_after = FusionPageBuilder.ElementView.extend( {
 
 			/**
-			 * Runs when element is first init.
+			 * Runs when element is first ini.
 			 *
 			 * @since 2.0.0
 			 * @return {void}
 			 */
 			onInit: function() {
 				this.listenTo( FusionEvents, 'fusion-preview-toggle', this.previewToggle );
+				this.listenTo( FusionEvents, 'fusion-wireframe-toggle', this.previewToggle );
 				this.listenTo( FusionEvents, 'fusion-iframe-loaded', this.initElement );
 			},
 
@@ -31,16 +32,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Preview mode toggled.
+			 * Preview mode toggled..
 			 *
 			 * @since 2.0.0
 			 * @return {void}
 			 */
 			previewToggle: function() {
-				if ( jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).hasClass( 'fusion-builder-preview-mode' ) ) {
-					this.disableDroppableElement();
-				} else {
-					this.enableDroppableElement();
+				if ( ! FusionPageBuilderApp.wireframeActive ) {
+					if ( jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).hasClass( 'fusion-builder-preview-mode' ) ) {
+						this.disableDroppableElement();
+					} else {
+						this.enableDroppableElement();
+					}
 				}
 			},
 
@@ -93,6 +96,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attributes.attrAfterImage  = this.buildAfterImageAttr( atts.values );
 					attributes.attrOverlay     = this.buildOverlayAttr( atts.values );
 					attributes.attrHandle      = this.buildHandleAttr( atts.values );
+					attributes.styles          = this.buildStyles( atts.values );
 
 					// Any extras that need passed on.
 					attributes.values = atts.values;
@@ -110,15 +114,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			validateValues: function( values ) {
 
-				values.offset        = parseInt( values.offset, 10 ) / 100;
-				values.font_size     = _.fusionValidateAttrValue( values.font_size, 'px' );
-				values.borderradius  = _.fusionValidateAttrValue( values.borderradius, 'px' );
-				values.bordersize    = _.fusionValidateAttrValue( values.bordersize, 'px' );
-				values.max_width     = _.fusionValidateAttrValue( values.max_width, 'px' );
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
+				values.offset       = parseInt( values.offset, 10 ) / 100;
+				values.font_size    = _.fusionValidateAttrValue( values.font_size, 'px' );
+				values.borderradius = _.fusionValidateAttrValue( values.borderradius, 'px' );
+				values.bordersize   = _.fusionValidateAttrValue( values.bordersize, 'px' );
+				values.max_width    = _.fusionValidateAttrValue( values.max_width, 'px' );
 			},
 
 			/**
@@ -129,10 +129,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			buildAttr: function( values ) {
-				var attr = {
+				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-image-before-after-element',
 						style: ''
-					},
+					} ),
 					cid = this.model.get( 'cid' );
 
 				if ( 'switch' === values.type ) {
@@ -161,10 +161,20 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( '' !== values.max_width ) {
-					attr.style += 'max-width:' + values.max_width + ';';
+					attr.style += 'max-width:' + values.max_width + '';
 				}
 
 				attr[ 'class' ] += ' fusion-image-before-after-cid' + cid;
+
+				if ( '' !== values[ 'class' ] ) {
+					attr[ 'class' ] += ' ' + values[ 'class' ];
+				}
+
+				if ( '' !== values.id ) {
+					attr.id = values.id;
+				}
+
+				attr = _.fusionAnimations( values, attr );
 
 				return attr;
 			},
@@ -177,39 +187,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			buildWrapperAttr: function( values ) {
-				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-image-before-after-wrapper',
-						style: this.getStyleVars( values )
-					} ),
+				var attr = {
+						class: 'fusion-image-before-after-wrapper'
+					},
 					cid = this.model.get( 'cid' );
 
-				if ( values.orientation && 'before_after' === values.type ) {
+				if ( values.orientation ) {
 					attr[ 'class' ] += ' fusion-image-before-after-' + values.orientation;
 				}
-
-				if ( '' !== values.type ) {
-					attr[ 'class' ] += ' type-' + values.type.replace( '_', '-' );
-				}
-
-				if ( '' !== values.label_hover_type ) {
-					const hoverTypeExtra = 'out-image-up-down' === values.label_placement ? 'out-' : '';
-					attr[ 'class' ] += ' hover-type-' + hoverTypeExtra + values.label_hover_type;
-				}
-
-				if ( '' !== values.alignment ) {
-					attr[ 'class' ] += ' has-alignment';
-					attr[ 'class' ] += ' align-' + values.alignment;
-				}
-
-				if ( '' !== values[ 'class' ] ) {
-					attr[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( '' !== values.id ) {
-					attr.id = values.id;
-				}
-
-				attr = _.fusionAnimations( values, attr );
 
 				attr[ 'class' ] += ' fusion-image-before-after-wrapper-cid' + cid;
 
@@ -311,66 +296,167 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Get style variables.
+			 * Builds the styles.
 			 *
-			 * @param {Object} values
-			 * @returns string
+			 * @since 2.0
+			 * @param {Object} values - The values.
+			 * @return {string}
 			 */
-			getStyleVars: function( values ) {
-				var cssVars = [
-					'handle_color',
-					'font_size',
-					'accent_color',
-					'bordersize',
-					'borderradius',
-					'bordercolor',
-					'margin_top',
-					'margin_right',
-					'margin_bottom',
-					'margin_left'
-					],
-					customCSSVars = {},
-					color,
-					colorObj;
+			buildStyles: function( values ) {
+				var styles   = '',
+					color    = '',
+					colorObj = '',
+					bgColor  = '',
+					cid      = this.model.get( 'cid' );
 
-				this.values = values;
+				if ( '' !== values.handle_color && 'before_after' === values.type ) {
+					color   = values.handle_color;
+					styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle {';
+					styles += 'border-color:' + color + ';';
+					styles += '}';
+					if ( 'horizontal' === values.orientation ) {
+						styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-left-arrow {';
+						styles += 'border-right-color:' + color + ';';
+						styles += '}';
+						styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-right-arrow {';
+						styles += 'border-left-color:' + color + ';';
+						styles += '}';
 
-				if ( 'circle' !== values.handle_type && 'arrows' !== values.handle_type ) {
-					cssVars.push( 'handle_bg' );
+						if ( values.handle_type && '' !== values.handle_type && 'diamond' === values.handle_type ) {
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-diamond .fusion-image-before-after-left-arrow::before {';
+							styles += 'border-color:' + color + ' !important;';
+							styles += '}';
+						} else if ( values.handle_type && '' !== values.handle_type && 'circle' === values.handle_type ) {
+							colorObj = jQuery.Color( color );
+
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle {';
+							styles += 'background:' + color + ' !important;';
+							styles += '}';
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle .fusion-image-before-after-left-arrow::before {';
+							styles += 'border-color:' + colorObj.alpha( 0.6 ).toRgbaString() + ' !important;';
+							styles += '}';
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle .fusion-image-before-after-left-arrow {';
+							styles += 'border-right-color:' + _.fusionAutoCalculateAccentColor( color ) + ' !important;';
+							styles += '}';
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle .fusion-image-before-after-right-arrow {';
+							styles += 'border-left-color:' + _.fusionAutoCalculateAccentColor( color ) + ' !important;';
+							styles += '}';
+						}
+					} else if ( 'vertical' === values.orientation ) {
+						styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-up-arrow {';
+						styles += 'border-bottom-color:' + color + ';';
+						styles += '}';
+						styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-down-arrow {';
+						styles += 'border-top-color:' + color + ';';
+						styles += '}';
+
+						if ( values.handle_type && '' !== values.handle_type && 'diamond' === values.handle_type ) {
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-diamond .fusion-image-before-after-left-arrow::before {';
+							styles += 'border-color:' + color + ' !important;';
+							styles += '}';
+						} else if ( values.handle_type && '' !== values.handle_type && 'circle' === values.handle_type ) {
+							colorObj = jQuery.Color( color );
+
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle {';
+							styles += 'background:' + color + ' !important;';
+							styles += '}';
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle .fusion-image-before-after-down-arrow::before {';
+							styles += 'border-color:' + colorObj.alpha( 0.6 ).toRgbaString() + ' !important;';
+							styles += '}';
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle .fusion-image-before-after-up-arrow {';
+							styles += 'border-bottom-color:' + _.fusionAutoCalculateAccentColor( color ) + ' !important;';
+							styles += '}';
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle-circle .fusion-image-before-after-down-arrow {';
+							styles += 'border-top-color:' + _.fusionAutoCalculateAccentColor( color ) + ' !important;';
+							styles += '}';
+						}
+					}
+					styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle::after {';
+					styles += 'background:' + color + ';';
+					if ( 'vertical' !== values.orientation ) {
+						styles += 'box-shadow: 0 3px 0 ' + color + ', 0 0 12px rgba(51,51,51,.5);';
+					}
+					styles += '}';
+					styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle::before {';
+					styles += 'background:' + color + ';';
+					if ( 'vertical' !== values.orientation ) {
+						styles += 'box-shadow: 0 3px 0 ' + color + ', 0 0 12px rgba(51,51,51,.5);';
+					}
+					styles += '}';
 				}
 
-				if ( values.handle_color ) {
-					if ( values.handle_type && 'circle' === values.handle_type ) {
-						color    = values.handle_color;
-						colorObj = jQuery.AWB_Color( color );
-
-						customCSSVars[ 'handle-accent-color' ] = _.fusionAutoCalculateAccentColor( color );
-						customCSSVars[ 'handle-transparent-color' ] = colorObj.alpha( 0.6 ).toVarOrRgbaString();
+				if ( values.handle_bg && '' !== values.handle_bg && 'before_after' === values.type ) {
+					bgColor = values.handle_bg;
+					if ( 'circle' !== values.handle_type && 'arrows' !== values.handle_type ) {
+						if ( 'diamond' !== values.handle_type ) {
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-handle {';
+							styles += 'background:' + bgColor + ';';
+							styles += '}';
+						} else {
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-down-arrow:before,';
+							styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-left-arrow:before {';
+							styles += 'background:' + bgColor + ';';
+							styles += '}';
+						}
 					}
 				}
 
-				if ( values.accent_color ) {
-					color    = values.accent_color;
-					colorObj = jQuery.AWB_Color( color );
+				if ( values.font_size && '' !== values.font_size && 'before_after' === values.type ) {
+					styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-before-label:before';
+					styles += ',.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-after-label:before';
+					if ( 'out-image-up-down' === values.label_placement ) {
+						styles += ',.fusion-image-before-after-wrapper-cid' + cid + ' .fusion-image-before-after-before-label:before';
+						styles += ',.fusion-image-before-after-wrapper-cid' + cid + ' .fusion-image-before-after-after-label:before';
+					}
+					styles += '{';
+					styles += 'font-size:' + values.font_size + ';';
+					styles += '}';
+				}
 
-					customCSSVars[ 'accent-color-bg' ] = 'transparent';
+				if ( values.accent_color && '' !== values.accent_color && 'before_after' === values.type ) {
+
+					color     = values.accent_color;
+					colorObj = jQuery.Color( color );
+					styles += '.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-before-label:before';
+					styles += ',.fusion-image-before-after-cid' + cid + ' .fusion-image-before-after-after-label:before';
+					if ( 'out-image-up-down' === values.label_placement ) {
+						styles += ',.fusion-image-before-after-wrapper-cid' + cid + ' .fusion-image-before-after-before-label:before';
+						styles += ',.fusion-image-before-after-wrapper-cid' + cid + ' .fusion-image-before-after-after-label:before';
+					}
+					styles += '{';
+					styles += 'color:' + color + ';';
 					if ( 'out-image-up-down' !== values.label_placement ) {
-						customCSSVars[ 'accent-color-bg' ] = colorObj.alpha( colorObj.alpha() * 0.15 ).toVarOrRgbaString();
+						styles += 'background:' + colorObj.alpha( 0.15 ).toRgbaString() + ';';
+					}
+					styles += '}';
+				}
+
+				if ( 'switch' === values.type && values.transition_time ) {
+					styles += '.fusion-image-switch.fusion-image-before-after-cid' + cid + ' img{';
+					styles += 'transition: ' + values.transition_time + 's ease-in-out;';
+					styles += '}';
+
+					if ( -1 !== values.before_image.indexOf( '.png' ) && -1 !== values.after_image.indexOf( '.png' )  ) {
+						styles += '.fusion-image-switch.fusion-image-before-after-cid' + cid + ':hover img:first-child{';
+						styles += 'opacity: 1;';
+						styles += '}';
 					}
 				}
 
-				if ( values.max_width ) {
-					customCSSVars[ 'element-width' ]     = '100%';
-					customCSSVars[ 'element-max-width' ] = values.max_width;
+				if ( '0' !== values.bordersize && 0 !== values.bordersize && '0px' !== values.bordersize ) {
+					styles += '.fusion-image-before-after-cid' + cid + ':not(.fusion-image-switch).initialized,';
+					styles += '.fusion-image-before-after-cid' + cid + '.fusion-image-switch img{';
+					styles += 'border: ' + values.bordersize + ' solid ' + values.bordercolor + ';';
+
+					if ( '0' !== values.borderradius && 0 !== values.borderradius && '0px' !== values.borderradius ) {
+						styles += '-webkit-border-radius:' + values.borderradius + ';-moz-border-radius:' + values.borderradius + ';border-radius:' + values.borderradius + ';';
+					}
+
+					styles += '}';
 				}
 
-				if ( values.transition_time ) {
-					customCSSVars.transition_time = values.transition_time + 's';
-				}
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCSSVars );
+				return styles;
 			}
-
 		} );
 	} );
 }( jQuery ) );

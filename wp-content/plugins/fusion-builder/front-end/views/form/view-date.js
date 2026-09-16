@@ -26,18 +26,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			generateDateFieldHtml: function( values ) {
 				var elementData,
 					elementHtml,
-					html = '',
-					input_type = 'type="date"';
+					html = '';
 
 				elementData = this.elementData( values );
 
 				this.generateTooltipHtml( values, elementData );
 
-				if ( 'custom' === values.picker || 'desktop' === values.picker ) {
-					input_type = 'type="text"';
-				}
-
-				elementHtml = '<input id="date-' + this.model.get( 'cid' ) + '" ' + input_type + ' data-type="' + values.picker + '" name="' + values.name + '" ' + elementData.holds_private_data + elementData[ 'class' ] + elementData.required + elementData.placeholder + '/>';
+				elementHtml = '<input id="date-' + this.model.get( 'cid' ) + '" type="date" data-type="' + values.picker + '" name="' + values.name + '" ' + elementData.holds_private_data + elementData[ 'class' ] + elementData.required + elementData.placeholder + '/>';
 
 				elementHtml = this.generateIconHtml( values, elementHtml );
 
@@ -71,10 +66,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				setTimeout( function() {
 					var $item 	  = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( self.$el.find( 'input[type="date"]' ) ),
 						type      = $item.attr( 'data-type' ),
-						format    = $item.attr( 'data-format' ),
 						useMobile = 'custom' === type;
-
-					format = 'undefined' === typeof format || '' === format ? 'Y-m-d' : format;
 
 					// Native, do not init.
 					if ( 'native' === type || 'function' !== typeof $item.flatpickr ) {
@@ -82,8 +74,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 					$item.flatpickr( {
 						defaultDate: new Date().getTime(),
-						disableMobile: useMobile,
-						dateFormat: format
+						disableMobile: useMobile
 					} );
 				}, 200 );
 			}

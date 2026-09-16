@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
 		class FusionTB_Project_Details extends Fusion_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -24,13 +33,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
 			 * @var int
 			 */
 			private $counter = 1;
-
-			/**
-			 * The post type.
-			 *
-			 * @var string
-			 */
-			public $post_type;
 
 			/**
 			 * Constructor.
@@ -66,7 +68,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 				return [
 					'heading_enable'      => 'yes',
 					'heading_size'        => '3',
@@ -81,9 +83,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
 					'animation_type'      => '',
 					'animation_direction' => 'down',
 					'animation_speed'     => '0.1',
-					'animation_delay'     => '',
 					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'     => '',
 				];
 			}
 
@@ -96,7 +96,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 				return [
 					'title_margin'       => $fusion_settings->get( 'title_margin' ),
 					'title_border_color' => $fusion_settings->get( 'title_border_color' ),
@@ -174,7 +174,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
 							'direction' => $this->args['animation_direction'],
 							'speed'     => $this->args['animation_speed'],
 							'offset'    => $this->args['animation_offset'],
-							'delay'     => $this->args['animation_delay'],
 						]
 					);
 
@@ -182,10 +181,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
 
 					$attr['class'] .= ' ' . $attr['animation_class'];
 					unset( $attr['animation_class'] );
-
-					if ( isset( $this->args['animation_color'] ) && $this->args['animation_color'] ) {
-						$attr['style'] .= '--awb-animation-color:' . $this->args['animation_color'] . ';';
-					}
 				}
 
 				if ( $this->args['margin_top'] ) {
@@ -280,6 +275,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_project_details' ) ) {
  */
 function fusion_component_project_details() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Project_Details',
@@ -333,18 +330,16 @@ function fusion_component_project_details() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'HTML Heading Tag', 'fusion-core' ),
-						'description' => esc_attr__( 'Choose HTML tag of the heading, either div, p or the heading tag, h1-h6.', 'fusion-core' ),
+						'heading'     => esc_html__( 'HTML Heading Size', 'fusion-core' ),
+						'description' => esc_html__( 'Choose the size of the HTML heading that should be used, h1-h6.', 'fusion-core' ),
 						'param_name'  => 'heading_size',
 						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-							'p'   => 'P',
+							'1' => 'H1',
+							'2' => 'H2',
+							'3' => 'H3',
+							'4' => 'H4',
+							'5' => 'H5',
+							'6' => 'H6',
 						],
 						'default'     => '3',
 						'group'       => esc_html__( 'Design', 'fusion-core' ),

@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_featured_slider' ) ) {
 		class FusionTB_Featured_Slider extends Fusion_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access protected
@@ -98,7 +107,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_featured_slider' ) ) {
 					'height'                    => '100%',
 					'width'                     => '100%',
 					'hover_type'                => 'none',
-					'lightbox'                  => 'no',
 					'margin_bottom'             => '',
 					'margin_left'               => '',
 					'margin_right'              => '',
@@ -189,7 +197,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_featured_slider' ) ) {
 			 * @return string
 			 */
 			protected function build_slider() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$content = '';
 
@@ -197,7 +205,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_featured_slider' ) ) {
 
 				$post_type   = get_post_type( $this->get_target_post() );
 				$post_id     = get_the_ID();
-				$video_embed = apply_filters( 'privacy_iframe_embed', fusion_get_page_option( 'video', $post_id ) );
+				$video_embed = fusion_get_page_option( 'video', $post_id );
 				$image_src   = [];
 				$images      = [];
 
@@ -276,8 +284,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_featured_slider' ) ) {
 
 				// Add all images to slider.
 				foreach ( $images as $image ) {
-					$link     = 'yes' === $this->args['lightbox'] ? $image['url'] : '';
-					$content .= '[fusion_slide type="image" link="' . $link . '" linktarget="_self" lightbox="' . $this->args['lightbox'] . '" image_id="' . $image['id'] . '|full"]' . $image['url'] . '[/fusion_slide]';
+					$content .= '[fusion_slide type="image" link="" linktarget="_self" lightbox="no" image_id="' . $image['id'] . '|full"]' . $image['url'] . '[/fusion_slide]';
 				}
 
 				$content .= '[/fusion_slider]';
@@ -303,27 +310,30 @@ if ( fusion_is_element_enabled( 'fusion_tb_featured_slider' ) ) {
  */
 function fusion_component_featured_slider() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Featured_Slider',
 			[
-				'name'         => esc_attr__( 'Featured Images Slider', 'fusion-builder' ),
-				'shortcode'    => 'fusion_tb_featured_slider',
-				'icon'         => 'fusiona-featured-images',
-				'component'    => true,
-				'templates'    => [ 'content', 'post_cards', 'page_title_bar' ],
-				'callback'     => [
+				'name'                    => esc_attr__( 'Featured Images Slider', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_featured_slider',
+				'icon'                    => 'fusiona-featured-images',
+				'component'               => true,
+				'templates'               => [ 'content', 'post_cards', 'page_title_bar' ],
+				'components_per_template' => 1,
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_featured_slider',
 					'ajax'     => true,
 				],
 
 				// Map subfields to their parent.
-				'subparam_map' => [
+				'subparam_map'            => [
 					'width'  => 'dimensions',
 					'height' => 'dimensions',
 				],
-				'params'       => [
+				'params'                  => [
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_html__( 'Show First Featured Image', 'fusion-builder' ),
@@ -373,17 +383,6 @@ function fusion_component_featured_slider() {
 							'action'   => 'get_fusion_featured_slider',
 							'ajax'     => true,
 						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Lightbox', 'fusion-builder' ),
-						'description' => esc_attr__( 'Show image in lightbox. Lightbox must be enabled in Global Options.', 'fusion-builder' ),
-						'param_name'  => 'lightbox',
-						'value'       => [
-							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'default'     => 'no',
 					],
 					[
 						'type'        => 'checkbox_button_set',

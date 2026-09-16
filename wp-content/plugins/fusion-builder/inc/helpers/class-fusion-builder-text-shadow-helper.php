@@ -130,6 +130,7 @@ class Fusion_Builder_Text_Shadow_Helper {
 		$style .= ' ' . fusion_library()->sanitize->get_value_with_unit( $params['text_shadow_vertical'] );
 		$style .= ' ' . fusion_library()->sanitize->get_value_with_unit( $params['text_shadow_blur'] );
 		$style .= ' ' . $params['text_shadow_color'];
+		$style .= ';';
 
 		return $style;
 	}

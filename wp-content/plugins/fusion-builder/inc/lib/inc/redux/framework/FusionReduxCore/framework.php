@@ -27,7 +27,7 @@
 	}
 
 	if ( class_exists( 'FusionReduxFrameworkInstances' ) ) {
-		add_action( 'fusionredux/init', 'FusionReduxFrameworkInstances::get_instance' ); // @phpstan-ignore-line
+		add_action( 'fusionredux/init', 'FusionReduxFrameworkInstances::get_instance' );
 	}
 
 // Don't duplicate me!
@@ -78,7 +78,6 @@
 			public static $base_wp_content_url;
 			public static $_is_plugin = true;
 			public static $_as_plugin = false;
-			public $apiHasRun;
 
 			public static function init() {
 				$dir = FusionRedux_Helpers::cleanFilePath( dirname( __FILE__ ) );
@@ -177,14 +176,6 @@
 			public $reload_fields = array();
 			public $omit_share_icons = false;
 			public $omit_admin_items = false;
-			public $old_opt_name;
-			public $transients;
-			public $wp_data;
-			public $field_head;
-			public $transients_check;
-			public $validation_ran;
-			public $no_panel_section;
-			public $field_types;
 
 			/**
 			 * Class Constructor. Defines the args for the Global Options class.
@@ -318,7 +309,7 @@
 					 * Construct hook
 					 * action 'fusionredux/construct'
 					 *
-					 * @param object $object FusionReduxFramework
+					 * @param object $this FusionReduxFramework
 					 */
 					do_action( 'fusionredux/construct', $this );
 
@@ -381,7 +372,7 @@
 							$this,
 							'save_network_page'
 						), 10, 0 );
-						// add_action( $action_name, array( $this, 'network_admin_bar' ), 999 );
+						add_action( $action_name, array( $this, 'network_admin_bar' ), 999 );
 					}
 					// Ajax saving!!!
 					add_action( 'wp_ajax_' . $this->args['opt_name'] . '_ajax_save', array( $this, "ajax_save" ) );
@@ -410,7 +401,7 @@
 				 * Loaded hook
 				 * action 'fusionredux/loaded'
 				 *
-				 * @param object $object FusionReduxFramework
+				 * @param  object $this FusionReduxFramework
 				 */
 				do_action( 'fusionredux/loaded', $this );
 			}
@@ -535,7 +526,7 @@
 
 			// Fix conflicts with Visual Composer.
 			public function vc_fixes() {
-				if ( FusionRedux_Helpers::isFieldInUse( $this, 'ace_editor' ) ) {
+				if ( fusionredux_helpers::isFieldInUse( $this, 'ace_editor' ) ) {
 					wp_dequeue_script( 'wpb_ace' );
 					wp_deregister_script( 'wpb_ace' );
 				}
@@ -762,7 +753,6 @@
 					$result = json_decode( stripslashes( json_encode( $result ) ), true );
 				} else {
 					$result = get_option( $this->args['opt_name'], array() );
-					$result = '' === $result ? [] : $result;
 				}
 
 				if ( empty ( $result ) && ! empty ( $defaults ) ) {
@@ -1356,6 +1346,7 @@
 					);
 
 					if ( true === $this->args['allow_sub_menu'] ) {
+						if ( ! isset ( $section['type'] ) || $section['type'] != 'divide' ) {
 							foreach ( $this->sections as $k => $section ) {
 								$canBeSubSection = ( $k > 0 && ( ! isset ( $this->sections[ ( $k ) ]['type'] ) || $this->sections[ ( $k ) ]['type'] != "divide" ) ) ? true : false;
 
@@ -1387,11 +1378,13 @@
 
 							// Remove parent submenu item instead of adding null item.
 							remove_submenu_page( $this->args['page_slug'], $this->args['page_slug'] );
+						}
 					}
 				}
 
 				add_action( "load-{$this->page}", array( &$this, '_load_page' ) );
 			}
+// _options_page()
 
 			/**
 			 * Add admin bar menu
@@ -1620,14 +1613,14 @@
 				 *
 				 * @deprecated
 				 *
-				 * @param object $object FusionReduxFramework
+				 * @param  object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux-admin-head-{$this->args['opt_name']}", $this ); // REMOVE
 
 				/**
 				 * action 'fusionredux/page/{opt_name}/header'
 				 *
-				 * @param object $object FusionReduxFramework
+				 * @param  object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux/page/{$this->args['opt_name']}/header", $this );
 			}
@@ -2154,7 +2147,7 @@
 				/**
 				 * action 'fusionredux/options/{opt_name}/register'
 				 *
-				 * @param array $option sections
+				 * @param array option sections
 				 */
 				do_action( "fusionredux/options/{$this->args['opt_name']}/register", $this->sections );
 
@@ -2178,14 +2171,14 @@
 				/**
 				 * action 'fusionredux/extensions/before'
 				 *
-				 * @param object $object FusionReduxFramework
+				 * @param object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux/extensions/before", $this );
 
 				/**
 				 * action 'fusionredux/extensions/{opt_name}/before'
 				 *
-				 * @param object $object FusionReduxFramework
+				 * @param object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux/extensions/{$this->args['opt_name']}/before", $this );
 
@@ -2205,16 +2198,16 @@
 					 *
 					 * @deprecated
 					 *
-					 * @param string $path            extension class file path.
-					 * @param string $extension_class extension class name.
+					 * @param        string                    extension class file path
+					 * @param string $extension_class          extension class name
 					 */
 					$class_file = apply_filters( "fusionredux-extensionclass-load", "$path/$folder/extension_{$folder}.php", $extension_class ); // REMOVE LATER
 
 					/**
 					 * filter 'fusionredux/extension/{opt_name}/{folder}'
 					 *
-					 * @param string $path            extension class file path.
-					 * @param string $extension_class extension class name.
+					 * @param        string                    extension class file path
+					 * @param string $extension_class          extension class name
 					 */
 					$class_file = apply_filters( "fusionredux/extension/{$this->args['opt_name']}/$folder", "$path/$folder/extension_{$folder}.php", $class_file );
 
@@ -2233,14 +2226,14 @@
 				 *
 				 * @deprecated
 				 *
-				 * @param object $object FusionReduxFramework
+				 * @param object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux-register-extensions-{$this->args['opt_name']}", $this ); // REMOVE
 
 				/**
 				 * action 'fusionredux/extensions/{opt_name}'
 				 *
-				 * @param object $object FusionReduxFramework
+				 * @param object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux/extensions/{$this->args['opt_name']}", $this );
 
@@ -2274,6 +2267,8 @@
 			 * @return array|mixed|string|void
 			 */
 			public function _validate_options( $plugin_options ) {
+//print_r($plugin_options);
+				//              exit();
 				if ( isset ( $this->validation_ran ) ) {
 					return $plugin_options;
 				}
@@ -2368,7 +2363,7 @@
 					/**
 					 * apply_filters 'fusionredux/validate/{opt_name}/defaults'
 					 *
-					 * @param array $options
+					 * @param  &array [ $this->options_defaults, $plugin_options]
 					 */
 					$plugin_options = apply_filters( "fusionredux/validate/{$this->args['opt_name']}/defaults", $this->options_defaults );
 
@@ -2395,6 +2390,11 @@
 				// Section reset to defaults
 				if ( ! empty ( $plugin_options['defaults-section'] ) ) {
 					if ( isset ( $plugin_options['fusionredux-section'] ) && isset ( $this->sections[ $plugin_options['fusionredux-section'] ]['fields'] ) ) {
+						/**
+						 * apply_filters 'fusionredux/validate/{opt_name}/defaults_section'
+						 *
+						 * @param  &array [ $this->options_defaults, $plugin_options]
+						 */
 						foreach ( $this->sections[ $plugin_options['fusionredux-section'] ]['fields'] as $field ) {
 							if ( isset ( $this->options_defaults[ $field['id'] ] ) ) {
 								$plugin_options[ $field['id'] ] = $this->options_defaults[ $field['id'] ];
@@ -2431,8 +2431,7 @@
 				/**
 				 * apply_filters 'fusionredux/validate/{opt_name}/before_validation'
 				 *
-				 * @param array $plugins_options
-				 * @param array $options
+				 * @param  &array [&$plugin_options, fusionredux_options]
 				 */
 				$plugin_options = apply_filters( "fusionredux/validate/{$this->args['opt_name']}/before_validation", $plugin_options, $this->options );
 
@@ -2537,21 +2536,6 @@
 					if ( ! empty ( $values ) ) {
 
 						try {
-							// Reset options, save them to uploads folder first.
-							if ( ! empty ( $values['defaults'] ) || ! empty ( $values['defaults-section'] ) ) {
-								unset( $values['defaults'] );
-								unset( $values['compiler'] );
-								unset( $values['fusionredux-section'] );
-								unset( $values['import_code'] );
-								unset( $values['import_link'] );
-
-								$values['fusionredux-backup'] = '1';
-								$content     = json_encode( $values );
-								$file        = new Fusion_Filesystem( 'avada_global_options_backup_' . date( 'Y_m_d' ) . '.json', 'avada-global-options' );
-
-								$could_write = $file->write_file( $content );
-							}
-
 							if ( isset ( $fusionredux->validation_ran ) ) {
 								unset ( $fusionredux->validation_ran );
 							}
@@ -2679,16 +2663,16 @@
 									 *
 									 * @deprecated
 									 *
-									 * @param string $file_path validation class file path
-									 * @param string $validate  validation class name
+									 * @param        string             validation class file path
+									 * @param string $validate          validation class name
 									 */
 									$class_file = apply_filters( "fusionredux-validateclass-load", self::$_dir . "inc/validation/{$field['validate']}/validation_{$field['validate']}.php", $validate ); // REMOVE LATER
 
 									/**
 									 * filter 'fusionredux/validate/{opt_name}/class/{field.validate}'
 									 *
-									 * @param string $file_path  validation class file path
-									 * @param string $class_file validation class file path
+									 * @param        string                validation class file path
+									 * @param string $class_file           validation class file path
 									 */
 									$class_file = apply_filters( "fusionredux/validate/{$this->args['opt_name']}/class/{$field['validate']}", self::$_dir . "inc/validation/{$field['validate']}/validation_{$field['validate']}.php", $class_file );
 
@@ -3061,8 +3045,8 @@
 						/**
 						 * filter 'fusionredux/{opt_name}/field/class/{field.type}'
 						 *
-						 * @param string $file_path validation class file path
-						 * @param array  $field     field data
+						 * @param       string        field class file path
+						 * @param array $field        field data
 						 */
 						$class_file = apply_filters( "fusionredux/{$this->args['opt_name']}/field/class/{$field['type']}", self::$_dir . "inc/fields/{$field['type']}/field_{$field['type']}.php", $field );
 
@@ -3133,24 +3117,24 @@
 						 *
 						 * @deprecated
 						 *
-						 * @param string $file_path validation class file path
-						 * @param array  $field     field data
+						 * @param       string        rendered field markup
+						 * @param array $field        field data
 						 */
 						$_render = apply_filters( "fusionredux-field-{$this->args['opt_name']}", ob_get_contents(), $field ); // REMOVE
 
 						/**
 						 * filter 'fusionredux/field/{opt_name}/{field.type}/render/after'
 						 *
-						 * @param string $file_path validation class file path
-						 * @param array  $field     field data
+						 * @param       string        rendered field markup
+						 * @param array $field        field data
 						 */
 						$_render = apply_filters( "fusionredux/field/{$this->args['opt_name']}/{$field['type']}/render/after", $_render, $field );
 
 						/**
 						 * filter 'fusionredux/field/{opt_name}/render/after'
 						 *
-						 * @param string $file_path validation class file path
-						 * @param array  $field     field data
+						 * @param       string        rendered field markup
+						 * @param array $field        field data
 						 */
 						$_render = apply_filters( "fusionredux/field/{$this->args['opt_name']}/render/after", $_render, $field );
 
@@ -3263,7 +3247,7 @@
 			 *
 			 * @param array $field
 			 *
-			 * @return void
+			 * @return array $params
 			 */
 			public function check_dependencies( $field ) {
 				//$params = array('data_string' => "", 'class_string' => "");
@@ -3665,7 +3649,7 @@
 		/**
 		 * action 'fusionredux/init'
 		 *
-		 * @param FusionReduxFramework $object The object.
+		 * @param null
 		 */
 		do_action( 'fusionredux/init', FusionReduxFramework::init() );
 	} // class_exists('FusionReduxFramework')

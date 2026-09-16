@@ -78,10 +78,11 @@ class Fusion_Builder_Library {
 		add_action( 'wp_ajax_fusion_load_custom_elements', [ $this, 'load_custom_elements' ] );
 		add_action( 'wp_ajax_fusion_builder_load_layout', [ $this, 'load_layout' ] );
 		add_action( 'wp_ajax_fusion_builder_load_demo', [ $this, 'load_demo' ] );
+		add_action( 'wp_ajax_fusion_builder_load_demo_layout', [ $this, 'load_demo_layout' ] );
 		add_action( 'wp_ajax_fusion_builder_update_layout', [ $this, 'update_layout' ] );
 		add_action( 'wp_ajax_fusion_builder_get_image_url', [ $this, 'get_image_url' ] );
 
-		add_filter( 'fusion_set_overrides', [ $this, 'set_template_content_override' ] );
+		add_filter( 'fusion_set_overrides', [ $this, 'set_template_content_override' ], 10, 3 );
 
 		// Polylang sync taxonomies.
 		add_filter( 'pll_copy_taxonomies', [ $this, 'copy_taxonomies' ], 10, 2 );
@@ -89,15 +90,12 @@ class Fusion_Builder_Library {
 		// Clone library element.
 		add_action( 'admin_action_clone_library_element', [ $this, 'clone_library_element' ] );
 
-		// Filters for template.
-		add_filter( 'awb_should_render_footer', [ $this, 'should_render_footer' ], 10, 2 );
-		add_filter( 'awb_should_render_header', [ $this, 'should_render_header' ], 10, 2 );
-		add_filter( 'awb_should_render_page_title_bar', [ $this, 'should_render_page_title_bar' ], 10, 2 );
-
 		$this->location = true === Fusion_App()->is_builder || ( isset( $_POST ) && isset( $_POST['fusion_front_end'] ) && $_POST['fusion_front_end'] ) ? 'front' : 'back'; // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
 
 		// Check for action and action2 and trigger appropriate function.
-		add_action( 'admin_init', [ $this, 'bulk_actions' ] );
+		if ( is_admin() ) {
+			$this->bulk_actions();
+		}
 	}
 
 	/**
@@ -119,15 +117,6 @@ class Fusion_Builder_Library {
 				return sanitize_text_field( wp_unslash( $_REQUEST['action2'] ) );
 			}
 		}
-
-		if ( ( isset( $_REQUEST['page'] ) && false !== strpos( $_REQUEST['page'], 'avada' ) ) && ( isset( $_REQUEST['action2'] ) || isset( $_REQUEST['action'] ) ) ) {
-			$referer = fusion_get_referer();
-			if ( $referer ) {
-				wp_safe_redirect( $referer );
-				exit;
-			}
-		}
-
 		return false;
 	}
 	// phpcs:enable WordPress.Security
@@ -141,40 +130,18 @@ class Fusion_Builder_Library {
 	public function bulk_actions() {
 		$action = $this->get_action();
 
-		$bulk_actions = [
-			'fusion_bulk_restore_element',
-			'fusion_bulk_delete_element',
-			'fusion_bulk_trash_element',
-			'fusion_restore_element',
-			'fusion_delete_element',
-			'fusion_trash_element',
-			'fusion_library_new',
-		];
-
-		if ( $action && in_array( $action, $bulk_actions ) ) {
-
-			// Check referer based on actions.
-			if ( strpos( $action, 'bulk' ) ) {
-				check_admin_referer( 'bulk-' . $this->get_bulk_nonce_action(), '_wpnonce' );
-			} elseif ( 'fusion_library_new' === $action ) {
-				// do nothing.
-			} else {
-				check_admin_referer( $this->get_single_nonce_action(), '_wpnonce' );
-			}
-
+		if ( $action ) {
 			switch ( $action ) {
 				case 'fusion_library_new':
-					$this->add_new_library_element();
+					// Action with priority 11 to ensure it is after post type is registered.
+					add_action( 'wp_loaded', [ $this, 'add_new_library_element' ], 11 );
 					break;
-				case 'fusion_bulk_trash_element':
 				case 'fusion_trash_element':
 					$this->trash_element();
 					break;
-				case 'fusion_bulk_restore_element':
 				case 'fusion_restore_element':
 					$this->restore_element();
 					break;
-				case 'fusion_bulk_delete_element':
 				case 'fusion_delete_element':
 					$this->delete_element_post();
 					break;
@@ -182,77 +149,6 @@ class Fusion_Builder_Library {
 		}
 	}
 
-	/**
-	 * Get the nonce action for bulk actions.
-	 *
-	 * @since 3.11
-	 * @access public
-	 */
-	public function get_bulk_nonce_action() {
-		$action = 'elements';
-		if ( isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$element_ids = (array) wp_unslash( $_GET['post'] ); // phpcs:ignore WordPress.Security
-		}
-
-		if ( isset( $element_ids[0] ) && ! empty( $element_ids ) ) {
-
-			switch ( get_post_type( $element_ids[0] ) ) {
-				case 'fusion_element':
-					$action = 'elements';
-					break;
-				case 'fusion_form':
-					$action = 'forms';
-					break;
-				case 'awb_off_canvas':
-					$action = 'offcanvases';
-					break;
-				case 'fusion_tb_section':
-					$action = 'sections';
-					break;
-				case 'fusion_icons':
-					$action = 'iconsets';
-					break;
-			}
-		}
-		return $action;
-	}
-
-	/**
-	 * Get the nonce action for single actions.
-	 *
-	 * @since 3.11
-	 * @access public
-	 */
-	public function get_single_nonce_action() {
-
-		$action = 'fusion-library';
-
-		if ( isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$element_ids = (array) wp_unslash( $_GET['post'] ); // phpcs:ignore WordPress.Security
-		}
-
-		if ( isset( $element_ids[0] ) && ! empty( $element_ids ) ) {
-
-			switch ( get_post_type( $element_ids[0] ) ) {
-				case 'fusion_element':
-					$action = 'fusion-library';
-					break;
-				case 'fusion_form':
-					$action = 'fusion-form-builder';
-					break;
-				case 'awb_off_canvas':
-					$action = 'awb-off-canvas';
-					break;
-				case 'fusion_tb_section':
-					$action = 'fusion-template-builder';
-					break;
-				case 'fusion_icons':
-					$action = 'fusion-template-builder';
-					break;
-			}
-		}
-		return $action;
-	}
 	/**
 	 * Setup the post type and taxonomies.
 	 *
@@ -330,7 +226,7 @@ class Fusion_Builder_Library {
 		$args = [
 			'labels'              => $labels,
 			'public'              => false,
-			'publicly_queryable'  => true,
+			'publicly_queryable'  => $is_builder,
 			'show_ui'             => true,
 			'show_in_menu'        => false,
 			'exclude_from_search' => true,
@@ -401,18 +297,10 @@ class Fusion_Builder_Library {
 		if ( isset( $_POST['fusion_layout_id'] ) && '' !== $_POST['fusion_layout_id'] && current_user_can( 'delete_post', $_POST['fusion_layout_id'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 
 			$layout_id = (int) $_POST['fusion_layout_id'];
-			$is_global = ( 'yes' === get_post_meta( $layout_id, '_fusion_is_global', true ) ? true : false );
-
-			if ( $is_global && ! apply_filters( 'awb_global_elements_access', true ) ) {
-				wp_send_json_error();
-				wp_die();
-			}
 
 			wp_delete_post( $layout_id, true );
-
 		}
 
-		wp_send_json_success();
 		wp_die();
 	}
 
@@ -428,14 +316,10 @@ class Fusion_Builder_Library {
 	 */
 	public function create_layout( $post_type, $name, $content, $meta = [], $taxonomy = [], $term = '' ) {
 
-		if ( ! AWB_Access_Control::wp_user_can_for_post( $post_type, 'create_posts' ) ) {
-			return;
-		}
-
 		$layout = [
 			'post_title'   => sanitize_text_field( $name ),
 			'post_content' => $content,
-			'post_status'  => AWB_Access_Control::wp_user_can_for_post( $post_type, 'publish_posts' ) ? 'publish' : 'pending',
+			'post_status'  => 'publish',
 			'post_type'    => $post_type,
 		];
 
@@ -448,7 +332,9 @@ class Fusion_Builder_Library {
 		}
 
 		if ( '' !== $term ) {
-			wp_set_object_terms( $layout_id, $term, $taxonomy );
+			wp_insert_term( $term, $taxonomy );
+			$term_id = term_exists( $term, $taxonomy );
+			wp_set_post_terms( $layout_id, $term_id, $taxonomy );
 		}
 
 		do_action( 'fusion_builder_create_layout_after' );
@@ -463,7 +349,7 @@ class Fusion_Builder_Library {
 
 		check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
 
-		if ( isset( $_POST['fusion_layout_name'] ) && '' !== $_POST['fusion_layout_name'] && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) {
+		if ( isset( $_POST['fusion_layout_name'] ) && '' !== $_POST['fusion_layout_name'] ) {
 
 			$layout_name = wp_unslash( $_POST['fusion_layout_name'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$taxonomy    = 'element_category';
@@ -476,7 +362,6 @@ class Fusion_Builder_Library {
 				'columns'    => 'column',
 				'sections'   => 'container',
 				'post_cards' => 'post_card',
-				'mega_menus' => 'mega_menu',
 			];
 
 			if ( isset( $_POST['fusion_layout_post_type'] ) && '' !== $_POST['fusion_layout_post_type'] ) {
@@ -516,7 +401,7 @@ class Fusion_Builder_Library {
 				}
 
 				// Globals.
-				if ( isset( $_POST['fusion_save_global'] ) && 'false' !== $_POST['fusion_save_global'] && apply_filters( 'awb_global_elements_access', true ) ) {
+				if ( isset( $_POST['fusion_save_global'] ) && 'false' !== $_POST['fusion_save_global'] ) {
 					$meta['_fusion_is_global'] = 'yes';
 					$global_data               = 'fusion-global';
 				} else {
@@ -552,10 +437,6 @@ class Fusion_Builder_Library {
 
 				$post_fusion_layout_content = ( isset( $_POST['fusion_layout_content'] ) ) ? wp_unslash( $_POST['fusion_layout_content'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 				$new_layout_id              = $this->create_layout( $post_type, $layout_name, $post_fusion_layout_content, $meta, $taxonomy, $term );
-
-				if ( empty( $new_layout_id ) ) {
-					die();
-				}
 				?>
 
 				<?php if ( 'fusion_element' === $post_type ) : ?>
@@ -668,7 +549,8 @@ class Fusion_Builder_Library {
 		// Work out post type based on type being added.
 		$post_type = isset( $_GET['fusion_library_type'] ) && 'templates' === $_GET['fusion_library_type'] ? 'fusion_template' : 'fusion_element';
 
-		if ( ! AWB_Access_Control::wp_user_can_for_post( $post_type, 'create_posts' ) ) {
+		$post_type_object = get_post_type_object( $post_type );
+		if ( ! current_user_can( $post_type_object->cap->edit_posts ) ) {
 			return;
 		}
 
@@ -680,7 +562,7 @@ class Fusion_Builder_Library {
 		$post_content = '';
 		switch ( $category ) {
 			case 'sections':
-				$post_content = '[fusion_builder_container type="flex"][fusion_builder_row][/fusion_builder_row][/fusion_builder_container]';
+				$post_content = '[fusion_builder_container][fusion_builder_row][/fusion_builder_row][/fusion_builder_container]';
 				break;
 			case 'columns':
 				$post_content = '[fusion_builder_column type="1_1"][/fusion_builder_column]';
@@ -692,7 +574,7 @@ class Fusion_Builder_Library {
 
 		$library_element = [
 			'post_title'   => isset( $_GET['name'] ) ? sanitize_text_field( wp_unslash( $_GET['name'] ) ) : '',
-			'post_status'  => AWB_Access_Control::wp_user_can_for_post( $post_type, 'publish_posts' ) ? 'publish' : 'pending',
+			'post_status'  => 'publish',
 			'post_type'    => $post_type,
 			'post_content' => $post_content,
 		];
@@ -704,7 +586,7 @@ class Fusion_Builder_Library {
 			];
 		}
 
-		$library_id = wp_insert_post( $library_element, true );
+		$library_id = wp_insert_post( $library_element );
 		if ( is_wp_error( $library_id ) ) {
 			$error_string = $library_id->get_error_message();
 			wp_die( esc_html( $error_string ) );
@@ -719,13 +601,8 @@ class Fusion_Builder_Library {
 			}
 		}
 
-		// if we are adding template. Set default width to 100%.
-		if ( 'fusion_template' === $post_type ) {
-			fusion_data()->post_meta( $library_id )->set( 'blog_width_100', 'yes' );
-		}
-
 		// Just redirect to back-end editor.  In future tie it to default editor option.
-		wp_safe_redirect( awb_get_new_post_edit_link( $library_id ) );
+		wp_safe_redirect( get_edit_post_link( $library_id, false ) );
 		die();
 	}
 
@@ -800,16 +677,6 @@ class Fusion_Builder_Library {
 			die( -1 );
 		}
 
-		// If this is a studio layout, use different logic.
-		if ( isset( $_POST['fusion_studio'] ) && $_POST['fusion_studio'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-
-			// Set import options from $_REQUEST global array.
-			AWB_Studio_Import()->set_import_options_from_request();
-
-			echo wp_json_encode( AWB_Studio_Import()->get_studio_content() );
-			wp_die();
-		}
-
 		$data      = [];
 		$layout_id = (int) $_POST['fusion_layout_id'];
 		$layout    = get_post( $layout_id );
@@ -851,6 +718,41 @@ class Fusion_Builder_Library {
 
 		die( $json_data ); // phpcs:ignore WordPress.Security.EscapeOutput
 
+	}
+
+	/**
+	 * Load custom header demo.
+	 */
+	public function load_demo_layout() {
+		check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
+		$data        = [];
+		$layout_name = isset( $_POST['layout_name'] ) && '' !== $_POST['layout_name'] ? sanitize_text_field( wp_unslash( $_POST['layout_name'] ) ) : '';// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$filter      = 'fusion_builder_get_demo_headers';
+
+		if ( false !== strpos( $layout_name, 'form' ) ) {
+			$filter = 'fusion_builder_get_demo_forms';
+		} elseif ( 0 === strpos( $layout_name, 'single-' ) ) {
+			$filter = 'fusion_builder_get_content_sections';
+		} elseif ( 0 === strpos( $layout_name, 'card-' ) ) {
+			$filter = 'fusion_builder_get_post_cards';
+		}
+
+		$fusion_builder_demo_layouts = apply_filters( $filter, [] );
+
+		if ( '' !== $layout_name && isset( $_POST['post_id'] ) && '' !== $_POST['post_id'] ) {
+			$post_id = (int) $_POST['post_id'];
+
+			if ( isset( $fusion_builder_demo_layouts[ $layout_name ] ) ) {
+				$data['post_content'] = $fusion_builder_demo_layouts[ $layout_name ]['content'];
+
+				// Add _fusion PO if it exists.
+				if ( isset( $fusion_builder_demo_layouts[ $layout_name ]['_fusion'] ) ) {
+					$data['_fusion'] = $fusion_builder_demo_layouts[ $layout_name ]['_fusion'];
+				}
+				wp_send_json_success( $data );
+			}
+		}
+		wp_send_json_error( $fusion_builder_demo_layouts, 500 );
 	}
 
 	/**
@@ -910,11 +812,11 @@ class Fusion_Builder_Library {
 
 		check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
 
-		if ( isset( $_POST['fusion_layout_id'] ) && '' !== $_POST['fusion_layout_id'] && current_user_can( 'edit_post', $_POST['fusion_layout_id'] ) && apply_filters( 'fusion_global_save', true, 'ajax' ) && apply_filters( 'awb_global_elements_access', true ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		if ( isset( $_POST['fusion_layout_id'] ) && '' !== $_POST['fusion_layout_id'] && current_user_can( 'edit_post', $_POST['fusion_layout_id'] ) && apply_filters( 'fusion_global_save', true, 'ajax' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 
 			$layout_id  = wp_unslash( $_POST['fusion_layout_id'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$content    = isset( $_POST['fusion_layout_content'] ) ? wp_unslash( $_POST['fusion_layout_content'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$to_replace = [ addslashes( ' fusion_global="' . $layout_id . '"' ), ' fusion_global="' . $layout_id . '"' ];
+			$to_replace = addslashes( ' fusion_global="' . $layout_id . '"' );
 			$content    = str_replace( $to_replace, '', $content );
 
 			// Filter nested globals.
@@ -966,7 +868,6 @@ class Fusion_Builder_Library {
 	 * @return void
 	 */
 	public function trash_element() {
-
 		if ( current_user_can( 'delete_published_pages' ) ) {
 			$element_ids = '';
 
@@ -1043,9 +944,6 @@ class Fusion_Builder_Library {
 			}
 
 			if ( ! empty( $element_ids ) ) {
-
-				// Register taxonomies.
-				$this->register_layouts();
 				foreach ( $element_ids as $id ) {
 					wp_delete_post( $id, true );
 				}
@@ -1085,7 +983,6 @@ class Fusion_Builder_Library {
 		$saved_post = $post;
 		$post_type  = get_query_var( 'post_type', get_post_type() );
 		$post_card  = fusion_is_post_card();
-		$mega_menu  = fusion_is_mega_menu();
 		?>
 		<div class="fusion_builder_modal_settings">
 			<div class="fusion-builder-modal-top-container">
@@ -1094,8 +991,20 @@ class Fusion_Builder_Library {
 					<h2 class="fusion-builder-settings-heading"><?php esc_html_e( 'Library', 'fusion-builder' ); ?></h2>
 				<?php endif; ?>
 				<ul class="fusion-tabs-menu">
-					<?php if ( current_theme_supports( 'fusion-builder-demos' ) && 'fusion_tb_section' !== $post_type && 'fusion_form' !== $post_type && ! $post_card && ! $mega_menu && AWB_Studio::is_studio_enabled() ) : ?>
+					<?php if ( current_theme_supports( 'fusion-builder-demos' ) && 'fusion_tb_section' !== $post_type && 'fusion_form' !== $post_type && ! $post_card ) : ?>
 						<li><a href="#fusion-builder-layouts-demos" id="fusion-builder-layouts-demos-trigger"><?php esc_html_e( 'Websites', 'fusion-builder' ); ?></a></li>
+					<?php endif; ?>
+					<?php if ( current_theme_supports( 'fusion-builder-demos' ) && Fusion_Template_Builder()->is_template( 'header' ) ) : ?>
+						<li><a href="#fusion-builder-layouts-headers" id="fusion-builder-layouts-headers-trigger"><?php esc_attr_e( 'Prebuilt Headers', 'fusion-builder' ); ?></a></li>
+					<?php endif; ?>
+					<?php if ( current_theme_supports( 'fusion-builder-demos' ) && Fusion_Template_Builder()->is_template( 'content' ) ) : ?>
+						<li><a href="#fusion-builder-layouts-content" id="fusion-builder-layouts-content-trigger"><?php esc_attr_e( 'Prebuilt Content', 'fusion-builder' ); ?></a></li>
+					<?php endif; ?>
+					<?php if ( current_theme_supports( 'fusion-builder-demos' ) && $post_card ) : ?>
+						<li><a href="#fusion-builder-layouts-cards" id="fusion-builder-layouts-cards-trigger"><?php esc_attr_e( 'Prebuilt Post Cards', 'fusion-builder' ); ?></a></li>
+					<?php endif; ?>
+					<?php if ( 'fusion_form' === $post_type ) : ?>
+						<li><a href="#fusion-builder-layouts-forms" id="fusion-builder-layouts-forms-trigger"><?php esc_attr_e( 'Prebuilt Forms', 'fusion-builder' ); ?></a></li>
 					<?php endif; ?>
 					<?php if ( ! $post_card ) : ?>
 						<li><a href="#fusion-builder-layouts-templates" id="fusion-builder-layouts-templates-trigger"><?php esc_attr_e( 'Templates', 'fusion-builder' ); ?></a></li>
@@ -1103,105 +1012,243 @@ class Fusion_Builder_Library {
 						<li><a href="#fusion-builder-layouts-columns" id="fusion-builder-layouts-columns-trigger"><?php esc_attr_e( 'Columns', 'fusion-builder' ); ?></a></li>
 					<?php endif; ?>
 					<li><a href="#fusion-builder-layouts-elements" id="fusion-builder-layouts-elements-trigger"><?php esc_attr_e( 'Elements', 'fusion-builder' ); ?></a></li>
-					<?php if ( function_exists( 'Avada' ) && AWB_Studio::is_studio_enabled() ) : ?>
-						<li><a href="#fusion-builder-fusion_template-studio" id="fusion-builder-layouts-studio-trigger"><i class="fusiona-avada-logo"></i> <?php esc_html_e( 'Studio', 'fusion-builder' ); ?></a></li>
-					<?php endif; ?>
 				</ul>
 			</div>
 
 			<div class="fusion-layout-tabs">
-				<?php if ( current_theme_supports( 'fusion-builder-demos' ) && 'fusion_tb_section' !== $post_type && AWB_Studio::is_studio_enabled() ) : // Display demos tab. ?>
+				<?php if ( current_theme_supports( 'fusion-builder-demos' ) && 'fusion_tb_section' !== $post_type ) : // Display demos tab. ?>
 					<div id="fusion-builder-layouts-demos" class="fusion-builder-layouts-tab">
-						<?php if ( Avada()->registration->is_registered() ) : ?>
-							<div class="fusion-builder-layouts-header awb-sites-failed-msg" style="display: none;">
-								<div class="fusion-builder-layouts-header-info">
-									<span class="fusion-builder-layout-info">
-										<?php esc_html_e( 'Failed to retrieve data from API.', 'fusion-builder' ); ?>
-									</span>
-								</div>
-							</div>
-							<div class="studio-wrapper awb-sites-wrapper">
-								<aside></aside>
-								<section>
-									<div class="fusion-builder-element-content fusion-loader"><span class="fusion-builder-loader"></span></div>
-									<ul class="studio-imports"></ul>
-									<div class="site-details hidden">
-										<div class="awb-sites-navigation">
-											<a href="#" class="awb-sites-back awb-sites-back-js"><span class="fusiona-back"></span> <?php esc_html_e( 'Back to websites', 'fusion-builder' ); ?></a>
-											<span class="awb-sites-title"></span>
-											<a href="#" class="awb-sites-next awb-sites-next-js"></a>
-										</div>
+						<div class="fusion-builder-layouts-header">
+							<?php $fusion_builder_demos = apply_filters( 'fusion_builder_get_demo_pages', [] ); ?>
 
-										<div class="fusion-builder-layouts-header-info">
-											<span class="fusion-builder-layout-info">
-												<?php echo apply_filters( 'fusion_builder_import_message', esc_html__( 'Select a prebuilt website and the pages that are available to import will display.', 'fusion-builder' ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+							<div class="fusion-builder-layouts-header-fields fusion-demo-selection-header">
+								<?php if ( $fusion_builder_demos ) : ?>
+									<?php asort( $fusion_builder_demos ); ?>
+									<div class="fusion-demo-selection-wrapper">
+										<h2><?php echo apply_filters( 'fusion_builder_import_title', esc_html__( 'Select a prebuilt website to view the pages you can import', 'fusion-builder' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></h2>
+										<select class="fusion-builder-demo-select fusion-select-field">
+											<option value="" selected><?php esc_html_e( 'Select Website', 'fusion-builder' ); ?></option>
+											<?php foreach ( $fusion_builder_demos as $key => $fusion_builder_demo ) : ?>
+												<option value="<?php echo esc_attr( $key ); ?>">
+													<?php echo esc_html( $fusion_builder_demo['category'] ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+									<div class="fusion-demo-selection-wrapper">
+										<h2><?php echo apply_filters( 'fusion_builder_demo_import_link_title', esc_html__( 'Paste URL of a specific live prebuilt website page to import  ', 'fusion-builder' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></h2>
+										<input type="text" class="fusion-builder-demo-page-link" name="fusion-builder-demo-page-link" id="fusion-builder-demo-page-link" placeholder="https://avada.theme-fusion.com/"/>
+									</div>
+								<?php endif; ?>
+							</div>
+
+							<div class="fusion-builder-layouts-header-info">
+								<span class="fusion-builder-layout-info">
+									<?php echo apply_filters( 'fusion_builder_import_message', esc_html__( 'Select a prebuilt website and the pages that are available to import will display.', 'fusion-builder' ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+								</span>
+							</div>
+						</div>
+
+						<h2 id="fusion-builder-demo-url-invalid" class="hidden"><?php esc_html_e( 'Unfortunately, no prebuilt website page matches the URL you entered. Please try again.', 'fusion-builder' ); ?></h2>
+
+						<?php foreach ( $fusion_builder_demos as $key => $fusion_builder_demo ) : ?>
+
+							<ul class="fusion-page-layouts demo-<?php echo esc_attr( $key ); ?> hidden">
+
+								<?php if ( isset( $fusion_builder_demo['pages'] ) && ! empty( $fusion_builder_demo['pages'] ) ) : ?>
+									<?php asort( $fusion_builder_demo['pages'] ); ?>
+									<?php foreach ( $fusion_builder_demo['pages'] as $page_key => $page ) : ?>
+										<?php $data_page_link = isset( $page['link'] ) ? str_replace( [ 'https://', 'http://', 'avada-xml/' ], '', esc_url( $page['link'] ) ) : ''; ?>
+										<li class="fusion-page-layout" data-layout_id="<?php echo esc_attr( $page['name'] ); ?>" data-page-link="<?php echo esc_attr( $data_page_link ); ?>" >
+											<h4 class="fusion-page-layout-title"><?php echo esc_html( ucwords( strtolower( $page['name'] ) ) ); ?></h4>
+											<span class="fusion-layout-buttons">
+												<a href="#" class="fusion-builder-demo-button-load" data-page-name="<?php echo esc_attr( $page_key ); ?>" data-demo-name="<?php echo esc_attr( $key ); ?>" data-post-id="<?php echo esc_attr( get_the_ID() ); ?>">
+													<?php if ( 'front' === $this->location ) : ?>
+														<span class="fusiona-plus"></span>
+														<span class="screen-reader-text">
+													<?php endif; ?>
+													<?php esc_html_e( 'Load', 'fusion-builder' ); ?>
+													<?php if ( 'front' === $this->location ) : ?>
+														</span>
+													<?php endif; ?>
+												</a>
 											</span>
-										</div>
-										<div class="awb-pages-container"></div>
-									</div>
-								</section>
-							</div>
-						<?php else : ?>
-							<div class="fusion-builder-layouts-header">
-								<div class="fusion-builder-layouts-header-info">
-									<h2 class="fusion-responsive-typography-calculated"><?php esc_html_e( 'Avada needs to be registered to access the prebuilt websites page import', 'fusion-builder' ); ?></h2>
-									<span class="fusion-builder-layout-info"><?php esc_html_e( 'To import single pages from any of the Avada prebuilt websites, you need to register your copy of Avada. You can do this from the Avada Dashboard.', 'fusion-builder' ); ?></span>
-									<div class="fusion-builder-layouts-header-fields">
-										<a style="margin-top:2em;" href="<?php echo esc_url( admin_url( 'admin.php?page=avada' ) ); ?>" target="_blank" class="fusion-builder-button-default"><?php esc_html_e( 'Avada Registration', 'fusion-builder' ); ?></a>
-									</div>
-								</div>
-							</div>
-						<?php endif; ?>
+										</li>
+									<?php endforeach; ?>
+								<?php else : ?>
+									<li><p><?php esc_html_e( 'There are no prebuilt websites in your library', 'fusion-builder' ); ?></p></li>
+								<?php endif; ?>
+
+							</ul>
+
+						<?php endforeach; ?>
+
 					</div>
 				<?php endif; ?>
 
-				<div id="fusion-builder-fusion_template-studio" class="fusion-builder-layouts-tab">
-					<?php if ( function_exists( 'Avada' ) && Avada()->registration->is_registered() ) : ?>
-						<div class="studio-wrapper">
-							<aside>
-								<ul></ul>
-							</aside>
-							<section>
-								<div class="fusion-builder-element-content fusion-loader"><span class="fusion-builder-loader"></span><span class="awb-studio-import-status"></span></div>
-								<ul class="studio-imports"></ul>
-							</section>
-							<?php AWB_Studio::studio_import_options_template(); ?>
-						</div>
-					<?php elseif ( function_exists( 'Avada' ) ) : ?>
-						<div class="fusion-builder-layouts-header">
+				<?php
+				// Display headers tab.
+				if ( current_theme_supports( 'fusion-builder-demos' ) && Fusion_Template_Builder()->is_template( 'header' ) ) :
+					?>
+					<div id="fusion-builder-layouts-headers" class="fusion-builder-layouts-tab">
+						<div class="fusion-builder-layouts-header ">
 							<div class="fusion-builder-layouts-header-info">
-								<h2 class="fusion-responsive-typography-calculated"><?php esc_html_e( 'Avada needs to be registered to access the Avada Studio', 'fusion-builder' ); ?></h2>
-								<span class="fusion-builder-layout-info"><?php esc_html_e( 'To access Avada Studio content, you need to register your copy of Avada. You can do this from the Avada Dashboard.', 'fusion-builder' ); ?></span>
-								<div class="fusion-builder-layouts-header-fields">
-									<a style="margin-top:2em;" href="<?php echo esc_url( admin_url( 'admin.php?page=avada' ) ); ?>" target="_blank" class="fusion-builder-button-default"><?php esc_html_e( 'Avada Registration', 'fusion-builder' ); ?></a>
-								</div>
+								<h2><?php esc_html_e( 'Prebuilt Header Layout Sections', 'fusion-builder' ); ?></h2>
+								<span class="fusion-builder-layout-info"><?php esc_html_e( 'Click to import one of our prebuilt header layout sections.  Please note, the visual appearance may vary depending on your global options.  The menu content will also depend on the menus already created on your site and are not included with the import.', 'fusion-builder' ); ?></span>
 							</div>
 						</div>
-					<?php endif; ?>
-				</div>
+						<ul class="fusion-page-layouts">
+							<?php $fusion_builder_demo_headers = apply_filters( 'fusion_builder_get_demo_headers', [] ); ?>
+							<?php if ( ! empty( $fusion_builder_demo_headers ) ) : ?>
+								<?php asort( $fusion_builder_demo_headers ); ?>
+								<?php foreach ( $fusion_builder_demo_headers as $header_key => $header ) : ?>
+									<li class="fusion-page-layout">
+										<?php if ( isset( $header['image'] ) ) : ?>
+											<?php
+											$position_css   = isset( $header['position'] ) ? 'background-position:' . $header['position'] . ' 0;' : ';';
+											$additional_css = isset( $header['css'] ) ? $header['css'] : '';
+											?>
+											<a href="#" class="fusion-builder-demo-layout-button-load" data-layout-name="<?php echo esc_attr( $header_key ); ?>" data-post-id="<?php echo esc_attr( get_the_ID() ); ?>">
+												<div class="preview-image" style="background-image: url( '<?php echo esc_url( $header['image'] ); ?>' );<?php echo esc_html( $position_css ); ?><?php echo esc_html( $additional_css ); ?>" data-key="<?php echo esc_attr( $header_key ); ?>" aria-label="<?php echo esc_attr( ucwords( strtolower( $header['name'] ) ) ); ?>">
+													<div class="fusion-layout-info">
+														<span class="button button-primary"><?php echo esc_html( ucwords( strtolower( $header['name'] ) ) ); ?></span>
+													</div>
+												</div>
+											</a>
+										<?php endif; ?>
+
+									</li>
+								<?php endforeach; ?>
+							<?php else : ?>
+								<li><p><?php esc_html_e( 'There are no headers in your library', 'fusion-builder' ); ?></p></li>
+							<?php endif; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
+
+				<?php
+				// Display content layout section tab.
+				if ( current_theme_supports( 'fusion-builder-demos' ) && Fusion_Template_Builder()->is_template( 'content' ) ) :
+					?>
+					<div id="fusion-builder-layouts-content" class="fusion-builder-layouts-tab fusion-builder-grid-layout">
+						<div class="fusion-builder-layouts-header ">
+							<div class="fusion-builder-layouts-header-info">
+								<h2><?php esc_html_e( 'Prebuilt Content Layout Sections', 'fusion-builder' ); ?></h2>
+								<span class="fusion-builder-layout-info"><?php esc_html_e( 'Click to import one of our prebuilt content layout sections.  Please note, the visual appearance and content of these layout sections will depend on the context. For example, Blog Post 1 is ideally used as a layout for a single post.  For a realistic preview in Avada Live please ensure you have set the View Dynamic Content As option for this layout section.', 'fusion-builder' ); ?></span>
+							</div>
+						</div>
+						<ul class="fusion-page-layouts">
+							<?php $fusion_builder_demo_content = apply_filters( 'fusion_builder_get_content_sections', [] ); ?>
+							<?php if ( ! empty( $fusion_builder_demo_content ) ) : ?>
+								<?php asort( $fusion_builder_demo_content ); ?>
+								<?php foreach ( $fusion_builder_demo_content as $content_key => $content ) : ?>
+									<li class="fusion-page-layout">
+										<?php if ( isset( $content['image'] ) ) : ?>
+											<a href="#" class="fusion-builder-demo-layout-button-load" data-layout-name="<?php echo esc_attr( $content_key ); ?>" data-post-id="<?php echo esc_attr( get_the_ID() ); ?>">
+												<div class="preview">
+													<img src="<?php echo esc_url( $content['image'] ); ?>" alt="<?php echo esc_html( ucwords( strtolower( $content['name'] ) ) ); ?>" data-src="<?php echo esc_url( $content['image'] ); ?>" data-alt="<?php echo esc_html( ucwords( strtolower( $content['name'] ) ) ); ?>">
+												</div>
+												<div class="bar">
+													<span class="fusion_module_title"><?php echo esc_html( ucwords( strtolower( $content['name'] ) ) ); ?></span>
+												</div>
+											</a>
+										<?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							<?php else : ?>
+								<li><p><?php esc_html_e( 'There are no content layout sections in your library', 'fusion-builder' ); ?></p></li>
+							<?php endif; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
+
+				<?php
+				// Display content layout section tab.
+				if ( current_theme_supports( 'fusion-builder-demos' ) && $post_card ) :
+					?>
+					<div id="fusion-builder-layouts-cards" class="fusion-builder-layouts-tab fusion-builder-grid-layout">
+						<div class="fusion-builder-layouts-header ">
+							<div class="fusion-builder-layouts-header-info">
+								<h2><?php esc_html_e( 'Prebuilt Post Cards', 'fusion-builder' ); ?></h2>
+								<span class="fusion-builder-layout-info"><?php esc_html_e( 'Click to import one of our prebuilt post cards.  Please note, the visual appearance and content of these post cards will depend on the context. For example, Blog Post Card 1 is ideally used as a post card for blog posts and with a post cards element set to grid. For a realistic preview in Avada Live please ensure you have set the View Dynamic Content As option for this post card.', 'fusion-builder' ); ?></span>
+							</div>
+						</div>
+						<ul class="fusion-page-layouts">
+							<?php $fusion_builder_post_cards = apply_filters( 'fusion_builder_get_post_cards', [] ); ?>
+							<?php if ( ! empty( $fusion_builder_post_cards ) ) : ?>
+								<?php ksort( $fusion_builder_post_cards ); ?>
+								<?php foreach ( $fusion_builder_post_cards as $content_key => $content ) : ?>
+									<li class="fusion-page-layout">
+										<?php if ( isset( $content['image'] ) ) : ?>
+											<a href="#" class="fusion-builder-demo-layout-button-load" data-layout-name="<?php echo esc_attr( $content_key ); ?>" data-post-id="<?php echo esc_attr( get_the_ID() ); ?>">
+												<div class="preview">
+													<img src="<?php echo esc_url( $content['image'] ); ?>" alt="<?php echo esc_html( ucwords( strtolower( $content['name'] ) ) ); ?>" data-src="<?php echo esc_url( $content['image'] ); ?>" data-alt="<?php echo esc_html( ucwords( strtolower( $content['name'] ) ) ); ?>">
+												</div>
+												<div class="bar">
+													<span class="fusion_module_title"><?php echo esc_html( ucwords( strtolower( $content['name'] ) ) ); ?></span>
+												</div>
+											</a>
+										<?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							<?php else : ?>
+								<li><p><?php esc_html_e( 'There are no post cards in your library', 'fusion-builder' ); ?></p></li>
+							<?php endif; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
+
+				<?php
+				// Display forms tab.
+				if ( 'fusion_form' === $post_type ) :
+					?>
+					<div id="fusion-builder-layouts-forms" class="fusion-builder-layouts-tab fusion-builder-grid-layout">
+						<ul class="fusion-page-layouts">
+							<?php $fusion_builder_demo_forms = apply_filters( 'fusion_builder_get_demo_forms', [] ); ?>
+							<?php if ( ! empty( $fusion_builder_demo_forms ) ) : ?>
+								<?php asort( $fusion_builder_demo_forms ); ?>
+								<?php foreach ( $fusion_builder_demo_forms as $form_key => $form ) : ?>
+									<li class="fusion-page-layout">
+										<?php if ( isset( $form['image'] ) ) : ?>
+											<a href="#" class="fusion-builder-demo-layout-button-load" data-layout-name="<?php echo esc_attr( $form_key ); ?>" data-post-id="<?php echo esc_attr( get_the_ID() ); ?>">
+												<div class="preview">
+													<img src="<?php echo esc_url( $form['image'] ); ?>" alt="<?php echo esc_html( str_replace( 'Rsvp', 'RSVP', ucwords( strtolower( $form['name'] ) ) ) ); ?>" data-src="<?php echo esc_url( $form['image'] ); ?>" data-alt="<?php echo esc_html( ucwords( strtolower( $form['name'] ) ) ); ?>">
+												</div>
+												<div class="bar">
+													<span class="fusion_module_title"><?php echo esc_html( str_replace( 'Rsvp', 'RSVP', ucwords( strtolower( $form['name'] ) ) ) ); ?></span>
+												</div>
+											</a>
+										<?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							<?php else : ?>
+								<li><p><?php esc_html_e( 'There are no headers in your library', 'fusion-builder' ); ?></p></li>
+							<?php endif; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
 
 				<?php
 				// Display containers tab.
 				?>
 
 				<div id="fusion-builder-layouts-sections" class="fusion-builder-layouts-tab">
-					<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) ) : ?>
-						<div class="fusion-builder-layouts-header">
-							<div class="fusion-builder-layouts-header-fields fusion-builder-layouts-header-element-fields"></div>
-							<div class="fusion-builder-layouts-header-info">
-								<h2><?php esc_html_e( 'Saved Containers', 'fusion-builder' ); ?></h2>
-								<span class="fusion-builder-layout-info">
-									<?php
-									printf(
-										/* translators: The "Fusion Documentation" link. */
-										__( 'Manage your saved containers. Containers cannot be inserted from the library window. The globe icon indicates the element is a <a href="%s" target="_blank">global element</a>.', 'fusion-builder' ), // phpcs:ignore WordPress.Security.EscapeOutput
-										'https://avada.com/documentation/avada-builder-library-global-elements/'
-									);
-									?>
-								</span>
-							</div>
+
+					<div class="fusion-builder-layouts-header">
+						<div class="fusion-builder-layouts-header-fields fusion-builder-layouts-header-element-fields"></div>
+						<div class="fusion-builder-layouts-header-info">
+							<h2><?php esc_html_e( 'Saved Containers', 'fusion-builder' ); ?></h2>
+							<span class="fusion-builder-layout-info">
+								<?php
+								printf(
+									/* translators: The "Fusion Documentation" link. */
+									__( 'Manage your saved containers. Containers cannot be inserted from the library window. The globe icon indicates the element is a <a href="%s" target="_blank">global element</a>.', 'fusion-builder' ), // phpcs:ignore WordPress.Security.EscapeOutput
+									'https://theme-fusion.com/documentation/fusion-builder/fusion-builder-library/fusion-builder-global-elements/'
+								);
+								?>
+							</span>
 						</div>
-					<?php endif; ?>
+					</div>
 
 					<?php
 					// Query containers.
@@ -1231,36 +1278,34 @@ class Fusion_Builder_Library {
 							?>
 
 							<li class="<?php echo esc_attr( $is_global ); ?> fusion-page-layout" data-layout_id="<?php echo get_the_ID(); ?>">
-								<h4 class="fusion-page-layout-title" title="<?php the_title_attribute(); ?>">
+								<h4 class="fusion-page-layout-title" title="<?php the_title(); ?>">
 									<?php the_title(); ?>
 									<?php if ( '' !== $is_global && 'front' !== $this->location ) : ?>
 										<div class="fusion-global-tooltip-wrapper"><span class="fusion-global-tooltip"><?php esc_html_e( 'This is a global container.', 'fusion-builder' ); ?></span></div>
 									<?php endif; ?>
 								</h4>
-								<?php if ( ( '' !== $is_global && apply_filters( 'awb_global_elements_access', true ) ) || ( '' === $is_global && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) ) : ?>
-									<span class="fusion-layout-buttons">
-										<a href="#" class="fusion-builder-layout-button-delete">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-trash-o"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-										<a href="<?php echo $this->get_library_item_edit_link( $post->ID ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" class="fusion-builder-layout-button-edit" target="_blank">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-pen"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-									</span>
-								<?php endif; ?>
+								<span class="fusion-layout-buttons">
+									<a href="#" class="fusion-builder-layout-button-delete">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-trash-o"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
+									<a href="<?php echo $this->get_library_item_edit_link( $post->ID ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" class="fusion-builder-layout-button-edit" target="_blank">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-pen"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
+								</span>
 							</li>
 						<?php endwhile; ?>
 						<?php if ( 'front' === $this->location || ( 'front' !== $this->location && ! $query->have_posts() ) ) : ?>
@@ -1285,23 +1330,22 @@ class Fusion_Builder_Library {
 				?>
 
 				<div id="fusion-builder-layouts-columns" class="fusion-builder-layouts-tab">
-					<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) ) : ?>
-						<div class="fusion-builder-layouts-header">
-							<div class="fusion-builder-layouts-header-fields fusion-builder-layouts-header-element-fields"></div>
-							<div class="fusion-builder-layouts-header-info">
-								<h2><?php esc_html_e( 'Saved Columns', 'fusion-builder' ); ?></h2>
-								<span class="fusion-builder-layout-info">
-									<?php
-									printf(
-										/* translators: The "Fusion Documentation" link. */
-										__( 'Manage your saved columns. Columns cannot be inserted from the library window and they must always go inside a container. The globe icon indicates the element is a <a href="%s" target="_blank">global element</a>.', 'fusion-builder' ), // phpcs:ignore WordPress.Security.EscapeOutput
-										'https://avada.com/documentation/avada-builder-library-global-elements/'
-									);
-									?>
-								</span>
-							</div>
+
+					<div class="fusion-builder-layouts-header">
+						<div class="fusion-builder-layouts-header-fields fusion-builder-layouts-header-element-fields"></div>
+						<div class="fusion-builder-layouts-header-info">
+							<h2><?php esc_html_e( 'Saved Columns', 'fusion-builder' ); ?></h2>
+							<span class="fusion-builder-layout-info">
+								<?php
+								printf(
+									/* translators: The "Fusion Documentation" link. */
+									__( 'Manage your saved columns. Columns cannot be inserted from the library window and they must always go inside a container. The globe icon indicates the element is a <a href="%s" target="_blank">global element</a>.', 'fusion-builder' ), // phpcs:ignore WordPress.Security.EscapeOutput
+									'https://theme-fusion.com/documentation/fusion-builder/fusion-builder-library/fusion-builder-global-elements/'
+								);
+								?>
+							</span>
 						</div>
-					<?php endif; ?>
+					</div>
 
 					<?php
 					// Query columns.
@@ -1331,36 +1375,34 @@ class Fusion_Builder_Library {
 							?>
 
 							<li class="<?php echo esc_attr( $is_global ); ?> fusion-page-layout" data-layout_id="<?php echo get_the_ID(); ?>">
-								<h4 class="fusion-page-layout-title" title="<?php the_title_attribute(); ?>">
+								<h4 class="fusion-page-layout-title" title="<?php the_title(); ?>">
 									<?php the_title(); ?>
 									<?php if ( '' !== $is_global && 'front' !== $this->location ) : ?>
 										<div class="fusion-global-tooltip-wrapper"><span class="fusion-global-tooltip"><?php esc_html_e( 'This is a global column.', 'fusion-builder' ); ?></span></div>
 									<?php endif; ?>
 								</h4>
-								<?php if ( ( '' !== $is_global && apply_filters( 'awb_global_elements_access', true ) ) || ( '' === $is_global && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) ) : ?>
-									<span class="fusion-layout-buttons">
-										<a href="<?php echo $this->get_library_item_edit_link( $post->ID ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" class="fusion-builder-layout-button-edit" target="_blank">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-pen"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-										<a href="#" class="fusion-builder-layout-button-delete">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-trash-o"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-									</span>
-								<?php endif; ?>
+								<span class="fusion-layout-buttons">
+									<a href="<?php echo $this->get_library_item_edit_link( $post->ID ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" class="fusion-builder-layout-button-edit" target="_blank">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-pen"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
+									<a href="#" class="fusion-builder-layout-button-delete">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-trash-o"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
+								</span>
 							</li>
 						<?php endwhile; ?>
 
@@ -1387,24 +1429,23 @@ class Fusion_Builder_Library {
 				?>
 
 				<div id="fusion-builder-layouts-elements" class="fusion-builder-layouts-tab">
-					<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) ) : ?>
-						<div class="fusion-builder-layouts-header">
-							<div class="fusion-builder-layouts-header-fields fusion-builder-layouts-header-element-fields"></div>
-							<div class="fusion-builder-layouts-header-info">
-								<h2><?php esc_html_e( 'Saved Elements', 'fusion-builder' ); ?></h2>
-								<span class="fusion-builder-layout-info">
-									<?php
 
-									printf(
-										/* translators: The "Fusion Documentation" link. */
-										__( 'Manage your saved elements. Elements cannot be inserted from the library window and they must always go inside a column. The globe icon indicates the element is a <a href="%s" target="_blank">global element</a>.', 'fusion-builder' ), // phpcs:ignore WordPress.Security.EscapeOutput
-										'https://avada.com/documentation/avada-builder-library-global-elements/'
-									);
-									?>
-								</span>
-							</div>
+					<div class="fusion-builder-layouts-header">
+						<div class="fusion-builder-layouts-header-fields fusion-builder-layouts-header-element-fields"></div>
+						<div class="fusion-builder-layouts-header-info">
+							<h2><?php esc_html_e( 'Saved Elements', 'fusion-builder' ); ?></h2>
+							<span class="fusion-builder-layout-info">
+								<?php
+
+								printf(
+									/* translators: The "Fusion Documentation" link. */
+									__( 'Manage your saved elements. Elements cannot be inserted from the library window and they must always go inside a column. The globe icon indicates the element is a <a href="%s" target="_blank">global element</a>.', 'fusion-builder' ), // phpcs:ignore WordPress.Security.EscapeOutput
+									'https://theme-fusion.com/documentation/fusion-builder/fusion-builder-library/fusion-builder-global-elements/'
+								);
+								?>
+							</span>
 						</div>
-					<?php endif; ?>
+					</div>
 
 					<?php
 					// Query elements.
@@ -1435,7 +1476,7 @@ class Fusion_Builder_Library {
 							?>
 
 							<li class="<?php echo esc_attr( $is_global ); ?> fusion-page-layout" data-layout_type="<?php echo esc_attr( $element_type ); ?>" data-layout_id="<?php echo esc_attr( get_the_ID() ); ?>">
-								<h4 class="fusion-page-layout-title" title="<?php the_title_attribute(); ?>">
+								<h4 class="fusion-page-layout-title" title="<?php the_title(); ?>">
 									<?php the_title(); ?>
 									<?php if ( '' !== $is_global && 'front' !== $this->location ) : ?>
 										<div class="fusion-global-tooltip-wrapper">
@@ -1443,30 +1484,28 @@ class Fusion_Builder_Library {
 										</div>
 									<?php endif; ?>
 								</h4>
-								<?php if ( ( '' !== $is_global && apply_filters( 'awb_global_elements_access', true ) ) || ( '' === $is_global && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) ) : ?>
-									<span class="fusion-layout-buttons">
-										<a href="<?php echo $this->get_library_item_edit_link( $post->ID ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" class="fusion-builder-layout-button-edit" target="_blank">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-pen"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-										<a href="#" class="fusion-builder-layout-button-delete">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-trash-o"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-									</span>
-								<?php endif; ?>
+								<span class="fusion-layout-buttons">
+									<a href="<?php echo $this->get_library_item_edit_link( $post->ID ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" class="fusion-builder-layout-button-edit" target="_blank">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-pen"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
+									<a href="#" class="fusion-builder-layout-button-delete">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-trash-o"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
+								</span>
 							</li>
 						<?php endwhile; ?>
 
@@ -1491,29 +1530,19 @@ class Fusion_Builder_Library {
 				// Display templates tab.
 				?>
 				<div id="fusion-builder-layouts-templates" class="fusion-builder-layouts-tab">
-					<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_template', 'create_posts' ) && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) : ?>
-						<div class="fusion-builder-layouts-header">
+					<div class="fusion-builder-layouts-header">
 
-							<div class="fusion-builder-layouts-header-fields">
-								<a href="#" class="fusion-builder-layout-button-save"><?php esc_html_e( 'Save Template', 'fusion-builder' ); ?></a>
-								<input type="text" id="new_template_name" value="" placeholder="<?php esc_attr_e( 'Custom template name', 'fusion-builder' ); ?>" />
-							</div>
-
-							<div class="fusion-builder-layouts-header-info">
-								<h2><?php esc_html_e( 'Save current page layout as a template', 'fusion-builder' ); ?></h2>
-								<span class="fusion-builder-layout-info"><?php esc_html_e( 'Enter a name for your template and click the Save button. This will save the entire page layout, page template from the page attributes box, custom CSS, and Avada Page Options. IMPORTANT: When loading a saved template through the "Replace All Content" option, everything will load, including the page template and Avada Page Options. When inserting above or below existing content only the saved content will be added.', 'fusion-builder' ); ?></span>
-							</div>
-
+						<div class="fusion-builder-layouts-header-fields">
+							<a href="#" class="fusion-builder-layout-button-save"><?php esc_html_e( 'Save Template', 'fusion-builder' ); ?></a>
+							<input type="text" id="new_template_name" value="" placeholder="<?php esc_attr_e( 'Custom template name', 'fusion-builder' ); ?>" />
 						</div>
-					<?php else : ?>
-						<div class="fusion-builder-layouts-header">
-							<div class="fusion-builder-layouts-header-fields fusion-builder-layouts-header-element-fields"></div>
-							<div class="fusion-builder-layouts-header-info">
-								<h2><?php esc_html_e( 'Saved Templates', 'fusion-builder' ); ?></h2>
-								<span class="fusion-builder-layout-info"><?php esc_html_e( 'IMPORTANT: When loading a saved template through the "Replace All Content" option, everything will load, including the page template and Avada Page Options. When inserting above or below existing content only the saved content will be added.', 'fusion-builder' ); ?></span>
-							</div>
+
+						<div class="fusion-builder-layouts-header-info">
+							<h2><?php esc_html_e( 'Save current page layout as a template', 'fusion-builder' ); ?></h2>
+							<span class="fusion-builder-layout-info"><?php esc_html_e( 'Enter a name for your template and click the Save button. This will save the entire page layout, page template from the page attributes box, custom CSS, and Avada Page Options. IMPORTANT: When loading a saved template through the "Replace All Content" option, everything will load, including the page template and Avada Page Options. When inserting above or below existing content only the saved content will be added.', 'fusion-builder' ); ?></span>
 						</div>
-					<?php endif; ?>
+
+					</div>
 
 					<?php
 					// Query page templates.
@@ -1572,28 +1601,26 @@ class Fusion_Builder_Library {
 											?>
 										<?php endif; ?>
 									</a>
-									<?php if ( apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) : ?>
-										<a href="<?php echo esc_url( htmlspecialchars_decode( get_edit_post_link( $post->ID ) ) ); ?>" class="" target="_blank" rel="noopener noreferrer">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-pen"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-										<a href="#" class="fusion-builder-layout-button-delete">
-											<?php if ( 'front' === $this->location ) : ?>
-												<span class="fusiona-trash-o"></span>
-												<span class="screen-reader-text">
-											<?php endif; ?>
-											<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
-											<?php if ( 'front' === $this->location ) : ?>
-												</span>
-											<?php endif; ?>
-										</a>
-									<?php endif; ?>
+									<a href="<?php echo esc_url( htmlspecialchars_decode( get_edit_post_link( $post->ID ) ) ); ?>" class="" target="_blank" rel="noopener noreferrer">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-pen"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Edit', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
+									<a href="#" class="fusion-builder-layout-button-delete">
+										<?php if ( 'front' === $this->location ) : ?>
+											<span class="fusiona-trash-o"></span>
+											<span class="screen-reader-text">
+										<?php endif; ?>
+										<?php esc_html_e( 'Delete', 'fusion-builder' ); ?>
+										<?php if ( 'front' === $this->location ) : ?>
+											</span>
+										<?php endif; ?>
+									</a>
 								</span>
 							</li>
 						<?php endwhile; ?>
@@ -1792,58 +1819,6 @@ class Fusion_Builder_Library {
 		return $new_post_id;
 	}
 
-	/**
-	 * Checks if footer should be rendered in Live Builder.
-	 *
-	 * @param string $default The default value.
-	 * @param string $page_id The page ID.
-	 * @return boolean
-	 */
-	public function should_render_footer( $default, $page_id ) {
-		return $this->should_render_for_template( 'live_footer', $default, $page_id );
-	}
-
-	/**
-	 * Checks if header should be rendered in Live Builder.
-	 *
-	 * @param string $default The default value.
-	 * @param string $page_id The page ID.
-	 * @return boolean
-	 */
-	public function should_render_header( $default, $page_id ) {
-		return $this->should_render_for_template( 'live_header', $default, $page_id );
-	}
-
-	/**
-	 * Checks if page title bar should be rendered in Live Builder.
-	 *
-	 * @param string $default The default value.
-	 * @param string $page_id The page ID.
-	 * @return boolean
-	 */
-	public function should_render_page_title_bar( $default, $page_id ) {
-		return $this->should_render_for_template( 'live_ptb', $default, $page_id );
-	}
-
-	/**
-	 * Checks if specific section should be rendered based on PO.
-	 *
-	 * @param string $type    The render type.
-	 * @param string $default The default value.
-	 * @param string $page_id The page ID.
-	 * @return boolean
-	 */
-	public function should_render_for_template( $type, $default, $page_id ) {
-		$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
-		$post_type  = get_post_type( $page_id );
-
-		if ( $is_builder && 'fusion_template' === $post_type ) {
-			$should_show = fusion_data()->post_meta( $page_id )->get( $type );
-			$default     = empty( $should_show ) || 'no' === $should_show ? false : $default;
-		}
-
-		return $default;
-	}
 }
 
 /**

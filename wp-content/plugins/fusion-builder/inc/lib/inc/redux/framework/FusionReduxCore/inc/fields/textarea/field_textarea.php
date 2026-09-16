@@ -30,10 +30,6 @@
 	if ( ! class_exists( 'FusionReduxFramework_textarea' ) ) {
 		class FusionReduxFramework_textarea {
 
-			public $parent;
-			public $field;
-			public $value;
-
 			/**
 			 * Field Constructor.
 			 *
@@ -57,7 +53,7 @@
 			 *
 			 * @param array $arr (See above)
 			 *
-			 * @return void
+			 * @return Object A new editor object.
 			 **/
 			function render() {
 
@@ -67,7 +63,7 @@
 				// The $this->field variables are already escaped in the FusionReduxFramework Class.
 				?>
 				<textarea <?php echo $readonly; ?> name="<?php echo esc_attr($this->field['name'] . $this->field['name_suffix']); ?>" id="<?php echo $this->field['id']; ?>-textarea" placeholder="<?php echo esc_attr( $this->field['placeholder'] ); ?>" class="large-text <?php echo esc_attr($this->field['class']); ?>" rows="<?php echo esc_attr($this->field['rows']); ?>"><?php echo esc_textarea( $this->value ); ?></textarea>
-				<?php
+			<?php
 			}
 
 			function sanitize( $field, $value ) {

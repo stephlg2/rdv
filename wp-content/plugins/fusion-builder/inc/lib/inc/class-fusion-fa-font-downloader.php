@@ -42,13 +42,6 @@ class Fusion_FA_Font_Downloader {
 	protected $folder_url;
 
 	/**
-	 * FA font family array info.
-	 * 
-	 * @var array
-	 */
-	public $font = [];
-
-	/**
 	 * Constructor.
 	 *
 	 * @access public
@@ -256,7 +249,7 @@ class Fusion_FA_Font_Downloader {
 	}
 
 	/**
-	 * Get a FA font-family array info.
+	 * Get a font-family from the array of google-fonts.
 	 *
 	 * @access public
 	 * @since 1.8

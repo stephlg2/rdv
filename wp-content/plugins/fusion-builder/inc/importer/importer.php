@@ -6,7 +6,7 @@
  */
 
 /**
- * Import Avada elements/templates
+ * Import Fusion elements/templates
  */
 function fusion_builder_importer() {
 
@@ -28,27 +28,23 @@ function fusion_builder_importer() {
 				include $wp_importer;
 			}
 
-			if ( ! class_exists( 'WP_Importer_Logger' ) ) { // If WP importer doesn't exist.
-				include FUSION_LIBRARY_PATH . '/inc/importer/class-logger.php';
-			}
-
-			if ( ! class_exists( 'AWB_Importer_Logger' ) ) { // If WP importer doesn't exist.
-				include FUSION_LIBRARY_PATH . '/inc/importer/class-awb-importer-logger.php';
-			}
-
 			if ( ! class_exists( 'WXR_Importer' ) ) { // If WP importer doesn't exist.
-				include FUSION_LIBRARY_PATH . '/inc/importer/class-wxr-importer.php';
+				include FUSION_LIBRARY_PATH . '/inc/importer/class-logger.php';
+				include FUSION_LIBRARY_PATH . '/inc/importer/class-logger-html.php';
+
+				$wp_import = FUSION_LIBRARY_PATH . '/inc/importer/class-wxr-importer.php';
+				include $wp_import;
 			}
 
 			if ( ! class_exists( 'Fusion_WXR_Importer' ) ) {
 				include FUSION_LIBRARY_PATH . '/inc/importer/class-fusion-wxr-importer.php';
 			}
 
-			if ( class_exists( 'AWB_Importer_Logger' ) && class_exists( 'WP_Importer' ) && class_exists( 'WXR_Importer' ) && class_exists( 'Fusion_WXR_Importer' ) ) { // Check for main import class and wp import class.
+			if ( class_exists( 'WP_Importer' ) && class_exists( 'WXR_Importer' ) && class_exists( 'Fusion_WXR_Importer' ) ) { // Check for main import class and wp import class.
 
 				if ( isset( $file ) && ! empty( $file ) ) {
 
-					$logger = new AWB_Importer_Logger();
+					$logger = new WP_Importer_Logger_HTML();
 
 					// It's important to disable 'prefill_existing_posts'.
 					// In case GUID of importing post matches GUID of an existing post it won't be imported.
@@ -123,7 +119,7 @@ function add_fb_element_terms( $terms, $post_id, $data ) {
 
 
 /**
- * Export Avada elements/templates
+ * Export Fusion elements/templates
  */
 function fusion_export_xml() {
 
@@ -158,13 +154,12 @@ add_action( 'admin_init', 'fusion_export_xml' );
  * @return string $wp_filename New export file name depends on the post type
  */
 function fusion_export_filename( $wp_filename ) {
+
 	if ( isset( $_GET['page'] ) && 'avada-builder-options' == $_GET['page'] ) {
 
 		$post_type = filter_input( INPUT_GET, 'fusion_export_type', FILTER_SANITIZE_STRING );
 		$wp_filename = $post_type . '-' . $wp_filename;
 		return $wp_filename;
 	}
-
-	return $wp_filename;
 }
 add_filter( 'export_wp_filename', 'fusion_export_filename' );

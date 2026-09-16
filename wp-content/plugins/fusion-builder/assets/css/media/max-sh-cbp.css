@@ -60,18 +60,12 @@
   padding-right: 0;
   order: 2;
 }
-.fusion-content-boxes {
-  --awb-item-margin-bottom: 55px;
+.fusion-content-boxes .fusion-column {
+  margin-bottom: 55px;
 }
 .fusion-content-boxes .fusion-read-more-button {
   margin-top: 8px;
 }
 .fusion-tabs.vertical-tabs .nav-tabs > li.active > .tab-link {
   border-left: 3px solid var(--primary_color);
-}
-.fusion-woocommerce-shipping-calculator .fusion-layout-column.fusion-column-last:last-of-type {
-  margin-bottom: 0 !important;
-}
-.fusion-woocommerce-shipping-calculator .fusion-layout-column.fusion-shipping-update-totals {
-  margin-top: 20px;
 }

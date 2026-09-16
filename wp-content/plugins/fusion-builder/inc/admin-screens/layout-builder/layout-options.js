@@ -353,7 +353,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			} else {
 				conditions[ conditionId ] = {
 					label: input.dataset.label,
-					slug: input.dataset.slug,
 					type: input.dataset.type,
 					mode: conditionMode,
 					[ input.dataset.type ]: conditionId,
@@ -610,7 +609,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		 */
 		switchTab: function( event ) {
 			var $tabLink = jQuery( event.currentTarget ),
-				tab      = '#' + jQuery.escapeSelector( $tabLink.attr( 'href' ).replace( '#', '' ) );
+				tab      = $tabLink.attr( 'href' );
 
 			if ( event ) {
 				event.preventDefault();
@@ -618,6 +617,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			$tabLink.addClass( 'current' ).removeClass( 'inactive' );
 			$tabLink.siblings().removeClass( 'current' ).addClass( 'inactive' );
+
 
 			this.$el.find( tab ).siblings( '.layout-mode-tab, .layout-option-tab' ).hide();
 			this.$el.find( tab ).show();
@@ -639,7 +639,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			if ( 'object' === typeof conditions && 0 < Object.keys( conditions ).length ) {
 				$layoutBox.closest( '.fusion-condition-control' ).addClass( 'has-conditions' );
 				_.each( conditions, function( condition ) {
-					var $condition = jQuery( '<li class="' + condition.mode + '"><span>' + condition.label + '</span></li>' );
+					var $condition = jQuery( '<li class="' + condition.mode + '">' + condition.label + '</li>' );
 					$layoutBox.append( $condition );
 				} );
 			}

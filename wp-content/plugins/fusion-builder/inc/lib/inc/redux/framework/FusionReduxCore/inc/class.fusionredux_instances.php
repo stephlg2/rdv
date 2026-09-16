@@ -24,10 +24,6 @@
 		 */
 		private static $instances;
 
-		public $options;
-
-		public $apiHasRun;
-
 		/**
 		 * Get Instance
 		 * Get FusionReduxFrameworkInstances instance
@@ -129,7 +125,11 @@
 				if ( isset( $array ) ) {
 					if ( isset( $array->extensions ) && is_array( $array->extensions ) && ! empty( $array->extensions ) ) {
 						foreach ( $array->extensions as $key => $extension ) {
-							$array->extensions[ $key ] = true;
+							if ( isset( $extension->$version ) ) {
+								$array->extensions[ $key ] = $extension->$version;
+							} else {
+								$array->extensions[ $key ] = true;
+							}
 						}
 					}
 

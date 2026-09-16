@@ -35,6 +35,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			private $counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Target post's post type.
 			 *
 			 * @access protected
@@ -53,7 +62,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 				parent::__construct( 'fusion_tb_related' );
 				add_filter( 'fusion_attr_fusion_tb_related-shortcode', [ $this, 'attr' ] );
 
-				$this->fusion_settings = awb_get_fusion_settings();
+				$this->fusion_settings = fusion_get_fusion_settings();
 
 				add_filter( 'fusion_attr_related-component-carousel', [ $this, 'carousel_attr' ] );
 
@@ -70,7 +79,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			 * @return boolean
 			 */
 			public function should_render() {
-				return is_singular() || wp_is_json_request();
+				return is_singular();
 			}
 
 			/**
@@ -82,7 +91,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'number_related_posts'         => $fusion_settings->get( 'number_related_posts' ),
 					'related_posts_image_size'     => $fusion_settings->get( 'related_posts_image_size' ),
@@ -105,9 +114,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 					'animation_type'               => '',
 					'animation_direction'          => 'down',
 					'animation_speed'              => '0.1',
-					'animation_delay'              => '',
 					'animation_offset'             => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'              => '',
 				];
 			}
 
@@ -124,6 +131,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 					'number_related_posts'         => 'number_related_posts',
 					'related_posts_image_size'     => 'related_posts_image_size',
 					'related_posts_columns'        => 'related_posts_columns',
+					'related_posts_navigation'     => 'related_posts_navigation',
 					'related_posts_navigation'     => 'related_posts_navigation',
 					'related_posts_autoplay'       => 'related_posts_autoplay',
 					'related_posts_swipe'          => 'related_posts_swipe',
@@ -142,7 +150,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'title_margin'       => $fusion_settings->get( 'title_margin' ),
 					'title_border_color' => $fusion_settings->get( 'title_border_color' ),
@@ -262,6 +270,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			 * @return array
 			 */
 			public function query( $defaults ) {
+				global $fusion_settings;
 
 				// Return if there's a query override.
 				$query_override = apply_filters( 'fusion_blog_shortcode_query_override', null, $defaults );
@@ -292,8 +301,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			public function render( $args, $content = '' ) {
 
 				// Set defaults.
-				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_related' );
+				$this->args = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_tb_related' );
 
 				// Validate and normalize args.
 				$this->validate_args();
@@ -335,7 +343,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 					}
 
 					$content .= '<div ' . FusionBuilder::attributes( 'related-component-carousel' ) . '>';
-					$content .= '<div class="swiper-wrapper">';
+					$content .= '<div class="fusion-carousel-positioner">';
+					$content .= '<ul class="fusion-carousel-holder">';
 
 					/**
 					 * Loop through related posts.
@@ -343,7 +352,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 					while ( $fusion_query->have_posts() ) :
 						$fusion_query->the_post();
 						$post_id  = get_the_ID(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
-						$content .= '<div class="swiper-slide"' . $carousel_item_css . ' >'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						$content .= '<li class="fusion-carousel-item"' . $carousel_item_css . ' >'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						$content .= '<div class="fusion-carousel-item-wrapper">';
 
 						$display_post_title = 'title_on_rollover' === $this->args['related_posts_layout'] ? 'default' : 'disable';
@@ -371,11 +380,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 							$content .= '</h4>';
 
 							$content .= '<div class="fusion-carousel-meta">';
-
-							$date_format = Avada()->settings->get( 'date_format' );
-							$date_format = $date_format ? $date_format : get_option( 'date_format' );
-
-							$content .= '<span class="fusion-date">' . esc_attr( get_the_time( $date_format, $post_id ) ) . '</span>';
+							$content .= '<span class="fusion-date">' . esc_attr( get_the_time( $this->fusion_settings->get( 'date_format' ), $post_id ) ) . '</span>';
 
 							if ( comments_open( $post_id ) ) {
 								$content .= '<span class="fusion-inline-sep">|</span>';
@@ -389,17 +394,21 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 						}
 
 							$content .= '</div><!-- fusion-carousel-item-wrapper -->';
-							$content .= '</div>';
+							$content .= '</li>';
 					endwhile;
-					$content .= '</div><!-- swiper-wrapper -->';
+					$content .= '</ul><!-- fusion-carousel-holder -->';
 
 					/**
 					 * Add navigation if needed.
 					 */
 					if ( true === $this->args['related_posts_navigation'] ) {
-						$content .= awb_get_carousel_nav();
+						$content .= '<div class="fusion-carousel-nav">';
+						$content .= '<span class="fusion-nav-prev"></span>';
+						$content .= '<span class="fusion-nav-next"></span>';
+						$content .= '</div>';
 					}
 
+					$content .= '</div><!-- fusion-carousel-positioner -->';
 					$content .= '</div><!-- fusion-carousel -->';
 					$content .= '</section><!-- related-posts -->';
 
@@ -578,8 +587,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			 */
 			public function carousel_attr() {
 
-				$attr['class'] = 'awb-carousel awb-swiper awb-swiper-carousel';
-				$attr['style'] = $this->get_carousel_style_variables();
+				$attr['class'] = 'fusion-carousel';
 				if ( 'title_below_image' === $this->args['related_posts_layout'] ) {
 					$attr['class'] .= ' fusion-carousel-title-below-image';
 				}
@@ -632,26 +640,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
 			 */
 			public function on_first_render() {
 				Fusion_Dynamic_JS::enqueue_script( 'fusion-lightbox' );
-				Fusion_Dynamic_JS::enqueue_script( 'awb-carousel' );
-			}
-
-			/**
-			 * Get the carousel style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_carousel_style_variables() {
-				$custom_vars = [];
-				if ( ! $this->is_default( 'related_posts_columns' ) ) {
-					$custom_vars['columns'] = $this->args['related_posts_columns'];
-				}
-				if ( ! $this->is_default( 'related_posts_column_spacing' ) ) {
-					$custom_vars['column_spacing'] = fusion_library()->sanitize->get_value_with_unit( $this->args['related_posts_column_spacing'] );
-				}
-
-				return $this->get_custom_css_vars( $custom_vars );
+				Fusion_Dynamic_JS::enqueue_script( 'fusion-carousel' );
 			}
 
 			/**
@@ -678,23 +667,25 @@ if ( fusion_is_element_enabled( 'fusion_tb_related' ) ) {
  * @since 2.2
  */
 function fusion_component_related() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Related',
 			[
-				'name'      => esc_html__( 'Related Posts', 'fusion-builder' ),
-				'shortcode' => 'fusion_tb_related',
-				'icon'      => 'fusiona-related-posts',
-				'component' => true,
-				'templates' => [ 'content' ],
-				'callback'  => [
+				'name'                    => esc_html__( 'Related Posts', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_related',
+				'icon'                    => 'fusiona-related-posts',
+				'component'               => true,
+				'templates'               => [ 'content' ],
+				'components_per_template' => 1,
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_related_posts',
 					'ajax'     => true,
 				],
-				'params'    => [
+				'params'                  => [
 					[
 						'heading'     => esc_html__( 'Layout', 'fusion-builder' ),
 						'description' => esc_html__( 'Controls the layout style for related posts and related projects.', 'fusion-builder' ),
@@ -839,18 +830,16 @@ function fusion_component_related() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'HTML Heading Tag', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the heading, either div, p or the heading tag, h1-h6.', 'fusion-builder' ),
+						'heading'     => esc_html__( 'HTML Heading Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Choose the size of the HTML heading that should be used, h1-h6.', 'fusion-builder' ),
 						'param_name'  => 'heading_size',
 						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-							'p'   => 'P',
+							'1' => 'H1',
+							'2' => 'H2',
+							'3' => 'H3',
+							'4' => 'H4',
+							'5' => 'H5',
+							'6' => 'H6',
 						],
 						'default'     => '3',
 						'group'       => esc_html__( 'Design', 'fusion-builder' ),

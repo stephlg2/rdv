@@ -23,6 +23,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				'click .fusion-builder-cancel-row': 'cancelChanges',
 				'click .fusion-builder-row-add-child': 'displayInnerColumn',
 				'click .fusion-builder-insert-inner-column': 'displayInnerColumn',
+				'click .fusion-builder-settings': 'editNestedColumn',
+				'click .fusion-builder-modal-save': 'closeNestedPopupAndSave',
+				'click .fusion-builder-inner-row-close': 'closeNestedPopup',
+				'click .fusion-builder-modal-close': 'closeNestedPopup',
 				'mousedown .fusion-builder-nested-columns-settings-overlay': 'overlayMousedown'
 			},
 
@@ -52,6 +56,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.listenTo( this.model.children, 'add', this.addChildView );
 				this.listenTo( FusionEvents, 'fusion-builder-loaded', this.updateColumnsPreview );
+
+				this.listenTo( FusionEvents, 'fusion-wireframe-toggle', this.wireFrameToggled );
 			},
 
 			/**
@@ -68,9 +74,23 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				setTimeout( function() {
 					self.droppableColumn();
 					self.droppableElement();
+					self.updateWireframeUI();
 				}, 100 );
 
 				return this;
+			},
+
+			updateWireframeUI: function() {
+				var innerColumnsWrapper = this.$el,
+					innerColumnsString  = '';
+
+				this.$el.find( '.fusion-nested-column-preview-columns' ).remove();
+
+				innerColumnsWrapper.find( '.fusion-builder-column-inner' ).each( function() {
+					innerColumnsString += String( jQuery( this ).data( 'column-size' ) ).replace( '_', '/' ) + ' + ';
+				} );
+
+				innerColumnsWrapper.find( '.fusion-nested-column-preview-title' ).after( '<p class="fusion-nested-column-preview-columns">' + innerColumnsString.slice( 0, innerColumnsString.length - 3 ) + '</p>' );
 			},
 
 			/**
@@ -171,50 +191,84 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			droppableColumn: function() {
-				var $el  = this.$el,
-					self = this;
+				var $el  = this.$el;
 
 				$el.find( '.fusion-nested-column-target' ).droppable( {
 					tolerance: 'touch',
 					hoverClass: 'ui-droppable-active',
 					accept: '.fusion-builder-column',
-					drop: function( event, ui ) {
-						var handleNestedColumnDropInsideRow = self.handleNestedColumnDropInsideRow.bind( self );
-						handleNestedColumnDropInsideRow( ui.draggable, $el );
+					drop: function( scopedEvent, ui ) {
+						var parentCid      = jQuery( scopedEvent.target ).closest( '.fusion-builder-row-content' ).data( 'cid' ),
+							destinationRow = FusionPageBuilderViewManager.getView( parentCid ),
+							columnCid      = ui.draggable.data( 'cid' ),
+							columnView     = FusionPageBuilderViewManager.getView( columnCid ),
+							originalCid    = columnView.model.get( 'parent' ),
+							originalView,
+							newIndex;
+
+						newIndex = ui.draggable.parent().children( '.fusion-builder-column' ).index( ui.draggable );
+
+						FusionPageBuilderApp.onDropCollectionUpdate( columnView.model, newIndex, self.model.get( 'cid' ) );
+
+						// Move the actual html.
+						$el.find( '.fusion-builder-row-container-inner' ).append( ui.draggable );
+
+						// Update destination row which is this current one.
+						destinationRow.setRowData();
+
+						// If destination row and original row are different, update original as well.
+						if ( parentCid !== originalCid ) {
+							originalView = FusionPageBuilderViewManager.getView( originalCid );
+							originalView.setRowData();
+						}
+
+						FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.column + ' order changed' );
+
+						setTimeout( function() {
+							columnView.droppableColumn();
+						}, 300 );
 					}
 				} );
 			},
 
-			handleNestedColumnDropInsideRow: function( $column, $targetEl ) {
-				var parentCid      = $targetEl.find( '.fusion-builder-row-content' ).data( 'cid' ),
-					destinationRow = FusionPageBuilderViewManager.getView( parentCid ),
-					columnCid      = $column.data( 'cid' ),
-					columnView     = FusionPageBuilderViewManager.getView( columnCid ),
-					originalCid    = columnView.model.get( 'parent' ),
-					originalView,
-					newIndex;
+			/**
+			 * Destroy or disable the droppable and draggable.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			disableDroppableElement: function() {
+				var $el = this.$el;
 
-				newIndex = $column.parent().children( '.fusion-builder-column' ).index( $column );
-
-				FusionPageBuilderApp.onDropCollectionUpdate( columnView.model, newIndex, this.model.get( 'cid' ) );
-
-				// Move the actual html.
-				$targetEl.find( '.fusion-builder-row-container-inner' ).append( $column );
-
-				// Update destination row which is this current one.
-				destinationRow.setRowData();
-
-				// If destination row and original row are different, update original as well.
-				if ( parentCid !== originalCid ) {
-					originalView = FusionPageBuilderViewManager.getView( originalCid );
-					originalView.setRowData();
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) ) {
+					$el.draggable( 'disable' );
 				}
 
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.column + ' Order Changed' );
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.find( '> .fusion-element-target' ).droppable( 'instance' ) ) {
+					$el.find( '> .fusion-element-target' ).droppable( 'disable' );
+				}
+			},
 
-				setTimeout( function() {
-					columnView.droppableColumn();
-				}, 300 );
+			/**
+			 * Enable the droppable and draggable.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			enableDroppableElement: function() {
+				var $el = this.$el;
+
+				// If they have been init, then just disable.
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) && 'undefined' !== typeof $el.find( '> .fusion-element-target' ).droppable( 'instance' ) ) {
+					$el.draggable( 'enable' );
+					$el.find( '> .fusion-element-target' ).droppable( 'enable' );
+				} else {
+
+					// No sign of init, then need to call it.
+					this.droppableElement();
+				}
 			},
 
 			/**
@@ -225,7 +279,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			droppableElement: function() {
 				var $el   = this.$el,
-					self  = this,
 					cid   = this.model.get( 'cid' ),
 					$body = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' );
 
@@ -260,45 +313,45 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					hoverClass: 'ui-droppable-active',
 					accept: '.fusion-builder-live-element, .fusion_builder_row_inner',
 					drop: function( event, ui ) {
-						var handleRowNestedDrop = self.handleRowNestedDrop.bind( self );
-						handleRowNestedDrop( ui.draggable, $el, jQuery( event.target ) );
+						var parentCid      = jQuery( event.target ).closest( '.fusion-builder-column' ).data( 'cid' ),
+							columnView     = FusionPageBuilderViewManager.getView( parentCid ),
+							elementCid     = ui.draggable.data( 'cid' ),
+							elementView    = FusionPageBuilderViewManager.getView( elementCid ),
+							MultiGlobalArgs,
+							newIndex;
+
+						// Move the actual html.
+						if ( jQuery( event.target ).hasClass( 'target-after' ) ) {
+							$el.after( ui.draggable );
+						} else {
+							$el.before( ui.draggable );
+						}
+
+						newIndex = ui.draggable.parent().children( '.fusion-builder-live-element, .fusion_builder_row_inner' ).index( ui.draggable );
+
+						FusionPageBuilderApp.onDropCollectionUpdate( elementView.model, newIndex, parentCid );
+
+						// Save history state
+						FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.moved + ' ' + fusionAllElements[ elementView.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element );
+
+						// Handle multiple global elements.
+						MultiGlobalArgs = {
+							currentModel: elementView.model,
+							handleType: 'save',
+							attributes: elementView.model.attributes
+						};
+						fusionGlobalManager.handleMultiGlobal( MultiGlobalArgs );
+
+						FusionEvents.trigger( 'fusion-content-changed' );
+
+						columnView._equalHeights();
 					}
 				} );
-			},
 
-			handleRowNestedDrop: function( $row, $targetEl, $dropTarget ) {
-				var parentCid      = $dropTarget.closest( '.fusion-builder-column' ).data( 'cid' ),
-					columnView     = FusionPageBuilderViewManager.getView( parentCid ),
-					elementCid     = $row.data( 'cid' ),
-					elementView    = FusionPageBuilderViewManager.getView( elementCid ),
-					MultiGlobalArgs,
-					newIndex;
-
-				// Move the actual html.
-				if ( $dropTarget.hasClass( 'target-after' ) ) {
-					$targetEl.after( $row );
-				} else {
-					$targetEl.before( $row );
+				// If we are in wireframe mode, then disable.
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableElement();
 				}
-
-				newIndex = $row.parent().children( '.fusion-builder-live-element, .fusion_builder_row_inner' ).index( $row );
-
-				FusionPageBuilderApp.onDropCollectionUpdate( elementView.model, newIndex, parentCid );
-
-				// Save history state
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.moved + ' ' + fusionAllElements[ elementView.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element );
-
-				// Handle multiple global elements.
-				MultiGlobalArgs = {
-					currentModel: elementView.model,
-					handleType: 'save',
-					attributes: elementView.model.attributes
-				};
-				fusionGlobalManager.handleMultiGlobal( MultiGlobalArgs );
-
-				FusionEvents.trigger( 'fusion-content-changed' );
-
-				columnView._equalHeights();
 			},
 
 			/**
@@ -323,7 +376,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				innerRowAttributes.cid      = FusionPageBuilderViewManager.generateCid();
 				innerRowAttributes.at_index = FusionPageBuilderApp.getCollectionIndex( this.$el );
 
-				if ( 'object' === typeof event || 'navigator' === event ) {
+				if ( 'object' === typeof event ) {
 					innerRowAttributes.targetElement         = this.$el;
 					innerRowAttributes.targetElementPosition = 'after';
 				} else if ( 'clone' === event ) {
@@ -363,7 +416,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 								return model.get( 'cid' ) == moduleCID; // jshint ignore: line
 							} ),
 
-							// Clone model attributes
+							// Clone model attritubes
 							innerElementAttributes = jQuery.extend( true, {}, module.attributes );
 
 						innerElementAttributes.created = 'manually';
@@ -453,10 +506,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					window.fusionHistoryState = fusionBuilderText.edited + ' ' + fusionAllElements[ this.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element;
 					FusionEvents.trigger( 'fusion-history-save-step', window.fusionHistoryState );
 				}
-
-				if ( FusionPageBuilderApp.navigator ) {
-					FusionPageBuilderApp.navigator.update();
-				}
 			},
 
 			/**
@@ -527,12 +576,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					thisRowInnerCID = $thisRowInner.data( 'cid' ),
 					module          = FusionPageBuilderElements.findWhere( { cid: thisRowInnerCID } ); // eslint-disable-line no-unused-vars
 
-				shortcode += '[fusion_builder_row_inner';
-				if ( 'undefined' !== typeof this.model.get( 'params' ) && 'undefined' !== typeof this.model.get( 'params' ).fusion_global ) {
-					shortcode += ' fusion_global="' + parseInt( this.model.get( 'params' ).fusion_global ) + '"';
+				shortcode += '[fusion_builder_row_inner]';
 
-				}
-				shortcode += ']';
 				$thisRowInner.find( '.fusion-builder-column-inner' ).each( function() {
 					var $thisColumnInner = jQuery( this ),
 						columnCID        = $thisColumnInner.data( 'cid' ),
@@ -542,6 +587,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} );
 
 				shortcode += '[/fusion_builder_row_inner]';
+
 				return shortcode;
 			},
 
@@ -549,11 +595,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Removes a row.
 			 *
 			 * @since 2.0.0
-			 * @param {Object} event - The event.
-			 * @param {bool} forceManually - Force manually, even if it's not an event, to update history and trigger content changes.
+			 * @param {Object}         event - The event.
+			 * @param {boolean|undefined} force - Should we force-remove the row?
 			 * @return {void}
 			 */
-			removeRow: function( event, forceManually ) {
+			removeRow: function( event ) {
 				var columns,
 					parentView = FusionPageBuilderViewManager.getView( this.model.get( 'parent' ) );
 
@@ -577,7 +623,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.remove();
 
 				// If row ( nested columns ) is removed manually
-				if ( event || forceManually ) {
+				if ( event ) {
 
 					// Save history state
 					FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.deleted_nested_columns );
@@ -597,8 +643,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			cancelChanges: function( event ) {
-				var newView;
-
 				if ( event ) {
 					event.preventDefault();
 				}
@@ -610,16 +654,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( true === this.contentChanged() ) {
 					FusionPageBuilderApp.shortcodesToBuilder( this.savedContent, this.model.get( 'parent' ), 'undefined', 'undefined', this.$el );
-					newView = FusionPageBuilderViewManager.getView( this.$el.next().attr( 'data-cid' ) );
 					this.removeRow();
 				}
 
-				FusionEvents.trigger( 'fusion-cancel-nested-row-changes', { oldView: this, newView: newView } );
 				FusionEvents.trigger( 'fusion-history-resume-tracking' );
-
-				if ( FusionPageBuilderApp.navigator ) {
-					FusionPageBuilderApp.navigator.update();
-				}
 			},
 
 			addNestedColumn: function( element, appendAfter, targetElement, atIndex ) {
@@ -787,6 +825,79 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
+			 * Opens nested columns in popup for wireframe mode.
+			 *
+			 * @since 2.0.0
+			 * @param {Object} element - The element model.
+			 * @return {void}
+			 */
+			editNestedColumn: function( event ) {
+				var self = this;
+
+				if ( event ) {
+					event.preventDefault();
+				}
+
+				this.savedContent = this.getInnerRowContent();
+
+				this.$el.find( '.fusion-builder-row-content' ).addClass( 'fusion-builder-row-content-active' );
+				self.$el.closest( '.fusion-row' ).addClass( 'fusion-builder-row-active' );
+				this.$el.closest( '.fusion-builder-ui-wireframe' ).addClass( 'fusion-builder-nested-cols-dialog-open' );
+
+				// Hides column size popup.
+				this.$el.closest( '.fusion-builder-column' ).removeClass( 'active' );
+				this.$el.closest( '.fusion-builder-container' ).removeClass( 'fusion-column-sizer-active' );
+
+				FusionEvents.trigger( 'fusion-history-turn-on-tracking' );
+				FusionEvents.trigger( 'fusion-history-capture-editor' );
+				FusionEvents.trigger( 'fusion-history-turn-off-tracking' );
+				FusionEvents.trigger( 'fusion-history-pause-tracking' );
+			},
+
+			/**
+			 * Closes nested columns in popup for wireframe mode.
+			 *
+			 * @since 2.0.0
+			 * @param {Object} element - The element model.
+			 * @return {void}
+			 */
+			closeNestedPopupAndSave: function( event ) {
+				if ( event ) {
+					event.preventDefault();
+				}
+
+				this.updateWireframeUI();
+				this.$el.find( '.fusion-builder-row-content' ).removeClass( 'fusion-builder-row-content-active' );
+				this.$el.closest( '.fusion-row' ).removeClass( 'fusion-builder-row-active' );
+				this.$el.closest( '.fusion-builder-ui-wireframe' ).removeClass( 'fusion-builder-nested-cols-dialog-open' );
+
+				FusionEvents.trigger( 'fusion-history-resume-tracking' );
+			},
+
+			/**
+			 * Closes nested columns in popup for wireframe mode and revert changes.
+			 *
+			 * @since 2.0.0
+			 * @param {Object} element - The element model.
+			 * @return {void}
+			 */
+			closeNestedPopup: function( event ) {
+				if ( event ) {
+					event.preventDefault();
+				}
+
+				this.$el.find( '.fusion-builder-row-content' ).removeClass( 'fusion-builder-row-content-active' );
+				this.$el.closest( '.fusion-row' ).removeClass( 'fusion-builder-row-active' );
+				this.$el.closest( '.fusion-builder-ui-wireframe' ).removeClass( 'fusion-builder-nested-cols-dialog-open' );
+
+				if ( true === this.contentChanged() ) {
+					FusionPageBuilderApp.shortcodesToBuilder( this.savedContent, this.model.get( 'parent' ), 'undefined', 'undefined', this.$el );
+					this.removeRow();
+				}
+				FusionEvents.trigger( 'fusion-history-resume-tracking' );
+			},
+
+			/**
 			 * Opens the library. Builds the settings for this view
 			 * and then calls FusionPageBuilder.LibraryView and renders it.
 			 *
@@ -819,12 +930,73 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				FusionPageBuilderApp.removeContextMenu();
 			},
 
+			/**
+			 * Fired when wireframe mode is toggled.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			wireFrameToggled: function() {
+				if ( FusionPageBuilderApp.wireframeActive ) {
+
+					if ( jQuery( 'body' ).hasClass( 'nested-ui-active' ) ) {
+						this.stopEdit();
+					}
+
+					this.enableSortableColumns();
+					this.disableDroppableElement();
+					this.updateWireframeUI();
+				} else {
+					this.disableSortableColumns();
+					this.enableDroppableElement();
+				}
+			},
+
 			recalculateMargins: function() {
 				var attr = this.attr();
 
 				this.$el.find( '.fusion-builder-row-container-inner' ).first().attr( 'style', attr.style );
-			}
+			},
 
+			/**
+			 * Destroy or disable column sortable.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			disableSortableColumns: function() {
+				var rowContainer = this.$el.find( '.fusion-builder-row-container' );
+
+				rowContainer.sortable( 'disable' );
+			},
+
+			/**
+			 * Initialize column sortable.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			sortableColumns: function() {
+				var sortableColumns = this.$el.find( '.fusion-builder-row-container-inner' ),
+					items = '.fusion-builder-column-inner',
+					self = this;
+
+				sortableColumns.sortable( {
+					items: items,
+					helper: 'clone',
+					cancel: '.fusion-builder-settings-column, .fusion-builder-column-size, .fusion-builder-column-clone, .fusion-builder-column-remove, .fusion-builder-add-element, .fusion-builder-insert-column, .fusion-builder-save-column, .column-sizes, .fusion-builder-modal-save, .fusion-builder-inner-row-close',
+					tolerance: 'pointer',
+
+					update: function() {
+						self.onSortUpdate();
+					},
+
+					stop: function( event, ui ) {
+						self.onSortStop( event, ui, items );
+					}
+
+				} ).disableSelection();
+			}
 		} );
 	} );
 }( jQuery ) );

@@ -1,10 +1,10 @@
 <?php
 /**
- * Custom Icons helper functions.
+ * Custom Icons helper functions.3
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Fusion-Library
  * @since      2.2
  */
@@ -58,7 +58,6 @@ function fusion_get_custom_icons_array( $args = [] ) {
 		if ( '' !== $meta ) {
 			$custom_icons[ $post->post_name ]            = $meta;
 			$custom_icons[ $post->post_name ]['name']    = get_the_title( $post->ID );
-			$custom_icons[ $post->post_name ]['post_id'] = $post->ID;
 			$custom_icons[ $post->post_name ]['css_url'] = fusion_get_custom_icons_css_url( $post->ID );
 		}
 	}
@@ -81,31 +80,27 @@ function fusion_get_custom_icons_preload_tags() {
 		$wp_filesystem = Fusion_Helper::init_filesystem();
 		foreach ( $icons as $icon ) {
 
-			if ( ! file_exists( FUSION_ICONS_BASE_DIR . $icon['icon_set_dir_name'] . '/style.css' ) ) {
-				continue;
-			}
-
 			// Get the file contents.
 			$file_contents = $wp_filesystem->get_contents( $icon['css_url'] );
 
 			// If it failed, try wp_remote_get().
 			if ( ! $file_contents ) {
 				$response = wp_remote_get( $icon['css_url'] );
-				if ( is_array( $response ) ) {
+				if ( is_array( $response ) && ! is_wp_error( $response ) ) {
 					$file_contents = wp_remote_retrieve_body( $response );
 				}
 			}
 
 			if ( $file_contents ) {
 				// Get font files.
-				preg_match_all( '/fonts\/.[^\?]*\.ttf?([^\')]+)/', $file_contents, $matches );
+				preg_match_all( '/fonts\/.*?\.woff/', $file_contents, $matches );
 				$matches = array_shift( $matches );
 
 				foreach ( $matches as $match ) {
 					$path = ! empty( $icon['icon_set_dir_name'] ) ? FUSION_ICONS_BASE_URL . $icon['icon_set_dir_name'] . '/' . $match : false;
 
 					if ( $path ) {
-						$tags .= '<link rel="preload" href="' . $path . '" as="font" type="font/ttf" crossorigin>';
+						$tags .= '<link rel="preload" href="' . $path . '" as="font" type="font/woff2" crossorigin>';
 					}
 				}
 			}

@@ -7,11 +7,13 @@
 
 ?>
 <script type="text/template" id="fusion-builder-nested-column-library-template">
-	<div class="fusion-builder-modal-top-container fusion-has-close-on-top">
+	<div class="fusion-builder-modal-top-container">
 		<h2 class="fusion-builder-settings-heading">
 				{{ fusionBuilderText.insert_columns }}
 		</h2>
-		<div class="fusion-builder-modal-close fusiona-plus2"></div>
+	</div>
+	<div class="fusion-builder-modal-bottom-container">
+		<a href="#" class="fusion-builder-modal-close"><span>{{ fusionBuilderText.cancel }}</span></a>
 	</div>
 	<div class="fusion-builder-main-settings fusion-builder-main-settings-full fusion-builder-main-settings-advanced">
 		<div class="fusion-builder-all-elements-container">

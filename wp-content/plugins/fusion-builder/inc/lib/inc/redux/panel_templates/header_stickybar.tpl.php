@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 
 		<div class="fusion-support-links avada-db-tooltip">
-			<a href="https://avada.com/help-center/" aria-label="Go To Help Center" target="_blank">
+			<a href="https://theme-fusion.com/support" aria-label="Go To Support Center" target="_blank">
 				<span class="fusiona-help-outlined"></span>
 			</a>
 		</div>

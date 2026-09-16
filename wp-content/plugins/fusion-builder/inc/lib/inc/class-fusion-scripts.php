@@ -112,14 +112,6 @@ class Fusion_Scripts {
 				'2.0.0',
 				true,
 			],
-			[
-				'swiper',
-				self::$js_folder_url . '/library/swiper.js',
-				self::$js_folder_path . '/library/swiper.js',
-				[],
-				'8.3.2',
-				true,
-			],
 
 			// Lazy Loading.
 			[
@@ -182,11 +174,43 @@ class Fusion_Scripts {
 			],
 			// jQuery.
 			[
+				'jquery-waypoints',
+				self::$js_folder_url . '/library/jquery.waypoints.js',
+				self::$js_folder_path . '/library/jquery.waypoints.js',
+				[ 'jquery' ],
+				'2.0.3',
+				true,
+			],
+			[
 				'jquery-request-animation-frame',
 				self::$js_folder_url . '/library/jquery.requestAnimationFrame.js',
 				self::$js_folder_path . '/library/jquery.requestAnimationFrame.js',
 				[ 'jquery' ],
 				'1',
+				true,
+			],
+			[
+				'jquery-appear',
+				self::$js_folder_url . '/library/jquery.appear.js',
+				self::$js_folder_path . '/library/jquery.appear.js',
+				[ 'jquery' ],
+				'1',
+				true,
+			],
+			[
+				'jquery-caroufredsel',
+				self::$js_folder_url . '/library/jquery.carouFredSel.js',
+				self::$js_folder_path . '/library/jquery.carouFredSel.js',
+				[ 'jquery' ],
+				'6.2.1',
+				true,
+			],
+			[
+				'jquery-cycle',
+				self::$js_folder_url . '/library/jquery.cycle.js',
+				self::$js_folder_path . '/library/jquery.cycle.js',
+				[ 'jquery' ],
+				'3.0.3',
 				true,
 			],
 			[
@@ -222,6 +246,22 @@ class Fusion_Scripts {
 				true,
 			],
 			[
+				'jquery-hover-flow',
+				self::$js_folder_url . '/library/jquery.hoverflow.js',
+				self::$js_folder_path . '/library/jquery.hoverflow.js',
+				[ 'jquery' ],
+				'1',
+				true,
+			],
+			[
+				'jquery-hover-intent',
+				self::$js_folder_url . '/library/jquery.hoverintent.js',
+				self::$js_folder_path . '/library/jquery.hoverintent.js',
+				[ 'jquery' ],
+				'1',
+				true,
+			],
+			[
 				'jquery-lightbox',
 				self::$js_folder_url . '/library/jquery.ilightbox.js',
 				self::$js_folder_path . '/library/jquery.ilightbox.js',
@@ -251,6 +291,14 @@ class Fusion_Scripts {
 				self::$js_folder_path . '/library/jquery.placeholder.js',
 				[ 'jquery' ],
 				'2.0.7',
+				true,
+			],
+			[
+				'jquery-touch-swipe',
+				self::$js_folder_url . '/library/jquery.touchSwipe.js',
+				self::$js_folder_path . '/library/jquery.touchSwipe.js',
+				[ 'jquery' ],
+				'1.6.6',
 				true,
 			],
 			[
@@ -296,6 +344,14 @@ class Fusion_Scripts {
 				true,
 			],
 			[
+				'fusion-video-bg',
+				self::$js_folder_url . '/library/fusion-video-bg.js',
+				self::$js_folder_path . '/library/fusion-video-bg.js',
+				[ 'fusion-video-general', 'jquery-fitvids' ],
+				'1',
+				true,
+			],
+			[
 				'fusion-video-general',
 				self::$js_folder_url . '/library/fusion-video-general.js',
 				self::$js_folder_path . '/library/fusion-video-general.js',
@@ -304,10 +360,10 @@ class Fusion_Scripts {
 				true,
 			],
 			[
-				'fusion-video-bg',
-				self::$js_folder_url . '/library/fusion-video-bg.js',
-				self::$js_folder_path . '/library/fusion-video-bg.js',
-				[ 'fusion-video-general', 'jquery-fitvids' ],
+				'fusion-waypoints',
+				self::$js_folder_url . '/general/fusion-waypoints.js',
+				self::$js_folder_path . '/general/fusion-waypoints.js',
+				[ 'jquery-waypoints', 'modernizr' ],
 				'1',
 				true,
 			],
@@ -320,18 +376,18 @@ class Fusion_Scripts {
 				true,
 			],
 			[
-				'fusion-flexslider',
-				self::$js_folder_url . '/general/fusion-flexslider.js',
-				self::$js_folder_path . '/general/fusion-flexslider.js',
-				[ 'jquery-flexslider' ],
+				'fusion-carousel',
+				self::$js_folder_url . '/general/fusion-carousel.js',
+				self::$js_folder_path . '/general/fusion-carousel.js',
+				[ 'jquery-caroufredsel', 'jquery-touch-swipe' ],
 				'1',
 				true,
 			],
 			[
-				'awb-carousel',
-				self::$js_folder_url . '/general/awb-carousel.js',
-				self::$js_folder_path . '/general/awb-carousel.js',
-				[ 'swiper' ],
+				'fusion-flexslider',
+				self::$js_folder_url . '/general/fusion-flexslider.js',
+				self::$js_folder_path . '/general/fusion-flexslider.js',
+				[ 'jquery-flexslider' ],
 				'1',
 				true,
 			],
@@ -347,7 +403,7 @@ class Fusion_Scripts {
 				'fusion-tooltip',
 				self::$js_folder_url . '/general/fusion-tooltip.js',
 				self::$js_folder_path . '/general/fusion-tooltip.js',
-				[ 'bootstrap-tooltip', 'cssua' ],
+				[ 'bootstrap-tooltip', 'jquery-hover-flow', 'cssua' ],
 				'1',
 				true,
 			],
@@ -386,16 +442,6 @@ class Fusion_Scripts {
 		];
 
 		// Conditional scripts.
-		if ( fusion_library()->get_option( 'status_yt' ) || $is_builder ) {
-			$scripts[] = [
-				'fusion-youtube',
-				self::$js_folder_url . '/library/fusion-youtube.js',
-				self::$js_folder_path . '/library/fusion-youtube.js',
-				[ 'fusion-video-bg' ],
-				'2.2.1',
-				true,
-			];
-		}
 		if ( fusion_library()->get_option( 'status_vimeo' ) || $is_builder ) {
 			$scripts[] = [
 				'vimeo-player',
@@ -427,7 +473,7 @@ class Fusion_Scripts {
 	 * @return void
 	 */
 	public function wp_enqueue_scripts() {
-		global $fusion_library_latest_version;
+
 		$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
 
 		if ( fusion_library()->get_option( 'status_gmap' ) || $is_builder ) {
@@ -435,13 +481,9 @@ class Fusion_Scripts {
 			$map_key      = apply_filters( 'fusion_google_maps_api_key', fusion_library()->get_option( 'gmap_api' ) );
 			$map_key      = ( $map_key ) ? 'key=' . $map_key . '&' : '';
 			$lang_code    = fusion_get_google_maps_language_code();
-			$callback     = apply_filters( 'awb_google_maps_js_api_callback', 'awbMapInit' );
-			$map_api      = $map_protocol . '://maps.googleapis.com/maps/api/js?' . $map_key . 'language=' . $lang_code . '&callback=' . $callback;
-			wp_register_script( 'google-maps-api', $map_api, [], $fusion_library_latest_version, true );
-			if ( 'awbMapInit' === $callback ) {
-				wp_add_inline_script( 'google-maps-api', 'function awbMapInit() {}', 'before' );
-			}
-			wp_register_script( 'google-maps-infobox', self::$js_folder_url . '/library/infobox_packed.js', [], $fusion_library_latest_version, true );
+			$map_api      = $map_protocol . '://maps.googleapis.com/maps/api/js?' . $map_key . 'language=' . $lang_code;
+			wp_register_script( 'google-maps-api', $map_api, [], '1', true );
+			wp_register_script( 'google-maps-infobox', self::$js_folder_url . '/library/infobox_packed.js', [], '1', true );
 		}
 	}
 
@@ -468,7 +510,7 @@ class Fusion_Scripts {
 			self::$js_folder_url . '/general/fusion-general-global.js',
 			self::$js_folder_path . '/general/fusion-general-global.js',
 			[ 'jquery', 'jquery-placeholder' ],
-			$fusion_library_latest_version,
+			'1',
 			true
 		);
 
@@ -488,7 +530,7 @@ class Fusion_Scripts {
 			self::$js_folder_url . '/general/fusion-scroll-to-anchor.js',
 			self::$js_folder_path . '/general/fusion-scroll-to-anchor.js',
 			$scroll_to_anchor_dependencies,
-			$fusion_library_latest_version,
+			'1',
 			true
 		);
 
@@ -498,7 +540,7 @@ class Fusion_Scripts {
 			self::$js_folder_url . '/general/fusion-responsive-typography.js',
 			self::$js_folder_path . '/general/fusion-responsive-typography.js',
 			[ 'jquery', 'fusion' ],
-			$fusion_library_latest_version,
+			'1',
 			true
 		);
 
@@ -509,7 +551,7 @@ class Fusion_Scripts {
 				self::$js_folder_url . '/general/fusion-non-responsive.js',
 				self::$js_folder_path . '/general/fusion-non-responsive.js',
 				[ 'jquery' ],
-				$fusion_library_latest_version,
+				'1',
 				true
 			);
 		}
@@ -585,7 +627,6 @@ class Fusion_Scripts {
 				'lightbox_opacity'         => fusion_get_option( 'lightbox_opacity' ),
 				'lightbox_desc'            => fusion_get_option( 'lightbox_desc' ),
 				'lightbox_social'          => fusion_get_option( 'lightbox_social' ),
-				'lightbox_social_links'    => Fusion_Social_Sharing::get_social_sharing_links_lightbox(),
 				'lightbox_deeplinking'     => fusion_library()->get_option( 'lightbox_deeplinking' ) ? fusion_library()->get_option( 'lightbox_deeplinking' ) : false,
 				'lightbox_path'            => fusion_get_option( 'lightbox_path' ),
 				'lightbox_post_images'     => fusion_get_option( 'lightbox_post_images' ),
@@ -601,8 +642,8 @@ class Fusion_Scripts {
 			]
 		);
 		Fusion_Dynamic_JS::localize_script(
-			'awb-carousel',
-			'awbCarouselVars',
+			'fusion-carousel',
+			'fusionCarouselVars',
 			[
 				'related_posts_speed' => fusion_library()->get_option( 'related_posts_speed' ) ? (int) fusion_library()->get_option( 'related_posts_speed' ) : 5000,
 				'carousel_speed'      => fusion_library()->get_option( 'carousel_speed' ) ? (int) fusion_library()->get_option( 'carousel_speed' ) : 5000,

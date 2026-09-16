@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Avada-Builder
  * @since      2.2
  */
@@ -65,7 +65,7 @@ class Fusion_Dummy_Post {
 				'post_date_gmt'  => current_time( 'mysql', 1 ),
 				'post_title'     => __( 'Sample Post Title', 'fusion-builder' ),
 				'post_content'   =>
-					'[fusion_builder_container type="flex"][fusion_builder_row][fusion_builder_column type="1_1"]Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed mauris ex, rutrum vitae nunc sed, tincidunt euismod velit. Duis quis cursus felis, nec viverra tellus. Donec lobortis gravida ex vel imperdiet.
+					'[fusion_builder_container][fusion_builder_row][fusion_builder_column type="1_1"]Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed mauris ex, rutrum vitae nunc sed, tincidunt euismod velit. Duis quis cursus felis, nec viverra tellus. Donec lobortis gravida ex vel imperdiet.
 
 					Morbi id dui mattis ex accumsan mattis. Etiam augue tortor, lacinia vitae auctor nec, <strong>blandit congue tortor</strong>. Aenean aliquet elementum scelerisque. Suspendisse sodales, odio in cursus aliquet, velit turpis volutpat est, id egestas mauris nibh ac massa.
 					<h4>Cras sed accumsan augue vitae et sapien</h4>

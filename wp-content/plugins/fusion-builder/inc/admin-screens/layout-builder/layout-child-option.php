@@ -16,6 +16,6 @@
 		<label for="{{ id }}-exclude" class="option-exclude">
 			<i class="fusiona-cross" aria-hidden="true"></i>
 		</label>
-		<span id="{{ id }}" class="layout-option-label" <# print( 'undefined' !== typeof slug ? 'title="Slug: ' + slug + '"' : '' ) #>>{{{ label }}}</span>
+		<span id="{{ id }}" class="layout-option-label">{{{ label }}}</span>
 	</div>
 </script>

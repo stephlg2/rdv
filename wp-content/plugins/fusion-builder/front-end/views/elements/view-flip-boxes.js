@@ -54,8 +54,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				values.columns = Math.min( 6, values.columns );
 
 				flipBoxesShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-flip-boxes flip-boxes row fusion-columns-' + values.columns,
-					style: this.getStyleVars( values )
+					class: 'fusion-flip-boxes flip-boxes row fusion-columns-' + values.columns
 				} );
 
 				flipBoxesShortcode[ 'class' ] += ' flip-effect-' + values.flip_effect;
@@ -76,23 +75,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				flipBoxesShortcode[ 'data-empty' ] = this.emptyPlaceholderText;
 
 				return flipBoxesShortcode;
-			},
-
-			getStyleVars: function( values ) {
-				var cssVars = [
-					'margin_top',
-					'margin_right',
-					'margin_bottom',
-					'margin_left'
-				],
-				customCssVars = {};
-				this.values = values;
-
-				if ( ! this.isDefault( 'flip_duration' ) ) {
-					customCssVars.flip_duration = values.flip_duration + 's';
-				}
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCssVars );
 			}
 
 		} );

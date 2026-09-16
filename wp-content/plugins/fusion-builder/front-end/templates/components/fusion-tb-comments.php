@@ -9,6 +9,7 @@
 ?>
 <script type="text/html" id="tmpl-fusion_tb_comments-shortcode">
 	<# if ( output !== '' ) { #>
+		{{{styles}}}
 		<div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
 			{{{output}}}
 		</div>

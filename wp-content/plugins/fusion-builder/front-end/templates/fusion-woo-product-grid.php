@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_woo_product_grid-shortcode">
+{{{styles}}}
 <div {{{ _.fusionGetAttributes( attr ) }}}>
 <#
 // If Query Data is set, use it and continue. If not, echo HTML.

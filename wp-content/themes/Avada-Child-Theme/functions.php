@@ -59,6 +59,9 @@ add_filter( 'body_class', 'rdvasie_add_header_classique' );
 function rdvasie_add_header_classique( $classes ) {
     $current_id = get_queried_object_id();
 
+    if ( ! function_exists( 'get_field' ) ) {
+        return $classes;
+    }
     $custom_class = get_field( 'header_classique', $current_id );
     $page_class = get_field( 'page_classique', $current_id );
     if ( $custom_class ) {
@@ -162,6 +165,51 @@ add_filter( 'get_edit_post_link', function( $link, $post_id, $context ) {
 
 // Charger le fichier de configuration ACF pour les guides des voyages
 require_once get_stylesheet_directory() . '/acf-voyages-guides.php';
+
+// Page Actualités : taxonomie Pays, shortcode [rdv_articles], sommaire article
+require_once get_stylesheet_directory() . '/rdv-articles.php';
+
+// Champ icône Font Awesome sur les catégories d'articles
+require_once get_stylesheet_directory() . '/rdv-category-icon.php';
+require_once get_stylesheet_directory() . '/rdv-reviews-trustindex.php';
+
+// -----------------------------------------------------------------
+// Mega menu : images widgets en meilleure qualité (évite le 300px "medium")
+// -----------------------------------------------------------------
+add_filter( 'widget_display_callback', 'rdvasie_megamenu_media_image_size', 10, 3 );
+function rdvasie_megamenu_media_image_size( $instance, $widget, $args ) {
+	if ( empty( $instance ) || ! $widget instanceof WP_Widget_Media_Image ) {
+		return $instance;
+	}
+
+	$before_widget = isset( $args['before_widget'] ) ? $args['before_widget'] : '';
+	if ( false === strpos( $before_widget, 'mega-menu-item' ) ) {
+		return $instance;
+	}
+
+	$GLOBALS['rdvasie_megamenu_image'] = true;
+	$instance['size']                = 'fusion-800';
+	add_filter( 'wp_get_attachment_image_attributes', 'rdvasie_megamenu_image_attributes', 20, 3 );
+
+	return $instance;
+}
+
+function rdvasie_megamenu_image_attributes( $attr, $attachment, $size ) {
+	if ( empty( $GLOBALS['rdvasie_megamenu_image'] ) ) {
+		return $attr;
+	}
+
+	unset( $GLOBALS['rdvasie_megamenu_image'] );
+	remove_filter( 'wp_get_attachment_image_attributes', 'rdvasie_megamenu_image_attributes', 20 );
+
+	$attr['loading'] = 'eager';
+	$attr['sizes']   = '400px';
+	if ( ! empty( $attr['class'] ) ) {
+		$attr['class'] = trim( preg_replace( '/\s*lazyload\s*/', ' ', $attr['class'] ) );
+	}
+
+	return $attr;
+}
 
 // -----------------------------------------------------------------
 // Synchroniser les demandes Tripzzy vers Devis Pro

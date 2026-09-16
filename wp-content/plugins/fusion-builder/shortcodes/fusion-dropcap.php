@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
 		class FusionSC_Dropcap extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -38,15 +47,16 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				return [
 					'class'        => '',
 					'id'           => '',
 					'boxed'        => '',
 					'boxed_radius' => '',
-					'color'        => '',
-					'text_color'   => '',
+					'color'        => strtolower( $fusion_settings->get( 'dropcap_color' ) ),
+					'text_color'   => strtolower( $fusion_settings->get( 'dropcap_text_color' ) ),
 				];
 			}
 
@@ -76,14 +86,24 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
 			 */
 			public function render( $args, $content = '' ) {
 
-				$this->args = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_dropcap' );
-				$content    = apply_filters( 'fusion_shortcode_content', $content, 'fusion_dropcap', $args );
+				global $fusion_settings;
+
+				$using_default_color = false;
+				if ( ( isset( $args['color'] ) && '' === $args['color'] ) || ! isset( $args['color'] ) ) {
+					$using_default_color = true;
+				}
+
+				$defaults                        = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_dropcap' );
+				$defaults['using_default_color'] = $using_default_color;
+				$content                         = apply_filters( 'fusion_shortcode_content', $content, 'fusion_dropcap', $args );
+
+				$this->args = $defaults;
 
 				$html = '<span ' . FusionBuilder::attributes( 'dropcap-shortcode' ) . '>' . do_shortcode( $content ) . '</span>';
 
 				$this->on_render();
 
-				return apply_filters( 'fusion_element_dropcap_content', $html, $this->args );
+				return apply_filters( 'fusion_element_dropcap_content', $html, $args );
 
 			}
 
@@ -98,11 +118,23 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
 
 				$attr = [
 					'class' => 'fusion-dropcap dropcap',
-					'style' => $this->get_style_vars(),
+					'style' => '',
 				];
 
 				if ( 'yes' === $this->args['boxed'] ) {
 					$attr['class'] .= ' dropcap-boxed';
+
+					if ( $this->args['boxed_radius'] || '0' === $this->args['boxed_radius'] ) {
+						$this->args['boxed_radius'] = ( 'round' === $this->args['boxed_radius'] ) ? '50%' : $this->args['boxed_radius'];
+						$attr['style']              = 'border-radius:' . $this->args['boxed_radius'] . ';';
+					}
+
+					if ( ! $this->args['using_default_color'] ) {
+						$attr['style'] .= 'background-color:' . $this->args['color'] . ';';
+						$attr['style'] .= 'color:' . $this->args['text_color'] . ';';
+					}
+				} elseif ( ! $this->args['using_default_color'] ) {
+					$attr['style'] .= 'color:' . $this->args['color'] . ';';
 				}
 
 				if ( $this->args['class'] ) {
@@ -115,42 +147,6 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
 
 				return $attr;
 
-			}
-
-			/**
-			 * Get the styling vars.
-			 *
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_style_vars() {
-				$custom_vars = [];
-				if ( 'yes' === $this->args['boxed'] ) {
-					if ( $this->args['boxed_radius'] || '0' === $this->args['boxed_radius'] ) {
-						$this->args['boxed_radius']   = ( 'round' === $this->args['boxed_radius'] ) ? '50%' : $this->args['boxed_radius'];
-						$custom_vars['border-radius'] = $this->args['boxed_radius'];
-					}
-
-					if ( '' !== $this->args['text_color'] ) {
-						$custom_vars['color'] = $this->args['text_color'];
-					}
-					if ( '' !== $this->args['color'] ) {
-						$custom_vars['background'] = $this->args['color'];
-					}
-				} elseif ( '' !== $this->args['color'] ) {
-					$custom_vars['color'] = $this->args['color'];
-				}
-
-				if ( 'yes' === $this->args['boxed'] ) {
-					if ( '' !== $this->args['text_color'] ) {
-						$custom_vars['color'] = $this->args['text_color'];
-					}
-					if ( '' !== $this->args['color'] ) {
-						$custom_vars['background'] = $this->args['color'];
-					}
-				}
-
-				return $this->get_custom_css_vars( $custom_vars );
 			}
 
 			/**
@@ -185,7 +181,7 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
 								'label'       => esc_html__( 'Dropcap Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the dropcap text, or the dropcap box if a box is used.', 'fusion-builder' ),
 								'id'          => 'dropcap_color',
-								'default'     => 'var(--awb-color5)',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
 								'css_vars'    => [
 									[
@@ -199,7 +195,7 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
 								'label'       => esc_html__( 'Dropcap Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the dropcap text when a box is used.', 'fusion-builder' ),
 								'id'          => 'dropcap_text_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#fff',
 								'type'        => 'color-alpha',
 								'css_vars'    => [
 									[
@@ -226,7 +222,8 @@ if ( fusion_is_element_enabled( 'fusion_dropcap' ) ) {
  * @since 1.0
  */
 function fusion_element_dropcap() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -236,7 +233,7 @@ function fusion_element_dropcap() {
 				'shortcode'      => 'fusion_dropcap',
 				'generator_only' => true,
 				'icon'           => 'fusiona-font',
-				'help_url'       => 'https://avada.com/documentation/dropcap-element/',
+				'help_url'       => 'https://theme-fusion.com/documentation/fusion-builder/elements/dropcap-element/',
 				'params'         => [
 					[
 						'type'        => 'textarea',

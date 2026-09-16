@@ -29,8 +29,6 @@
 				if ( layoutLabel.includes( '_' ) ) {
 					layoutLabel = layoutLabel.replace('_','/')
 					{{  }}
-				} else if ( layout.includes( 'px' ) || layout.includes( 'calc' ) ) {
-					layoutLabel = '<span class="fusiona-column"></span>';
 				} else if ( 'auto' !== layoutLabel ) {
 					layoutLabel += '%';
 				}

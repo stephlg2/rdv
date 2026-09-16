@@ -31,14 +31,6 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 	public $columns = [];
 
 	/**
-	 * Number of total table items.
-	 *
-	 * @since 3.6
-	 * @var int
-	 */
-	public $total_items = -1;
-
-	/**
 	 * Class constructor.
 	 *
 	 * @since 1.0
@@ -83,9 +75,11 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 		$hidden       = $this->get_hidden_columns();
 		$sortable     = $this->get_sortable_columns();
 
+		$total_items = count( $this->table_data() );
+
 		$this->set_pagination_args(
 			[
-				'total_items' => -1 !== $this->total_items ? $this->total_items : count( $this->table_data() ),
+				'total_items' => $total_items,
 				'per_page'    => $per_page,
 			]
 		);
@@ -109,10 +103,6 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 			'global' => esc_html__( 'Global', 'fusion-builder' ),
 			'date'   => esc_html__( 'Date', 'fusion-builder' ),
 		];
-
-		if ( ! apply_filters( 'awb_global_elements_access', true ) ) {
-			unset( $columns['global'] );
-		}
 
 		return apply_filters( 'manage_fusion_element_posts_columns', $columns );
 	}
@@ -154,8 +144,7 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 	private function table_data( $per_page = -1, $current_page = 0 ) {
 		$data          = [];
 		$library_query = [];
-		$status        = [ 'publish', 'draft', 'future', 'pending', 'private' ];
-		$global_access = apply_filters( 'awb_global_elements_access', true );
+		$status        = [ 'publish' ];
 
 		// Make sure current-page and per-page are integers.
 		$per_page     = (int) $per_page;
@@ -183,7 +172,7 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 		if ( isset( $_GET['type'] ) ) {
 			$args['post_type'] = 'fusion_element';
 
-			if ( 'global' === $_GET['type'] && $global_access ) {
+			if ( 'global' === $_GET['type'] ) {
 				$args['meta_key']   = '_fusion_is_global';
 				$args['meta_value'] = 'yes';
 			} elseif ( 'template' === $_GET['type'] ) {
@@ -203,9 +192,6 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 
 		// Check if there are items available.
 		if ( $library_query->have_posts() ) {
-
-			$this->total_items = $library_query->found_posts;
-
 			// The loop.
 			while ( $library_query->have_posts() ) :
 				$library_query->the_post();
@@ -227,8 +213,6 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 							$term_name = esc_html__( 'Element', 'fusion-builder' );
 						} elseif ( 'post_cards' === $term_name ) {
 							$term_name = esc_html__( 'Post Card', 'fusion-builder' );
-						} elseif ( 'mega_menus' === $term_name ) {
-							$term_name = esc_html__( 'Mega Menu', 'fusion-builder' );
 						}
 						$display_terms .= '<span class="fusion-library-element-type fusion-library-element-' . esc_attr( $term->name ) . '"><a href="' . esc_url_raw( admin_url( 'admin.php?page=avada-library&type=' ) . $term->name ) . '">' . esc_html( $term_name ) . '</a></span>';
 					}
@@ -237,7 +221,7 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 				}
 
 				$global = '';
-				if ( $global_access && 'yes' === get_post_meta( $element_post_id, '_fusion_is_global', true ) ) {
+				if ( 'yes' === get_post_meta( $element_post_id, '_fusion_is_global', true ) ) {
 					$global  = '<a href="' . esc_url_raw( admin_url( 'admin.php?page=avada-library&type=global' ) ) . '"><span class="fusion-library-element-global"></span></a>';
 					$global .= '<span class="fusion-library-global-sc"><input type="text" onfocus="this.select();" readonly="readonly" value=\'[fusion_global id="' . $element_post_id . '"]\'></span>';
 				}
@@ -290,24 +274,34 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 	 */
 	public function column_title( $item ) {
 		$wpnonce = wp_create_nonce( 'fusion-library' );
-		$actions = [];
 
 		if ( isset( $_GET['status'] ) && 'trash' === $_GET['status'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$actions['restore'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Restore', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_restore_element', esc_attr( $item['id'] ) );
 			$actions['delete']  = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Delete Permanently', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_delete_element', esc_attr( $item['id'] ) );
 		} else {
-			$actions = awb_get_list_table_edit_links( $actions, $item );
+			$live_editor     = apply_filters( 'fusion_load_live_editor', true );
+			$actions['edit'] = sprintf( '<a href="post.php?post=%s&action=%s">' . esc_html__( 'Edit', 'fusion-builder' ) . '</a>', esc_attr( $item['id'] ), 'edit' );
 
 			if ( current_user_can( 'edit_others_posts' ) ) {
 				$actions['clone_element'] = '<a href="' . $this->get_element_clone_link( $item['id'] ) . '" title="' . esc_attr( __( 'Clone this element', 'fusion-builder' ) ) . '">' . __( 'Clone', 'fusion-builder' ) . '</a>';
 			}
 
-			if ( current_user_can( 'delete_post', $item['id'] ) ) {
-				$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
+			if ( $live_editor ) {
+				/* translators: The title. */
+				$actions['fusion_builder_live'] = '<a href="' . esc_url_raw( add_query_arg( 'fb-edit', '1', get_the_permalink( $item['id'] ) ) ) . '" aria-label="' . sprintf( esc_attr__( 'Edit %s with Avada Live', 'fusion-builder' ), '&#8220;' . get_the_title( $item['id'] ) . '&#8221;' ) . '">' . esc_html__( 'Avada Live', 'fusion-builder' ) . '</a>';
 			}
+
+			$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
 		}
 
-		return awb_get_list_table_title( $item ) . ' ' . $this->row_actions( $actions );
+		$status = '';
+		if ( 'draft' === $item['status'] ) {
+			$status = ' &mdash; <span class="post-state">' . ucwords( $item['status'] ) . '</span>';
+		}
+
+		$title = '<strong><a href="post.php?post=' . esc_attr( $item['id'] ) . '&action=edit">' . esc_html( $item['title'] ) . '</a>' . $status . '</strong>';
+
+		return $title . ' ' . $this->row_actions( $actions );
 	}
 
 	/**
@@ -358,12 +352,12 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 	public function get_bulk_actions() {
 		if ( isset( $_GET['status'] ) && 'trash' === $_GET['status'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$actions = [
-				'fusion_bulk_restore_element' => esc_html__( 'Restore', 'fusion-builder' ),
-				'fusion_bulk_delete_element'  => esc_html__( 'Delete Permanently', 'fusion-builder' ),
+				'fusion_restore_element' => esc_html__( 'Restore', 'fusion-builder' ),
+				'fusion_delete_element'  => esc_html__( 'Delete Permanently', 'fusion-builder' ),
 			];
 		} else {
 			$actions = [
-				'fusion_bulk_trash_element' => esc_html__( 'Move To Trash', 'fusion-builder' ),
+				'fusion_trash_element' => esc_html__( 'Move To Trash', 'fusion-builder' ),
 			];
 		}
 
@@ -379,11 +373,7 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_cb( $item ) {
-		if ( current_user_can( 'delete_post', $item['id'] ) || current_user_can( 'edit_post', $item['id'] ) ) {
-			return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
-		}
-
-		return '';
+		return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
 	}
 
 	/**
@@ -416,15 +406,24 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 		$count_templates = wp_count_posts( 'fusion_template' );
 		$count_elements  = (array) $count_elements;
 		$count_templates = (array) $count_templates;
-		$element_types   = [ 'sections', 'columns', 'elements', 'post_cards', 'mega_menus' ];
+		$element_types   = [ 'sections', 'columns', 'elements', 'post_cards' ];
 
 		$count_posts['publish'] = $count_elements['publish'] + $count_templates['publish'];
 		$count_posts['trash']   = $count_elements['trash'] + $count_templates['trash'];
-		$count_posts['pending'] = $count_elements['pending'] + $count_templates['pending'];
 
 		if ( isset( $count_posts['publish'] ) && $count_posts['publish'] ) {
 			$post_status['all'] = $count_posts['publish'];
 		}
+
+		$globals_query = new WP_Query(
+			[
+				'post_type'      => 'fusion_element',
+				'posts_per_page' => '-1',
+				'post_status'    => 'publish',
+				'meta_key'       => '_fusion_is_global',
+				'meta_value'     => 'yes',
+			]
+		);
 
 		if ( isset( $count_templates['publish'] ) && $count_templates['publish'] ) {
 			$post_status['template'] = $count_templates['publish'];
@@ -437,28 +436,12 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 			}
 		}
 
-		if ( apply_filters( 'awb_global_elements_access', true ) ) {
-			$globals_query = new WP_Query(
-				[
-					'post_type'      => 'fusion_element',
-					'posts_per_page' => '-1',
-					'post_status'    => 'publish',
-					'meta_key'       => '_fusion_is_global',
-					'meta_value'     => 'yes',
-				]
-			);
-
-			if ( $globals_query->have_posts() ) {
-				$post_status['global'] = $globals_query->post_count;
-			}
+		if ( $globals_query->have_posts() ) {
+			$post_status['global'] = $globals_query->post_count;
 		}
 
 		if ( isset( $count_posts['trash'] ) && $count_posts['trash'] ) {
 			$post_status['trash'] = $count_posts['trash'];
-		}
-
-		if ( isset( $count_posts['pending'] ) && $count_posts['pending'] ) {
-			$post_status['pending'] = $count_posts['pending'];
 		}
 
 		$status_html = '<ul class="subsubsub">';
@@ -477,7 +460,7 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 			$current = ( $status === $current_type ) ? ' class="current" ' : '';
 
 			$status_attr = ( 'all' !== $status ) ? '&type=' . $status : '';
-			if ( 'trash' === $status || 'pending' === $status ) {
+			if ( 'trash' === $status ) {
 				$status_attr = '&status=' . $status;
 			}
 
@@ -488,8 +471,6 @@ class Fusion_Builder_Library_Table extends WP_List_Table {
 				$status_title = esc_html__( 'Containers', 'fusion-builder' );
 			} elseif ( 'post_cards' === $status ) {
 				$status_title = esc_html__( 'Post Cards', 'fusion-builder' );
-			} elseif ( 'mega_menus' === $status ) {
-				$status_title = esc_html__( 'Mega Menus', 'fusion-builder' );
 			}
 
 			$status_list  = '<li class="' . $status . '">';

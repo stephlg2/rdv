@@ -40,6 +40,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock();
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -63,8 +64,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.alignment ) {
 					attr.style += 'justify-content:' + values.alignment + ';';
 				}
-
-				attr.style += this.getStyleVariables( values );
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
@@ -101,27 +100,39 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since  3.9
+			 * @since  3.2
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars     = [],
-					cssVarsOptions = [];
+			buildStyleBlock: function() {
+				var css;
 
-				if ( ( 'right' === values.thumbnail_position || 'left' === values.thumbnail_position ) ) {
-					customVars[ 'thumbnail-width' ] = _.fusionGetValueWithUnit( values.thumbnail_column_width, '%' );
+				this.baseSelector = '.fusion-woo-product-images-' + this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				this.addCssProperty( this.baseSelector + ' .woocommerce-product-gallery', 'max-width', _.fusionGetValueWithUnit( this.values.product_images_width ) );
+
+				if ( ! this.isDefault( 'margin_top' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-top',  _.fusionGetValueWithUnit( this.values.margin_top ) );
 				}
 
-				cssVarsOptions.product_images_width = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left          = { 'callback': _.fusionGetValueWithUnit };
+				if ( ! this.isDefault( 'margin_right' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-right',  _.fusionGetValueWithUnit( this.values.margin_right ) );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				if ( ! this.isDefault( 'margin_bottom' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-bottom',  _.fusionGetValueWithUnit( this.values.margin_bottom ) );
+				}
+
+				if ( ! this.isDefault( 'margin_left' ) ) {
+					this.addCssProperty( this.baseSelector, 'margin-left',  _.fusionGetValueWithUnit( this.values.margin_left ) );
+				}
+
+				css = this.parseCSS();
+				return ( css ) ? '<style type="text/css">' + css + '</style>' : '';
+
 			}
 		} );
 	} );

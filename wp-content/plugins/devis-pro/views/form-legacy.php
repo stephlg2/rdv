@@ -8,6 +8,10 @@ if (!defined('ABSPATH')) {
 }
 
 $error = isset($error) ? $error : '';
+
+$settings = get_option('devis_pro_settings');
+$recaptcha_site_key = $settings['recaptcha_site_key'] ?? '';
+$has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secret_key'] ?? '');
 ?>
 <style>
     .devis-form-wrapper form { padding: 15px; }
@@ -216,7 +220,7 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
         }
         
         // Soumission AJAX
-        function submitFormAjax() {
+        function submitFormAjax(recaptchaToken) {
             if (!validateForm()) return;
             
             if (submitBtn) {
@@ -227,6 +231,9 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
             
             var formData = new FormData(form);
             formData.append('action', 'devis_pro_submit_form');
+            if (recaptchaToken) {
+                formData.append('recaptcha_token', recaptchaToken);
+            }
             // Envoyer l'URL actuelle pour déterminer si on doit rediriger
             formData.append('current_url', window.location.href);
             
@@ -252,7 +259,10 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
                         }
                     }
                 } else {
-                    alert(data.data || 'Une erreur est survenue');
+                    var errorMessage = (typeof data.data === 'string')
+                        ? data.data
+                        : (data.data && data.data.message ? data.data.message : 'Une erreur est survenue');
+                    alert(errorMessage);
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.value = originalBtnValue;
@@ -276,7 +286,15 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
             submitBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                submitFormAjax();
+                <?php if ($has_recaptcha) : ?>
+                grecaptcha.ready(function() {
+                    grecaptcha.execute('<?php echo esc_js($recaptcha_site_key); ?>', {action: 'devis_submit'}).then(function(token) {
+                        submitFormAjax(token);
+                    });
+                });
+                <?php else : ?>
+                submitFormAjax(null);
+                <?php endif; ?>
             });
         }
         
@@ -339,3 +357,7 @@ $form_unique_id = 'form-devis-pro-' . uniqid();
     });
 })();
 </script>
+
+<?php if ($has_recaptcha) : ?>
+<script src="https://www.google.com/recaptcha/api.js?render=<?php echo esc_attr($recaptcha_site_key); ?>"></script>
+<?php endif; ?>

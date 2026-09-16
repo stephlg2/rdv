@@ -92,13 +92,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				// Validate values.
-				this.validateValues( atts.values );
-
-				this.values = atts.values;
-
 				// Create attribute objects
-				attributes.attr = this.buildAttr( atts.values );
+				attributes.attr   	= this.buildAttr( atts.values );
+				attributes.styles 	= this.buildStyles( atts.values );
 
 				// Any extras that need passed on.
 				attributes.cid    = this.model.get( 'cid' );
@@ -106,20 +102,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.placeholder = this.getWidgetPlaceholder();
 
 				return attributes;
-			},
-
-			/**
-			 * Modify the values.
-			 *
-			 * @since 2.0
-			 * @param {Object} values - The values object.
-			 * @return {void}
-			 */
-			validateValues: function( values ) {
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -161,28 +143,75 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( values.fusion_align_mobile ) {
 					attr[ 'class' ] += ' fusion-widget-mobile-align-' + values.fusion_align_mobile;
 				}
+				return attr;
+			},
 
-				if ( '' !== values.type ) {
-					attr[ 'class' ] += ' ' + values.type.toLowerCase();
+			/**
+			 * Builds attributes.
+			 *
+			 * @since 2.0
+			 * @param {Object} values - The values object.
+			 * @return {Object}
+			 */
+			buildStyles: function( values ) {
+				var styles       = '',
+					cid          = this.model.get( 'cid' );
+
+				styles = '<style type="text/css">';
+				styles += '.fusion-widget.fusion-widget-cid' + cid + '{';
+				styles += 'background-color:' + values.fusion_bg_color + ';';
+
+				if ( 'undefined' !== typeof values.fusion_padding_color ) {
+					styles += 'padding:' + _.fusionCheckValue( values.fusion_padding_color ) + ';';
 				}
+				if ( 'undefined' !== typeof values.fusion_bg_radius_size ) {
+					styles += 'border-radius:' + _.fusionCheckValue( values.fusion_bg_radius_size ) + ';';
+				}
+				if ( 'undefined' !== typeof values.fusion_margin ) {
+					styles += 'margin:' + _.fusionCheckValue( values.fusion_margin ) + ';';
+				}
+				styles += 'border-color:' + values.fusion_border_color + ';';
+				styles += 'border-width:' + _.fusionValidateAttrValue( values.fusion_border_size, 'px' ) + ';';
+
+				if ( '' !== values.fusion_border_size ) {
+					styles += 'border-style:' + values.fusion_border_style + ';';
+				}
+
+				styles += '}';
 
 				if ( 'no' === values.fusion_display_title ) {
-					attr[ 'class' ] += ' hide-title';
+					styles += '.fusion-widget.fusion-widget-cid' + cid + ' .widget-title{display:none;}';
 				}
 
+
+				if ( 'undefined' !== typeof values.fusion_divider_color && '' !== values.fusion_divider_color ) {
+					styles += '#wrapper .fusion-widget.fusion-widget-cid' + cid + ' li { border-color:' + values.fusion_divider_color + ';}';
+
+					if ( 'WP_Widget_Tag_Cloud' === values.type ) {
+						styles += '#wrapper .fusion-widget.fusion-widget-cid' + cid + ' .tagcloud a { border-color:' + values.fusion_divider_color + ';}';
+					} else if ( 'Fusion_Widget_Menu' === values.type ) {
+						styles += '#wrapper .fusion-widget.fusion-widget-cid' + cid + ' .fusion-widget-menu ul li a:after { color:' + values.fusion_divider_color + ';}';
+					}
+				}
+
+				// Special handling for vertical menu widget, to take into account the deprecated border_color option.
 				if ( 'Fusion_Widget_Vertical_Menu' === values.type ) {
-					if ( '' !== values.border_color && '' === values.fusion_divider_color ) {
+					if ( 'undefined' !== typeof values.border_color && 'undefined' === typeof values.fusion_divider_color ) {
 						values.fusion_divider_color = values.border_color;
 					}
 
-					if ( '' === values.fusion_divider_color ) {
-						attr[ 'class' ] += ' no-divider-color';
+					if ( '' !== values.fusion_divider_color ) {
+						styles += '#wrapper .fusion-widget.fusion-widget-cid' + cid + ' .menu { border-right-color:' + values.fusion_divider_color + ' !important; border-top-color:' + values.fusion_divider_color + ' !important;}';
+						styles += '#wrapper .fusion-widget.fusion-widget-cid' + cid + ' .menu li a { border-bottom-color:' + values.fusion_divider_color + ' !important; }';
+						styles += '#wrapper .fusion-widget.fusion-widget-cid' + cid + ' .right .menu { border-left-color:' + values.fusion_divider_color + ' !important; }';
+					} else {
+						styles += '#wrapper .fusion-widget.fusion-widget-cid' + cid + ' > ul.menu { margin-top: -8px; }';
 					}
 				}
 
-				attr.style += this.getStyleVariables( values );
+				styles += '</style>';
 
-				return attr;
+				return styles;
 			},
 
 			/**
@@ -235,52 +264,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				this.model.set( 'params', params );
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param  {Object} values - The values object.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
-
-				if ( 'Fusion_Widget_Vertical_Menu' === values.type ) {
-					if ( 'undefined' !== typeof values.border_color && 'undefined' === typeof values.fusion_divider_color ) {
-						values.fusion_divider_color = values.border_color;
-					}
-				}
-
-				if ( 'undefined' !== typeof values.fusion_divider_color ) {
-					customVars.fusion_divider_color = values.fusion_divider_color;
-				}
-
-				if ( '' === values.margin_top && '' === values.margin_right && '' === values.margin_bottom && '' === values.margin_left && '' !== values.fusion_margin ) {
-					values.margin_top    = values.fusion_margin;
-					values.margin_right  = values.fusion_margin;
-					values.margin_bottom = values.fusion_margin;
-					values.margin_left   = values.fusion_margin;
-				}
-
-				customVars.margin_top    = _.fusionGetValueWithUnit( values.margin_top );
-				customVars.margin_right  = _.fusionGetValueWithUnit( values.margin_right );
-				customVars.margin_bottom = _.fusionGetValueWithUnit( values.margin_bottom );
-				customVars.margin_left   = _.fusionGetValueWithUnit( values.margin_left );
-
-				cssVarsOptions = [
-					'fusion_bg_color',
-					'fusion_border_color',
-					'fusion_border_style'
-				];
-
-				cssVarsOptions.fusion_padding_color  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.fusion_border_size    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.fusion_bg_radius_size = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
 			}
 
 		} );

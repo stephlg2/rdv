@@ -9,21 +9,10 @@
 ?>
 <script type="text/template" id="fusion-builder-child-sortables">
 	<h3>{{ fusionBuilderText.add_edit_items }}</h3>
-	<p class="fusion-multi-child-desc">{{ fusionBuilderText.sortable_items_info }}</p>
-	<a href="#" class="fusion-multi-child-button fusion-builder-add-multi-child"><span class="fusiona-plus"></span><span class="add-sortable-child-text"><?php esc_attr_e( 'Add', 'fusion-builder' ); ?> {{ fusionAllElements[fusionAllElements[attributes.element_type].element_child].name }}</span></a>
-
-	<# if ( 'fusion_checklist' === attributes.element_type ) { #>
-	<a href="#" class="fusion-multi-child-button fusion-builder-add-predefined-multi-child"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.bulk_add }}</span></a>
-	<# } #>
-	<# if ( 'fusion_gallery' === attributes.element_type ) { #>
-	<a href="#" class="fusion-multi-child-button fusion-builder-add-multi-gallery-images"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.bulk_add }}</span></a>
-	<# } #>
-	<# if ( 'fusion_images' === attributes.element_type ) { #>
-	<a href="#" class="fusion-multi-child-button fusion-builder-add-multi-gallery-images"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.bulk_add }}</span></a>
-	<# } #>
+	<p>{{ fusionBuilderText.sortable_items_info }}</p>
+	<a href="#" class="fusion-builder-add-multi-child"><span class="fusiona-plus"></span><?php esc_attr_e( 'Add', 'fusion-builder' ); ?> {{ fusionAllElements[fusionAllElements[attributes.element_type].element_child].name }}</a>
 	<ul class="fusion-builder-sortable-children">
-		<#
-			_.each( children.models, function( child ) { #>
+		<# _.each( children.models, function( child ) { #>
 			<#
 				params = jQuery.extend( true, {}, child.attributes.params );
 				elementName = "<?php esc_attr_e( 'Item', 'fusion-builder' ); ?>";
@@ -58,14 +47,8 @@
 				// Remove HTML tags but keep quotation marks etc.
 				elementName = jQuery( '<div/>' ).html( elementName ).text();
 				elementName = jQuery( '<div/>' ).html( elementName ).text();
-
-				let isDynamic = '';
-				if ( child.attributes.params.dynamic_parent ) {
-					isDynamic = 'fusion-dynamic-child';
-					elementName = '<?php esc_html_e( 'Item', 'fusion-builder' ); ?>'
-				}
 			#>
-			<li data-cid="{{child.attributes.cid}}" class="fusion-builder-data-cid {{isDynamic}}">
+			<li data-cid="{{child.attributes.cid}}" class="fusion-builder-data-cid">
 				<span class="multi-element-child-name">{{ ( ( elementName ) ? elementName : fusionAllElements[child.attributes.element_type].name ) }}</span>
 				<div class="fusion-builder-controls">
 					<a href="#" class="fusion-builder-multi-setting-options" title="{{ fusionBuilderText.edit_item }}"><span class="fusiona-pen"></span></a>

@@ -26,10 +26,6 @@
 	if ( ! class_exists( 'FusionReduxFramework_ace_editor' ) ) {
 		class FusionReduxFramework_ace_editor {
 
-			public $parent;
-			public $field;
-			public $value;
-
 			/**
 			 * Field Constructor.
 			 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -99,13 +95,12 @@
 			 * @return      void
 			 */
 			public function enqueue() {
-				global $fusion_library_latest_version;
 				if ( ! wp_style_is( 'fusionredux-field-ace-editor-css' ) ) {
 					wp_enqueue_style(
 						'fusionredux-field-ace-editor-css',
 						trailingslashit( FUSION_LIBRARY_URL ) . 'inc/redux/custom-fields/ace_editor/field_ace_editor.css',
 						array(),
-						$fusion_library_latest_version,
+						false,
 						'all'
 					);
 				}
@@ -115,7 +110,7 @@
 						'ace-editor-js',
 						trailingslashit( FUSION_LIBRARY_URL ) . 'inc/redux/custom-fields/ace_editor/ace.js',
 						array( 'jquery' ),
-						$fusion_library_latest_version,
+						false,
 						true
 					);
 				}
@@ -125,7 +120,7 @@
 						'fusionredux-field-ace-editor-js',
 						trailingslashit( FUSION_LIBRARY_URL ) . 'inc/redux/custom-fields/ace_editor/field_ace_editor.js',
 						array( 'jquery', 'ace-editor-js', 'fusionredux-js' ),
-						$fusion_library_latest_version,
+						false,
 						true
 					);
 				}

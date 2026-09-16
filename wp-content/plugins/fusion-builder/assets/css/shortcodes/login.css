@@ -1,30 +1,11 @@
 /* stylelint-disable length-zero-no-unit */
 /* stylelint-enable length-zero-no-unit */
-.fusion-login-box {
-  --awb-margin-top: 0;
-  --awb-margin-right: 0;
-  --awb-margin-bottom: 0;
-  --awb-margin-left: 0;
-  --awb-heading-color: var(--h3_typography-color);
-  --awb-caption-color: var(--body_typography-color);
-  --awb-link-color: var(--link_color);
-  --awb-form-background-color: #f6f6f6;
-  --awb-form-padding: 25px;
-  margin: var(--awb-margin-top) var(--awb-margin-right) var(--awb-margin-bottom) var(--awb-margin-left);
-}
-.fusion-login-box .fusion-login-heading {
-  color: var(--awb-heading-color);
-}
 .fusion-login-box .fusion-login-caption {
   margin-bottom: 20px;
-  color: var(--awb-caption-color);
-}
-.fusion-login-box a {
-  color: var(--awb-link-color);
 }
 .fusion-login-box .fusion-login-form {
-  padding: var(--awb-form-padding);
-  background-color: var(--awb-form-background-color);
+  padding: 25px;
+  background-color: #f6f6f6;
 }
 .fusion-login-box .fusion-login-form input[type="password"],
 .fusion-login-box .fusion-login-form input[type="text"] {

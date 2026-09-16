@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
 		class FusionForm_Recaptcha extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -42,7 +60,42 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
 				}
 
 				// Add reCAPTCHA script.
-				AWB_Recaptcha_Helper::enqueue_scripts();
+				$this->enqueue_scripts();
+				add_action( 'wp_footer', [ $this, 'recaptcha_callback' ] );
+			}
+
+			/**
+			 * Generate reCaptcha callback
+			 *
+			 * @access public
+			 * @since 3.2
+			 */
+			public function recaptcha_callback() {
+				global $fusion_settings;
+				?>
+				<script type='text/javascript'>
+					var fusionOnloadCallback = function () {
+						grecaptcha.ready(function () {
+							jQuery(".g-recaptcha-response").each(function () {
+								var el = jQuery(this);
+								var container_div = jQuery(el).parent().find('div.recaptcha-container');
+								var id = container_div.attr('id');
+								var renderId = grecaptcha.render(
+										id,
+										{
+											sitekey: container_div.data('sitekey'),
+											badge: container_div.data('badge'),
+											size: 'invisible'
+										}
+								);
+								grecaptcha.execute(renderId, {action: 'contact_form'}).then(function (token) {
+									jQuery(el).val(token);
+								});
+							});
+						});
+					};
+				</script>
+				<?php
 			}
 
 			/**
@@ -54,7 +107,7 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'color_theme'    => $fusion_settings->get( 'recaptcha_color_scheme' ),
 					'badge_position' => $fusion_settings->get( 'recaptcha_badge_position' ),
@@ -73,24 +126,42 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
 			 * @return string
 			 */
 			public function render_input_field( $content ) {
-
-				$params          = [
-					'color_theme'    => $this->args['color_theme'],
-					'badge_position' => $this->args['badge_position'],
-					'tab_index'      => $this->args['tab_index'],
-					'counter'        => $this->params['form_number'],
-					'element'        => 'form',
-					'wrapper_class'  => 'fusion-form-recaptcha-wrapper',
-				];
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				ob_start();
 				?>
-				<div <?php echo FusionBuilder::attributes( 'recaptcha-shortcode' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> >
-					<?php AWB_Recaptcha_Helper::render_field( $params ); ?>
-				</div>
+				<?php if ( $fusion_settings->get( 'recaptcha_public' ) && $fusion_settings->get( 'recaptcha_private' ) ) : ?>
+					<div <?php echo FusionBuilder::attributes( 'recaptcha-shortcode' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> >
+						<?php if ( 'v2' === $fusion_settings->get( 'recaptcha_version' ) ) : ?>
+							<div
+								id="g-recaptcha-<?php echo esc_attr( $this->params['form_number'] ); ?>"
+								class="fusion-form-recaptcha-v2"
+								data-theme="<?php echo esc_attr( $this->args['color_theme'] ); ?>"
+								data-sitekey="<?php echo esc_attr( $fusion_settings->get( 'recaptcha_public' ) ); ?>"
+								data-tabindex="<?php echo esc_attr( $this->args['tab_index'] ); ?>">
+							</div>
+						<?php else : ?>
+							<?php $hide_badge_class = 'hide' === $this->args['badge_position'] ? ' fusion-form-hide-recaptcha-badge' : ''; ?>
+							<div
+								id="g-recaptcha-<?php echo esc_attr( $this->counter ); ?>"
+								class="fusion-form-recaptcha-v3 recaptcha-container <?php echo esc_attr( $hide_badge_class ); ?>"
+								data-sitekey="<?php echo esc_attr( $fusion_settings->get( 'recaptcha_public' ) ); ?>"
+								data-badge="<?php echo esc_attr( $this->args['badge_position'] ); ?>">
+							</div>
+							<input
+								type="hidden"
+								name="fusion-form-recaptcha-response"
+								class="g-recaptcha-response"
+								id="fusion-form-recaptcha-response-<?php echo esc_attr( $this->counter ); ?>"
+								value="">
+						<?php endif; ?>
+					</div>
+				<?php elseif ( is_user_logged_in() && current_user_can( 'manage_options' ) ) : ?>
+						<div class="fusion-builder-placeholder"><?php echo esc_html__( 'reCAPTCHA configuration error. Please check the Global Options settings and your reCAPTCHA account settings.', 'fusion-builder' ); ?></div>
+				<?php endif; ?>
 				<?php
 				$recaptcha_content = ob_get_clean();
+
 				return $recaptcha_content;
 			}
 
@@ -102,6 +173,7 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
 			 * @return array
 			 */
 			public function attr() {
+				global $fusion_settings;
 
 				$attr = [
 					'class' => 'form-creator-recaptcha',
@@ -127,7 +199,7 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'recaptcha_public'         => $fusion_settings->get( 'recaptcha_public' ),
 					'recaptcha_private'        => $fusion_settings->get( 'recaptcha_private' ),
@@ -169,6 +241,25 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
 					'recaptcha_badge_position' => 'badge_position',
 				];
 			}
+
+			/**
+			 * Sets the necessary scripts.
+			 *
+			 * @access public
+			 * @since 3.1
+			 * @return void
+			 */
+			public function enqueue_scripts() {
+				global $fusion_settings;
+
+				if ( $fusion_settings->get( 'recaptcha_public' ) && $fusion_settings->get( 'recaptcha_private' ) && ! function_exists( 'recaptcha_get_html' ) && ! class_exists( 'ReCaptcha' ) ) {
+					$recaptcha_script_uri = 'https://www.google.com/recaptcha/api.js?render=explicit&hl=' . get_locale() . '&onload=fusionOnloadCallback';
+					if ( 'v2' === $fusion_settings->get( 'recaptcha_version' ) ) {
+						$recaptcha_script_uri = 'https://www.google.com/recaptcha/api.js?hl=' . get_locale();
+					}
+					wp_enqueue_script( 'recaptcha-api', $recaptcha_script_uri, [], FUSION_BUILDER_VERSION, false );
+				}
+			}
 		}
 	}
 
@@ -181,6 +272,8 @@ if ( fusion_is_element_enabled( 'fusion_form_recaptcha' ) ) {
  * @since 3.1
  */
 function fusion_form_recaptcha() {
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(

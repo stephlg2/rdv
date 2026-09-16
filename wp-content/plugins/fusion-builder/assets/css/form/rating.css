@@ -1,9 +1,3 @@
-.fusion-form-form-wrapper .fusion-form-field {
-  --awb-active-icon-color: var(--awb-form-focus-border-color);
-  --awb-hover-color: var(--awb-form-focus-border-hover-color);
-  --awb-icon-size: var(--body_typography-font-size);
-  --awb-icon-color: var(--awb-form-border-color);
-}
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area {
   display: block;
   direction: rtl;
@@ -30,26 +24,25 @@
   margin: 0;
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-input:checked ~ label i {
-  color: var(--awb-active-icon-color);
+  color: var(--form_focus_border_color);
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-input:checked:hover ~ label i {
-  color: var(--awb-hover-color);
+  color: var(--form_focus_border_color-5a);
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-input:hover ~ label i {
-  color: var(--awb-hover-color);
+  color: var(--form_focus_border_color-5a);
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-rating-icon {
   margin-right: 0.27em;
   margin-top: 0;
   margin-bottom: 0;
-  font-size: var(--awb-icon-size);
   cursor: pointer;
-  color: var(--awb-icon-color);
+  color: var(--form_border_color);
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-rating-icon i {
   transition: all 0.2s ease;
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-rating-icon:hover i,
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area .fusion-form-rating-icon:hover ~ label i {
-  color: var(--awb-hover-color);
+  color: var(--form_focus_border_color-5a);
 }

@@ -33,16 +33,13 @@ if( !class_exists( 'FusionReduxFramework_extension_search' ) ) {
 
 			// Protected vars
 			protected $parent;
-			public $_extension_dir;
-			public $_extension_url;
-			public $extension_dir;
 
 			/**
 			 * Class Constructor. Defines the args for the extions class
 			 *
 			 * @since       1.0.0
 			 * @access      public
-			 * @param       object $parent FusionRedux_Options class instance
+			 * @param       array $parent FusionRedux_Options class instance
 			 * @return      void
 			 */
 			public function __construct( $parent ) {
@@ -56,8 +53,9 @@ if( !class_exists( 'FusionReduxFramework_extension_search' ) ) {
 				}
 
 				// Allow users to extend if they want
-				do_action( 'fusionredux/search/' . $parent->args['opt_name'] . '/construct' );
+				do_action('fusionredux/search/'.$parent->args['opt_name'].'/construct');
 
+				global $pagenow;
 				if ( isset( $_GET['page'] ) && $_GET['page'] && $_GET['page'] == $this->parent->args['page_slug'] )  {
 					add_action( 'admin_enqueue_scripts', array( $this, '_enqueue' ), 0 );
 				}
@@ -67,7 +65,6 @@ if( !class_exists( 'FusionReduxFramework_extension_search' ) ) {
 			}
 
 			function _enqueue() {
-				global $fusion_library_latest_version;
 
 				/**
 				 * FusionRedux search CSS
@@ -77,8 +74,8 @@ if( !class_exists( 'FusionReduxFramework_extension_search' ) ) {
 				wp_enqueue_style(
 						'fusionredux-extension-search-css',
 						apply_filters( "fusionredux/search/{$this->parent->args['opt_name']}/enqueue/fusionredux-extension-search-css", $this->_extension_url . 'extension_search.css' ),
-						[],
-						$fusion_library_latest_version,
+						'',
+						filemtime( $this->_extension_dir . 'extension_search.css' ), // todo - version should be based on above post-filter src
 						'all'
 				);
 				/**
@@ -89,8 +86,8 @@ if( !class_exists( 'FusionReduxFramework_extension_search' ) ) {
 				wp_enqueue_script(
 						'fusionredux-extension-search-js',
 						apply_filters( "fusionredux/search/{$this->parent->args['opt_name']}/enqueue/fusionredux-extension-search-js", $this->_extension_url . 'extension_search.js' ),
-						[],
-						$fusion_library_latest_version,
+						'',
+						filemtime( $this->_extension_dir . 'extension_search.js' ), // todo - version should be based on above post-filter src
 						'all'
 				);
 

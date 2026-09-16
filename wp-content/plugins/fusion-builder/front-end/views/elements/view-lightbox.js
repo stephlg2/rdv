@@ -45,85 +45,40 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			filterTemplateAtts: function( atts ) {
+
 				// Create attribute objects.
-				atts.name    = atts.params.alt_text;
-				atts.label   = window.fusionAllElements[ this.model.get( 'element_type' ) ].name;
-				atts.icon    = window.fusionAllElements[ this.model.get( 'element_type' ) ].icon;
-				atts.attr    = this.buildAttr( atts.params );
-				atts.imgAttr = this.buildImgAttr( atts.params );
-				atts.values  = atts.params;
+				atts.name   = atts.params.alt_text;
+				atts.label  = window.fusionAllElements[ this.model.get( 'element_type' ) ].name;
+				atts.icon   = window.fusionAllElements[ this.model.get( 'element_type' ) ].icon;
 
 				return atts;
-			},
-
-			/**
-			 * Builds attributes.
-			 *
-			 * @since 3.5
-			 * @param {Object} values - The values object.
-			 * @return {Object}
-			 */
-			buildAttr: function( values ) {
-
-				// Main wrapper attributes
-				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'awb-lightbox awb-lightbox-' + this.model.get( 'cid' ),
-						style: ''
-					} );
-
-				if ( values.title ) {
-					attr.title = attr[ 'data-title' ] = values.title; // eslint-disable-line no-multi-assign
-				}
-
-				if ( 'undefined' !== typeof values.type && 'video' === values.type ) {
-					attr.href = values.video_url;
-				} else if ( 'link' === values.type ) {
-					attr.href = values.link_url;
-				} else {
-					attr.href = values.full_image;
-				}
-
-				if ( values.description ) {
-					attr[ 'data-caption' ] = values.description;
-				}
-
-				if ( attr.href ) {
-					attr[ 'data-rel' ] = 'iLightbox';
-				}
-
-				if ( 'undefined' !== typeof values[ 'class' ] && '' !== values[ 'class' ] ) {
-					attr[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( 'undefined' !== typeof values.id && '' !== values.id ) {
-					attr.id = values.id;
-				}
-
-				return attr;
-			},
-
-			/**
-			 * Builds image attributes.
-			 *
-			 * @since 3.5
-			 * @param {Object} values - The values object.
-			 * @return {Object}
-			 */
-			buildImgAttr: function( values ) {
-
-				var attr = {};
-
-				if ( values.thumbnail_image ) {
-					attr.src = values.thumbnail_image;
-				}
-
-				if ( values.alt_text ) {
-					attr.alt = values.alt_text;
-				}
-
-				return attr;
 			}
 
 		} );
+	} );
+
+	_.extend( FusionPageBuilder.Callback.prototype, {
+		lightboxShortcodeFilter: function( attributes, view ) {
+
+			var lightbox      = view.$el,
+				id            = attributes.params.id,
+				className     = attributes.params[ 'class' ],
+				title         = attributes.params.title,
+				description   = attributes.params.description,
+				type          = lightbox.find( '#type' ).val(),
+				href          = ( '' === type || 'undefined' === typeof type ) ? lightbox.find( '#full_image' ).val() : lightbox.find( '#video_url' ).val(),
+				src           = lightbox.find( '#thumbnail_image' ).val(),
+				alt           = attributes.params.alt_text,
+				dataRel       = ( href )  ? ' data-rel="iLightbox"' : '',
+				lightboxCode  = '';
+
+			if ( '' !== src ) {
+				lightboxCode =  '<a id="' + id + '" class="' + className + '" title="' + title + '" data-title="' + title + '" data-caption="' + description + '"  href="' + href + '"' + dataRel + '><img src="' + src + '" alt="' + alt + '" /></a>';
+			}
+
+			attributes.params.element_content = lightboxCode;
+
+			return attributes;
+		}
 	} );
 }( jQuery ) );

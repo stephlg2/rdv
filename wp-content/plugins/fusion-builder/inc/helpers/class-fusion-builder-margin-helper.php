@@ -75,6 +75,7 @@ class Fusion_Builder_Margin_Helper {
 	 * @return string
 	 */
 	public static function get_margins_style( $args ) {
+
 		$style        = '';
 		$margin_sides = [
 			'margin_top',
@@ -86,31 +87,6 @@ class Fusion_Builder_Margin_Helper {
 		foreach ( $margin_sides as $margin_side ) {
 			if ( isset( $args[ $margin_side ] ) && $args[ $margin_side ] ) {
 				$style .= str_replace( '_', '-', $margin_side ) . ':' . fusion_library()->sanitize->get_value_with_unit( $args[ $margin_side ] ) . ';';
-			}
-		}
-
-		return $style;
-	}
-
-	/**
-	 * Generates margins CSS vars properties.
-	 *
-	 * @since 3.9
-	 * @param array $args Element arguments.
-	 * @return string
-	 */
-	public static function get_margin_vars( $args ) {
-		$style        = '';
-		$margin_sides = [
-			'margin_top',
-			'margin_right',
-			'margin_bottom',
-			'margin_left',
-		];
-
-		foreach ( $margin_sides as $margin_side ) {
-			if ( isset( $args[ $margin_side ] ) && $args[ $margin_side ] ) {
-				$style .= '--awb-' . str_replace( '_', '-', $margin_side ) . ':' . fusion_library()->sanitize->get_value_with_unit( $args[ $margin_side ] ) . ';';
 			}
 		}
 

@@ -18,26 +18,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var attributes = {};
 
 				this.isFlex = this.flexDisplay();
-				this.values = atts.values;
 
 				// Create attribute objects
 				attributes.attr        = this.buildAttr( atts.values );
 				attributes.wrapperAttr = this.buildWrapperAttr( atts.values );
-				attributes.playerAttr = this.buildPlayerAttr( atts.values );
 				attributes.tag         = '' !== atts.values.link ? 'a' : 'div';
+				attributes.styleBlock  = _.fusionGetFilterStyleElem( atts.values, '.fusion-lottie-' + this.model.get( 'cid' ), this.model.get( 'cid' )  );
+
 				return attributes;
 			},
 
 			buildAttr: function( values ) {
-				var cssVars = [
-						'margin_top',
-						'margin_right',
-						'margin_bottom',
-						'margin_left',
-						'max_width'
-					],
-					customVars = [],
-					attr = {
+				var attr = {
 						'class': 'fusion-lottie-animation',
 						'style': ''
 					},
@@ -50,12 +42,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					alignMedium,
 					alignSmall;
 
-				if ( '' !== this.values.max_width ) {
-					customVars.width = '100%';
-				}
-
-				attr.style = this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customVars ) +  _.getFilterVars( this.values );
-
 				if ( '' !== values.json ) {
 					attr[ 'data-path' ] = values.json;
 					attr[ 'data-loop' ]    = 'yes' === values.loop ? 1 : 0;
@@ -63,28 +49,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr[ 'data-speed' ]   = values.speed;
 					attr[ 'data-trigger' ] = values.trigger;
 					if ( 'viewport' === values.trigger ) {
-						attr[ 'data-animationoffset' ] = values.trigger_offset;
+						if ( 'top-into-view' === values.trigger_offset ) {
+							values.trigger_offset = '100%';
+						} else if ( 'top-mid-of-view' === values.trigger_offset ) {
+							values.trigger_offset = '50%';
+						}
+						attr[ 'data-offset' ] = values.trigger_offset;
 					}
-					if ( '' !== values.start_point ) {
-						attr[ 'data-start_point' ] = values.start_point;
-					}
-					if ( '' !== values.end_point ) {
-						attr[ 'data-end_point' ] = values.end_point;
-					}
-					if ( 'scroll' === values.trigger && '' !== values.scroll_relative_to ) {
-						attr[ 'data-scroll_relative_to' ] = values.scroll_relative_to;
-					}
-					if ( 'scroll' === values.trigger && 'element' === values.scroll_relative_to && '' !== values.scroll_element ) {
-						attr[ 'data-scroll_element' ] = values.scroll_element;
-					}
-					if ( 'cursor' === values.trigger ) {
-						attr[ 'data-cursor_direction' ] = values.cursor_direction;
-					}
-
 				}
 
 				if ( values.max_width ) {
-					attr[ 'class' ] += ' lg-' + alignClasses[ this.values.align ];
+					attr.style += 'width:100%;max-width:' + values.max_width + ';';
+
+					if ( '' !== values.link ) {
+						attr.style += 'display:block;';
+					}
 				}
 
 				// Link if set.
@@ -158,29 +137,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr.style += 'margin-left:' + _.fusionValidateAttrValue( values.margin_left, 'px' ) + ';';
 				}
 
-				return attr;
-			},
-
-			/**
-			 * Player attributes.
-			 *
-			 * @since 3.9.2
-			 * @param {Object} values - The values object.
-			 * @return {Object}
-			 */
-			buildPlayerAttr: function( values ) {
-
-				var attr = {};
-
-				if ( '' !== values.json ) {
-					if ( 'yes' === values.loop ) {
-						attr.loop = true;
-					}
-					if ( 'yes' === values.reverse ) {
-						attr.direction = '-1';
-					}
-					attr.speed = values.speed;
-				}
 				return attr;
 			}
 		} );

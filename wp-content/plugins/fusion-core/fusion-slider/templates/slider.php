@@ -155,46 +155,37 @@
 					$video_zindex        = 'z-index:-99;';
 				}
 
-				$heading_color = ! empty( $metadata['heading_color'] ) ? $metadata['heading_color'] : '';
+				$heading_color = 'color:#fff;';
+				if ( $metadata['heading_color'] ) {
+					$heading_color = 'color:' . $metadata['heading_color'] . ';';
+				}
 
 				$heading_bg = '';
 				if ( 'yes' === $metadata['heading_bg'] ) {
 					$heading_bg = 'background-color: rgba(0,0,0,0.4);';
-					if ( $metadata['heading_bg_color'] && class_exists( 'Fusion_Color' ) ) {
-						$heading_bg_color_object = Fusion_Color::new_color( $metadata['heading_bg_color'] );
-
-						if ( 1 === intval( $heading_bg_color_object->alpha ) ) {
-							$heading_bg_color_object = $heading_bg_color_object->get_new( 'alpha', 0.4 );
-						}
-
-						$heading_bg = 'background-color:' . $heading_bg_color_object->toCSS( 'rgba' );
+					if ( $metadata['heading_bg_color'] ) {
+						$rgb        = fusion_hex2rgb( $metadata['heading_bg_color'] );
+						$heading_bg = 'background-color: rgba(' . $rgb[0] . ',' . $rgb[1] . ',' . $rgb[2] . ',' . 0.4 . ');';
 					}
 				}
 
-				$caption_color = ! empty( $metadata['caption_color'] ) ? $metadata['caption_color'] : '';
+				$caption_color = 'color:#fff;';
+				if ( $metadata['caption_color'] ) {
+					$caption_color = 'color:' . $metadata['caption_color'] . ';';
+				}
 
 				$caption_bg = '';
 				if ( 'yes' === $metadata['caption_bg'] ) {
 					$caption_bg = 'background-color:rgba(0,0,0,0.4);';
-					if ( $metadata['caption_bg_color'] && class_exists( 'Fusion_Color' ) ) {
-						$caption_bg_color_object = Fusion_Color::new_color( $metadata['caption_bg_color'] );
-
-						if ( 1 === intval( $caption_bg_color_object->alpha ) ) {
-							$caption_bg_color_object = $caption_bg_color_object->get_new( 'alpha', 0.4 );
-						}
-
-						$caption_bg = 'background-color:' . $caption_bg_color_object->toCSS( 'rgba' );
+					if ( $metadata['caption_bg_color'] ) {
+						$rgb        = fusion_hex2rgb( $metadata['caption_bg_color'] );
+						$caption_bg = 'background-color:rgba(' . $rgb[0] . ',' . $rgb[1] . ',' . $rgb[2] . ',' . 0.4 . ');';
 					}
 				}
 
-				if ( $metadata['video_bg_color'] && class_exists( 'Fusion_Color' ) ) {
-					$video_bg_color_object = Fusion_Color::new_color( $metadata['video_bg_color'] );
-
-					if ( 1 === intval( $video_bg_color_object->alpha ) ) {
-						$video_bg_color_object = $video_bg_color_object->get_new( 'alpha', 0.4 );
-					}
-
-					$metadata['video_bg_color'] = 'background-color:' . $video_bg_color_object->toCSS( 'rgba' );
+				if ( $metadata['video_bg_color'] ) {
+					$video_bg_color_hex         = fusion_hex2rgb( $metadata['video_bg_color'] );
+					$metadata['video_bg_color'] = 'background-color:rgba(' . $video_bg_color_hex[0] . ',' . $video_bg_color_hex[1] . ',' . $video_bg_color_hex[2] . ',0.4);';
 				}
 
 				$video = false;
@@ -207,21 +198,20 @@
 					$background_class = 'self-hosted-video-bg';
 				}
 
-				$heading_font_size   = '60px';
-				$heading_line_height = '80px';
-				if ( isset( $metadata['heading_font_size'] ) && $metadata['heading_font_size'] ) {
-					$heading_font_size   = str_replace( 'px', '', $metadata['heading_font_size'] ) . 'px';
-					$heading_line_height = (float) $heading_font_size * 1.2 . 'px';
+				$heading_font_size = 'font-size:60px;line-height:80px;';
+				if ( $metadata['heading_font_size'] ) {
+					$line_height       = intval( $metadata['heading_font_size'] ) * 1.2;
+					$heading_font_size = 'font-size:' . intval( $metadata['heading_font_size'] ) . 'px;line-height:' . $line_height . 'px;';
 				}
 
-				$caption_font_size   = '24px';
-				$caption_line_height = '38px';
-				if ( isset( $metadata['caption_font_size'] ) && $metadata['caption_font_size'] ) {
-					$caption_font_size   = str_replace( 'px', '', $metadata['caption_font_size'] ) . 'px';
-					$caption_line_height = (float) $caption_font_size * 1.2 . 'px';
+				$caption_font_size = 'font-size: 24px;line-height:38px;';
+				if ( $metadata['caption_font_size'] ) {
+					$line_height       = intval( $metadata['caption_font_size'] ) * 1.2;
+					$caption_font_size = 'font-size:' . $metadata['caption_font_size'] . 'px;line-height:' . $line_height . 'px;';
 				}
 
-
+				$heading_styles                 = $heading_color . $heading_font_size;
+				$caption_styles                 = $caption_color . $caption_font_size;
 				$heading_title_sc_wrapper_class = '';
 				$caption_title_sc_wrapper_class = '';
 
@@ -244,20 +234,20 @@
 					$metadata['slider_indicator_color'][0] = '#ffffff';
 				}
 				?>
-				<li class="slide-id-<?php the_ID(); ?>" data-mute="<?php echo esc_attr( $metadata['mute_video'] ); ?>" data-loop="<?php echo esc_attr( $metadata['loop_video'] ); ?>" data-autoplay="<?php echo esc_attr( $metadata['autoplay_video'] ); ?>">
+				<li class="slide-id-<?php the_ID(); ?>" data-mute="<?php echo esc_html( $metadata['mute_video'] ); ?>" data-loop="<?php echo esc_html( $metadata['loop_video'] ); ?>" data-autoplay="<?php echo esc_html( $metadata['autoplay_video'] ); ?>">
 					<div class="slide-content-container slide-content-<?php echo esc_attr( $metadata['content_alignment'] ); ?>" style="display: none;">
 						<div class="slide-content" style="<?php echo esc_html( $content_max_width ); ?>">
 							<?php if ( $metadata['heading'] ) : ?>
 								<div class="heading <?php echo ( $heading_bg ) ? 'with-bg' : ''; ?>">
-									<div class="fusion-title-sc-wrapper<?php echo esc_attr( $heading_title_sc_wrapper_class ); ?>" style="<?php echo esc_attr( $heading_bg ); ?>">
-										<?php echo do_shortcode( '[fusion_title size="' . $metadata['heading_size'] . '" font_size="' . $heading_font_size . '" line_height="' . $heading_line_height . '" text_color="' . $heading_color . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $heading_color . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['heading_separator'] . '"]' . do_shortcode( $metadata['heading'] ) . '[/fusion_title]' ); ?>
+									<div class="fusion-title-sc-wrapper<?php echo esc_attr( $heading_title_sc_wrapper_class ); ?>" style="<?php echo esc_html( $heading_bg ); ?>">
+										<?php echo do_shortcode( '[fusion_title size="' . $metadata['heading_size'] . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $metadata['heading_color'] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['heading_separator'] . '" style_tag="' . $heading_styles . '"]' . do_shortcode( $metadata['heading'] ) . '[/fusion_title]' ); ?>
 									</div>
 								</div>
 							<?php endif; ?>
 							<?php if ( $metadata['caption'] ) : ?>
 								<div class="caption <?php echo ( $caption_bg ) ? 'with-bg' : ''; ?>">
 									<div class="fusion-title-sc-wrapper<?php echo esc_attr( $caption_title_sc_wrapper_class ); ?>" style="<?php echo esc_attr( $caption_bg ); ?>">
-										<?php echo do_shortcode( '[fusion_title size="' . $metadata['caption_size'] . '" font_size="' . $caption_font_size . '" line_height="' . $caption_line_height . '" text_color="' . $caption_color . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $caption_color . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['caption_separator'] . '"]' . do_shortcode( $metadata['caption'] ) . '[/fusion_title]' ); ?>
+										<?php echo do_shortcode( '[fusion_title size="' . $metadata['caption_size'] . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $metadata['caption_color'] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['caption_separator'] . '" style_tag="' . $caption_styles . '"]' . do_shortcode( $metadata['caption'] ) . '[/fusion_title]' ); ?>
 									</div>
 								</div>
 							<?php endif; ?>

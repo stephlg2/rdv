@@ -49,15 +49,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			filterTemplateAtts: function( atts ) {
-				var computedAtts;
-
-				atts.usingDynamicParent = this.isParentHasDynamicContent( atts.parentValues );
-
-				if ( atts.usingDynamicParent ) {
-					atts.values.usingDynamicParent = true;
-				}
-
-				computedAtts = this.computeAtts( atts.values );
+				var computedAtts = this.computeAtts( atts.values );
 
 				atts.cid    = this.model.get( 'cid' );
 				atts.parent = this.model.get( 'parent' );
@@ -69,7 +61,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				atts.title_front_output       = computedAtts.title_front_output;
 				atts.title_back_output        = computedAtts.title_back_output;
 				atts.icon_output              = computedAtts.icon_output;
-
 
 				return atts;
 			},
@@ -96,7 +87,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					},
 					iconOutput                   = '',
 					animations                   = '',
-					titleTag                     = '',
 					flipBoxShortcodeGrafix       = '',
 					flipBoxShortcodeHeadingFront = '',
 					titleFrontOutput             = '',
@@ -170,6 +160,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						flipBoxShortcodeIcon[ 'class' ] = _.fusionFontAwesome( values.icon );
 					}
 
+					if ( values.icon_color ) {
+						flipBoxShortcodeIcon.style = 'color:' + values.icon_color + ';';
+					}
+
 					if ( values.icon_flip ) {
 						flipBoxShortcodeIcon[ 'class' ] += ' fa-flip-' + values.icon_flip;
 					}
@@ -196,6 +190,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 						if ( 'yes' === values.circle ) {
 							flipBoxShortcodeGrafix[ 'class' ] += ' flip-box-circle';
+
+							if ( values.circle_color ) {
+								flipBoxShortcodeGrafix.style = 'background-color:' + values.circle_color + ';';
+							}
+
+							if ( values.circle_border_color ) {
+								flipBoxShortcodeGrafix.style += 'border-color:' + values.circle_border_color + ';';
+							}
 						} else {
 							flipBoxShortcodeGrafix[ 'class' ] += ' flip-box-no-circle';
 						}
@@ -206,40 +208,31 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					iconOutput = '<div ' + _.fusionGetAttributes( flipBoxShortcodeGrafix ) + '>' + iconOutput + '</div>';
 				}
 
-				let title_front = values.title_front;
-				let title_back = values.title_back;
-
-				if ( values.usingDynamicParent ) {
-					title_front = 'Front Title';
-					title_back = 'Back Title';
-				}
-
-				if ( '' !== title_front ) {
+				if ( '' !== values.title_front ) {
 					flipBoxShortcodeHeadingFront = {
-						class: 'flip-box-heading',
-						style: this.getFrontHeadingStyleVars( values )
+						class: 'flip-box-heading'
 					};
-
-					jQuery.each( _.fusionGetFontStyle( 'front_title_font', values, 'object' ), function( rule, value ) {
-						flipBoxShortcodeHeadingFront.style += rule + ':' + value + ';';
-					} );
 
 					if ( ! values.text_front ) {
 						flipBoxShortcodeHeadingFront[ 'class' ] += ' without-text';
 					}
 
-					titleTag = this.getTitleTag( values, 'front' );
-					titleFrontOutput = '<' + titleTag + ' ' + _.fusionGetAttributes( flipBoxShortcodeHeadingFront ) + '>' + title_front + '</' + titleTag + '>';
+					if ( values.title_front_color ) {
+						flipBoxShortcodeHeadingFront.style = 'color:' + values.title_front_color + ';';
+					}
+
+					titleFrontOutput = '<h2 ' + _.fusionGetAttributes( flipBoxShortcodeHeadingFront ) + '>' + values.title_front + '</h2>';
 				}
 
-				if ( '' !== title_back ) {
+				if ( '' !== values.title_back ) {
 					flipBoxShortcodeHeadingBack = {
-						class: 'flip-box-heading-back',
-						style: this.getBackHeadingStyleVars( values )
+						class: 'flip-box-heading-back'
 					};
 
-					titleTag = this.getTitleTag( values, 'back' );
-					titleBackOutput = '<' + titleTag + ' ' + _.fusionGetAttributes( flipBoxShortcodeHeadingBack ) + '>' + title_back + '</' + titleTag + '>';
+					if ( values.title_back_color ) {
+						flipBoxShortcodeHeadingBack.style = 'color:' + values.title_back_color + ';';
+					}
+					titleBackOutput = '<h3 ' + _.fusionGetAttributes( flipBoxShortcodeHeadingBack ) + '>' + values.title_back + '</h3>';
 				}
 
 				frontInner = '<div class="flip-box-front-inner">' + iconOutput + titleFrontOutput + values.text_front + '</div>';
@@ -247,14 +240,82 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// flipBoxShortcodeFrontBox Attributes.
 				flipBoxShortcodeFrontBox = {
 					class: 'flip-box-front',
-					style: this.getChildStyleVars( values, 'front' )
+					style: ''
 				};
+
+				if ( values.background_color_front ) {
+					flipBoxShortcodeFrontBox.style += 'background-color:' + values.background_color_front + ';';
+				}
+
+				if ( values.border_color ) {
+					flipBoxShortcodeFrontBox.style += 'border-color:' + values.border_color + ';';
+				}
+
+				if ( values.border_radius ) {
+					flipBoxShortcodeFrontBox.style += 'border-radius:' + values.border_radius + ';';
+				}
+
+				if ( values.border_size ) {
+					flipBoxShortcodeFrontBox.style += 'border-style:solid;border-width:' + values.border_size + ';';
+				}
+
+				if ( values.text_front_color ) {
+					flipBoxShortcodeFrontBox.style += 'color:' + values.text_front_color + ';';
+				}
+
+				if ( parentValues.flip_duration ) {
+					flipBoxShortcodeFrontBox.style += 'transition-duration:' + parentValues.flip_duration + 's;';
+				}
+
+				if ( values.background_image_front ) {
+					flipBoxShortcodeFrontBox.style += 'background-image: url(\'' + values.background_image_front + '\');';
+					if ( values.background_color_front ) {
+						alpha = jQuery.Color( values.background_color_front ).alpha();
+						if ( 1 > alpha && 0 !== alpha ) {
+							flipBoxShortcodeFrontBox.style += 'background-blend-mode: overlay;';
+						}
+					}
+				}
 
 				// flipBoxShortcodeBackBox Attributes.
 				flipBoxShortcodeBackBox = {
 					class: 'flip-box-back',
-					style: this.getChildStyleVars( values, 'back' )
+					style: ''
 				};
+
+				if ( values.background_color_back ) {
+					flipBoxShortcodeBackBox.style += 'background-color:' + values.background_color_back + ';';
+				}
+
+				if ( values.border_color ) {
+					flipBoxShortcodeBackBox.style += 'border-color:' + values.border_color + ';';
+				}
+
+				if ( values.border_radius ) {
+					flipBoxShortcodeBackBox.style += 'border-radius:' + values.border_radius + ';';
+				}
+
+				if ( values.border_size ) {
+					flipBoxShortcodeBackBox.style += 'border-style:solid;border-width:' + values.border_size + ';';
+				}
+
+				if ( values.text_back_color ) {
+					flipBoxShortcodeBackBox.style += 'color:' + values.text_back_color + ';';
+				}
+
+				if ( parentValues.flip_duration ) {
+					flipBoxShortcodeBackBox.style += 'transition-duration:' + parentValues.flip_duration + 's;';
+				}
+
+				if ( values.background_image_back ) {
+					flipBoxShortcodeBackBox.style += 'background-image: url(\'' + values.background_image_back + '\');';
+					if ( values.background_color_back ) {
+						alpha = jQuery.Color( values.background_color_back ).alpha();
+						if ( 1 > alpha && 0 !== alpha ) {
+							flipBoxShortcodeBackBox.style += 'background-blend-mode: overlay;';
+						}
+					}
+				}
 
 				// flipBoxShortcode Attributes.
 				columns = 1;
@@ -291,142 +352,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				atts.icon_output              = iconOutput;
 
 				return atts;
-			},
-
-			/**
-			 * Get the style vars for a child element.
-			 *
-			 * @since 3.9
-			 * @param {Object} values
-			 * @param {string} childType
-			 * @returns
-			 */
-			getChildStyleVars: function( values, childType ) {
-				var cssVars = [ 'icon_color', 'border_color', 'border_size', 'border_radius' ],
-					cssCustomVars = {},
-					alpha;
-				this.values = values;
-
-				if ( ! values.image && values.circle ) {
-					cssVars.push( 'circle_color' );
-					cssVars.push( 'circle_border_color' );
-				}
-
-				if ( 'front' === childType ) {
-					cssVars.push( 'background_color_front' );
-					cssVars.push( 'title_front_color' );
-					cssVars.push( 'text_front_color' );
-
-					if ( values.background_image_front ) {
-						cssCustomVars.background_image_front = 'url(\'' + values.background_image_front + '\')';
-						if ( values.background_color_front ) {
-							alpha = jQuery.AWB_Color( values.background_color_front ).alpha();
-							if ( 1 > alpha && 0 !== alpha ) {
-								cssCustomVars[ 'background-front-blend-mode' ] = 'overlay';
-							}
-						}
-					}
-				} else {
-					cssVars.push( 'background_color_back' );
-					cssVars.push( 'title_back_color' );
-					cssVars.push( 'text_back_color' );
-
-					if ( values.background_image_back ) {
-						cssCustomVars.background_image_back = 'url(\'' + values.background_image_back + '\')';
-
-						if ( values.background_color_back ) {
-							alpha = jQuery.AWB_Color( values.background_color_back ).alpha();
-							if ( 1 > alpha && 0 !== alpha ) {
-								cssCustomVars[ 'background-back-blend-mode' ] = 'overlay';
-							}
-						}
-					}
-				}
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( cssCustomVars );
-			},
-
-			/**
-			 * Get the style vars for front heading.
-			 *
-			 * @since 3.9
-			 * @param {Object} values
-			 * @return string
-			 */
-			getFrontHeadingStyleVars: function( values ) {
-				var titleTypography = _.fusionGetFontStyle( 'front_title_font', values, 'object' ),
-					fontVarArgs,
-					fontVars;
-
-				fontVarArgs = {
-					'font-family': ( titleTypography[ 'font-family' ] ? titleTypography[ 'font-family' ] : '' ),
-					'font-weight': ( titleTypography[ 'font-weight' ] ? titleTypography[ 'font-weight' ] : '' ),
-					'font-style': ( titleTypography[ 'font-style' ] ? titleTypography[ 'font-style' ] : '' ),
-					'font-size': values.front_title_font_size,
-					'letter-spacing': values.front_title_letter_spacing,
-					'line-height': values.front_title_line_height,
-					'text-transform': values.front_title_text_transform
-				};
-
-				fontVars = this.getHeadingFontVars( this.getTitleTag( values, 'front' ), fontVarArgs );
-
-				return fontVars;
-			},
-
-			/**
-			 * Get the style vars for back heading.
-			 *
-			 * @since 3.9
-			 * @param {Object} values
-			 * @return string
-			 */
-			getBackHeadingStyleVars: function( values ) {
-				var titleTypography = _.fusionGetFontStyle( 'back_title_font', values, 'object' ),
-					fontVarArgs,
-					fontVars;
-
-				fontVarArgs = {
-					'font-family': ( titleTypography[ 'font-family' ] ? titleTypography[ 'font-family' ] : '' ),
-					'font-weight': ( titleTypography[ 'font-weight' ] ? titleTypography[ 'font-weight' ] : '' ),
-					'font-style': ( titleTypography[ 'font-style' ] ? titleTypography[ 'font-style' ] : '' ),
-					'font-size': values.back_title_font_size,
-					'letter-spacing': values.back_title_letter_spacing,
-					'line-height': values.back_title_line_height,
-					'text-transform': values.back_title_text_transform
-				};
-
-				fontVars = this.getHeadingFontVars( this.getTitleTag( values, 'back' ), fontVarArgs );
-
-				return fontVars;
-			},
-
-			/**
-			 * Get the title HTML tag.
-			 *
-			 * @param {Array} values
-			 * @param {string} title 'front' or 'back' for title type.
-			 * @returns
-			 */
-			getTitleTag: function( values, title ) {
-			var title_value;
-			if ( 'front' === title ) {
-				title_value = values.front_title_size;
-				if ( ! title_value ) {
-					return 'h2';
-				}
-			} else {
-				title_value = values.back_title_size;
-				if ( ! title_value ) {
-					return 'h3';
-				}
 			}
-
-			if ( !isNaN( title_value ) && !isNaN( parseFloat( title_value ) ) ) {
-				return 'h' + title_value;
-			}
-
-			return title_value;
-		}
 
 		} );
 	} );

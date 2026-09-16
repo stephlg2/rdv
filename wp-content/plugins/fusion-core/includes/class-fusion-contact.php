@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Avada Core
  * @subpackage Core
  * @since      3.9.2
@@ -84,7 +84,7 @@ class Fusion_Contact {
 	 * @since 3.9.2
 	 * @var float
 	 */
-	private $re_captcha_score = 0.5;
+	private $rre_captcha_score = 0.5;
 
 	/**
 	 * Position of the comment textarea.
@@ -94,13 +94,6 @@ class Fusion_Contact {
 	 * @var string
 	 */
 	private $comment_position = 'below';
-
-	/**
-	 * Recaptcha color scheme.
-	 *
-	 * @var string
-	 */
-	private $recaptcha_color_scheme = '';
 
 	/**
 	 * Whether the privacy checkbox should be displayed.
@@ -210,7 +203,6 @@ class Fusion_Contact {
 		$this->comment_position          = isset( $args['comment_position'] ) ? $args['comment_position'] : 'below';
 		$this->privacy_checkbox          = isset( $args['privacy_checkbox'] ) ? $args['privacy_checkbox'] : 0;
 		$this->privacy_label             = isset( $args['privacy_label'] ) ? $args['privacy_label'] : esc_html__( 'By checking this box, you confirm that you have read and are agreeing to our terms of use regarding the storage of the data submitted through this form.', 'fusion-core' );
-		$this->recaptcha_color_scheme    = isset( $args['recaptcha_color_scheme'] ) ? $args['recaptcha_color_scheme'] : '';
 
 		$this->init_recaptcha();
 		if ( isset( $_POST['submit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -500,7 +492,7 @@ class Fusion_Contact {
 	 */
 	public function get_error_messages() {
 		?>
-		<?php if ( current_user_can( 'manage_options' ) ) : ?>
+		<?php if ( current_user_can( 'edit_theme_options' ) ) : ?>
 			<?php if ( ! $this->email_address ) : // Email address not set. ?>
 				<?php if ( shortcode_exists( 'fusion_alert' ) ) : ?>
 					<?php echo do_shortcode( '[fusion_alert type="error"]' . esc_html__( 'Form email address is not set in Global Options. Please fill in a valid address to make contact form work.', 'fusion-core' ) . '[/fusion_alert]' ); ?>

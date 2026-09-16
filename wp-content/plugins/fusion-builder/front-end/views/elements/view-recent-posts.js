@@ -93,7 +93,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					};
 
 				this.validateValues( atts.values );
-				this.values = atts.values;
 
 				if ( 'undefined' !== typeof this.model.attributes.query_data && 'undefined' !== typeof this.model.attributes.query_data.posts ) {
 					if ( '' !== atts.values.columns ) {
@@ -122,11 +121,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					// recentPostsShortcode Attributes.
 					recentPostsShortcode = _.fusionVisibilityAtts( atts.values.hide_on_mobile, {
-						class: 'fusion-recent-posts fusion-recent-posts-' + this.model.get( 'cid' ) + ' avada-container layout-' + atts.values.layout + ' layout-columns-' + atts.values.columns,
-						style: ''
+						class: 'fusion-recent-posts avada-container layout-' + atts.values.layout + ' layout-columns-' + atts.values.columns
 					} );
-
-					recentPostsShortcode.style += this.getStyleVariables( atts.values );
 
 					if ( '' !== atts.values[ 'class' ] ) {
 						recentPostsShortcode[ 'class' ] += ' ' + atts.values[ 'class' ];
@@ -160,7 +156,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.query_data                    = atts.query_data;
 				attributes.extras                        = atts.extras;
 				attributes.values                        = atts.values;
-				attributes.titleTag                      = this.getTitleTag( atts.values );
 				attributes.recentPostsShortcode          = recentPostsShortcode;
 				attributes.recentPostsShortcodeColumn    = recentPostsShortcodeColumn;
 				attributes.recentPostsShortcodeImgLink   = recentPostsShortcodeImgLink;
@@ -168,48 +163,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.recentPostsShortcodeSlideshow = recentPostsShortcodeSlideshow;
 
 				return attributes;
-			},
-
-			getTitleTag: function( values ) {
-				if ( ! values.title_size ) {
-					return 'h4';
-				}
-
-				if ( !isNaN( values.title_size ) && !isNaN( parseFloat( values.title_size ) ) ) {
-					return 'h' + values.title_size;
-				}
-
-				return values.title_size;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				var titleTypography = _.fusionGetFontStyle( 'title_font', values, 'object' ),
-					fontVarArgs,
-					cssVarsOptions = [];
-
-				fontVarArgs = {
-					'font-family': ( titleTypography[ 'font-family' ] ? titleTypography[ 'font-family' ] : '' ),
-					'font-weight': ( titleTypography[ 'font-weight' ] ? titleTypography[ 'font-weight' ] : '' ),
-					'font-style': ( titleTypography[ 'font-style' ] ? titleTypography[ 'font-style' ] : '' ),
-					'font-size': values.title_font_size,
-					'letter-spacing': values.title_letter_spacing,
-					'line-height': values.title_line_height,
-					'text-transform': values.title_text_transform
-				};
-
-				cssVarsOptions.margin_top           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left          = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getHeadingFontVars( this.getTitleTag( values ), fontVarArgs );
 			}
 		} );
 	} );

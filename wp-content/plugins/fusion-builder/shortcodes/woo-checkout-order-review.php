@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -69,7 +78,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					// General.
 					'margin_bottom'                   => '',
@@ -89,20 +98,13 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 					'fusion_font_family_header_font'  => '',
 					'fusion_font_variant_header_font' => '',
 					'header_font_size'                => '',
-					'header_text_transform'           => '',
-					'header_line_height'              => '',
-					'header_letter_spacing'           => '',
 
 					// Body.
-					'display_product_images'          => 'show',
 					'table_cell_backgroundcolor'      => '',
 					'text_color'                      => '',
 					'fusion_font_family_text_font'    => '',
 					'fusion_font_variant_text_font'   => '',
 					'text_font_size'                  => '',
-					'text_text_transform'             => '',
-					'text_line_height'                => '',
-					'text_letter_spacing'             => '',
 
 					// Footer.
 					'footer_cell_backgroundcolor'     => '',
@@ -110,9 +112,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 					'fusion_font_family_footer_font'  => '',
 					'fusion_font_variant_footer_font' => '',
 					'footer_font_size'                => '',
-					'footer_text_transform'           => '',
-					'footer_line_height'              => '',
-					'footer_letter_spacing'           => '',
 
 					// General.
 					'hide_on_mobile'                  => fusion_builder_default_visibility( 'string' ),
@@ -121,9 +120,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 					'animation_type'                  => '',
 					'animation_direction'             => 'down',
 					'animation_speed'                 => '0.1',
-					'animation_delay'                 => '',
 					'animation_offset'                => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                 => '',
 				];
 			}
 
@@ -169,7 +166,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 				$this->defaults = self::get_element_defaults();
 				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_woo_checkout_order_review' );
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_checkout_order_review-shortcode' ) . '>' . $this->get_woo_checkout_order_review_content() . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_checkout_order_review-shortcode' ) . '>' . $this->get_woo_checkout_order_review_content() . '</div>';
 
 				$this->counter++;
 
@@ -189,25 +187,13 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 			public function get_woo_checkout_order_review_content() {
 				$content = '';
 
-				if ( ! is_object( WC()->cart ) || 0 === WC()->cart->get_cart_contents_count() ) {
+				if ( 0 === WC()->cart->get_cart_contents_count() ) {
 					return $content;
 				}
 
-				// Check cart items are valid.
-				do_action( 'woocommerce_check_cart_items' );
-
 				if ( function_exists( 'woocommerce_order_review' ) ) {
-					if ( class_exists( 'WooCommerce_Germanized' ) ) {
-						remove_action( 'woocommerce_checkout_order_review', 'woocommerce_order_review', wc_gzd_get_hook_priority( 'checkout_order_review' ) );
-						remove_action( 'woocommerce_checkout_order_review', 'woocommerce_checkout_payment', wc_gzd_get_hook_priority( 'checkout_payment' ) );
-					} else {
-						remove_action( 'woocommerce_checkout_order_review', 'woocommerce_order_review', 10 );
-						remove_action( 'woocommerce_checkout_order_review', 'woocommerce_checkout_payment', 20 );
-					}
-
 					ob_start();
 					woocommerce_order_review();
-					do_action( 'woocommerce_checkout_order_review' );
 					$content .= ob_get_clean();
 				}
 				return apply_filters( 'fusion_woo_component_content', $content, $this->shortcode_handle, $this->args );
@@ -232,15 +218,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				if ( 'show' !== $this->args['table_header'] ) {
-					$attr['class'] .= ' hide-header';
-				}
-
-				if ( 'show' !== $this->args['display_product_images'] ) {
-					$attr['class'] .= ' hide-product-images';
-				}
-
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -254,117 +232,115 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.3
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-checkout-order-review-tb-' . $this->counter;
+				$this->dynamic_css   = [];
 
-				if ( ! $this->is_default( 'footer_color' ) ) {
-					$custom_vars['amount_color'] = Fusion_Sanitize::color( $this->args['footer_color'] );
-				}
-
-				if ( ! $this->is_default( 'fusion_font_variant_footer_font' ) ) {
-					$custom_vars['amount_font_weight'] = $this->args['fusion_font_variant_footer_font'];
-				}
+				$selector = [
+					$this->base_selector . ' tbody tr td',
+					$this->base_selector . ' thead tr th',
+					$this->base_selector . ' tfoot tr th',
+					$this->base_selector . ' tfoot tr td',
+				];
 
 				if ( ! $this->is_default( 'cell_padding_top' ) ) {
-					$custom_vars['header_padding_top'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_top'] );
-					$custom_vars['footer_padding_top'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_top'] );
+					$this->add_css_property( $selector, 'padding-top', $this->args['cell_padding_top'] );
 				}
 
 				if ( ! $this->is_default( 'cell_padding_bottom' ) ) {
-					$custom_vars['header_padding_bottom'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_bottom'] );
-					$custom_vars['footer_padding_bottom'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_bottom'] );
+					$this->add_css_property( $selector, 'padding-bottom', $this->args['cell_padding_bottom'] );
 				}
 
 				if ( ! $this->is_default( 'cell_padding_left' ) ) {
-					$custom_vars['header_padding_left'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_left'] );
-					$custom_vars['footer_padding_left'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_left'] );
+					$this->add_css_property( $selector, 'padding-left', $this->args['cell_padding_left'] );
 				}
 
 				if ( ! $this->is_default( 'cell_padding_right' ) ) {
-					$custom_vars['header_padding_right'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_right'] );
-					$custom_vars['footer_padding_right'] = Fusion_Sanitize::get_value_with_unit( $this->args['cell_padding_right'] );
+					$this->add_css_property( $selector, 'padding-right', $this->args['cell_padding_right'] );
+				}
+
+				$selector = $this->base_selector . ' thead tr th';
+				if ( ! $this->is_default( 'header_cell_backgroundcolor' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['header_cell_backgroundcolor'] );
+				}
+
+				if ( ! $this->is_default( 'header_color' ) ) {
+					$this->add_css_property( $selector, 'color', $this->args['header_color'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_family_header_font' ) ) {
+					$this->add_css_property( $selector, 'font-family', $this->args['fusion_font_family_header_font'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_variant_header_font' ) ) {
+					$this->add_css_property( $selector, 'font-weight', $this->args['fusion_font_variant_header_font'] );
+				}
+
+				if ( ! $this->is_default( 'header_font_size' ) ) {
+					$this->add_css_property( $selector, 'font-size', $this->args['header_font_size'] );
+				}
+
+				$selector = $this->base_selector . ' tbody tr td';
+				if ( ! $this->is_default( 'table_cell_backgroundcolor' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['table_cell_backgroundcolor'] );
+				}
+
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $selector, 'color', $this->args['text_color'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_family_text_font' ) ) {
+					$this->add_css_property( $selector, 'font-family', $this->args['fusion_font_family_text_font'] );
+				}
+
+				if ( ! $this->is_default( 'fusion_font_variant_text_font' ) ) {
+					$this->add_css_property( $selector, 'font-weight', $this->args['fusion_font_variant_text_font'] );
+				}
+
+				if ( ! $this->is_default( 'text_font_size' ) ) {
+					$this->add_css_property( $selector, 'font-size', $this->args['text_font_size'] );
+				}
+
+				$selector = $this->base_selector . ' tr, ' . $this->base_selector . ' tr td, ' . $this->base_selector . ' tr th, ' . $this->base_selector . ' tfoot';
+				if ( ! $this->is_default( 'border_color' ) ) {
+					$this->add_css_property( $selector, 'border-color', $this->args['border_color'], true );
+				}
+
+				$selector = $this->base_selector . ' tfoot tr th, ' . $this->base_selector . ' tfoot tr td';
+				if ( ! $this->is_default( 'footer_cell_backgroundcolor' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['footer_cell_backgroundcolor'] );
+				}
+
+				$selector .= ', ' . $this->base_selector . ' .shop_table tfoot .order-total .amount';
+				if ( ! $this->is_default( 'footer_color' ) ) {
+					$this->add_css_property( $selector, 'color', $this->args['footer_color'] );
 				}
 
 				if ( ! $this->is_default( 'fusion_font_family_footer_font' ) ) {
-					$custom_vars['fusion_font_family_footer_td_font'] = $this->args['fusion_font_family_footer_font'];
+					$this->add_css_property( $selector, 'font-family', $this->args['fusion_font_family_footer_font'] );
 				}
 
 				if ( ! $this->is_default( 'fusion_font_variant_footer_font' ) ) {
-					$custom_vars['fusion_font_variant_footer_td_font'] = $this->args['fusion_font_variant_footer_font'];
+					$this->add_css_property( $selector, 'font-weight', $this->args['fusion_font_variant_footer_font'] );
 				}
 
 				if ( ! $this->is_default( 'footer_font_size' ) ) {
-					$custom_vars['footer_td_font_size'] = Fusion_Sanitize::get_value_with_unit( $this->args['footer_font_size'] );
+					$this->add_css_property( $selector, 'font-size', $this->args['footer_font_size'] );
 				}
 
-				if ( ! $this->is_default( 'footer_line_height' ) ) {
-					$custom_vars['footer_td_line_height'] = $this->args['footer_line_height'];
+				if ( 'show' !== $this->args['table_header'] ) {
+					$this->add_css_property( $this->base_selector . ' thead', 'display', 'none' );
 				}
 
-				if ( ! $this->is_default( 'footer_letter_spacing' ) ) {
-					$custom_vars['footer_td_letter_spacing'] = Fusion_Sanitize::get_value_with_unit( $this->args['footer_letter_spacing'] );
-				}
+				$css = $this->parse_css();
 
-				if ( ! $this->is_default( 'footer_text_transform' ) ) {
-					$custom_vars['footer_td_text_transform'] = $this->args['footer_text_transform'];
-				}
-
-				$css_vars_options = [
-					'header_cell_backgroundcolor' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'header_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'table_cell_backgroundcolor'  => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_color'                  => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'footer_cell_backgroundcolor' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'footer_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'margin_top'                  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_left'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'cell_padding_right'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'header_font_size'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'header_letter_spacing'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_font_size'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_letter_spacing'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'footer_font_size'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'footer_letter_spacing'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'fusion_font_family_header_font',
-					'fusion_font_variant_header_font',
-					'header_line_height',
-					'header_text_transform',
-					'fusion_font_family_text_font',
-					'fusion_font_variant_text_font',
-					'text_line_height',
-					'text_text_transform',
-					'fusion_font_family_footer_font',
-					'fusion_font_variant_footer_font',
-					'footer_line_height',
-					'footer_text_transform',
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
-			}
-
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/woo-checkout-order-review.min.css' );
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -390,37 +366,16 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_order_review' ) ) {
  */
 function fusion_component_woo_checkout_order_review() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Woo_Checkout_Order_Review',
 			[
-				'name'         => esc_attr__( 'Woo Checkout Order Review', 'fusion-builder' ),
-				'shortcode'    => 'fusion_tb_woo_checkout_order_review',
-				'icon'         => 'fusiona-checkout-order-review',
-				'subparam_map' => [
-					'fusion_font_family_header_font'  => 'header_fonts',
-					'fusion_font_variant_header_font' => 'header_fonts',
-					'header_font_size'                => 'header_fonts',
-					'header_text_transform'           => 'header_fonts',
-					'header_line_height'              => 'header_fonts',
-					'header_letter_spacing'           => 'header_fonts',
-					'header_color'                    => 'header_fonts',
-					'fusion_font_family_text_font'    => 'text_fonts',
-					'fusion_font_variant_text_font'   => 'text_fonts',
-					'text_font_size'                  => 'text_fonts',
-					'text_text_transform'             => 'text_fonts',
-					'text_line_height'                => 'text_fonts',
-					'text_letter_spacing'             => 'text_fonts',
-					'text_color'                      => 'text_fonts',
-					'fusion_font_family_footer_font'  => 'footer_fonts',
-					'fusion_font_variant_footer_font' => 'footer_fonts',
-					'footer_font_size'                => 'footer_fonts',
-					'footer_text_transform'           => 'footer_fonts',
-					'footer_line_height'              => 'footer_fonts',
-					'footer_letter_spacing'           => 'footer_fonts',
-					'footer_color'                    => 'footer_fonts',
-				],
-				'params'       => [
+				'name'      => esc_attr__( 'Woo Checkout Order Review', 'fusion-builder' ),
+				'shortcode' => 'fusion_tb_woo_checkout_order_review',
+				'icon'      => 'fusiona-checkout-order-review',
+				'params'    => [
 					[
 						'type'             => 'dimension',
 						'remove_from_atts' => true,
@@ -439,20 +394,6 @@ function fusion_component_woo_checkout_order_review() {
 						'heading'     => esc_attr__( 'Show Table Headers', 'fusion-builder' ),
 						'description' => esc_attr__( 'Choose to have table headers displayed.', 'fusion-builder' ),
 						'param_name'  => 'table_header',
-						'value'       => [
-							'show' => esc_attr__( 'Show', 'fusion-builder' ),
-							'hide' => esc_attr__( 'Hide', 'fusion-builder' ),
-						],
-						'default'     => 'show',
-						'callback'    => [
-							'function' => 'fusion_style_block',
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Show Product Images', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose to have the product images displayed.', 'fusion-builder' ),
-						'param_name'  => 'display_product_images',
 						'value'       => [
 							'show' => esc_attr__( 'Show', 'fusion-builder' ),
 							'hide' => esc_attr__( 'Hide', 'fusion-builder' ),
@@ -509,29 +450,33 @@ function fusion_component_woo_checkout_order_review() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Header Cell Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the header text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'header_fonts',
-						'choices'          => [
-							'font-family'    => 'header_font',
-							'font-size'      => 'header_font_size',
-							'text-transform' => 'header_text_transform',
-							'line-height'    => 'header_line_height',
-							'letter-spacing' => 'header_letter_spacing',
-							'color'          => 'header_color',
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Header Cell Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the header text, ex: #000.' ),
+						'param_name'  => 'header_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'table_header',
+								'value'    => 'show',
+								'operator' => '==',
+							],
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_attr__( 'Header Cell Font Family', 'fusion-builder' ),
+						'description'      => esc_html__( 'Controls the font family of the header.', 'fusion-builder' ),
+						'param_name'       => 'header_font',
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '',
+						],
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'dependency'       => [
 							[
@@ -541,6 +486,24 @@ function fusion_component_woo_checkout_order_review() {
 							],
 						],
 						'callback'         => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Header Cell Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'header_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'table_header',
+								'value'    => 'show',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
 					],
@@ -556,31 +519,39 @@ function fusion_component_woo_checkout_order_review() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Table Cell Text Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'text_fonts',
-						'choices'          => [
-							'font-family'    => 'text_font',
-							'font-size'      => 'text_font_size',
-							'text-transform' => 'text_text_transform',
-							'line-height'    => 'text_line_height',
-							'letter-spacing' => 'text_letter_spacing',
-							'color'          => 'text_color',
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Table Cell Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the text, ex: #000.' ),
+						'param_name'  => 'text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
-						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_attr__( 'Table Cell Text Font Family', 'fusion-builder' ),
+						'description'      => esc_html__( 'Controls the font family of the text.', 'fusion-builder' ),
+						'param_name'       => 'text_font',
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '',
+						],
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'callback'         => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Table Cell Text Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'text_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
 					],
@@ -596,31 +567,39 @@ function fusion_component_woo_checkout_order_review() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Footer Cell Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the footer text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'footer_fonts',
-						'choices'          => [
-							'font-family'    => 'footer_font',
-							'font-size'      => 'footer_font_size',
-							'text-transform' => 'footer_text_transform',
-							'line-height'    => 'footer_line_height',
-							'letter-spacing' => 'footer_letter_spacing',
-							'color'          => 'footer_color',
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Footer Cell Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the footer text, ex: #000.' ),
+						'param_name'  => 'footer_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
-						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_attr__( 'Footer Cell Font Family', 'fusion-builder' ),
+						'description'      => esc_html__( 'Controls the font family of the footer cells.', 'fusion-builder' ),
+						'param_name'       => 'footer_font',
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '',
+						],
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'callback'         => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Footer Cell Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'footer_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
 					],
@@ -650,7 +629,7 @@ function fusion_component_woo_checkout_order_review() {
 						'preview_selector' => '.fusion-woo-checkout-order-review-tb',
 					],
 				],
-				'callback'     => [
+				'callback'  => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_woo_checkout_order_review',
 					'ajax'     => true,

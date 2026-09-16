@@ -31,30 +31,29 @@ function fusion_pagebuilder_meta_box() {
 
 	<div id="fusion_builder_main_container" class="<?php echo esc_attr( $rtl_class ); ?>" data-post-id="<?php echo esc_attr( $post->ID ); ?>"></div>
 	<?php
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/app.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/multi-element-sortable-child.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/blank-page.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/container.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/row.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/nested-row.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/modal.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/column.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/nested-column.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/nested-column-library.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/column-library.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/element-library.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/generator-elements.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/element.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/element-settings.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/next-page.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/form-step.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/context-menu.php';
-	include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/dynamic-selection.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/app.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/multi-element-sortable-child.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/blank-page.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/container.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/row.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/nested-row.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/modal.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/column.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/nested-column.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/nested-column-library.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/column-library.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/element-library.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/generator-elements.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/element.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/element-settings.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/next-page.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/context-menu.php';
+	include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/dynamic-selection.php';
 	include FUSION_LIBRARY_PATH . '/inc/fusion-app/templates/repeater-fields.php';
 	include FUSION_LIBRARY_PATH . '/inc/fusion-app/templates/bulk-add.php';
 
 	if ( class_exists( 'WooCommerce' ) ) {
-		include FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/woo-checkout-form.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/inc/templates/woo-checkout-form.php';
 	}
 	do_action( 'fusion_builder_after' );
 }

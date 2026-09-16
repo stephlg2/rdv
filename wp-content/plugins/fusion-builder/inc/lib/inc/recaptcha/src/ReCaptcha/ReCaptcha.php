@@ -123,12 +123,6 @@ class ReCaptcha
      */
     private $requestMethod;
 
-    public $hostname;
-    public $apkPackageName;
-    public $action;
-    public $threshold;
-    public $timeoutSeconds;
-    
     /**
      * Create a configured instance to use the reCAPTCHA service.
      *

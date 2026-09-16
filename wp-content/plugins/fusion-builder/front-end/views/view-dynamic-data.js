@@ -1,4 +1,4 @@
-/* global FusionPageBuilderApp, FusionApp, FusionEvents */
+/* global FusionPageBuilderApp, FusionApp */
 
 var FusionPageBuilder = FusionPageBuilder || {};
 
@@ -79,9 +79,7 @@ FusionPageBuilder.options.fusionDynamicData = {
 
 		// Listener for open and close toggle.
 		$targetEl.on( 'click', '.dynamic-title', function() {
-			jQuery( this ).parent().find( '.dynamic-param-fields' ).slideToggle( 300, function() {
-				FusionEvents.trigger( 'fusion-dynamic-data-toggle', param );
-			} );
+			jQuery( this ).parent().find( '.dynamic-param-fields' ).slideToggle( 300 );
 
 			if ( jQuery( this ).find( '.dynamic-toggle-icon' ).hasClass( 'fusiona-pen' ) ) {
 				jQuery( this ).find( '.dynamic-toggle-icon' ).removeClass( 'fusiona-pen' ).addClass( 'fusiona-minus' );

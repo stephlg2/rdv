@@ -17,13 +17,13 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 		class FusionSC_SocialLinks extends Fusion_Element {
 
 			/**
-			 * The internal container counter.
+			 * An array of the shortcode arguments.
 			 *
-			 * @access private
-			 * @since 3.3
-			 * @var int
+			 * @access protected
+			 * @since 1.0
+			 * @var array
 			 */
-			private $counter = 1;
+			protected $args;
 
 			/**
 			 * Constructor.
@@ -50,100 +50,56 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
-					'hide_on_mobile'         => fusion_builder_default_visibility( 'string' ),
-					'sticky_display'         => '',
-					'class'                  => '',
-					'id'                     => '',
-					'font_size'              => $fusion_settings->get( 'social_links_font_size' ),
-					'icons_boxed'            => ( 1 == $fusion_settings->get( 'social_links_boxed' ) ) ? 'yes' : $fusion_settings->get( 'social_links_boxed' ), // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-					'icons_boxed_radius'     => fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_boxed_radius' ) ),
-					'color_type'             => $fusion_settings->get( 'social_links_color_type' ),
-					'icon_colors'            => $fusion_settings->get( 'social_links_icon_color' ),
-					'box_colors'             => $fusion_settings->get( 'social_links_box_color' ),
-					'icon_order'             => '',
-					'show_custom'            => 'no',
-					'alignment'              => '',
-					'alignment_medium'       => '',
-					'alignment_small'        => '',
-					'tooltip_placement'      => strtolower( $fusion_settings->get( 'social_links_tooltip_placement' ) ),
-					'facebook'               => '',
-					'tiktok'                 => '',
-					'twitch'                 => '',
-					'twitter'                => '',
-					'instagram'              => '',
-					'linkedin'               => '',
-					'dribbble'               => '',
-					'rss'                    => '',
-					'youtube'                => '',
-					'pinterest'              => '',
-					'flickr'                 => '',
-					'vimeo'                  => '',
-					'tumblr'                 => '',
-					'discord'                => '',
-					'digg'                   => '',
-					'blogger'                => '',
-					'skype'                  => '',
-					'myspace'                => '',
-					'deviantart'             => '',
-					'yahoo'                  => '',
-					'reddit'                 => '',
-					'forrst'                 => '',
-					'paypal'                 => '',
-					'dropbox'                => '',
-					'soundcloud'             => '',
-					'snapchat'               => '',
-					'vk'                     => '',
-					'wechat'                 => '',
-					'whatsapp'               => '',
-					'telegram'               => '',
-					'teams'                  => '',
-					'xing'                   => '',
-					'yelp'                   => '',
-					'spotify'                => '',
-					'email'                  => '',
-					'phone'                  => '',
-
-					'icon_colors_hover'      => $fusion_settings->get( 'social_links_icon_color_hover' ),
-					'box_colors_hover'       => $fusion_settings->get( 'social_links_box_color_hover' ),
-
-					'box_padding_top'        => '',
-					'box_padding_right'      => '',
-					'box_padding_bottom'     => '',
-					'box_padding_left'       => '',
-
-					// border.
-					'box_border_top'         => ( '' !== $fusion_settings->get( 'social_links_border', 'top' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_border', 'top' ) ) : '1px',
-					'box_border_right'       => ( '' !== $fusion_settings->get( 'social_links_border', 'right' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_border', 'right' ) ) : '1px',
-					'box_border_bottom'      => ( '' !== $fusion_settings->get( 'social_links_border', 'bottom' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_border', 'bottom' ) ) : '1px',
-					'box_border_left'        => ( '' !== $fusion_settings->get( 'social_links_border', 'left' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_border', 'left' ) ) : '1px',
-
-					'box_border_color'       => $fusion_settings->get( 'social_links_border_color' ),
-					'box_border_color_hover' => $fusion_settings->get( 'social_links_border_color_hover' ),
-
-					// margin.
-					'margin_top'             => ( '' !== $fusion_settings->get( 'social_links_margin', 'top' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_margin', 'top' ) ) : '0px',
-					'margin_right'           => ( '' !== $fusion_settings->get( 'social_links_margin', 'right' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_margin', 'right' ) ) : '0px',
-					'margin_bottom'          => ( '' !== $fusion_settings->get( 'social_links_margin', 'bottom' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_margin', 'bottom' ) ) : '0px',
-					'margin_left'            => ( '' !== $fusion_settings->get( 'social_links_margin', 'left' ) ) ? fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_margin', 'left' ) ) : '0px',
-					'margin_top_medium'      => '',
-					'margin_right_medium'    => '',
-					'margin_bottom_medium'   => '',
-					'margin_left_medium'     => '',
-					'margin_top_small'       => '',
-					'margin_right_small'     => '',
-					'margin_bottom_small'    => '',
-					'margin_left_small'      => '',
-
-					// animation.
-					'animation_direction'    => 'left',
-					'animation_offset'       => $fusion_settings->get( 'animation_offset' ),
-					'animation_speed'        => '',
-					'animation_delay'        => '',
-					'animation_type'         => '',
-					'animation_color'        => '',
+					'hide_on_mobile'     => fusion_builder_default_visibility( 'string' ),
+					'sticky_display'     => '',
+					'class'              => '',
+					'id'                 => '',
+					'font_size'          => $fusion_settings->get( 'social_links_font_size' ),
+					'icons_boxed'        => ( 1 == $fusion_settings->get( 'social_links_boxed' ) ) ? 'yes' : $fusion_settings->get( 'social_links_boxed' ), // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+					'icons_boxed_radius' => fusion_library()->sanitize->size( $fusion_settings->get( 'social_links_boxed_radius' ) ),
+					'color_type'         => $fusion_settings->get( 'social_links_color_type' ),
+					'icon_colors'        => $fusion_settings->get( 'social_links_icon_color' ),
+					'box_colors'         => $fusion_settings->get( 'social_links_box_color' ),
+					'icon_order'         => '',
+					'show_custom'        => 'no',
+					'alignment'          => '',
+					'tooltip_placement'  => strtolower( $fusion_settings->get( 'social_links_tooltip_placement' ) ),
+					'facebook'           => '',
+					'tiktok'             => '',
+					'twitch'             => '',
+					'twitter'            => '',
+					'instagram'          => '',
+					'linkedin'           => '',
+					'dribbble'           => '',
+					'rss'                => '',
+					'youtube'            => '',
+					'pinterest'          => '',
+					'flickr'             => '',
+					'vimeo'              => '',
+					'tumblr'             => '',
+					'discord'            => '',
+					'digg'               => '',
+					'blogger'            => '',
+					'skype'              => '',
+					'myspace'            => '',
+					'deviantart'         => '',
+					'yahoo'              => '',
+					'reddit'             => '',
+					'forrst'             => '',
+					'paypal'             => '',
+					'dropbox'            => '',
+					'soundcloud'         => '',
+					'vk'                 => '',
+					'wechat'             => '',
+					'whatsapp'           => '',
+					'xing'               => '',
+					'yelp'               => '',
+					'spotify'            => '',
+					'email'              => '',
+					'phone'              => '',
 				];
 			}
 
@@ -157,35 +113,19 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			 */
 			public static function settings_to_params() {
 				return [
-					'social_links_boxed'                 => [
+					'social_links_boxed'             => [
 						'param'    => 'icons_boxed',
 						'callback' => 'toYes',
 					],
-					'social_links_margin[top]'           => 'margin_top',
-					'social_links_margin[right]'         => 'margin_right',
-					'social_links_margin[bottom]'        => 'margin_bottom',
-					'social_links_margin[left]'          => 'margin_left',
-					'social_links_boxed_radius'          => 'icons_boxed_radius',
-					'social_links_font_size'             => 'font_size',
-					'social_links_tooltip_placement'     => [
+					'social_links_boxed_radius'      => 'icons_boxed_radius',
+					'social_links_color_type'        => 'color_type',
+					'social_links_icon_color'        => 'icon_colors',
+					'social_links_box_color'         => 'box_colors',
+					'social_links_font_size'         => 'font_size',
+					'social_links_tooltip_placement' => [
 						'param'    => 'tooltip_placement',
 						'callback' => 'toLowerCase',
 					],
-					'social_links_color_type'            => 'color_type',
-					'social_links_icon_color'            => 'icon_colors',
-					'social_links_box_color'             => 'box_colors',
-					'social_links_icon_color_hover'      => 'icon_colors_hover',
-					'social_links_box_color_hover'       => 'box_colors_hover',
-					'social_links_boxed_padding[top]'    => 'box_padding_top',
-					'social_links_boxed_padding[right]'  => 'box_padding_right',
-					'social_links_boxed_padding[bottom]' => 'box_padding_bottom',
-					'social_links_boxed_padding[left]'   => 'box_padding_left',
-					'social_links_border[top]'           => 'box_border_top',
-					'social_links_border[right]'         => 'box_border_right',
-					'social_links_border[bottom]'        => 'box_border_bottom',
-					'social_links_border[left]'          => 'box_border_left',
-					'social_links_border_color'          => 'box_border_color',
-					'social_links_border_color_hover'    => 'box_border_color_hover',
 				];
 			}
 
@@ -198,15 +138,13 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
-					'linktarget'                => $fusion_settings->get( 'social_icons_new' ),
-					'social_media_icons'        => $fusion_settings->get( 'social_media_icons' ),
-					'boxed_padding'             => $fusion_settings->get( 'social_links_boxed_padding' ),
-					'social_links_box_color'    => $fusion_settings->get( 'social_links_box_color' ),
-					'social_links_icon_color'   => $fusion_settings->get( 'social_links_icon_color' ),
-					'social_links_border_color' => $fusion_settings->get( 'social_links_border_color' ),
-					'body_font_size'            => $fusion_settings->get( 'body_typography', 'font-size' ),
+					'linktarget'              => $fusion_settings->get( 'social_icons_new' ),
+					'social_links_box_color'  => $fusion_settings->get( 'social_links_box_color' ),
+					'social_links_icon_color' => $fusion_settings->get( 'social_links_icon_color' ),
+					'social_media_icons'      => $fusion_settings->get( 'social_media_icons' ),
+					'boxed_padding'           => $fusion_settings->get( 'social_links_boxed_padding' ),
 				];
 			}
 
@@ -221,13 +159,10 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			public static function settings_to_extras() {
 
 				return [
-					'social_icons_new'           => 'linktarget',
-					'social_links_box_color'     => 'social_links_box_color',
-					'social_links_icon_color'    => 'social_links_icon_color',
-					'social_media_icons'         => 'social_media_icons',
-					'social_links_boxed_padding' => 'boxed_padding',
-					'social_links_border_color'  => 'box_border_color',
-					'body_typography'            => 'body_font_size',
+					'social_icons_new'        => 'linktarget',
+					'social_links_box_color'  => 'social_links_box_color',
+					'social_links_icon_color' => 'social_links_icon_color',
+					'social_media_icons'      => 'social_media_icons',
 				];
 			}
 
@@ -241,7 +176,7 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_social_links' );
 				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_social_links', $args );
@@ -253,6 +188,8 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 				}
 				$defaults['icons_boxed_radius'] = FusionBuilder::validate_shortcode_attr_value( $defaults['icons_boxed_radius'], 'px' );
 				$defaults['font_size']          = FusionBuilder::validate_shortcode_attr_value( $defaults['font_size'], 'px' );
+
+				extract( $defaults );
 
 				$this->args = $defaults;
 
@@ -275,55 +212,14 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 				$html .= '</div>';
 				$html .= '</div>';
 
-				if ( $this->args['alignment'] && ! fusion_element_rendering_is_flex() ) {
-					$html = '<div class="align' . $this->args['alignment'] . '">' . $html . '</div>';
+				if ( $alignment && ! fusion_element_rendering_is_flex() ) {
+					$html = '<div class="align' . $alignment . '">' . $html . '</div>';
 				}
 
-				$this->counter ++;
 				$this->on_render();
 
 				return apply_filters( 'fusion_element_social_links_content', $html, $args );
 
-			}
-
-			/**
-			 * Builds margin styles.
-			 *
-			 * @access public
-			 * @since 1.0
-			 * @return string
-			 */
-			public function build_margin_styles() {
-				// Responsive Margin.
-				$fusion_settings = awb_get_fusion_settings();
-				$styles          = '';
-
-				foreach ( [ 'large', 'medium', 'small' ] as $size ) {
-					$margin_styles = '';
-					foreach ( [ 'top', 'right', 'bottom', 'left' ] as $direction ) {
-
-						$margin_key = 'large' === $size ? 'margin_' . $direction : 'margin_' . $direction . '_' . $size;
-						if ( '' !== $this->args[ $margin_key ] ) {
-							$margin_styles .= 'margin-' . $direction . ' : ' . fusion_library()->sanitize->get_value_with_unit( $this->args[ $margin_key ] ) . ';';
-						}
-					}
-
-					if ( '' === $margin_styles ) {
-						continue;
-					}
-
-					$margin_styles = '.fusion-social-links-' . $this->counter . '{ ' . $margin_styles . '}';
-
-					// Large styles, no wrapping needed.
-					if ( 'large' === $size ) {
-						$styles .= $margin_styles;
-					} else {
-						// Medium and Small size screen styles.
-						$styles .= '@media only screen and (max-width:' . $fusion_settings->get( 'visibility_' . $size ) . 'px) {' . $margin_styles . '}';
-					}
-				}
-
-				return $styles;
 			}
 
 			/**
@@ -338,12 +234,15 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 				$attr = fusion_builder_visibility_atts(
 					$this->args['hide_on_mobile'],
 					[
-						'class' => 'fusion-social-links fusion-social-links-' . $this->counter,
-						'style' => '',
+						'class' => 'fusion-social-links',
 					]
 				);
 
 				$attr['class'] .= Fusion_Builder_Sticky_Visibility_Helper::get_sticky_class( $this->args['sticky_display'] );
+
+				if ( fusion_element_rendering_is_flex() && $this->args['alignment'] ) {
+					$attr['style'] = 'text-align:' . $this->args['alignment'];
+				}
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -352,12 +251,6 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 				if ( $this->args['id'] ) {
 					$attr['id'] = $this->args['id'];
 				}
-
-				if ( $this->args['animation_type'] ) {
-					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
-				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				return $attr;
 
@@ -380,8 +273,6 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 					$attr['class'] .= ' boxed-icons';
 				}
 
-				$attr['class'] .= ' color-type-' . $this->args['color_type'];
-
 				return $attr;
 
 			}
@@ -395,10 +286,11 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			 * @return array
 			 */
 			public function icon_attr( $args ) {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				$attr = [
-					'class' => 'fusion-social-network-icon fusion-tooltip fusion-' . $args['social_network'],
+					'class' => '',
 					'style' => '',
 				];
 
@@ -406,10 +298,6 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 				if ( '' === $args['social_network'] || 'custom_' === substr( $args['social_network'], 0, 7 ) ) {
 					$attr['class']         .= 'custom ';
 					$args['social_network'] = strtolower( str_replace( ' ', '-', $tooltip ) );
-				} elseif ( ! empty( $args['icon_mark'] ) ) {
-					$attr['class'] .= ' ' . $args['icon_mark'];
-				} else {
-					$attr['class'] .= ' awb-icon-' . $args['social_network'];
 				}
 
 				if ( 'none' !== strtolower( $this->args['tooltip_placement'] ) ) {
@@ -419,6 +307,8 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 				}
 
 				$attr['title'] = $tooltip;
+
+				$attr['class'] .= 'fusion-social-network-icon fusion-tooltip fusion-' . $args['social_network'] . ' fusion-icon-' . $args['social_network'];
 
 				$attr['aria-label'] = $args['social_network'];
 
@@ -460,8 +350,7 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 					$attr['style'] .= 'font-size:' . $this->args['font_size'] . ';';
 
 					if ( 'yes' === $this->args['icons_boxed'] ) {
-						$font_size      = ( false === strpos( $this->args['font_size'], 'px' ) ) ? fusion_library()->sanitize->convert_font_size_to_px( $this->args['font_size'], $fusion_settings->get( 'body_typography', 'font-size' ) ) . 'px' : $this->args['font_size'];
-						$attr['style'] .= 'width:' . $font_size . ';';
+						$attr['style'] .= 'width: calc(' . $this->args['font_size'] . ' + (2 * (' . $fusion_settings->get( 'social_links_boxed_padding' ) . ')) + 2px);';
 					}
 				}
 
@@ -488,7 +377,7 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			 * @return array $sections Social Links settings.
 			 */
 			public function add_options() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				return [
 					'social_links_shortcode_section' => [
@@ -498,28 +387,84 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 						'type'        => 'accordion',
 						'icon'        => 'fusiona-link',
 						'fields'      => [
-							'social_links_info'            => [
+							'social_links_info'          => [
 								'id'          => 'social_links_info',
 								'type'        => 'custom',
 								'description' => '<div class="fusion-redux-important-notice">' . __( '<strong>IMPORTANT NOTE:</strong> These social icon global options control both the social link element and person element.', 'fusion-builder' ) . '</div>',
 							],
-							'social_links_margin'          => [
-								'label'       => esc_html__( 'Margins', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the margin around social links element.', 'fusion-builder' ),
-								'id'          => 'social_links_margin',
-								'type'        => 'spacing',
+							'social_links_font_size'     => [
+								'label'       => esc_html__( 'Social Links Icons Font Size', 'fusion-builder' ),
+								'description' => esc_html__( 'Controls the font size for the social link icons.', 'fusion-builder' ),
+								'id'          => 'social_links_font_size',
+								'default'     => '16px',
+								'type'        => 'dimension',
+								'css_vars'    => [
+									[
+										'name'    => '--social_links_font_size',
+										'element' => '.fusion-social-links',
+									],
+								],
+							],
+							'social_links_color_type'    => [
+								'label'       => esc_html__( 'Social Links Icon Color Type', 'fusion-builder' ),
+								'description' => esc_html__( 'Custom colors allow you to choose a color for icons and boxes. Brand colors will use the exact brand color of each network for the icons or boxes.', 'fusion-builder' ),
+								'id'          => 'social_links_color_type',
+								'default'     => 'custom',
+								'type'        => 'radio-buttonset',
 								'transport'   => 'postMessage',
 								'choices'     => [
-									'top'    => true,
-									'left'   => true,
-									'bottom' => true,
-									'right'  => true,
+									'custom' => esc_html__( 'Custom Colors', 'fusion-builder' ),
+									'brand'  => esc_html__( 'Brand Colors', 'fusion-builder' ),
 								],
-								'default'     => [
-									'top'    => '0px',
-									'left'   => '0px',
-									'bottom' => '0px',
-									'right'  => '0px',
+							],
+							'social_links_icon_color'    => [
+								'label'           => esc_html__( 'Social Links Custom Icons Color', 'fusion-builder' ),
+								'description'     => esc_html__( 'Controls the color of the custom icons.', 'fusion-builder' ),
+								'id'              => 'social_links_icon_color',
+								'default'         => '#9ea0a4',
+								'type'            => 'color-alpha',
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+							],
+							'social_links_boxed'         => [
+								'label'       => esc_html__( 'Social Links Icons Boxed', 'fusion-builder' ),
+								'description' => esc_html__( 'Turn on to have the icon displayed in a small box. Turn off to have the icon displayed with no box.', 'fusion-builder' ),
+								'id'          => 'social_links_boxed',
+								'default'     => '0',
+								'type'        => 'switch',
+								'transport'   => 'postMessage',
+							],
+							'social_links_box_color'     => [
+								'label'           => esc_html__( 'Social Links Icons Custom Box Color', 'fusion-builder' ),
+								'description'     => esc_html__( 'Select a custom social icon box color.', 'fusion-builder' ),
+								'id'              => 'social_links_box_color',
+								'default'         => '#f2f3f5',
+								'type'            => 'color-alpha',
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+							],
+							'social_links_boxed_radius'  => [
+								'label'           => esc_html__( 'Social Links Icons Boxed Radius', 'fusion-builder' ),
+								'description'     => esc_html__( 'Box radius for the social icons.', 'fusion-builder' ),
+								'id'              => 'social_links_boxed_radius',
+								'default'         => '4px',
+								'type'            => 'dimension',
+								'choices'         => [ 'px', 'em' ],
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+							],
+							'social_links_boxed_padding' => [
+								'label'           => esc_html__( 'Social Links Icons Boxed Padding', 'fusion-builder' ),
+								'id'              => 'social_links_boxed_padding',
+								'default'         => '8px',
+								'type'            => 'dimension',
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+								'css_vars'        => [
+									[
+										'name'    => '--social_links_boxed_padding',
+										'element' => '.fusion-social-links',
+									],
 								],
 							],
 							'social_links_tooltip_placement' => [
@@ -537,138 +482,6 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 									'None'   => esc_html__( 'None', 'fusion-builder' ),
 								],
 							],
-							'social_links_font_size'       => [
-								'label'       => esc_html__( 'Icons Font Size', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the font size for the social link icons.', 'fusion-builder' ),
-								'id'          => 'social_links_font_size',
-								'default'     => '16px',
-								'type'        => 'dimension',
-								'css_vars'    => [
-									[
-										'name'     => '--social_links_font_size',
-										'element'  => '.fusion-social-links',
-										'callback' => [ 'convert_font_size_to_px', '' ],
-									],
-								],
-							],
-							'social_links_color_type'      => [
-								'label'       => esc_html__( 'Icon Color Type', 'fusion-builder' ),
-								'description' => esc_html__( 'Custom colors allow you to choose a color for icons and boxes. Brand colors will use the exact brand color of each network for the icons or boxes.', 'fusion-builder' ),
-								'id'          => 'social_links_color_type',
-								'default'     => 'custom',
-								'type'        => 'radio-buttonset',
-								'transport'   => 'postMessage',
-								'choices'     => [
-									'custom' => esc_html__( 'Custom Colors', 'fusion-builder' ),
-									'brand'  => esc_html__( 'Brand Colors', 'fusion-builder' ),
-								],
-							],
-							'social_links_icon_color'      => [
-								'label'           => esc_html__( 'Icons Color', 'fusion-builder' ),
-								'description'     => esc_html__( 'Controls the color of the custom icons.', 'fusion-builder' ),
-								'id'              => 'social_links_icon_color',
-								'default'         => 'var(--awb-color6)',
-								'type'            => 'color-alpha',
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-							],
-							'social_links_icon_color_hover' => [
-								'label'           => esc_html__( 'Icons Hover Color', 'fusion-builder' ),
-								'description'     => esc_html__( 'Controls the color of the custom icons on hover.', 'fusion-builder' ),
-								'id'              => 'social_links_icon_color_hover',
-								'default'         => 'var(--awb-color4)',
-								'type'            => 'color-alpha',
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-							],
-							'social_links_boxed'           => [
-								'label'       => esc_html__( 'Boxed Style', 'fusion-builder' ),
-								'description' => esc_html__( 'Turn on to have the icon displayed in a small box. Turn off to have the icon displayed with no box.', 'fusion-builder' ),
-								'id'          => 'social_links_boxed',
-								'default'     => '0',
-								'type'        => 'switch',
-								'transport'   => 'postMessage',
-							],
-							'social_links_boxed_padding'   => [
-								'label'           => esc_html__( 'Boxed Padding', 'fusion-builder' ),
-								'id'              => 'social_links_boxed_padding',
-								'default'         => '8px',
-								'type'            => 'dimension',
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-								'css_vars'        => [
-									[
-										'name'    => '--social_links_boxed_padding',
-										'element' => '.fusion-social-links',
-									],
-								],
-							],
-							'social_links_box_color'       => [
-								'label'           => esc_html__( 'Box Background', 'fusion-builder' ),
-								'description'     => esc_html__( 'Select a custom social icon box background color.', 'fusion-builder' ),
-								'id'              => 'social_links_box_color',
-								'default'         => 'var(--awb-color2)',
-								'type'            => 'color-alpha',
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-							],
-							'social_links_box_color_hover' => [
-								'label'           => esc_html__( 'Box Hover Background', 'fusion-builder' ),
-								'description'     => esc_html__( 'Select a custom social icon box background color on hover.', 'fusion-builder' ),
-								'id'              => 'social_links_box_color_hover',
-								'default'         => 'var(--awb-color1)',
-								'type'            => 'color-alpha',
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-							],
-							'social_links_border'          => [
-								'label'       => esc_html__( 'Box Border Size', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the borders size of social icon box.', 'fusion-builder' ),
-								'id'          => 'social_links_border',
-								'type'        => 'spacing',
-								'transport'   => 'postMessage',
-								'choices'     => [
-									'top'    => true,
-									'left'   => true,
-									'bottom' => true,
-									'right'  => true,
-								],
-								'default'     => [
-									'top'    => '0px',
-									'left'   => '0px',
-									'bottom' => '0px',
-									'right'  => '0px',
-								],
-							],
-							'social_links_boxed_radius'    => [
-								'label'           => esc_html__( 'Box Radius', 'fusion-builder' ),
-								'description'     => esc_html__( 'Box radius for the social icons.', 'fusion-builder' ),
-								'id'              => 'social_links_boxed_radius',
-								'default'         => '4px',
-								'type'            => 'dimension',
-								'choices'         => [ 'px', 'em' ],
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-							],
-							'social_links_border_color'    => [
-								'label'           => esc_html__( 'Border Color', 'fusion-builder' ),
-								'description'     => esc_html__( 'Controls the borders color of social icon box.', 'fusion-builder' ),
-								'id'              => 'social_links_border_color',
-								'default'         => 'var(--awb-color3)',
-								'type'            => 'color-alpha',
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-							],
-							'social_links_border_color_hover' => [
-								'label'           => esc_html__( 'Border Hover Color', 'fusion-builder' ),
-								'description'     => esc_html__( 'Controls the borders color of social icon box on hover.', 'fusion-builder' ),
-								'id'              => 'social_links_border_color_hover',
-								'default'         => 'var(--awb-color4)',
-								'type'            => 'color-alpha',
-								'transport'       => 'postMessage',
-								'soft_dependency' => true,
-							],
-
 						],
 					],
 				];
@@ -685,99 +498,6 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 				Fusion_Dynamic_JS::enqueue_script( 'fusion-tooltip' );
 			}
 
-
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-
-				$css_vars_options = [
-					'margin_top'           => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_right'         => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_bottom'        => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_left'          => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_top_medium'    => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_right_medium'  => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_bottom_medium' => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_left_medium'   => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_top_small'     => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_right_small'   => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_bottom_small'  => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'margin_left_small'    => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'alignment',
-					'box_border_top'       => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'box_border_right'     => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'box_border_bottom'    => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'box_border_left'      => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'box_padding_top'      => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'box_padding_right'    => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'box_padding_bottom'   => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-					'box_padding_left'     => [
-						'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ],
-					],
-				];
-
-				$custom_vars                           = [];
-				$custom_vars['icon_colors_hover']      = $this->args['icon_colors_hover'];
-				$custom_vars['box_colors_hover']       = $this->args['box_colors_hover'];
-				$custom_vars['box_border_color']       = $this->args['box_border_color'];
-				$custom_vars['box_border_color_hover'] = $this->args['box_border_color_hover'];
-
-				if ( $this->args['alignment_medium'] ) {
-					$custom_vars['alignment_medium'] = $this->args['alignment_medium'];
-				}
-
-				if ( $this->args['alignment_small'] ) {
-					$custom_vars['alignment_small'] = $this->args['alignment_small'];
-				}
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
-			}
-
 			/**
 			 * Load base CSS.
 			 *
@@ -787,25 +507,6 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
 			 */
 			public function add_css_files() {
 				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/social-links.min.css' );
-
-				if ( class_exists( 'Avada' ) ) {
-					$version = Avada::get_theme_version();
-					Fusion_Media_Query_Scripts::$media_query_assets[] = [
-						'avada-social-links-md',
-						FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/social-links-md.min.css',
-						[],
-						$version,
-						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-medium' ),
-					];
-					Fusion_Media_Query_Scripts::$media_query_assets[] = [
-						'avada-social-links-sm',
-						FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/social-links-sm.min.css',
-						[],
-						$version,
-						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-small' ),
-					];
-				}
-
 			}
 		}
 	}
@@ -819,14 +520,112 @@ if ( fusion_is_element_enabled( 'fusion_social_links' ) ) {
  * @since 1.0
  */
 function fusion_element_social_links() {
-	$fusion_settings = awb_get_fusion_settings();
-
-	$social_options = [
+	$social_options         = [
 		'name'      => esc_attr__( 'Social Links', 'fusion-builder' ),
 		'shortcode' => 'fusion_social_links',
 		'icon'      => 'fusiona-link',
-		'help_url'  => 'https://avada.com/documentation/social-links-element/',
+		'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/social-links-element/',
 		'params'    => [
+			[
+				'type'        => 'textfield',
+				'heading'     => esc_attr__( 'Social Icons Font Size', 'fusion-builder' ),
+				'description' => esc_attr__( 'Controls the font size for the social icons. Enter value including CSS unit (px, em, rem), ex: 10px', 'fusion-builder' ),
+				'param_name'  => 'font_size',
+				'value'       => '',
+				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+			],
+			[
+				'type'        => 'radio_button_set',
+				'heading'     => esc_attr__( 'Boxed Social Icons', 'fusion-builder' ),
+				'description' => esc_attr__( 'Choose to get boxed icons.', 'fusion-builder' ),
+				'param_name'  => 'icons_boxed',
+				'value'       => [
+					''    => esc_attr__( 'Default', 'fusion-builder' ),
+					'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+					'no'  => esc_attr__( 'No', 'fusion-builder' ),
+				],
+				'default'     => '',
+				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+			],
+			[
+				'type'        => 'textfield',
+				'heading'     => esc_attr__( 'Social Icon Box Radius', 'fusion-builder' ),
+				'description' => esc_attr__( 'Choose the border radius of the boxed icons. In pixels (px), ex: 1px, or "round". ', 'fusion-builder' ),
+				'param_name'  => 'icons_boxed_radius',
+				'value'       => '',
+				'dependency'  => [
+					[
+						'element'  => 'icons_boxed',
+						'value'    => 'no',
+						'operator' => '!=',
+					],
+				],
+				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+			],
+			[
+				'type'        => 'radio_button_set',
+				'heading'     => esc_attr__( 'Social Icons Color Type', 'fusion-builder' ),
+				'description' => esc_attr__( 'Choose the color type of social icons. Brand colors will use the exact brand color of each network for the icons or boxes.', 'fusion-builder' ),
+				'param_name'  => 'color_type',
+				'value'       => [
+					''       => esc_attr__( 'Default', 'fusion-builder' ),
+					'custom' => esc_attr__( 'Custom Colors', 'fusion-builder' ),
+					'brand'  => esc_attr__( 'Brand Colors', 'fusion-builder' ),
+				],
+				'default'     => '',
+				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+			],
+			[
+				'type'        => 'textarea',
+				'heading'     => esc_attr__( 'Social Icon Custom Colors', 'fusion-builder' ),
+				'description' => esc_attr__( 'Specify the color of social icons.', 'fusion-builder' ),
+				'param_name'  => 'icon_colors',
+				'value'       => '',
+				'dependency'  => [
+					[
+						'element'  => 'color_type',
+						'value'    => 'brand',
+						'operator' => '!=',
+					],
+				],
+				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+			],
+			[
+				'type'        => 'textarea',
+				'heading'     => esc_attr__( 'Social Icon Custom Box Colors', 'fusion-builder' ),
+				'description' => esc_attr__( 'Specify the box color of social icons.', 'fusion-builder' ),
+				'param_name'  => 'box_colors',
+				'value'       => '',
+				'dependency'  => [
+					[
+						'element'  => 'icons_boxed',
+						'value'    => 'no',
+						'operator' => '!=',
+					],
+					[
+						'element'  => 'color_type',
+						'value'    => 'brand',
+						'operator' => '!=',
+					],
+				],
+				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+			],
+			[
+				'type'        => 'radio_button_set',
+				'heading'     => esc_attr__( 'Social Icon Tooltip Position', 'fusion-builder' ),
+				'description' => esc_attr__( 'Choose the display position for tooltips.', 'fusion-builder' ),
+				'param_name'  => 'tooltip_placement',
+				'value'       => [
+					''       => esc_attr__( 'Default', 'fusion-builder' ),
+					'top'    => esc_attr__( 'Top', 'fusion-builder' ),
+					'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
+					'left'   => esc_attr__( 'Left', 'fusion-builder' ),
+					'Right'  => esc_attr__( 'Right', 'fusion-builder' ),
+					'none'   => esc_html__( 'None', 'fusion-builder' ),
+				],
+				'default'     => '',
+				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+			],
 			[
 				'type'         => 'textfield',
 				'heading'      => esc_attr__( 'Blogger Link', 'fusion-builder' ),
@@ -965,14 +764,6 @@ function fusion_element_social_links() {
 			],
 			[
 				'type'         => 'textfield',
-				'heading'      => esc_attr__( 'Snapchat Link', 'fusion-builder' ),
-				'description'  => esc_attr__( 'Insert your custom Snapchat link.', 'fusion-builder' ),
-				'param_name'   => 'snapchat',
-				'value'        => '',
-				'dynamic_data' => true,
-			],
-			[
-				'type'         => 'textfield',
 				'heading'      => esc_attr__( 'SoundCloud Link', 'fusion-builder' ),
 				'description'  => esc_attr__( 'Insert your custom SoundCloud link.', 'fusion-builder' ),
 				'param_name'   => 'soundcloud',
@@ -984,22 +775,6 @@ function fusion_element_social_links() {
 				'heading'      => esc_attr__( 'Spotify Link', 'fusion-builder' ),
 				'description'  => esc_attr__( 'Insert your custom Spotify link.', 'fusion-builder' ),
 				'param_name'   => 'spotify',
-				'value'        => '',
-				'dynamic_data' => true,
-			],
-			[
-				'type'         => 'textfield',
-				'heading'      => esc_attr__( 'Teams Link', 'fusion-builder' ),
-				'description'  => esc_attr__( 'Insert your custom Microsoft Teams link.', 'fusion-builder' ),
-				'param_name'   => 'teams',
-				'value'        => '',
-				'dynamic_data' => true,
-			],
-			[
-				'type'         => 'textfield',
-				'heading'      => esc_attr__( 'Telegram Link', 'fusion-builder' ),
-				'description'  => esc_attr__( 'Insert your custom Telegram link.', 'fusion-builder' ),
-				'param_name'   => 'telegram',
 				'value'        => '',
 				'dynamic_data' => true,
 			],
@@ -1117,250 +892,14 @@ function fusion_element_social_links() {
 			],
 			[
 				'type'        => 'radio_button_set',
-				'heading'     => esc_attr__( 'Show Custom Social Icons', 'fusion-builder' ),
-				'description' => esc_attr__( 'Show the custom social icons specified in Global Options.', 'fusion-builder' ),
+				'heading'     => esc_attr__( 'Show Custom Social Icon', 'fusion-builder' ),
+				'description' => esc_attr__( 'Show the custom social icon specified in Global Options.', 'fusion-builder' ),
 				'param_name'  => 'show_custom',
 				'value'       => [
 					'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 					'no'  => esc_attr__( 'No', 'fusion-builder' ),
 				],
 				'default'     => 'no',
-			],
-			[
-				'type'        => 'radio_button_set',
-				'heading'     => esc_attr__( 'Alignment', 'fusion-builder' ),
-				'description' => esc_attr__( "Select the icon's alignment.", 'fusion-builder' ),
-				'param_name'  => 'alignment',
-				'value'       => [
-					''       => esc_attr__( 'Text Flow', 'fusion-builder' ),
-					'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-					'center' => esc_attr__( 'Center', 'fusion-builder' ),
-					'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-				],
-				'responsive'  => [
-					'state' => 'large',
-				],
-				'default'     => '',
-				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-			],
-			'fusion_margin_placeholder'    => [
-				'param_name' => 'margin',
-				'value'      => [
-					'margin_top'    => '',
-					'margin_right'  => '',
-					'margin_bottom' => '',
-					'margin_left'   => '',
-				],
-				'responsive' => [
-					'state' => 'large',
-				],
-			],
-			[
-				'type'        => 'radio_button_set',
-				'heading'     => esc_attr__( 'Tooltip Position', 'fusion-builder' ),
-				'description' => esc_attr__( 'Choose the display position for tooltips.', 'fusion-builder' ),
-				'param_name'  => 'tooltip_placement',
-				'value'       => [
-					''       => esc_attr__( 'Default', 'fusion-builder' ),
-					'top'    => esc_attr__( 'Top', 'fusion-builder' ),
-					'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
-					'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-					'Right'  => esc_attr__( 'Right', 'fusion-builder' ),
-					'none'   => esc_html__( 'None', 'fusion-builder' ),
-				],
-				'default'     => '',
-				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-			],
-			[
-				'type'        => 'textfield',
-				'heading'     => esc_attr__( 'Font Size', 'fusion-builder' ),
-				'description' => esc_attr__( 'Controls the font size for the social icons. Enter value including CSS unit (px, em, rem), ex: 10px', 'fusion-builder' ),
-				'param_name'  => 'font_size',
-				'value'       => '',
-				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-			],
-			[
-				'type'        => 'radio_button_set',
-				'heading'     => esc_attr__( 'Boxed Style', 'fusion-builder' ),
-				'description' => esc_attr__( 'Choose to get boxed icons.', 'fusion-builder' ),
-				'param_name'  => 'icons_boxed',
-				'value'       => [
-					''    => esc_attr__( 'Default', 'fusion-builder' ),
-					'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-					'no'  => esc_attr__( 'No', 'fusion-builder' ),
-				],
-				'default'     => '',
-				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-			],
-			[
-				'type'             => 'dimension',
-				'remove_from_atts' => true,
-				'heading'          => esc_attr__( 'Boxed Padding', 'fusion-builder' ),
-				'description'      => esc_attr__( 'Controls the padding of boxed icons.', 'fusion-builder' ),
-				'param_name'       => 'box_padding',
-				'value'            => [
-					'box_padding_top'    => '',
-					'box_padding_right'  => '',
-					'box_padding_bottom' => '',
-					'box_padding_left'   => '',
-				],
-				'dependency'       => [
-					[
-						'element'  => 'icons_boxed',
-						'value'    => 'no',
-						'operator' => '!=',
-					],
-				],
-				'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-			],
-			[
-				'type'             => 'dimension',
-				'remove_from_atts' => true,
-				'heading'          => esc_attr__( 'Box Border Size', 'fusion-builder' ),
-				'description'      => esc_attr__( 'Controls the border size. In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
-				'param_name'       => 'box_border',
-				'value'            => [
-					'box_border_top'    => '',
-					'box_border_right'  => '',
-					'box_border_bottom' => '',
-					'box_border_left'   => '',
-				],
-				'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-				'dependency'       => [
-					[
-						'element'  => 'icons_boxed',
-						'value'    => 'no',
-						'operator' => '!=',
-					],
-					[
-						'element'  => 'color_type',
-						'value'    => 'brand',
-						'operator' => '!=',
-					],
-				],
-			],
-			[
-				'type'        => 'textfield',
-				'heading'     => esc_attr__( 'Box Border Radius', 'fusion-builder' ),
-				'description' => esc_attr__( 'Choose the border radius of the boxed icons. In pixels (px), ex: 1px, or "round". ', 'fusion-builder' ),
-				'param_name'  => 'icons_boxed_radius',
-				'value'       => '',
-				'dependency'  => [
-					[
-						'element'  => 'icons_boxed',
-						'value'    => 'no',
-						'operator' => '!=',
-					],
-				],
-				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-			],
-			[
-				'type'        => 'radio_button_set',
-				'heading'     => esc_attr__( 'Color Type', 'fusion-builder' ),
-				'description' => esc_attr__( 'Choose the color type of social icons. Brand colors will use the exact brand color of each network for the icons or boxes.', 'fusion-builder' ),
-				'param_name'  => 'color_type',
-				'value'       => [
-					''       => esc_attr__( 'Default', 'fusion-builder' ),
-					'custom' => esc_attr__( 'Custom Colors', 'fusion-builder' ),
-					'brand'  => esc_attr__( 'Brand Colors', 'fusion-builder' ),
-				],
-				'default'     => '',
-				'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-			],
-			// colors group.
-			[
-				'type'          => 'colorpickeralpha',
-				'heading'       => esc_attr__( 'Icon Color', 'fusion-builder' ),
-				'description'   => esc_attr__( 'Specify the color of social icons.', 'fusion-builder' ),
-				'param_name'    => 'icon_colors',
-				'default'       => $fusion_settings->get( 'social_links_icon_color' ),
-				'dependency'    => [
-					[
-						'element'  => 'color_type',
-						'value'    => 'brand',
-						'operator' => '!=',
-					],
-				],
-				'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-				'states'        => [
-					'hover' => [
-						'label'   => __( 'Hover', 'fusion-builder' ),
-						'default' => $fusion_settings->get( 'social_links_icon_color_hover' ),
-						'preview' => [
-							'selector' => '.fusion-social-network-icon',
-							'type'     => 'class',
-							'toggle'   => 'hover',
-						],
-					],
-				],
-				'connect-state' => [ 'box_colors', 'box_border_color' ],
-			],
-			[
-				'type'          => 'colorpickeralpha',
-				'heading'       => esc_attr__( 'Background Color', 'fusion-builder' ),
-				'description'   => esc_attr__( 'Specify the box background color of social icons.', 'fusion-builder' ),
-				'param_name'    => 'box_colors',
-				'default'       => $fusion_settings->get( 'social_links_box_color' ),
-				'dependency'    => [
-					[
-						'element'  => 'icons_boxed',
-						'value'    => 'no',
-						'operator' => '!=',
-					],
-					[
-						'element'  => 'color_type',
-						'value'    => 'brand',
-						'operator' => '!=',
-					],
-				],
-				'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-				'states'        => [
-					'hover' => [
-						'label'   => __( 'Hover', 'fusion-builder' ),
-						'default' => $fusion_settings->get( 'social_links_box_color_hover' ),
-						'preview' => [
-							'selector' => '.fusion-social-network-icon',
-							'type'     => 'class',
-							'toggle'   => 'hover',
-						],
-					],
-				],
-				'connect-state' => [ 'icon_colors', 'box_border_color' ],
-			],
-			[
-				'type'          => 'colorpickeralpha',
-				'heading'       => esc_attr__( 'Border Color', 'fusion-builder' ),
-				'description'   => esc_attr__( 'Specify the border color of social icons.', 'fusion-builder' ),
-				'param_name'    => 'box_border_color',
-				'default'       => $fusion_settings->get( 'social_links_border_color' ),
-				'dependency'    => [
-					[
-						'element'  => 'icons_boxed',
-						'value'    => 'no',
-						'operator' => '!=',
-					],
-					[
-						'element'  => 'color_type',
-						'value'    => 'brand',
-						'operator' => '!=',
-					],
-				],
-				'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-				'states'        => [
-					'hover' => [
-						'label'   => __( 'Hover', 'fusion-builder' ),
-						'default' => $fusion_settings->get( 'social_links_border_color_hover' ),
-						'preview' => [
-							'selector' => '.fusion-social-network-icon',
-							'type'     => 'class',
-							'toggle'   => 'hover',
-						],
-					],
-				],
-				'connect-state' => [ 'icon_colors', 'box_colors' ],
-			],
-			'fusion_animation_placeholder' => [
-				'preview_selector' => '.fusion-social-links',
 			],
 		],
 	];
@@ -1385,6 +924,20 @@ function fusion_element_social_links() {
 			];
 		}
 	}
+	$social_options['params'][]                                       = [
+		'type'        => 'radio_button_set',
+		'heading'     => esc_attr__( 'Alignment', 'fusion-builder' ),
+		'description' => esc_attr__( "Select the icon's alignment.", 'fusion-builder' ),
+		'param_name'  => 'alignment',
+		'value'       => [
+			''       => esc_attr__( 'Text Flow', 'fusion-builder' ),
+			'left'   => esc_attr__( 'Left', 'fusion-builder' ),
+			'center' => esc_attr__( 'Center', 'fusion-builder' ),
+			'right'  => esc_attr__( 'Right', 'fusion-builder' ),
+		],
+		'default'     => '',
+		'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+	];
 	$social_options['params'][]                                       = [
 		'type'        => 'checkbox_button_set',
 		'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),

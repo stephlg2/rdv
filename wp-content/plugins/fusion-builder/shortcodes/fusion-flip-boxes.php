@@ -72,91 +72,69 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @static
 			 * @access public
 			 * @since 2.0.0
-			 * @param 'parent'|'child' $context Whether we want parent or child.
+			 * @param string $context Whether we want parent or child.
+			 *                        Returns array( parent, child ) if empty.
 			 * @return array
 			 */
 			public static function get_element_defaults( $context = '' ) {
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$parent = [
-					'hide_on_mobile'                       => fusion_builder_default_visibility( 'string' ),
-					'class'                                => '',
-					'id'                                   => '',
-					'columns'                              => '1',
-					'circle'                               => '',
-					'circle_color'                         => '',
-					'circle_border_color'                  => '',
-					'equal_heights'                        => $fusion_settings->get( 'flip_boxes_equal_heights' ),
-					'front_title_size'                     => '2',
-					'back_title_size'                      => '3',
-					'flip_direction'                       => $fusion_settings->get( 'flip_boxes_flip_direction' ),
-					'flip_effect'                          => $fusion_settings->get( 'flip_boxes_flip_effect' ),
-					'flip_duration'                        => '',
-					'icon'                                 => '',
-					'icon_color'                           => '',
-					'icon_flip'                            => '',
-					'icon_rotate'                          => '',
-					'icon_spin'                            => '',
-					'image'                                => '',
-					'image_id'                             => '',
-					'image_max_width'                      => '',
-
-					'fusion_font_family_front_title_font'  => '',
-					'fusion_font_variant_front_title_font' => '',
-					'front_title_font_size'                => '',
-					'front_title_line_height'              => '',
-					'front_title_letter_spacing'           => '',
-					'front_title_text_transform'           => '',
-					'fusion_font_family_back_title_font'   => '',
-					'fusion_font_variant_back_title_font'  => '',
-					'back_title_font_size'                 => '',
-					'back_title_line_height'               => '',
-					'back_title_letter_spacing'            => '',
-					'back_title_text_transform'            => '',
-
-					'margin_top'                           => '',
-					'margin_right'                         => '',
-					'margin_bottom'                        => '',
-					'margin_left'                          => '',
-					'dynamic_params'                       => '',
+					'hide_on_mobile'      => fusion_builder_default_visibility( 'string' ),
+					'class'               => '',
+					'id'                  => '',
+					'columns'             => '1',
+					'circle'              => '',
+					'circle_color'        => $fusion_settings->get( 'icon_circle_color' ),
+					'circle_border_color' => $fusion_settings->get( 'icon_border_color' ),
+					'equal_heights'       => $fusion_settings->get( 'flip_boxes_equal_heights' ),
+					'flip_direction'      => $fusion_settings->get( 'flip_boxes_flip_direction' ),
+					'flip_effect'         => $fusion_settings->get( 'flip_boxes_flip_effect' ),
+					'flip_duration'       => $fusion_settings->get( 'flip_boxes_flip_duration' ),
+					'icon'                => '',
+					'icon_color'          => $fusion_settings->get( 'icon_color' ),
+					'icon_flip'           => '',
+					'icon_rotate'         => '',
+					'icon_spin'           => '',
+					'image'               => '',
+					'image_id'            => '',
+					'image_max_width'     => '',
 				];
 
 				$child = [
 					'class'                  => '',
 					'id'                     => '',
-					'background_color_back'  => '',
-					'background_color_front' => '',
+					'background_color_back'  => $fusion_settings->get( 'flip_boxes_back_bg' ),
+					'background_color_front' => $fusion_settings->get( 'flip_boxes_front_bg' ),
 					'background_image_back'  => '',
 					'background_image_front' => '',
-					'border_color'           => '',
-					'border_radius'          => '',
-					'border_size'            => '',
+					'border_color'           => $fusion_settings->get( 'flip_boxes_border_color' ),
+					'border_radius'          => $fusion_settings->get( 'flip_boxes_border_radius' ),
+					'border_size'            => ( $fusion_settings->get( 'flip_boxes_border_size' ) ) ? $fusion_settings->get( 'flip_boxes_border_size' ) . 'px' : '',
 					'circle'                 => '',
-					'circle_color'           => '',
-					'circle_border_color'    => '',
+					'circle_color'           => $fusion_settings->get( 'icon_circle_color' ),
+					'circle_border_color'    => $fusion_settings->get( 'icon_border_color' ),
 					'flip_direction'         => $fusion_settings->get( 'flip_boxes_flip_direction' ),
 					'icon'                   => '',
-					'icon_color'             => '',
+					'icon_color'             => $fusion_settings->get( 'icon_color' ),
 					'icon_flip'              => '',
 					'icon_rotate'            => '',
 					'icon_spin'              => '',
 					'image'                  => '',
 					'image_id'               => $parent['image_id'],
 					'image_max_width'        => '',
-					'text_back_color'        => '',
+					'text_back_color'        => $fusion_settings->get( 'flip_boxes_back_text' ),
 					'text_front'             => '',
-					'text_front_color'       => '',
+					'text_front_color'       => $fusion_settings->get( 'flip_boxes_front_text' ),
 					'title_front'            => '',
-					'title_front_color'      => '',
+					'title_front_color'      => $fusion_settings->get( 'flip_boxes_front_heading' ),
 					'title_back'             => '',
-					'title_back_color'       => '',
+					'title_back_color'       => $fusion_settings->get( 'flip_boxes_back_heading' ),
 					'animation_type'         => '',
 					'animation_direction'    => 'left',
 					'animation_speed'        => '0.1',
-					'animation_delay'        => '',
 					'animation_offset'       => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'        => '',
 				];
 
 				if ( 'parent' === $context ) {
@@ -226,30 +204,26 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_parent( $args, $content = '' ) {
-				$this->parent_args = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_flip_boxes' );
+				global $fusion_settings;
+
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_flip_boxes' );
 
 				// Backwards compatibility for when we had image width and height params.
 				if ( isset( $args['image_width'] ) ) {
-					$this->parent_args['image_width'] = ( $args['image_width'] ) ? $args['image_width'] : '35';
+					$defaults['image_width'] = ( $args['image_width'] ) ? $args['image_width'] : '35';
 				} else {
-					$this->parent_args['image_width'] = $this->parent_args['image_max_width'];
+					$defaults['image_width'] = $defaults['image_max_width'];
 				}
+
+				extract( $defaults );
+
+				$this->parent_args = $defaults;
 
 				if ( $this->parent_args['columns'] > 6 ) {
 					$this->parent_args['columns'] = 6;
 				}
 
-				$html = '<div ' . FusionBuilder::attributes( 'flip-boxes-shortcode' ) . '>';
-				if ( $this->parent_args['dynamic_params'] ) {
-					$dynamic_data = json_decode( fusion_decode_if_needed( $this->parent_args['dynamic_params'] ), true );
-
-					if ( isset( $dynamic_data['parent_dynamic_content'] ) ) {
-						$html .= self::get_acf_repeater( $dynamic_data['parent_dynamic_content'], $this->parent_args, $content );
-					}
-				} else {
-					$html .= do_shortcode( $content );
-				}
-				$html .= '</div>';
+				$html = '<div ' . FusionBuilder::attributes( 'flip-boxes-shortcode' ) . '>' . do_shortcode( $content ) . '</div>';
 
 				$html = fusion_maybe_add_clearfix( $html );
 
@@ -266,11 +240,11 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @return array
 			 */
 			public function parent_attr() {
+
 				$attr = fusion_builder_visibility_atts(
 					$this->parent_args['hide_on_mobile'],
 					[
 						'class' => 'fusion-flip-boxes flip-boxes row fusion-columns-' . $this->parent_args['columns'],
-						'style' => $this->get_parent_style_vars(),
 					]
 				);
 
@@ -289,26 +263,7 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 				}
 
 				return $attr;
-			}
 
-			/**
-			 * Get the parent css variables.
-			 *
-			 * @since 3.9
-			 * @return string
-			 */
-			private function get_parent_style_vars() {
-				$this->args      = $this->parent_args;
-				$this->defaults  = self::get_element_defaults( 'parent' );
-				$custom_css_vars = [];
-				$css_vars        = [];
-
-				if ( ! $this->is_default( 'flip_duration' ) ) {
-					$custom_css_vars['flip_duration'] = $this->args['flip_duration'] . 's';
-				}
-
-				$margins = Fusion_Builder_Margin_Helper::get_margin_vars( $this->args );
-				return $this->get_css_vars_for_options( $css_vars ) . $this->get_custom_css_vars( $custom_css_vars ) . $margins;
 			}
 
 			/**
@@ -321,6 +276,8 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_child( $args, $content = '' ) {
+				global $fusion_settings;
+
 				$defaults                        = self::get_element_defaults( 'child' );
 				$defaults['circle']              = $this->parent_args['circle'];
 				$defaults['circle_color']        = $this->parent_args['circle_color'];
@@ -344,6 +301,11 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 
 				$defaults['border_size']   = FusionBuilder::validate_shortcode_attr_value( $defaults['border_size'], 'px' );
 				$defaults['border_radius'] = FusionBuilder::validate_shortcode_attr_value( $defaults['border_radius'], 'px' );
+
+				// Case when image is set on parent element and icon on child element.
+				if ( empty( $args['image'] ) && ! empty( $args['icon'] ) ) {
+					$defaults['image'] = '';
+				}
 
 				// Backwards compatibility for when we had image width and height params.
 				if ( isset( $args['image_width'] ) && $args['image_width'] ) {
@@ -374,38 +336,42 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 					$defaults['border_radius'] = '50%';
 				}
 
+				extract( $defaults );
+
 				$this->child_args = $defaults;
 
-				$icon_output = $title_front_output = $title_back_output = '';
+				$style = $icon_output = $title_output = $title_front_output = $title_back_output = '';
 
-				if ( $defaults['image'] && $defaults['image_width'] && $defaults['image_height'] ) {
-					$image_data = fusion_library()->images->get_attachment_data_by_helper( $this->child_args['image_id'], $defaults['image'] );
+				if ( $image && $image_width && $image_height ) {
+
+					$image_data = fusion_library()->images->get_attachment_data_by_helper( $this->child_args['image_id'], $image );
 
 					if ( $image_data['url'] ) {
-						$defaults['image'] = $image_data['url'];
+						$image = $image_data['url'];
 					}
-					$defaults['image'] = '<img src="' . $defaults['image'] . '" width="' . $defaults['image_width'] . '" height="' . $defaults['image_height'] . '" alt="' . $image_data['alt'] . '" />';
-					$defaults['image'] = fusion_library()->images->apply_lazy_loading( $defaults['image'], null, $this->child_args['image_id'], 'full' );
-					$icon_output       = $defaults['image'];
-				} elseif ( $defaults['icon'] ) {
+					$image       = '<img src="' . $image . '" width="' . $image_width . '" height="' . $image_height . '" alt="' . $image_data['alt'] . '" />';
+					$image       = fusion_library()->images->apply_lazy_loading( $image, null, $this->child_args['image_id'], 'full' );
+					$icon_output = $image;
+
+				} elseif ( $icon ) {
+
 					$icon_output = '<i ' . FusionBuilder::attributes( 'flip-box-shortcode-icon' ) . '></i>';
+
 				}
 
 				if ( $icon_output ) {
 					$icon_output = '<div ' . FusionBuilder::attributes( 'flip-box-shortcode-grafix' ) . '>' . $icon_output . '</div>';
 				}
 
-				if ( $defaults['title_front'] ) {
-					$front_title_tag    = $this->get_title_tag( 'front' );
-					$title_front_output = '<' . $front_title_tag . ' ' . FusionBuilder::attributes( 'flip-box-shortcode-heading-front' ) . '>' . $defaults['title_front'] . '</' . $front_title_tag . '>';
+				if ( $title_front ) {
+					$title_front_output = '<h2 ' . FusionBuilder::attributes( 'flip-box-shortcode-heading-front' ) . '>' . $title_front . '</h2>';
 				}
 
-				if ( $defaults['title_back'] ) {
-					$back_title_tag    = $this->get_title_tag( 'back' );
-					$title_back_output = '<' . $back_title_tag . ' ' . FusionBuilder::attributes( 'flip-box-shortcode-heading-back' ) . '>' . $defaults['title_back'] . '</' . $back_title_tag . '>';
+				if ( $title_back ) {
+					$title_back_output = '<h3 ' . FusionBuilder::attributes( 'flip-box-shortcode-heading-back' ) . '>' . $title_back . '</h3>';
 				}
 
-				$front_inner = '<div ' . FusionBuilder::attributes( 'flip-box-front-inner' ) . '>' . $icon_output . $title_front_output . $defaults['text_front'] . '</div>';
+				$front_inner = '<div ' . FusionBuilder::attributes( 'flip-box-front-inner' ) . '>' . $icon_output . $title_front_output . $text_front . '</div>';
 				$back_inner  = '<div ' . FusionBuilder::attributes( 'flip-box-back-inner' ) . '>' . $title_back_output . do_shortcode( $content ) . '</div>';
 
 				$front = '<div ' . FusionBuilder::attributes( 'flip-box-shortcode-front-box' ) . '>' . $front_inner . '</div>';
@@ -420,6 +386,7 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 				$this->flipbox_counter++;
 
 				return apply_filters( 'fusion_element_flip_boxes_child_content', $html, $args );
+
 			}
 
 			/**
@@ -467,7 +434,6 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 
 				$attr = [
 					'class'    => 'fusion-flip-box',
-					'style'    => '',
 					'tabindex' => 0,
 				];
 
@@ -480,7 +446,6 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 							'direction' => $this->child_args['animation_direction'],
 							'speed'     => $this->child_args['animation_speed'],
 							'offset'    => $this->child_args['animation_offset'],
-							'delay'     => $this->child_args['animation_delay'],
 						]
 					);
 
@@ -488,10 +453,6 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 
 					$attr['class'] .= ' ' . $attr['animation_class'];
 					unset( $attr['animation_class'] );
-
-					if ( isset( $this->child_args['animation_color'] ) && $this->child_args['animation_color'] ) {
-						$attr['style'] .= '--awb-animation-color:' . $this->child_args['animation_color'] . ';';
-					}
 				}
 
 				return $attr;
@@ -505,12 +466,49 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @return array
 			 */
 			public function front_box_attr() {
+
 				$attr = [
 					'class' => 'flip-box-front',
-					'style' => $this->get_child_style_vars( 'front' ),
 				];
 
+				if ( $this->child_args['background_color_front'] ) {
+					$attr['style'] = 'background-color:' . $this->child_args['background_color_front'] . ';';
+				}
+
+				if ( $this->child_args['border_color'] ) {
+					$attr['style'] .= 'border-color:' . $this->child_args['border_color'] . ';';
+				}
+
+				if ( $this->child_args['border_radius'] ) {
+					$attr['style'] .= 'border-radius:' . $this->child_args['border_radius'] . ';';
+				}
+
+				if ( $this->child_args['border_size'] ) {
+					$attr['style'] .= 'border-style:solid;border-width:' . $this->child_args['border_size'] . ';';
+				}
+
+				if ( $this->child_args['text_front_color'] ) {
+					$attr['style'] .= 'color:' . $this->child_args['text_front_color'] . ';';
+				}
+
+				if ( $this->parent_args['flip_duration'] ) {
+					$attr['style'] .= 'transition-duration:' . $this->parent_args['flip_duration'] . 's;';
+				}
+
+				if ( $this->child_args['background_image_front'] ) {
+					$attr['style'] .= 'background-image: url(\'' . esc_attr( $this->child_args['background_image_front'] ) . '\');';
+
+					if ( $this->child_args['background_color_front'] ) {
+						$alpha = Fusion_Color::new_color( $this->child_args['background_color_front'] )->alpha;
+
+						if ( 1 > $alpha && 0 !== $alpha ) {
+							$attr['style'] .= 'background-blend-mode: overlay;';
+						}
+					}
+				}
+
 				return $attr;
+
 			}
 
 			/**
@@ -521,67 +519,49 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @return array
 			 */
 			public function back_box_attr() {
+
 				$attr = [
 					'class' => 'flip-box-back',
-					'style' => $this->get_child_style_vars( 'back' ),
 				];
 
+				if ( $this->child_args['background_color_back'] ) {
+					$attr['style'] = 'background-color:' . $this->child_args['background_color_back'] . ';';
+				}
+
+				if ( $this->child_args['border_color'] ) {
+					$attr['style'] .= 'border-color:' . $this->child_args['border_color'] . ';';
+				}
+
+				if ( $this->child_args['border_radius'] ) {
+					$attr['style'] .= 'border-radius:' . $this->child_args['border_radius'] . ';';
+				}
+
+				if ( $this->child_args['border_size'] ) {
+					$attr['style'] .= 'border-style:solid;border-width:' . $this->child_args['border_size'] . ';';
+				}
+
+				if ( $this->child_args['text_back_color'] ) {
+					$attr['style'] .= 'color:' . $this->child_args['text_back_color'] . ';';
+				}
+
+				if ( $this->parent_args['flip_duration'] ) {
+					$attr['style'] .= 'transition-duration:' . $this->parent_args['flip_duration'] . 's;';
+				}
+
+				if ( $this->child_args['background_image_back'] ) {
+					$attr['style'] .= 'background-image: url(\'' . esc_attr( $this->child_args['background_image_back'] ) . '\');';
+
+					if ( $this->child_args['background_color_back'] ) {
+						$alpha = Fusion_Color::new_color( $this->child_args['background_color_back'] )->alpha;
+
+						if ( 1 > $alpha && 0 !== $alpha ) {
+							$attr['style'] .= 'background-blend-mode: overlay;';
+						}
+					}
+				}
+
 				return $attr;
-			}
 
-			/**
-			 * Get the child style vars.
-			 *
-			 * @since 3.9
-			 * @param 'front'|'back' $child_type Either 'front' or 'back'.
-			 * @return string
-			 */
-			public function get_child_style_vars( $child_type ) {
-				$this->args      = $this->child_args;
-				$this->defaults  = self::get_element_defaults( 'child' );
-				$css_vars        = [ 'icon_color', 'border_color', 'border_size', 'border_radius' ];
-				$custom_css_vars = [];
-
-				if ( ! $this->child_args['image'] && 'yes' === $this->child_args['circle'] ) {
-					array_push( $css_vars, 'circle_color' );
-					array_push( $css_vars, 'circle_border_color' );
-				}
-
-				if ( 'front' === $child_type ) {
-					array_push( $css_vars, 'background_color_front' );
-					array_push( $css_vars, 'title_front_color' );
-					array_push( $css_vars, 'text_front_color' );
-
-					if ( $this->child_args['background_image_front'] ) {
-						$custom_css_vars['background_image_front'] = 'url(\'' . esc_attr( $this->child_args['background_image_front'] ) . '\')';
-
-						if ( $this->child_args['background_color_front'] ) {
-							$alpha = Fusion_Color::new_color( $this->child_args['background_color_front'] )->alpha;
-
-							if ( 1 > $alpha && 0 !== $alpha ) {
-								$custom_css_vars['background-front-blend-mode'] = 'overlay';
-							}
-						}
-					}
-				} else {
-					array_push( $css_vars, 'background_color_back' );
-					array_push( $css_vars, 'title_back_color' );
-					array_push( $css_vars, 'text_back_color' );
-
-					if ( $this->child_args['background_image_back'] ) {
-						$custom_css_vars['background_image_back'] = 'url(\'' . esc_attr( $this->child_args['background_image_back'] ) . '\')';
-
-						if ( $this->child_args['background_color_back'] ) {
-							$alpha = Fusion_Color::new_color( $this->child_args['background_color_back'] )->alpha;
-
-							if ( 1 > $alpha && 0 !== $alpha ) {
-								$custom_css_vars['background-back-blend-mode'] = 'overlay';
-							}
-						}
-					}
-				}
-
-				return $this->get_css_vars_for_options( $css_vars ) . $this->get_custom_css_vars( $custom_css_vars );
 			}
 
 			/**
@@ -598,8 +578,17 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 				];
 
 				if ( ! $this->child_args['image'] ) {
+
 					if ( 'yes' === $this->child_args['circle'] ) {
 						$attr['class'] .= ' flip-box-circle';
+
+						if ( $this->child_args['circle_color'] ) {
+							$attr['style'] = 'background-color:' . $this->child_args['circle_color'] . ';';
+						}
+
+						if ( $this->child_args['circle_border_color'] ) {
+							$attr['style'] .= 'border-color:' . $this->child_args['circle_border_color'] . ';';
+						}
 					} else {
 						$attr['class'] .= ' flip-box-no-circle';
 					}
@@ -630,6 +619,10 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 					$attr['class'] = fusion_font_awesome_name_handler( $this->child_args['icon'] );
 				}
 
+				if ( $this->child_args['icon_color'] ) {
+					$attr['style'] = 'color:' . $this->child_args['icon_color'] . ';';
+				}
+
 				if ( $this->child_args['icon_flip'] && 'none' !== $this->child_args['icon_flip'] ) {
 					$attr['class'] .= ' fa-flip-' . $this->child_args['icon_flip'];
 				}
@@ -654,13 +647,17 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @return array
 			 */
 			public function heading_front_attr() {
+
 				$attr = [
 					'class' => 'flip-box-heading',
-					'style' => $this->get_front_heading_style_vars(),
 				];
 
 				if ( ! $this->child_args['text_front'] ) {
 					$attr['class'] .= ' without-text';
+				}
+
+				if ( $this->child_args['title_front_color'] ) {
+					$attr['style'] = 'color:' . $this->child_args['title_front_color'] . ';';
 				}
 
 				return $attr;
@@ -675,86 +672,17 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 			 * @return array
 			 */
 			public function heading_back_attr() {
+
 				$attr = [
 					'class' => 'flip-box-heading-back',
-					'style' => $this->get_back_heading_style_vars(),
 				];
+
+				if ( $this->child_args['title_back_color'] ) {
+					$attr['style'] = 'color:' . $this->child_args['title_back_color'] . ';';
+				}
 
 				return $attr;
-			}
 
-			/**
-			 * Get the style vars for front heading.
-			 *
-			 * @since 3.9
-			 * @return string
-			 */
-			private function get_front_heading_style_vars() {
-				$title_typography = Fusion_Builder_Element_Helper::get_font_styling( $this->parent_args, 'front_title_font', 'array' );
-
-				$font_var_args = [
-					'font-family'    => ( isset( $title_typography['font-family'] ) && $title_typography['font-family'] ? $title_typography['font-family'] : '' ),
-					'font-weight'    => ( isset( $title_typography['font-weight'] ) && $title_typography['font-weight'] ? $title_typography['font-weight'] : '' ),
-					'font-style'     => ( isset( $title_typography['font-style'] ) && $title_typography['font-style'] ? $title_typography['font-style'] : '' ),
-					'font-size'      => $this->parent_args['front_title_font_size'],
-					'letter-spacing' => $this->parent_args['front_title_letter_spacing'],
-					'line-height'    => $this->parent_args['front_title_line_height'],
-					'text-transform' => $this->parent_args['front_title_text_transform'],
-
-				];
-				$font_vars = $this->get_heading_font_vars( $this->get_title_tag( 'front' ), $font_var_args );
-
-				return $font_vars;
-			}
-
-			/**
-			 * Get the style vars for back heading.
-			 *
-			 * @since 3.9
-			 * @return string
-			 */
-			private function get_back_heading_style_vars() {
-				$title_typography = Fusion_Builder_Element_Helper::get_font_styling( $this->parent_args, 'back_title_font', 'array' );
-
-				$font_var_args = [
-					'font-family'    => ( isset( $title_typography['font-family'] ) && $title_typography['font-family'] ? $title_typography['font-family'] : '' ),
-					'font-weight'    => ( isset( $title_typography['font-weight'] ) && $title_typography['font-weight'] ? $title_typography['font-weight'] : '' ),
-					'font-style'     => ( isset( $title_typography['font-style'] ) && $title_typography['font-style'] ? $title_typography['font-style'] : '' ),
-					'font-size'      => $this->parent_args['back_title_font_size'],
-					'letter-spacing' => $this->parent_args['back_title_letter_spacing'],
-					'line-height'    => $this->parent_args['back_title_line_height'],
-					'text-transform' => $this->parent_args['back_title_text_transform'],
-
-				];
-				$font_vars = $this->get_heading_font_vars( $this->get_title_tag( 'back' ), $font_var_args );
-
-				return $font_vars;
-			}
-
-			/**
-			 * Get the tag of the title.
-			 *
-			 * @param string $title The title, front or back.
-			 * @return string
-			 */
-			public function get_title_tag( $title ) {
-				if ( 'front' === $title ) {
-					$tag_option = $this->parent_args['front_title_size'];
-					if ( ! $tag_option ) {
-						return 'h2';
-					}
-				} else {
-					$tag_option = $this->parent_args['back_title_size'];
-					if ( ! $tag_option ) {
-						return 'h3';
-					}
-				}
-
-				if ( is_numeric( $tag_option ) ) {
-					return 'h' . $tag_option;
-				}
-
-				return $tag_option;
 			}
 
 			/**
@@ -812,12 +740,6 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 									'max'  => '2',
 									'step' => '0.1',
 								],
-								'css_vars'    => [
-									[
-										'name'          => '--flip_boxes_flip_duration',
-										'value_pattern' => '$s',
-									],
-								],
 							],
 							'flip_boxes_equal_heights'  => [
 								'label'       => esc_html__( 'Equal Heights', 'fusion-builder' ),
@@ -835,85 +757,49 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 								'label'       => esc_html__( 'Flip Box Background Color Frontside', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the frontside background.', 'fusion-builder' ),
 								'id'          => 'flip_boxes_front_bg',
-								'default'     => 'var(--awb-color7)',
+								'default'     => '#212934',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--flip_boxes_front_bg',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'flip_boxes_front_heading'  => [
 								'label'       => esc_html__( 'Flip Box Heading Color Frontside', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the frontside heading.', 'fusion-builder' ),
 								'id'          => 'flip_boxes_front_heading',
-								'default'     => 'var(--awb-color2)',
+								'default'     => '#f9f9fb',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--flip_boxes_front_heading',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'flip_boxes_front_text'     => [
 								'label'       => esc_html__( 'Flip Box Text Color Frontside', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the frontside text.', 'fusion-builder' ),
 								'id'          => 'flip_boxes_front_text',
-								'default'     => 'var(--awb-color3)',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--flip_boxes_front_text',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'flip_boxes_back_bg'        => [
 								'label'       => esc_html__( 'Flip Box Background Color Backside', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the backside background.', 'fusion-builder' ),
 								'id'          => 'flip_boxes_back_bg',
-								'default'     => 'var(--awb-color5)',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--flip_boxes_back_bg',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'flip_boxes_back_heading'   => [
 								'label'       => esc_html__( 'Flip Box Heading Color Backside', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the backside heading.', 'fusion-builder' ),
 								'id'          => 'flip_boxes_back_heading',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--flip_boxes_back_heading',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'flip_boxes_back_text'      => [
 								'label'       => esc_html__( 'Flip Box Text Color Backside', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the backside text.', 'fusion-builder' ),
 								'id'          => 'flip_boxes_back_text',
-								'default'     => 'hsla(var(--awb-color1-h),var(--awb-color1-s),var(--awb-color1-l),calc(var(--awb-color1-a) - 20%))',
+								'default'     => 'rgba(255,255,255,0.8)',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--flip_boxes_back_text',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'flip_boxes_border_size'    => [
 								'label'       => esc_html__( 'Flip Box Border Size', 'fusion-builder' ),
@@ -927,12 +813,6 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 									'max'  => '50',
 									'step' => '1',
 								],
-								'css_vars'    => [
-									[
-										'name'          => '--flip_boxes_border_size',
-										'value_pattern' => '$px',
-									],
-								],
 							],
 							'flip_boxes_border_color'   => [
 								'label'       => esc_html__( 'Flip Box Border Color', 'fusion-builder' ),
@@ -941,12 +821,6 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 								'default'     => 'rgba(0,0,0,0)',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--flip_boxes_border_color',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'flip_boxes_border_radius'  => [
 								'label'       => esc_html__( 'Flip Box Border Radius', 'fusion-builder' ),
@@ -956,11 +830,6 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 								'type'        => 'dimension',
 								'choices'     => [ 'px', '%', 'em' ],
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name' => '--flip_boxes_border_radius',
-									],
-								],
 							],
 						],
 					],
@@ -981,7 +850,7 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
 					FusionBuilder::$js_folder_url . '/general/fusion-flip-boxes.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-flip-boxes.js',
 					[ 'jquery', 'fusion-animations' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 			}
@@ -1009,7 +878,7 @@ if ( fusion_is_element_enabled( 'fusion_flip_boxes' ) ) {
  * @since 1.0
  */
 function fusion_element_flip_boxes() {
-	$fusion_settings = awb_get_fusion_settings();
+	$fusion_settings = fusion_get_fusion_settings();
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionSC_FlipBoxes',
@@ -1021,16 +890,8 @@ function fusion_element_flip_boxes() {
 				'icon'          => 'fusiona-loop-alt2',
 				'preview'       => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-flipboxes-preview.php',
 				'preview_id'    => 'fusion-builder-block-module-flipboxes-preview-template',
-				'help_url'      => 'https://avada.com/documentation/flip-boxes-element/',
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/flip-boxes-element/',
 				'params'        => [
-					[
-						'type'            => 'textfield',
-						'heading'         => esc_attr__( 'Dynamic Content', 'fusion-builder' ),
-						'param_name'      => 'parent_dynamic_content',
-						'dynamic_data'    => true,
-						'dynamic_options' => [ 'acf_repeater_parent' ],
-						'group'           => esc_attr__( 'children', 'fusion-builder' ),
-					],
 					[
 						'type'        => 'tinymce',
 						'heading'     => esc_attr__( 'Content', 'fusion-builder' ),
@@ -1095,84 +956,6 @@ function fusion_element_flip_boxes() {
 							''    => esc_attr__( 'Default', 'fusion-builder' ),
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Front Title Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the title heading, either div or the heading tag, h1-h6.', 'fusion-builder' ),
-						'param_name'  => 'front_title_size',
-						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-						],
-						'default'     => '2',
-					],
-					[
-						'type'             => 'typography',
-						'remove_from_atts' => true,
-						'global'           => true,
-						'heading'          => esc_attr__( 'Front Title Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the title typography', 'fusion-builder' ),
-						'param_name'       => 'front_title_typography',
-						'choices'          => [
-							'font-family'    => 'front_title_font',
-							'font-size'      => 'front_title_font_size',
-							'line-height'    => 'front_title_line_height',
-							'letter-spacing' => 'front_title_letter_spacing',
-							'text-transform' => 'front_title_text_transform',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '',
-							'font-size'      => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'text-transform' => '',
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Back Title Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the title heading, either div or the heading tag, h1-h6.', 'fusion-builder' ),
-						'param_name'  => 'back_title_size',
-						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-						],
-						'default'     => '3',
-					],
-					[
-						'type'             => 'typography',
-						'remove_from_atts' => true,
-						'global'           => true,
-						'heading'          => esc_attr__( 'Back Title Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the title typography', 'fusion-builder' ),
-						'param_name'       => 'back_title_typography',
-						'choices'          => [
-							'font-family'    => 'back_title_font',
-							'font-size'      => 'back_title_font_size',
-							'line-height'    => 'back_title_line_height',
-							'letter-spacing' => 'back_title_letter_spacing',
-							'text-transform' => 'back_title_text_transform',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '',
-							'font-size'      => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'text-transform' => '',
 						],
 					],
 					[
@@ -1275,17 +1058,6 @@ function fusion_element_flip_boxes() {
 						'param_name'  => 'image_max_width',
 						'default'     => '35',
 					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'heading'    => esc_attr__( 'Margin', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_right'  => '',
-							'margin_bottom' => '',
-							'margin_left'   => '',
-						],
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-					],
 					[
 						'type'        => 'checkbox_button_set',
 						'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
@@ -1320,7 +1092,8 @@ add_action( 'fusion_builder_before_init', 'fusion_element_flip_boxes' );
  * Map shortcode to Avada Builder
  */
 function fusion_element_flip_box() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	$hover_preview = [
 		'selector' => '.fusion-flip-box',

@@ -91,7 +91,7 @@ function fusion_builder_options_section_elements( $sections ) {
 						'label'       => esc_html__( 'Carousel Navigation Box Color', 'fusion-builder' ),
 						'description' => esc_html__( 'Controls the color of the navigation box for carousel sliders.', 'fusion-builder' ),
 						'id'          => 'carousel_nav_color',
-						'default'     => 'hsla(var(--awb-color8-h),var(--awb-color8-s),var(--awb-color8-l),calc(var(--awb-color8-a) - 30%))',
+						'default'     => 'rgba(29,36,45,0.7)',
 						'type'        => 'color-alpha',
 						'option_name' => $option_name,
 						'css_vars'    => [
@@ -105,7 +105,7 @@ function fusion_builder_options_section_elements( $sections ) {
 						'label'       => esc_html__( 'Carousel Hover Navigation Box Color', 'fusion-builder' ),
 						'description' => esc_html__( 'Controls the color of the hover navigation box for carousel sliders.', 'fusion-builder' ),
 						'id'          => 'carousel_hover_color',
-						'default'     => 'hsla(var(--awb-color5-h),var(--awb-color5-s),var(--awb-color5-l),calc(var(--awb-color5-a) - 20%))',
+						'default'     => 'rgba(29,36,45,0.8)',
 						'type'        => 'color-alpha',
 						'option_name' => $option_name,
 						'css_vars'    => [

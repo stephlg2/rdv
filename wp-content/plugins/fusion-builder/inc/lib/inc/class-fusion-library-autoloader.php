@@ -82,7 +82,6 @@ class Fusion_Library_Autoloader {
 		if ( ! isset( $this->paths[ $class_name ] ) ) {
 			$this->paths[ $class_name ] = $this->locate_file( $class_name );
 		}
-
 		// Only process if file was found.
 		// If it doesn't exist, then the locate_file() method returned false.
 		if ( $this->paths[ $class_name ] ) {
@@ -98,8 +97,8 @@ class Fusion_Library_Autoloader {
 	 * @return string|false      If false, file was not located.
 	 */
 	private function locate_file( $class_name ) {
-		// Return false if the class does not start with "Fusion" or "AWB".
-		if ( 0 !== stripos( $class_name, 'Fusion' ) && 0 !== stripos( $class_name, 'AWB' ) ) {
+		// Return false if the class does not start with "Fusion".
+		if ( 0 !== stripos( $class_name, 'Fusion' ) ) {
 			return false;
 		}
 
@@ -164,8 +163,6 @@ class Fusion_Library_Autoloader {
 			self::$path_map = [
 				'Fusion'                      => FUSION_LIBRARY_PATH . '/inc/class-fusion.php',
 				'Fusion_Images'               => FUSION_LIBRARY_PATH . '/inc/class-fusion-images.php',
-				'AWB_Widget_Framework'        => FUSION_LIBRARY_PATH . '/inc/class-awb-widget-framework.php',
-				'AWB_Widget_Style'            => FUSION_LIBRARY_PATH . '/inc/class-awb-widget-style.php',
 				'Fusion_Settings'             => FUSION_LIBRARY_PATH . '/inc/class-fusion-settings.php',
 				'Fusion_Multilingual'         => FUSION_LIBRARY_PATH . '/inc/class-fusion-multilingual.php',
 				'Fusion_Sanitize'             => FUSION_LIBRARY_PATH . '/inc/class-fusion-sanitize.php',

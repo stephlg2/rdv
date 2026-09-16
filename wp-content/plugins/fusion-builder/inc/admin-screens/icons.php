@@ -1,13 +1,13 @@
 <?php
 /**
- * Admin Screen markup (Library page).
+ * Admin Screen markup (Ligrary page).
  *
  * @package fusion-builder
  */
 
 ?>
 <?php Fusion_Builder_Admin::header( 'icons' ); ?>
-<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_icons', 'create_posts' ) ) : ?>
+
 	<div class="fusion-builder-important-notice fusion-template-builder avada-db-card avada-db-card-first">
 		<div class="intro-text">
 			<h1><?php esc_html_e( 'Custom Icons', 'fusion-builder' ); ?></h1>
@@ -15,16 +15,16 @@
 
 			<div class="avada-db-card-notice">
 				<i class="fusiona-info-circle"></i>
-				<p class="avada-db-card-notice-heading">
+				<p class="avada-db-card-notice-heading">			
 					<?php
 					printf(
 						/* translators: %s: "Icons Documentation Link". */
 						esc_html__( 'Please see the %s.', 'fusion-builder' ),
-						'<a href="https://avada.com/documentation/how-to-upload-and-use-custom-icons-in-avada/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Custom Icons Documentation', 'fusion-builder' ) . '</a>'
+						'<a href="https://theme-fusion.com/documentation/avada/how-to/how-to-upload-and-use-custom-icons-in-avada/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Custom Icons Documentation', 'fusion-builder' ) . '</a>'
 					);
 					?>
 				</p>
-			</div>
+			</div>			
 		</div>
 		<form class="avada-db-create-form">
 			<input type="hidden" name="action" value="fusion_custom_icons_new">
@@ -39,7 +39,7 @@
 			</div>
 		</form>
 	</div>
-<?php endif; ?>
+
 	<div class="fusion-library-data-items avada-db-table">
 		<?php
 			$fusion_icons_table = new Fusion_Custom_Icons_Table();

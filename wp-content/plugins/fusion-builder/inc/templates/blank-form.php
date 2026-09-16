@@ -17,7 +17,11 @@
 		</h3>
 		<h4 class="subtitle">{{ fusionBuilderText.to_get_started_sub }}</h4>
 		<a href="#" class="fusion-builder-new-section-add fusion-builder-submit-button"><span class="fusiona-plus"></span> {{ fusionBuilderText.full_width_section }}</a>
-		<a href="#" id="fusion-load-studio-dialog" class="fusion-builder-submit-button" data-target="#fusion-builder-fusion_template-studio"><span class="fusiona-avada-logo"></span> {{ fusionBuilderText.avada_studio }}</a>
+		<?php if ( 'fusion_form' === get_post_type() ) : ?>
+			<a href="#" id="fusion-load-template-dialog" class="fusion-builder-submit-button"><span class="fusiona-plus"></span> {{ fusionBuilderText.pre_built_form }}</a>
+		<?php else : ?>
+			<a href="#" id="fusion-load-template-dialog" class="fusion-builder-submit-button"><span class="fusiona-plus"></span> {{ fusionBuilderText.pre_built_page }}</a>
+		<?php endif; ?>
 	</div>
 
 	<div class="fusion-builder-blank-page-info fusion-builder-blank-page-icons">
@@ -37,11 +41,11 @@
 	<div class="fusion-builder-blank-page-info fusion-builder-blank-page-video">
 		<h3>{{{ fusionBuilderText.getting_started_video }}}</h3>
 		<a href="#" class="fusion-builder-submit-button fusion-builder-video-button"><span class="fusiona-plus"></span> {{ fusionBuilderText.watch_the_video }}</a>
-		<p class="fusion-support-link"><a href="https://avada.com/help-center/" target="_blank"><span class="dashicons dashicons-editor-help"></span></a>{{ fusionBuilderText.additional_docs }}</p>
+		<p class="fusion-support-link"><a href="https://theme-fusion.com/support/documentation/fusion-builder-documentation/" target="_blank"><span class="dashicons dashicons-editor-help"></span></a>{{ fusionBuilderText.additional_docs }}</p>
 	</div>
 
 	<div id="video-dialog" title="{{{ fusionBuilderText.getting_started_video }}}">
-		<p><iframe width="560" height="315" src="https://www.youtube.com/embed/CbOQqvQDrVQ?rel=0&enablejsapi=1" frameborder="0" allowfullscreen></iframe></p>
+		<p><iframe width="560" height="315" src="https://www.youtube.com/embed/569TlvRLn90?rel=0&enablejsapi=1" frameborder="0" allowfullscreen></iframe></p>
 	</div>
 </div>
 

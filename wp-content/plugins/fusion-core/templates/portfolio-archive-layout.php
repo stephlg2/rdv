@@ -15,13 +15,7 @@ if ( ! class_exists( 'Avada' ) ) {
 ?>
 <?php
 global $wp_query, $fusion_library;
-$fusion_settings = awb_get_fusion_settings();
-
-// Enqueue facade JS if GO is On and Avada Builder is active.
-if ( 'on' === $fusion_settings->get( 'video_facade' ) && defined( 'FUSION_BUILDER_VERSION' ) ) {
-	Fusion_Dynamic_JS::enqueue_script( 'lite-vimeo' );
-	Fusion_Dynamic_JS::enqueue_script( 'lite-youtube' );
-}
+$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 
 // Get main settings and mofify as needed.
 $portfolio_layout_setting      = $fusion_settings->get( 'portfolio_archive_layout' );
@@ -261,26 +255,9 @@ if ( 'no_text' !== $portfolio_text_layout ) {
 							 * For all other layouts get the calculated max-width from the image size.
 							 */
 							?>
-							<?php
-
-							$video_max_width = ( 'one' === $portfolio_columns && 'floated' === $portfolio_one_column_text_pos ) ? '540px' : $post_featured_image_size_dimensions['width'];
-							$video_meta      = fusion_get_page_option( 'video', $post->ID );
-							$video           = apply_filters( 'privacy_iframe_embed', $video_meta );
-							if ( 'on' === $fusion_settings->get( 'video_facade' ) ) {
-
-								if ( false !== strpos( $video_meta, 'vimeo' ) ) {
-									$video_id = fusion_get_vimeo_id( $video_meta );
-									$video    = '<lite-vimeo videoid="' . $video_id . '"></lite-vimeo>';
-								}
-
-								if ( false !== strpos( $video_meta, 'youtube' ) ) {
-									$video_id = fusion_get_youtube_id( $video_meta );
-									$video    = '<lite-youtube videoid="' . $video_id . '"></lite-youtube>';
-								}
-							}
-							?>
+							<?php $video_max_width = ( 'one' === $portfolio_columns && 'floated' === $portfolio_one_column_text_pos ) ? '540px' : $post_featured_image_size_dimensions['width']; ?>
 							<div class="fusion-image-wrapper fusion-video" style="max-width:<?php echo esc_attr( $video_max_width ); ?>;">
-								<?php echo $video; // phpcs:ignore WordPress.Security ?>
+								<?php echo fusion_get_page_option( 'video', $post->ID ); // phpcs:ignore WordPress.Security ?>
 							</div>
 
 							<?php
@@ -300,10 +277,7 @@ if ( 'no_text' !== $portfolio_text_layout ) {
 								);
 							}
 							echo fusion_render_first_featured_image_markup( $post->ID, $portfolio_image_size, get_permalink( $post->ID ), true, false, false, 'default', 'default', '', '', 'yes', false, $masonry_attributes ); // phpcs:ignore WordPress.Security
-
-							if ( class_exists( 'Avada' ) ) {
-								Avada()->images->set_grid_image_meta( [] );
-							}
+							Avada()->images->set_grid_image_meta( [] );
 							?>
 
 						<?php endif; ?>

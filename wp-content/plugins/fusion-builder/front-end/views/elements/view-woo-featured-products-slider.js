@@ -30,8 +30,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Validate values.
 				this.validateValues( atts.values );
 
-				this.values = atts.values;
-
 				// Create attribute objects.
 				attributes.wooFeaturedProductsSliderShortcode         = {};
 				attributes.wooFeaturedProductsSliderShortcodeCarousel = {};
@@ -61,11 +59,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			validateValues: function( values ) {
 				values.column_spacing = _.fusionValidateAttrValue( values.column_spacing, '' );
-
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -79,11 +72,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// WooFeaturedProductsSliderShortcode attributes.
 				var wooFeaturedProductsSliderShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-woo-featured-products-slider fusion-woo-slider',
-					style: ''
+					class: 'fusion-woo-featured-products-slider fusion-woo-slider'
 				} );
-
-				wooFeaturedProductsSliderShortcode.style += this.getStyleVariables();
 
 				if ( '' !== values[ 'class' ] ) {
 					wooFeaturedProductsSliderShortcode[ 'class' ] += ' ' + values[ 'class' ];
@@ -97,23 +87,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @return {String}
-			 */
-			getStyleVariables: function() {
-				var cssVarsOptions = [];
-
-				cssVarsOptions.margin_top     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left    = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions );
-			},
-
-			/**
 			 * Builds carousel attributes.
 			 *
 			 * @since 2.0
@@ -124,7 +97,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// WooFeaturedProductsSliderShortcodeCarousel Attributes.
 				var wooFeaturedProductsSliderShortcodeCarousel = {
-					class: 'awb-carousel awb-swiper awb-swiper-carousel'
+					class: 'fusion-carousel'
 				};
 
 				if ( 'title_below_image' === values.carousel_layout ) {
@@ -217,9 +190,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 
 					if ( -1 !== inCart ) {
-						productList += '<div class="swiper-slide"><div class="' + designClass + ' fusion-item-in-cart"><div class="fusion-carousel-item-wrapper">' + image + '</div></div></div>';
+						productList += '<li class="fusion-carousel-item"><div class="' + designClass + ' fusion-item-in-cart"><div class="fusion-carousel-item-wrapper">' + image + '</div></div></li>';
 					} else {
-						productList += '<div class="swiper-slide"><div class="' + designClass + '"><div class="fusion-carousel-item-wrapper">' + image + '</div></div></div>';
+						productList += '<li class="fusion-carousel-item"><div class="' + designClass + '"><div class="fusion-carousel-item-wrapper">' + image + '</div></div></li>';
 					}
 
 				} );

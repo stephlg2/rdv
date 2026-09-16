@@ -41,7 +41,7 @@
 				 *
 				 * @deprecated
 				 *
-				 * @param FusionReduxFramework $object
+				 * @param  object $this FusionReduxFramework
 				 */
 				do_action( "fusionredux-enqueue-{$this->parent->args['opt_name']}", $this->parent ); // REMOVE
 
@@ -52,7 +52,6 @@
 			}
 
 			private function register_styles() {
-				global $fusion_library_latest_version;
 
 				//*****************************************************************
 				// FusionRedux Admin CSS
@@ -85,7 +84,7 @@
 					'select3-css',
 					FusionReduxFramework::$_url . 'assets/css/vendor/select3.css',
 					array(),
-					$fusion_library_latest_version,
+					'3.5.2',//$this->timestamp,
 					'all'
 				);
 
@@ -101,7 +100,7 @@
 					'fusionredux-spectrum-css',
 					FusionReduxFramework::$_url . 'assets/css/vendor/spectrum/' . $css_file,
 					array(),
-					$fusion_library_latest_version,
+					'1.3.3',
 					'all'
 				);
 
@@ -128,7 +127,7 @@
 					'qtip-css',
 					FusionReduxFramework::$_url . 'assets/css/vendor/qtip/' . $css_file,
 					array(),
-					$fusion_library_latest_version,
+					'2.2.0',
 					'all'
 				);
 
@@ -189,8 +188,6 @@
 			}
 
 			private function register_scripts() {
-				global $fusion_library_latest_version;
-
 				//*****************************************************************
 				// JQuery / JQuery UI JS
 				//*****************************************************************
@@ -225,7 +222,7 @@
 					'select3-js',
 					FusionReduxFramework::$_url . 'assets/js/vendor/select3.min.js',
 					array( 'jquery', 'fusionredux-select3-sortable-js' ),
-					$fusion_library_latest_version,
+					'3.5.2',
 					true
 				);
 
@@ -241,7 +238,7 @@
 					'qtip-js',
 					FusionReduxFramework::$_url . 'assets/js/vendor/qtip/' . $js_file,
 					array( 'jquery' ),
-					$fusion_library_latest_version,
+					'2.2.0',
 					true
 				);
 
@@ -257,7 +254,7 @@
 					'fusionredux-spectrum-js',
 					FusionReduxFramework::$_url . 'assets/js/vendor/spectrum/' . $js_file,
 					array( 'jquery' ),
-					$fusion_library_latest_version,
+					'1.3.3',
 					true
 				);
 
@@ -270,16 +267,12 @@
 					'fusionredux-vendor',
 					FusionReduxFramework::$_url . 'assets/js/vendor.min.js',
 					array( 'jquery' ),
-					$fusion_library_latest_version,
+					$this->timestamp,
 					true
 				);
 
-				if ( function_exists( 'AWB_Global_Colors' ) ) {
-					AWB_Global_Colors()->enqueue();
-				}
-
 				array_push( $depArray, 'fusionredux-vendor' );
-				array_push( $depArray, 'awb-color-picker' );
+
 				//*****************************************************************
 				// FusionRedux JS
 				//*****************************************************************
@@ -287,7 +280,7 @@
 					'fusionredux-js',
 					FusionReduxFramework::$_url . 'assets/js/fusionredux' . $this->min . '.js',
 					$depArray,
-					$fusion_library_latest_version,
+					$this->timestamp,
 					true
 				);
 
@@ -296,7 +289,7 @@
 					'webfontloader',
 					'https://ajax.' . $google_api . '/ajax/libs/webfont/1.6.26/webfont.js',
 					array( 'jquery' ),
-					$fusion_library_latest_version,
+					'1.6.26',
 					true
 				);
 			}
@@ -312,8 +305,8 @@
 					 * Field class file
 					 * filter 'fusionredux/{opt_name}/field/class/{field.type}
 					 *
-					 * @param string $file_path field class file path
-					 * @param array  $field     field config data
+					 * @param       string        field class file path
+					 * @param array $field        field config data
 					 */
 					$class_file = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/field/class/{$field['type']}", FusionReduxFramework::$_dir . "inc/fields/{$field['type']}/field_{$field['type']}.php", $field );
 					if ( $class_file ) {
@@ -457,7 +450,7 @@
 				 * Save pending string
 				 * filter 'fusionredux/{opt_name}/localize/save_pending
 				 *
-				 * @param string $save_pending
+				 * @param       string        save_pending string
 				 */
 				$save_pending = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/save_pending", __( 'You have changes that are not saved. Would you like to save them now?', 'fusion-builder' ) );
 
@@ -465,7 +458,7 @@
 				 * Reset all string
 				 * filter 'fusionredux/{opt_name}/localize/reset
 				 *
-				 * @param string $reset_all_string
+				 * @param       string        reset all string
 				 */
 				$reset_all = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/reset", __( 'Are you sure? Resetting will lose all custom values.', 'fusion-builder' ) );
 
@@ -473,7 +466,7 @@
 				 * Reset section string
 				 * filter 'fusionredux/{opt_name}/localize/reset_section
 				 *
-				 * @param string $reset_section_string
+				 * @param       string        reset section string
 				 */
 				$reset_section = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/reset_section", __( 'Are you sure? Resetting will lose all custom values in this section.', 'fusion-builder' ) );
 
@@ -481,7 +474,7 @@
 				 * Preset confirm string
 				 * filter 'fusionredux/{opt_name}/localize/preset
 				 *
-				 * @param string $preset_confirm_string
+				 * @param       string        preset confirm string
 				 */
 				$preset_confirm = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/preset", __( 'Your current options will be replaced with the values of this preset. Would you like to proceed?', 'fusion-builder' ) );
 				global $pagenow;

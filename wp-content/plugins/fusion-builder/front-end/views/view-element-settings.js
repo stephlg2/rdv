@@ -1,4 +1,4 @@
-/* global FusionApp, FusionPageBuilderViewManager, FusionEvents, fusionAllElements, FusionPageBuilderApp, fusionBuilderText, fusionGlobalManager, fusionBuilderInsertIntoEditor, openShortcodeGenerator, awbPalette */
+/* global FusionApp, FusionPageBuilderViewManager, FusionEvents, fusionAllElements, FusionPageBuilderApp, fusionBuilderText, fusionGlobalManager, fusionBuilderInsertIntoEditor, openShortcodeGenerator */
 /* eslint no-unused-vars: 0 */
 /* eslint no-alert: 0 */
 /* eslint no-empty-function: 0 */
@@ -17,7 +17,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		events: {
 
 			'click [id$="fusion_shortcodes_text_mode"]': 'activateSCgenerator',
-			'change input:not(.fusion-skip-change-event)': 'optionChange',
+			'change input': 'optionChange',
 			'keyup input:not(.fusion-slider-input)': 'optionChange',
 			'change select': 'optionChange',
 			'keyup textarea': 'optionChange',
@@ -34,10 +34,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			'click .option-dynamic-content': 'addDynamicContent',
 			'click .option-has-responsive': 'showResponsiveOptions',
 			'click .fusion-responsive-options li a': 'changeResponsiveOption',
-			'mouseleave .fusion-builder-option': 'hideResponsiveOptions',
-			'click .fusion-builder-toggle-subgroup': 'toggleSubGroup',
-			'click .option-has-state': 'toggleStateOptions',
-			'click .fusion-state-options li a': 'changeStateOption'
+			'mouseleave .fusion-builder-option': 'hideResponsiveOptions'
 		},
 
 		/**
@@ -48,10 +45,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		 */
 		initialize: function() {
 
-			// Manipulate model attributes via custom function if provided by the element.
+			// Manupulate model attributes via custom function if provided by the element
 			this.onSettingsCallback();
 
-			// Store element view.
+			// Store element view
 			this.elementView = FusionPageBuilderViewManager.getView( this.model.get( 'cid' ) );
 
 			this.loadComplete     = false;
@@ -297,16 +294,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				view;
 
 			view = new FusionPageBuilder.ElementSettingsParent( viewSettings );
-			if ( this.model.attributes.params.dynamic_params ) {
-				let dynamicData = FusionPageBuilderApp.base64Decode( this.model.attributes.params.dynamic_params );
-					dynamicData = _.unescape( dynamicData );
-					dynamicData = JSON.parse( dynamicData );
-
-				if ( dynamicData.parent_dynamic_content ) {
-					this.$el.find( '.fusion-child-sortables' ).addClass( 'has-dynamic-data' );
-				}
-			}
-
 			this.$el.find( '.fusion-child-sortables' ).html( view.render().el );
 			this.childSortableView = view;
 		},
@@ -356,22 +343,20 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		 * @param {Object} event - The JS event.
 		 * @return {void}
 		 */
-		optionChange: function( event, data ) {
+		optionChange: function( event ) {
 			var $target          = jQuery( event.target ),
 				$option          = $target.closest( '.fusion-builder-option' ),
 				paramName        = this.getParamName( $target, $option ),
 				$dynamicWrapper  = $option.closest( '.dynamic-wrapper' ),
 				ajaxDynamicParam = false,
-				debounceTimeout  = 'tinymce' === $option.data( 'option-type' ) ? 300 : 500,
-				element,
-				option;
+				debounceTimeout  = 'tinymce' === $option.data( 'option-type' ) ? 300 : 500;
 
 			if ( this.changesPaused ) {
 				return;
 			}
 
 			// Fix range with default value not triggering properly.
-			if ( $target.is( '.fusion-slider-input.fusion-with-default' ) || $target.is( '.awb-ignore' ) ) {
+			if ( $target.is( '.fusion-slider-input.fusion-with-default' ) ) {
 				return;
 			}
 
@@ -380,18 +365,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				ajaxDynamicParam = $option.closest( '.dynamic-wrapper' ).attr( 'data-ajax' );
 				if ( $target.closest( '.fusion-builder-option' ).hasClass( 'text' ) ) {
 					debounceTimeout = 500;
-				}
-			}
-
-			// Forced default reset on select field.
-			if ( 'object' === typeof data && 'undefined' !== typeof data.silent && data.silent && 'undefined' !== typeof this.elementView ) {
-				element = fusionAllElements[ this.elementView.model.get( 'element_type' ) ];
-				option  = element.params[ paramName ];
-
-				// If it has a callback then just set the param value directly.
-				if ( 'undefined' !== typeof option.callback ) {
-					this.elementView.changeParam( paramName, $target.val() );
-					return;
 				}
 			}
 
@@ -431,11 +404,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		 * @return {void}
 		 */
 		getParamName: function( $target, $option ) {
-			var paramName = $option.data( 'option-id' ),
-				$wrapper  = $target.closest( '.fusion-builder-option' );
+			var paramName  = $option.data( 'option-id' );
 
 			// Non single dimension fields or font family input.
-			if ( $wrapper.hasClass( 'typography' ) || ( $wrapper.hasClass( 'dimension' ) && ! $target.closest( '.single-builder-dimension' ).length ) ) {
+			if ( $target.closest( '.fusion-builder-option' ).hasClass( 'font_family' ) || ( $target.closest( '.fusion-builder-option.dimension' ).length && ! $target.closest( '.single-builder-dimension' ).length ) ) {
 				paramName = $target.attr( 'name' );
 			}
 
@@ -461,15 +433,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 			}
 
-			if ( $target.hasClass( 'fusion-builder-raw-textarea' ) || $target.hasClass( 'fusion-builder-raw-text' ) ) {
+			if ( $target.hasClass( 'fusion-builder-raw-textarea' ) ) {
 				paramValue = FusionPageBuilderApp.base64Encode( paramValue );
-			}
-
-			// Escape input fields.
-			if ( $target.is( 'input' ) && '' !== paramValue ) {
-				if ( ! $target.hasClass( 'fusion-builder-upload-field' ) && ! $target.hasClass( 'awb-typo-input' ) && ! $target.is( '#generator_element_content' ) && ! $target.is( '#generator_multi_child_content' ) && false === $target.closest( 'li' ).data( 'dynamic' ) ) {
-					paramValue = _.escape( paramValue );
-				}
 			}
 
 			if ( $target.closest( '.fusion-builder-option' ).hasClass( 'escape_html' ) ) {
@@ -494,9 +459,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				paramValue = paramValue.join( ',' );
 			}
-
-			// Remove script tags from option values.
-			paramValue = jQuery( '<div>' + paramValue + '</div>' ).find( 'script, noscript' ).remove().end().html();
 
 			return paramValue;
 		},
@@ -626,9 +588,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			// Trigger temporary active state if exists.
 			this.triggerTemporaryState( $option );
 
-			// Trigger Option change for any other option to listen for it.
-			FusionEvents.trigger( 'awb-options-change-' + paramName, paramValue, this.model.get( 'cid' ) );
-
 			if ( 'generated_element' === this.model.get( 'type' ) ) {
 				return;
 			}
@@ -651,7 +610,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			// JS trigger for option specific refreshes.
 			this._refreshJs( paramName );
-
 
 			// Trigger active states.
 			this.triggerActiveStates();
@@ -706,9 +664,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			var self = this;
 
 			// Close colorpickers before saving
-			this.$el.find( '.fusion-color-created' ).each( function() {
-				if ( 'undefined' !== typeof jQuery( this ).awbColorPicker( 'instance' ) ) {
-					jQuery( this ).awbColorPicker( 'close' );
+			this.$el.find( '.wp-color-picker' ).each( function() {
+				if ( jQuery( this ).closest( '.wp-picker-active' ).length ) {
+					jQuery( this ).wpColorPicker( 'close' );
 				}
 			} );
 
@@ -786,11 +744,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes = this.filterAttributes( attributes );
 			}
 
-			// if fusion gallery image ( child ) add parents value to atts.
-			if ( 'fusion_gallery_image' === this.model.get( 'element_type' ) ) {
-				attributes.parentValues = this.getParentValues();
-			}
-
 			this.$el.html( this.template( { atts: attributes } ) );
 		},
 
@@ -833,10 +786,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			this.optionSortable( $thisEl );
 			this.optionSortableText( $thisEl );
 			this.optionConnectedSortable( $thisEl );
+			this.optionFontFamily( $thisEl );
 			this.optionAjaxSelect( $thisEl );
-			this.optionFocusImage( $thisEl );
-			this.optionTypography( $thisEl );
-			this.optionNominatimSelector( $thisEl );
 
 			// TODO: fix for WooCommerce element.
 			if ( 'fusion_woo_shortcodes' === this.model.get( 'element_type' ) ) {
@@ -911,7 +862,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 
 			setTimeout( function() {
-				$thisEl.find( 'select, input, textarea, radio' ).filter( ':eq(0)' ).not( '[data-placeholder], .awb-color-picker' ).focus();
+				$thisEl.find( 'select, input, textarea, radio' ).filter( ':eq(0)' ).not( '[data-placeholder]' ).focus();
 			}, 1 );
 
 			// If rendering a specific tab, save this fact to prevent reinit.
@@ -1029,8 +980,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' ).removeClass( 'fusion-dialog-ui-active' );
 
 			this.remove();
-
-			FusionApp.sidebarView.changeTabTitle();
 		},
 
 		/**
@@ -1070,7 +1019,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.params.element_content = _.escape( attributes.params.element_content );
 			}
 
-			// Manipulate model attributes via custom function if provided by element
+			// Manupulate model attributes via custom function if provided by element
 			if ( 'undefined' !== typeof fusionAllElements[ this.model.get( 'element_type' ) ].on_save ) {
 
 				functionName = fusionAllElements[ this.model.get( 'element_type' ) ].on_save;
@@ -1111,9 +1060,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				this.remove();
 			}
-
-			// Change Heading text.
-			FusionApp.sidebarView.changeTabTitle();
 
 			if ( 'undefined' !== typeof this.elementView ) {
 				this.elementView.onSettingsClose();
@@ -1308,24 +1254,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			$element.toggleClass( 'active' );
 		},
 
-		toggleSubGroup: function( event ) {
-			var $element = jQuery( event.currentTarget );
-			const $tabs = $element.closest( '.fusion-builder-option' ).find( '.fusion-builder-option-container' );
-			const $content = $element.closest( '.fusion-builder-option' ).next( '.fusion-subgroups-content-wrap' );
-
-			if ( $element.hasClass( 'active' ) ) {
-				$tabs.slideDown( 250, function() {
-					$content.slideDown( 500 );
-				} );
-			} else {
-				$content.slideUp( 500, function() {
-					$tabs.slideUp( 250 );
-				} );
-			}
-
-			$element.toggleClass( 'active' );
-		},
-
 		showResponsiveOptions: function( event ) {
 			var $element = jQuery( event.currentTarget ).parent();
 
@@ -1348,8 +1276,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		},
 
 		checkPageTemplate: function() {
-			var option  = this.$el.find( 'li[data-option-id="hundred_percent"]' ),
-				postTypes = [ 'post', 'fusion_template', 'fusion_element' ];
+			var option = this.$el.find( 'li[data-option-id="hundred_percent"]' );
 
 			if ( 'fusion_builder_container' === this.model.get( 'element_type' ) ) {
 				option.show();
@@ -1358,7 +1285,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( 'fusion_tb_section' !== FusionApp.data.postDetails.post_type && 'object' !== typeof FusionApp.data.template_override.content ) {
 
 					// Check the post type.
-					if ( postTypes.includes( FusionApp.data.postDetails.post_type ) ) {
+					if ( 'post' === FusionApp.data.postDetails.post_type ) {
 
 						// Blog post.
 						if ( 'no' === FusionApp.data.postMeta._fusion.blog_width_100 || ( 'default' === FusionApp.data.postMeta._fusion.blog_width_100 && '0' === FusionApp.settings.blog_width_100 ) ) {
@@ -1384,71 +1311,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		},
 
-		toggleStateOptions: function( event ) {
-			var $element = jQuery( event.currentTarget ).parent();
-
-			$element.toggleClass( 'active-item' );
-		},
-		changeStateOption: function( event ) {
-			var $element   = jQuery( event.currentTarget );
-			var $parent    = jQuery( event.currentTarget ).closest( 'li.active-item' );
-			var $option	   = jQuery( event.currentTarget ).closest( 'li.fusion-builder-option' );
-			const state = $element.attr( 'data-indicator' );
-			const origID = $option.hasClass( 'is-option-state' ) ? $option.attr( 'data-default-state-option' ) : $option.attr( 'data-option-id' );
-			const param_name = $element.attr( 'data-param_name' ) ? $element.attr( 'data-param_name' ) : `${origID}_${state}`;
-			const $stateOption = $option.parent().find( `[data-option-id=${param_name}]` );
-
-			if ( $stateOption.attr( 'data-option-id' ) === $option.attr( 'data-option-id' ) ) {
-				$parent.removeClass( 'active-item' );
-				return;
-			}
-
-			$stateOption.addClass( 'state-active' );
-
-			const $stateLink = $parent.find( '.option-has-state' );
-			if ( $stateLink.attr( 'data-connect-state' ) ) {
-				const connectedOptions = $stateLink.attr( 'data-connect-state' ).split( ',' );
-				connectedOptions.forEach( ( option ) => {
-					$option.siblings( `[data-option-id=${option}], [data-default-state-option=${option}]` ).find( '.fusion-states-panel .fusion-state-options a[data-indicator= ' + state + ']' ).click();
-				} );
-			}
-
-			if ( $stateOption.find( '.fusion-panel-options .option-preview-toggle' ) ) {
-				$stateOption.find( '.fusion-panel-options .option-preview-toggle:not(.active)' ).click();
-			}
-
-			if ( 'default' === state ) {
-				// Trun of active preview.
-				$option.find( '.fusion-state-options li a' ).each( function() {
-					const optionName = jQuery( this ).attr( 'data-param_name' );
-					if ( optionName ) {
-						$option.parent().find( `li.fusion-builder-option[data-option-id=${optionName}] .fusion-panel-options .option-preview-toggle.active` ).click();
-					}
-				} );
-			}
-
-			if ( $option.hasClass( 'is-option-state' ) ) {
-				if ( 'default' === state ) {
-					this.defaultState( event );
-				} else {
-					$option.removeClass( 'state-active' );
-				}
-			} else {
-				// eslint-disable-next-line no-lonely-if
-				if ( 'default' !== state ) {
-					$option.addClass( 'state-inactive' );
-				}
-			}
-
-			$parent.removeClass( 'active-item' );
-		},
-		defaultState: function( event ) {
-			var $option	    	= jQuery( event.currentTarget ).closest( 'li.fusion-builder-option' );
-			var $defaultOption 	= $option.parent().find( `[data-option-id=${$option.attr( 'data-default-state-option' )}]` );
-
-			$defaultOption.removeClass( 'state-inactive' );
-			$option.removeClass( 'state-active' );
-		},
 		onInit: function() {
 		},
 
@@ -1461,7 +1323,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				optionType = false,
 				oldValue,
 				$target,
-				validColorValue,
 				values,
 				$datePicker,
 				$timePicker;
@@ -1481,17 +1342,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			switch ( optionType ) {
 			case 'colorpicker':
 			case 'colorpickeralpha':
-				$target = $option.find( '.awb-color-picker' );
+				$target = $option.find( '.fusion-builder-color-picker-hex' );
 				if ( $target.length ) {
-					if ( 'undefined' === typeof $target.awbColorPicker( 'instance' ) ) {
-						break;
-					}
-					$target.awbColorPicker( 'instance' ).defaultColor( value );
-
+					$target.data( 'default', value ).trigger( 'change' );
 					if ( '' === $target.val() ) {
-						// Refresh the preview to global color.
-						$target.awbColorPicker( 'color', value );
-						$target.awbColorPicker( 'color', '' );
+						$target.addClass( 'fusion-default-changed fusion-using-default' );
+						if ( $target.hasClass( 'wp-color-picker' ) ) {
+							$target.wpColorPicker( 'color', value );
+						}
 					}
 				}
 				break;
@@ -1513,7 +1371,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 		paramChanged: function( param, value ) {
 			var self       = this,
-				$option    = 0 < this.$el.find( 'li[data-option-id="' + param + '"]' ).length ? this.$el.find( 'li[data-option-id="' + param + '"]' ) : this.$el.find( '[name=' + param + ']' ).closest( '.fusion-builder-option' ),
+				$option    = 0 < this.$el.find( 'li[data-option-id="' + param + '"]' ).length ? this.$el.find( 'li[data-option-id="' + param + '"]' ) : this.$el.find( '#' + param ).closest( '.fusion-builder-option' ),
 				optionType = false,
 				$target,
 				values,
@@ -1605,7 +1463,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 				break;
 			case 'raw_textarea':
-			case 'raw_text':
 				try {
 					value = FusionPageBuilderApp.base64Decode( value );
 					$option.find( '#' + param ).val( value ).trigger( 'change' );
@@ -1683,7 +1540,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				self.reRender();
 				break;
 			default:
-				$option.find( '[name=' + param + ']' ).val( value ).trigger( 'change' );
+				$option.find( '#' + param ).val( value ).trigger( 'change' );
 				break;
 			}
 
@@ -1714,11 +1571,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionConnectedSortable );
 	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionDynamicData );
 	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionTypographyField );
+	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionFontFamilyField );
 	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionColumnWidth );
 	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionFormOptions );
 	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionLogics );
-	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionImageFocusPoint );
-	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.options.fusionNominatimSelector );
 
 	// Active states.
 	_.extend( FusionPageBuilder.ElementSettingsView.prototype, FusionPageBuilder.fusionActiveStates );

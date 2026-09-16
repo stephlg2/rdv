@@ -25,9 +25,6 @@
 
 			public $parent = null;
 
-			public $killswitch = false;
-
-
 			public function __construct() {
 				if ( ! $this->parent ) {
 					$this->parent = new stdClass();
@@ -115,7 +112,7 @@
 				}
 			}
 
-			public function execute( $action, $file = '', $params = [] ) {
+			public function execute( $action, $file = '', $params = '' ) {
 
 				if ( empty( $this->parent->args ) ) {
 					return;
@@ -148,7 +145,7 @@
 				return $this->do_action( $action, $file, $params );
 			}
 
-			public function do_action( $action, $file = '', $params = [] ) {
+			public function do_action( $action, $file = '', $params = '' ) {
 
 				if ( ! empty ( $params ) ) {
 					extract( $params );
@@ -190,8 +187,17 @@
 					}
 				} elseif ( $action == 'rmdir' ) {
 					$res = $wp_filesystem->rmdir( $file, $recursive );
-				// } elseif ( $action == 'copy' && ! isset( $this->filesystem->killswitch ) ) {
-				// } elseif ( $action == 'move' && ! isset( $this->filesystem->killswitch ) ) {
+				} elseif ( $action == 'copy' && ! isset( $this->filesystem->killswitch ) ) {
+					if ( isset( $this->parent->ftp_form ) && ! empty( $this->parent->ftp_form ) ) {
+						$res = copy( $file, $destination );
+						if ( $res ) {
+							chmod( $destination, $chmod );
+						}
+					} else {
+						$res = $wp_filesystem->copy( $file, $destination, $overwrite, $chmod );
+					}
+				} elseif ( $action == 'move' && ! isset( $this->filesystem->killswitch ) ) {
+					$res = $wp_filesystem->copy( $file, $destination, $overwrite );
 				} elseif ( $action == 'delete' ) {
 					$res = $wp_filesystem->delete( $file, $recursive );
 				} elseif ( $action == 'rmdir' ) {
@@ -201,7 +207,14 @@
 						$include_hidden = true;
 					}
 					$res = $wp_filesystem->dirlist( $file, $include_hidden, $recursive );
-				// } elseif ( $action == 'put_contents' && ! isset( $this->filesystem->killswitch ) ) {
+				} elseif ( $action == 'put_contents' && ! isset( $this->filesystem->killswitch ) ) {
+					// Write a string to a file
+					if ( isset( $this->parent->ftp_form ) && ! empty( $this->parent->ftp_form ) ) {
+						self::load_direct();
+						$res = self::$direct->put_contents( $file, $content, $chmod );
+					} else {
+						$res = $wp_filesystem->put_contents( $file, $content, $chmod );
+					}
 				} elseif ( $action == 'chown' ) {
 					// Changes file owner
 					if ( isset( $owner ) && ! empty( $owner ) ) {
@@ -231,8 +244,12 @@
 					$res = $wp_filesystem->get_contents_array( $file );
 				} elseif ( $action == 'object' ) {
 					$res = $wp_filesystem;
-				} 
-				// elseif ( $action == 'unzip' ) {}
+				} elseif ( $action == 'unzip' ) {
+					$unzipfile = unzip_file( $file, $destination );
+					if ( $unzipfile ) {
+						$res = true;
+					}
+				}
 
 				if ( ! $res ) {
 					if ($action == 'dirlist') {

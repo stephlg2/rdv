@@ -6,19 +6,6 @@ FusionPageBuilder.options = FusionPageBuilder.options || {};
 
 FusionPageBuilder.options.fusionLogics = {
 	optionLogics: function ( $element ) {
-		var self = this,
-			$fusionLogics;
-
-		$element      = 'undefined' !== typeof $element && $element.length ? $element : this.$el;
-		$fusionLogics = $element.find( '.fusion-builder-option-logics' );
-
-		if ( $fusionLogics.length ) {
-			$fusionLogics.each( function() {
-				self.optionLogicsInit( jQuery( this ) );
-			} );
-		}
-	},
-	optionLogicsInit: function ( $element ) {
 		var $optionsGrid = $element.find( '.options-grid' ),
 			$addBtn = $element.find( '.fusion-builder-add-sortable-child' ),
 			$fusionLogics = $optionsGrid.find( '.fusion-logics' ),
@@ -125,12 +112,11 @@ FusionPageBuilder.options.fusionLogics = {
 					break;
 
 				case 'text':
-					$options = `<input type="text" value="" placeholder="${currentChoice.placeholder || fusionBuilderText.condition_value}" class="fusion-hide-from-atts fusion-logic-option" />`;
+					$options = '<input type="text" value="" placeholder="' + fusionBuilderText.condition_value + '" class="fusion-hide-from-atts fusion-logic-option" />';
 					$wrapper.find( '.logic-value-field' ).html( $options );
 					break;
 				}
 
-				$wrapper.find( '.logic-additionals' ).remove();
 				if ( 'undefined' !== typeof currentChoice.additionals ) {
 					switch ( currentChoice.additionals.type ) {
 					case 'select':
@@ -155,6 +141,8 @@ FusionPageBuilder.options.fusionLogics = {
 						$wrapper.find( '.logic-field' ).append( $options );
 						break;
 					}
+				} else {
+					$wrapper.find( '.logic-additionals' ).remove();
 				}
 			}
 

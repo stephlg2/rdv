@@ -19,6 +19,15 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 			class FusionTB_Archives extends Fusion_Component {
 
 				/**
+				 * An array of the shortcode arguments.
+				 *
+				 * @access protected
+				 * @since 2.2.0
+				 * @var array
+				 */
+				protected $args;
+
+				/**
 				 * Constructor.
 				 *
 				 * @access public
@@ -74,7 +83,7 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 					check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
 
 					if ( isset( $_POST['fusion_meta'] ) && isset( $_POST['post_id'] ) ) {
-						$meta = fusion_string_to_array( $_POST['fusion_meta'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+						$meta = fusion_string_to_array( wp_unslash( $_POST['fusion_meta'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 						$type = isset( $meta['_fusion']['dynamic_content_preview_type'] ) && in_array( $meta['_fusion']['dynamic_content_preview_type'], [ 'search', 'archives' ], true ) ? $meta['_fusion']['dynamic_content_preview_type'] : false;
 						if ( ! $type ) {
 							echo wp_json_encode( [] );
@@ -227,7 +236,7 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 						'class' => 'fusion-archives-tb',
 					];
 
-					$attr['data-infinite-post-class'] = is_search() ? '' : $this->args['post_type'];
+					$attr['data-infinite-post-class'] = $this->args['post_type'];
 
 					return $attr;
 				}
@@ -270,7 +279,7 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 	 * @since 2.2.0
 	 */
 	function fusion_component_archives() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		$builder_status = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
 
@@ -278,12 +287,13 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 			fusion_builder_frontend_data(
 				'FusionTB_Archives',
 				[
-					'name'      => esc_attr__( 'Archives', 'fusion-builder' ),
-					'shortcode' => 'fusion_tb_archives',
-					'icon'      => 'fusiona-search-results',
-					'component' => true,
-					'templates' => [ 'content' ],
-					'params'    => [
+					'name'                    => esc_attr__( 'Archives', 'fusion-builder' ),
+					'shortcode'               => 'fusion_tb_archives',
+					'icon'                    => 'fusiona-search-results',
+					'component'               => true,
+					'templates'               => [ 'content' ],
+					'components_per_template' => 1,
+					'params'                  => [
 						[
 							'type'        => 'range',
 							'heading'     => esc_attr__( 'Posts Per Page', 'fusion-builder' ),
@@ -495,19 +505,6 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 							'value'        => esc_html__( 'Nothing Found', 'fusion-builder' ),
 							'placeholder'  => true,
 							'dynamic_data' => true,
-						],
-						[
-							'type'             => 'dimension',
-							'remove_from_atts' => true,
-							'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
-							'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
-							'param_name'       => 'margin',
-							'value'            => [
-								'margin_top'    => '',
-								'margin_right'  => '',
-								'margin_bottom' => '',
-								'margin_left'   => '',
-							],
 						],
 						[
 							'type'        => 'checkbox_button_set',
@@ -804,7 +801,7 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 						[
 							'type'        => 'select',
 							'heading'     => esc_attr__( 'Grid Separator Style', 'fusion-builder' ),
-							'description' => __( 'Controls the line style of grid separators. <strong>NOTE:</strong> Separators will display, when excerpt/content or meta data below the separators is displayed.', 'fusion-builder' ),
+							'description' => __( 'Controls the line style of grid separators. <strong>Note:</strong> Separators will display, when excerpt/content or meta data below the separators is displayed.', 'fusion-builder' ),
 							'param_name'  => 'grid_separator_style_type',
 							'value'       => [
 								''              => esc_attr__( 'Default', 'fusion-builder' ),
@@ -920,7 +917,7 @@ if ( fusion_is_element_enabled( 'fusion_blog' ) ) {
 							'group'            => esc_html__( 'Design', 'fusion-builder' ),
 						],
 					],
-					'callback'  => [
+					'callback'                => [
 						'function' => 'fusion_ajax',
 						'action'   => 'get_fusion_archives',
 						'ajax'     => true,

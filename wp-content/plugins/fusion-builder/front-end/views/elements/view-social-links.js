@@ -1,5 +1,3 @@
-/* global fusionSanitize */
-
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -41,19 +39,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var socialLinksShortcode,
 					socialLinksShortcodeSocialNetworks,
-					icons;
+					icons,
+					values = atts.values;
 
-				this.counter = this.model.get( 'cid' );
-				this.values = atts.values;
 				// Validate values and extras.
 				this.validateValuesExtras( atts.values, atts.extras );
-				this.extras = atts.extras;
 
 				// Create attribute objects.
 				socialLinksShortcode               = this.buildShortcodeAttr( atts.values );
 				socialLinksShortcodeSocialNetworks = this.buildSocialNetworksAttr( atts.values );
 				icons                              = this.buildIcons( atts.values );
-
 
 				// Reset attributes.
 				atts = {};
@@ -61,6 +56,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				atts.socialLinksShortcode               = socialLinksShortcode;
 				atts.socialLinksShortcodeSocialNetworks = socialLinksShortcodeSocialNetworks;
 				atts.icons                              = icons;
+
+				// Any extras that need passed on.
+				atts.alignment = values.alignment;
 
 				return atts;
 			},
@@ -81,7 +79,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				values.icons_boxed_radius      = _.fusionValidateAttrValue( values.icons_boxed_radius, 'px' );
 				values.font_size               = _.fusionValidateAttrValue( values.font_size, 'px' );
 				values.boxed_padding           = _.fusionValidateAttrValue( extras.boxed_padding, 'px' );
-				values.body_font_size          = extras.body_font_size;
 
 				if ( '' == values.color_type ) {
 					values.box_colors  = values.social_links_box_color;
@@ -98,8 +95,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildShortcodeAttr: function( values ) {
 				var socialLinksShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-social-links fusion-social-links-' +  this.counter,
-					'style': ''
+					class: 'fusion-social-links'
 				} );
 
 				socialLinksShortcode[ 'class' ] += _.fusionGetStickyClass( values.sticky_display );
@@ -111,11 +107,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.id ) {
 					socialLinksShortcode.id = values.id;
 				}
-
-				//Animation
-				socialLinksShortcode = _.fusionAnimations( values, socialLinksShortcode );
-
-				socialLinksShortcode.style += this.getStyleVariables( values );
 
 				return socialLinksShortcode;
 			},
@@ -135,8 +126,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( 'yes' === values.icons_boxed ) {
 					socialLinksShortcodeSocialNetworks[ 'class' ] += ' boxed-icons';
 				}
-
-				socialLinksShortcodeSocialNetworks[ 'class' ] += ' color-type-' + values.color_type;
 
 				return socialLinksShortcodeSocialNetworks;
 			},
@@ -169,9 +158,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			socialLinksIconAttr: function( args, values ) {
 				var tooltip,
 					link,
-					fontSize,
+
 					attr = {
-						class: 'fusion-social-network-icon fusion-tooltip fusion-' + args.social_network,
+						class: '',
 						style: ''
 					};
 
@@ -180,11 +169,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr[ 'class' ] += 'custom ';
 					tooltip = args.social_network.replace( 'custom_', '' );
 					args.social_network = tooltip.toLowerCase();
-				} else if ( ! _.isEmpty( args.icon_mark ) ) {
-					attr[ 'class' ] += ' ' + args.icon_mark;
-				} else {
-					attr[ 'class' ] += ' awb-icon-' + args.social_network;
 				}
+
+				attr[ 'class' ] += 'fusion-social-network-icon fusion-tooltip fusion-' + args.social_network + ' fusion-icon-' + args.social_network;
 
 				attr[ 'aria-label' ] = 'fusion-' + args.social_network;
 				link               = args.social_link;
@@ -223,8 +210,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr.style += 'font-size:' + values.font_size + ';';
 
 					if ( 'yes' === values.icons_boxed ) {
-						fontSize = ( -1 === values.font_size.indexOf( 'px' ) ) ? fusionSanitize.convert_font_size_to_px( values.font_size, values.body_font_size ) + 'px' : values.font_size;
-						attr.style += 'width:' + fontSize + ';';
+						attr.style += 'width:calc(' + values.font_size + ' + (2 * (' + values.boxed_padding + ')) + 2px);';
 					}
 				}
 
@@ -238,57 +224,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attr.title = tooltip;
 
 				return attr;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				const cssVarsOptions = [ 'alignment' ];
-
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top_medium    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right_medium  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom_medium = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top_small    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right_small  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom_small = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_border_top   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_border_right    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_border_bottom    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_border_left    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_padding_top   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_padding_right    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_padding_bottom    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.box_padding_left    = { 'callback': _.fusionGetValueWithUnit };
-
-				const customVars = [];
-
-				customVars.icon_colors_hover = values.icon_colors_hover;
-				customVars.box_colors_hover = values.box_colors_hover;
-				customVars.box_border_color = values.box_border_color;
-				customVars.box_border_color_hover = values.box_border_color_hover;
-
-				if ( values.alignment_medium ) {
-					customVars.alignment_medium = values.alignment_medium;
-				}
-
-				if ( values.alignment_small ) {
-					customVars.alignment_small = values.alignment_small;
-				}
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
 			}
-		} );
 
+		} );
 	} );
 }( jQuery ) );

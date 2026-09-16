@@ -126,9 +126,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				values.width  = _.fusionValidateAttrValue( values.width, 'px' );
 				values.height = _.fusionValidateAttrValue( values.height, 'px' );
 
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
-
 				// Set placeholder coordinates.
 				if ( '' === values.address ) {
 					values.address = 'latlng=0,0';
@@ -144,32 +141,19 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildGoogleMapShortcode: function( atts ) {
 				var googleMapShortcode = _.fusionVisibilityAtts( atts.values.hide_on_mobile, {
-					class: 'shortcode-map fusion-google-map fusion-maps-' + atts.values.api_type + '-type',
-					style: this.getStyleVars( atts.values )
+					class: 'shortcode-map fusion-google-map fusion-maps-' + atts.values.api_type + '-type'
 				} );
 
 				if ( '' !== atts.values[ 'class' ] ) {
 					googleMapShortcode[ 'class' ] += ' ' + atts.values[ 'class' ];
 				}
+
 				googleMapShortcode.id    = 'map_' + this.model.get( 'cid' );
-
-				return googleMapShortcode;
-			},
-
-			getStyleVars: function( values ) {
-				var cssVarsOptions = [
-					'margin_top',
-					'margin_bottom'
-				];
-
-				this.values = values;
-
-				if ( 'js' === values.api_type ) {
-					cssVarsOptions.push( 'height' );
-					cssVarsOptions.push( 'width' );
+				if ( 'js' === atts.values.api_type ) {
+					googleMapShortcode.style = 'height:' + atts.values.height + ';width:' + atts.values.width + ';';
 				}
 
-				return this.getCssVarsForOptions( cssVarsOptions );
+				return googleMapShortcode;
 			},
 
 			/**
@@ -233,7 +217,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 
 					if ( 'theme' === values.map_style ) {
-						colorObject = jQuery.AWB_Color( extras.primary_color );
+						colorObject = jQuery.Color( extras.primary_color );
 						rgb         = [ colorObject.red(), colorObject.green(), colorObject.blue() ];
 
 						mapStyle               = 'custom';
@@ -249,7 +233,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							infoboxTextColor = '#fff';
 						}
 					} else if ( 'custom' === values.map_style ) {
-						if ( 0 === jQuery.AWB_Color( values.overlay_color ).alpha() ) {
+						if ( 0 === jQuery.Color( values.overlay_color ).alpha() ) {
 							overlayColor = '';
 						}
 					}
@@ -335,7 +319,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 					} );
 
-					colorObject     = jQuery.AWB_Color( overlayColor );
+					colorObject     = jQuery.Color( overlayColor );
 					overlayColorHSL = {
 						hue: colorObject.hue(),
 						sat: colorObject.saturation() * 100,
@@ -447,7 +431,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					if ( values.static_map_color ) {
 						rgb         = values.static_map_color.replace( '#', '' );
-						colorObject = jQuery.AWB_Color( values.static_map_color );
+						colorObject = jQuery.Color( values.static_map_color );
 						saturation  = ( colorObject.saturation() * 200 ) - 100;
 						lightness   = ( colorObject.lightness() * 200 ) - 100;
 

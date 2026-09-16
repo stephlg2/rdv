@@ -71,7 +71,7 @@ if ( ( data.enable_rollover && 'yes' === data.display_rollover ) || 'force_yes' 
 	}
 
 	if ( 'product' === data.post_type ) {
-		iconClass = ( inCart ) ? 'awb-icon-check-square-o' : 'awb-icon-spinner';
+		iconClass = ( inCart ) ? 'fusion-icon-check-square-o' : 'fusion-icon-spinner';
 		output += '<span class="cart-loading">';
 			output += '<a href="' + data.cart_url + '">';
 				output += '<i class="' + iconClass + '" aria-hidden="true"></i>';

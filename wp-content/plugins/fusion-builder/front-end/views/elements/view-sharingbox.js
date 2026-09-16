@@ -1,4 +1,4 @@
-/* global cssua */
+/* global cssua, FusionApp */
 /* jshint -W107 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
@@ -61,9 +61,207 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.icons              = this.buildIcons( atts.values );
 				attributes.tagline            = atts.values.tagline;
 				attributes.taglineVisibility  = atts.values.tagline_visibility;
-				attributes.taglineTag         = this.getTaglineTag( atts.values );
+				attributes.styles             = this.buildStyleBlock();
 
 				return attributes;
+			},
+
+			/**
+			 * Builds styles.
+			 *
+			 * @since  2.4
+			 * @param  {Object} values - The values object.
+			 * @return {String}
+			 */
+			buildStyleBlock: function() {
+				var selector, large_layout, css, layout_medium, layout_small;
+				this.baseSelector = '.sharingbox-shortcode-icon-wrapper-' +  this.counter + '';
+				this.wrapper_selector = '.fusion-sharing-box-' +  this.counter;
+				this.selectors = [ this.baseSelector, this.wrapper_selector ];
+				this.dynamic_css = {};
+
+				if ( 'hide' ===  this.values.tagline_visibility ) {
+					this.values.layout = 'floated';
+					this.values.layout_medium = 'floated';
+					this.values.layout_small = 'floated';
+				}
+
+				if ( ! this.values.layout_medium ) {
+					this.values.layout_medium =  this.values.layout;
+				}
+
+				if ( ! this.values.layout_small ) {
+					this.values.layout_small =  this.values.layout;
+				}
+
+				if ( this.values.icon_taglines ) {
+					if ( 'before' ===  this.values.tagline_placement ) {
+						this.addCssProperty( this.wrapper_selector + ' .fusion-social-network-icon-tagline', 'margin-right', '0.5em', true );
+					} else {
+						this.addCssProperty( this.wrapper_selector + ' .fusion-social-network-icon-tagline', 'margin-left', '0.5em', true );
+					}
+
+					this.addCssProperty( this.baseSelector + ' span a', 'align-items', 'center', true );
+					this.addCssProperty( this.baseSelector + ' span a', 'display', 'flex', true );
+				}
+
+				if ( ! this.values.stacked_align_medium ) {
+					this.values.stacked_align_medium =  this.values.stacked_align;
+				}
+
+				if ( ! this.values.stacked_align_small ) {
+					this.values.stacked_align_small =  this.values.stacked_align;
+				}
+
+				if ( ! this.values.alignment_medium ) {
+					this.values.alignment_medium =  this.values.alignment;
+				}
+
+				if ( ! this.values.alignment_small ) {
+					this.values.alignment_small =  this.values.alignment;
+				}
+
+				if ( !this.isDefault( 'alignment' ) ) {
+					this.addCssProperty( [ this.baseSelector ], 'justify-content',  this.values.alignment, true );
+				}
+
+				selector = [ this.wrapper_selector ];
+				if ( 'floated' ===  this.values.layout ) {
+					this.addCssProperty( [ this.wrapper_selector + ' h4' ], 'margin-bottom', '0', true );
+				} else {
+					this.addCssProperty( selector, 'align-items',  this.values.stacked_align, true );
+					this.addCssProperty( selector, 'justify-content', 'space-around', true );
+					this.addCssProperty( [ this.baseSelector ], 'width', '100%', true );
+				}
+
+				large_layout = ( 'stacked' ===  this.values.layout ) ? ' column' : 'row';
+				this.addCssProperty( selector, 'flex-direction', large_layout, true );
+				if ( !this.isDefault( 'border_color' ) ) {
+					this.addCssProperty( selector, 'border-color',  this.values.border_color, true );
+				}
+
+				if ( !this.isDefault( 'wrapper_padding_top' ) ) {
+					this.addCssProperty( selector, 'padding-top',  this.values.wrapper_padding_top, true );
+				}
+
+				if ( !this.isDefault( 'wrapper_padding_bottom' ) ) {
+					this.addCssProperty( selector, 'padding-bottom',  this.values.wrapper_padding_bottom, true );
+				}
+
+				if ( !this.isDefault( 'wrapper_padding_left' ) ) {
+					this.addCssProperty( selector, 'padding-left',  this.values.wrapper_padding_left, true );
+				}
+
+				if ( !this.isDefault( 'wrapper_padding_right' ) ) {
+					this.addCssProperty( selector, 'padding-right',  this.values.wrapper_padding_right, true );
+				}
+
+				if ( !this.isDefault( 'border_bottom' ) ) {
+					this.addCssProperty( selector, 'border-bottom-width',  this.values.border_bottom, true );
+				}
+
+				if ( !this.isDefault( 'border_top' ) ) {
+					this.addCssProperty( selector, 'border-top-width',  this.values.border_top, true );
+				}
+
+				if ( !this.isDefault( 'border_left' ) ) {
+					this.addCssProperty( selector, 'border-left-width',  this.values.border_left, true );
+				}
+
+				if ( !this.isDefault( 'border_right' ) ) {
+					this.addCssProperty( selector, 'border-right-width',  this.values.border_right, true );
+				}
+
+				selector = [ this.baseSelector + ' span:not(.sharingbox-shortcode-icon-separator)' ];
+				if ( !this.isDefault( 'padding_top' ) ) {
+					this.addCssProperty( selector, 'padding-top',  this.values.padding_top, true );
+				}
+
+				if ( !this.isDefault( 'padding_bottom' ) ) {
+					this.addCssProperty( selector, 'padding-bottom',  this.values.padding_bottom, true );
+				}
+
+				if ( !this.isDefault( 'padding_left' ) ) {
+					this.addCssProperty( selector, 'padding-left',  this.values.padding_left, true );
+				}
+
+				if ( !this.isDefault( 'padding_right' ) ) {
+					this.addCssProperty( selector, 'padding-right',  this.values.padding_right, true );
+				}
+
+				if ( !this.isDefault( 'icon_tagline_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' a', 'color',  this.values.icon_tagline_color, true );
+				}
+
+				if ( !this.isDefault( 'icon_tagline_color_hover' ) ) {
+					this.addCssProperty( this.baseSelector + ' a:hover', 'color',  this.values.icon_tagline_color_hover, true );
+				}
+
+				if ( !this.isDefault( 'tagline_text_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' a', 'font-size',  this.values.tagline_text_size, true );
+				}
+
+				if ( !this.isDefault( 'icon_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' a i', 'font-size',  this.values.icon_size, true );
+				}
+
+				selector = [ this.baseSelector + ' span.sharingbox-shortcode-icon-separator' ];
+				if ( !this.isDefault( 'separator_border_color' ) ) {
+					this.addCssProperty( selector, 'border-color',  this.values.separator_border_color, true );
+				}
+
+				if ( !this.isDefault( 'separator_border_sizes' ) ) {
+					this.values.separator_border_sizes = this.values.separator_border_sizes + 'px';
+					this.addCssProperty( selector, 'border-right-width',  this.values.separator_border_sizes, true );
+				}
+
+				css = this.parseCSS();
+				this.dynamic_css = {};
+				layout_medium = ( 'stacked' ===  this.values.layout_medium ) ? ' column' : 'row';
+				selector = [ this.wrapper_selector ];
+				this.addCssProperty( selector, 'flex-direction', layout_medium, true );
+				if ( 'floated' !==  this.values.layout_medium ) {
+					this.addCssProperty( [ this.wrapper_selector + ' h4' ], 'margin-bottom', 'revert', true );
+					this.addCssProperty( [ this.baseSelector ], 'width', '100%', true );
+				} else {
+					this.addCssProperty( [ this.baseSelector ], 'width', 'auto', true );
+					this.addCssProperty( selector, 'align-items', 'center', true );
+					this.addCssProperty( [ this.wrapper_selector + ' h4' ], 'margin-bottom', '0', true );
+					this.addCssProperty( this.wrapper_selector + ' h4', 'margin-right', '0.5em', true );
+				}
+
+				if ( this.values.alignment_medium ) {
+					this.addCssProperty( [ this.baseSelector ], 'justify-content',  this.values.alignment_medium, true );
+					if ( 'floated' !==  this.values.layout_medium ) {
+						this.addCssProperty( selector, 'align-items',  this.values.stacked_align_medium, true );
+					}
+
+				}
+
+				css += '@media only screen and (max-width:' + FusionApp.settings.visibility_medium + 'px){' + this.parseCSS() + ' }';
+				layout_small = ( 'stacked' ===  this.values.layout_small ) ? ' column' : 'row';
+				this.dynamic_css = {};
+				this.addCssProperty( selector, 'flex-direction', layout_small, true );
+				if ( 'floated' !==  this.values.layout_small ) {
+					this.addCssProperty( [ this.wrapper_selector + ' h4' ], 'margin-bottom', 'revert', true );
+					this.addCssProperty( [ this.baseSelector ], 'width', '100%', true );
+				} else {
+					this.addCssProperty( [ this.wrapper_selector + ' h4' ], 'margin-bottom', '0', true );
+					this.addCssProperty( selector, 'align-items', 'center', true );
+					this.addCssProperty( [ this.baseSelector ], 'width', 'auto', true );
+					this.addCssProperty( this.wrapper_selector + ' h4', 'margin-right', '0.5em', true );
+				}
+
+				if ( this.values.alignment_small ) {
+					this.addCssProperty( this.baseSelector, 'justify-content',  this.values.alignment_small, true );
+					if ( 'floated' !==  this.values.layout_small ) {
+						this.addCssProperty( selector, 'align-items',  this.values.stacked_align_small, true );
+					}
+
+				}
+
+				css += '@media only screen and (max-width:' + FusionApp.settings.visibility_small + 'px){' + this.parseCSS() + ' }';
+				return ( css ) ? '<style type="text/css">' + css + '</style>' : '';
 			},
 
 			/**
@@ -77,70 +275,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			validateValuesExtras: function( values, extras ) {
 				extras.linktarget         = extras.linktarget ? '_blank' : '_self';
 				values.icons_boxed_radius = _.fusionValidateAttrValue( values.icons_boxed_radius, 'px' );
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				const cssVarsOptions = [
-					'icon_tagline_color',
-					'icon_tagline_color_hover',
-					'separator_border_color',
-					'alignment',
-					'stacked_align'
-				];
-
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.wrapper_padding_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.wrapper_padding_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.wrapper_padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.wrapper_padding_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_top_left    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_top_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius_bottom_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.tagline_text_size   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.icon_size   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.separator_border_sizes   = { 'callback': _.fusionGetValueWithUnit };
-
-				const customVars = [];
-
-				const layout = 'stacked' === values.layout ? 'column' : 'row';
-				customVars.layout = layout;
-
-				if ( values.alignment_medium ) {
-					customVars.alignment_medium = values.alignment_medium;
-				}
-
-				if ( values.stacked_align_medium ) {
-					customVars.stacked_align_medium = values.stacked_align_medium;
-				}
-
-				if ( values.alignment_small ) {
-					customVars.alignment_small = values.alignment_small;
-				}
-
-				if ( values.stacked_align_small ) {
-					customVars.stacked_align_small = values.stacked_align_small;
-				}
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
 			},
 
 			/**
@@ -165,7 +299,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.backgroundcolor ) {
 					sharingboxShortcode.style = 'background-color:' + values.backgroundcolor + ';';
 
-					if ( 'transparent' === values.backgroundcolor || 0 === jQuery.AWB_Color( values.backgroundcolor ).alpha() ) {
+					if ( 'transparent' === values.backgroundcolor || 0 === jQuery.Color( values.backgroundcolor ).alpha() ) {
 						sharingboxShortcode.style += 'padding:0;';
 					}
 				}
@@ -178,41 +312,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					sharingboxShortcode[ 'class' ] += ' ' + values.id;
 				}
 
+				if ( '' !== values.margin_top ) {
+					sharingboxShortcode.style += 'margin-top: ' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					sharingboxShortcode.style += 'margin-bottom: ' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					sharingboxShortcode.style += 'margin-left: ' + values.margin_left + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					sharingboxShortcode.style += 'margin-right: ' + values.margin_right + ';';
+				}
+
 				sharingboxShortcode[ 'data-title' ]       = values.title;
 				sharingboxShortcode[ 'data-description' ] = values.description;
 				sharingboxShortcode[ 'data-link' ]        = values.link;
 				sharingboxShortcode[ 'data-image' ]       = values.pinterest_image;
-
-				sharingboxShortcode = _.fusionAnimations( values, sharingboxShortcode );
-
-				if ( 'show' === values.tagline_visibility ) {
-					sharingboxShortcode[ 'class' ] += ' has-taglines';
-					if ( values.layout ) {
-						sharingboxShortcode[ 'class' ] += ' layout-' + values.layout;
-					}
-					if ( values.layout_medium ) {
-						sharingboxShortcode[ 'class' ] += ' layout-medium-' + values.layout_medium;
-					} else {
-						sharingboxShortcode[ 'class' ] += ' layout-medium-' + values.layout;
-					}
-
-					if ( values.layout_small ) {
-						sharingboxShortcode[ 'class' ] += ' layout-small-' + values.layout_small;
-					} else {
-						sharingboxShortcode[ 'class' ] += ' layout-small-' + values.layout;
-					}
-				}
-
-				if ( values.icon_taglines ) {
-					sharingboxShortcode[ 'class' ] += ' has-icon-taglines';
-					sharingboxShortcode[ 'class' ] += ' icon-taglines-placement-' + values.tagline_placement;
-				}
-
-				if ( ! this.isDefault( 'border_color' ) ) {
-					sharingboxShortcode.style += 'border-color:' + values.border_color + ';';
-				}
-
-				sharingboxShortcode.style += this.getStyleVariables( values );
 
 				return sharingboxShortcode;
 			},
@@ -255,24 +374,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( '' !== values.tagline_color ) {
 					sharingboxShortcodeTagline.style = 'color:' + values.tagline_color + ';';
-				}
-
-				sharingboxShortcodeTagline.style += _.fusionGetFontStyle( 'tagline_font', values );
-
-				if ( 'undefined' !== typeof values.tagline_font_size && '' !== values.tagline_font_size ) {
-					sharingboxShortcodeTagline.style += 'font-size:' + values.tagline_font_size + ';';
-				}
-
-				if ( 'undefined' !== typeof values.tagline_line_height && '' !== values.tagline_line_height ) {
-					sharingboxShortcodeTagline.style += 'line-height:' + values.tagline_line_height + ';';
-				}
-
-				if ( 'undefined' !== typeof values.tagline_letter_spacing && '' !== values.tagline_letter_spacing ) {
-					sharingboxShortcodeTagline.style += 'letter-spacing:' + values.tagline_letter_spacing + ';';
-				}
-
-				if ( 'undefined' !== typeof values.tagline_text_transform && '' !== values.tagline_text_transform ) {
-					sharingboxShortcodeTagline.style += 'text-transform:' + values.tagline_text_transform + ';';
 				}
 
 				sharingboxShortcodeTagline = _.fusionInlineEditor( {
@@ -398,7 +499,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					image       = _.fusionRawUrlEncode( values.pinterest_image );
 
 					sharingboxShortcodeIcon = {
-						class: 'fusion-social-network-icon fusion-tooltip fusion-' + iconOptions.social_network + ' awb-icon-' + iconOptions.social_network
+						class: 'fusion-social-network-icon fusion-tooltip fusion-' + iconOptions.social_network + ' fusion-icon-' + iconOptions.social_network
 					};
 					sharingboxShortcodeIconLink = {};
 
@@ -407,7 +508,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					case 'facebook':
 						socialLink = 'https://m.facebook.com/sharer.php?u=' + link;
 						if ( cssua.ua.mobile ) {
-							socialLink = 'https://www.facebook.com/sharer.php?m2w&s=100&p&#91;url&#93;=' + link + '&p&#91;images&#93;&#91;title&#93;=' + _.fusionRawUrlEncode( title );
+							socialLink = 'http://www.facebook.com/sharer.php?m2w&s=100&p&#91;url&#93;=' + link + '&p&#91;images&#93;&#91;title&#93;=' + _.fusionRawUrlEncode( title );
 						}
 						break;
 					case 'twitter':
@@ -417,19 +518,16 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						socialLink = 'https://www.linkedin.com/shareArticle?mini=true&url=' + _.fusionRawUrlEncode( link ) + '&amp;title=' + _.fusionRawUrlEncode( title ) + '&amp;summary=' + _.fusionRawUrlEncode( description );
 						break;
 					case 'reddit':
-						socialLink = 'https://reddit.com/submit?url=' + link + '&amp;title=' + title;
-						break;
-					case 'telegram':
-						socialLink = 'https://t.me/share/url?url=' + _.fusionRawUrlEncode( link ) + '&text=' + _.fusionRawUrlEncode( title );
+						socialLink = 'http://reddit.com/submit?url=' + link + '&amp;title=' + title;
 						break;
 					case 'tumblr':
-						socialLink = 'https://www.tumblr.com/share/link?url=' + _.fusionRawUrlEncode( link ) + '&amp;name=' + _.fusionRawUrlEncode( title ) + '&amp;description=' + _.fusionRawUrlEncode( description );
+						socialLink = 'http://www.tumblr.com/share/link?url=' + _.fusionRawUrlEncode( link ) + '&amp;name=' + _.fusionRawUrlEncode( title ) + '&amp;description=' + _.fusionRawUrlEncode( description );
 						break;
 					case 'pinterest':
-						socialLink = 'https://pinterest.com/pin/create/button/?url=' + _.fusionRawUrlEncode( link ) + '&amp;description=' + _.fusionRawUrlEncode( description ) + '&amp;media=' + image;
+						socialLink = 'http://pinterest.com/pin/create/button/?url=' + _.fusionRawUrlEncode( link ) + '&amp;description=' + _.fusionRawUrlEncode( description ) + '&amp;media=' + image;
 						break;
 					case 'vk':
-						socialLink = 'https://vk.com/share.php?url=' + _.fusionRawUrlEncode( link ) + '&amp;title=' + _.fusionRawUrlEncode( title ) + '&amp;description=' + _.fusionRawUrlEncode( description );
+						socialLink = 'http://vkontakte.ru/share.php?url=' + _.fusionRawUrlEncode( link ) + '&amp;title=' + _.fusionRawUrlEncode( title ) + '&amp;description=' + _.fusionRawUrlEncode( description );
 						break;
 					case 'mail':
 						socialLink = 'mailto:?subject=' + _.fusionRawUrlEncode( title ) + '&body=' + _.fusionRawUrlEncode( link );
@@ -480,18 +578,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return icons;
-			},
-
-			getTaglineTag: function( values ) {
-				if ( ! values.tagline_size ) {
-					return 'h4';
-				}
-
-				if ( !isNaN( values.tagline_size ) && !isNaN( parseFloat( values.tagline_size ) ) ) {
-					return 'h' + values.tagline_size;
-				}
-
-				return values.tagline_size;
 			}
 
 		} );

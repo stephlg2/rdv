@@ -39,6 +39,18 @@ function fusion_builder_activate() {
 	include_once FUSION_BUILDER_PLUGIN_DIR . 'inc/lib/fusion-library.php';
 	do_action( 'fb_library_loaded' );
 	FusionBuilder::get_instance();
+
+	$fb_patcher = new Fusion_Patcher(
+		[
+			'context'     => 'fusion-builder',
+			'version'     => FUSION_BUILDER_VERSION,
+			'name'        => 'Avada-Builder',
+			'parent_slug' => 'avada',
+			'page_title'  => esc_attr__( 'Avada Patcher', 'fusion-builder' ),
+			'menu_title'  => esc_attr__( 'Patcher', 'fusion-builder' ),
+			'classname'   => 'FusionBuilder',
+		]
+	);
 }
 add_action( 'after_setup_theme', 'fusion_builder_activate' );
 
@@ -74,21 +86,9 @@ require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-gradi
 require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-form-helper.php';
 require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-form-logics-helper.php';
 require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-conditional-render-helper.php';
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-transform-helper.php';
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-transition-helper.php';
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-pattern-helper.php';
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-mask-helper.php';
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-fusion-builder-motion-effects-helper.php';
 require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/class-fusion-builder-element-helper.php';
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/helpers/class-awb-recaptcha-helper.php';
-
-// Nav walker for the menu element.
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/class-awb-nav-walker.php';
 
 require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/class-fusion-dummy-post.php';
-
-// Access Control.
-require_once FUSION_BUILDER_PLUGIN_DIR . 'inc/class-awb-access-control.php';
 
 /**
  * Init the languages updater.

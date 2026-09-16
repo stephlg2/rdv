@@ -68,16 +68,10 @@
 		<!-- If there is more than one group found show tabs -->
 		<# if ( Object.keys( group_options ).length > 1 ) { #>
 			<ul class="fusion-tabs-menu">
-				<# 
-					_.each( group_options, function( options, group) {
-						if ( 'children' !== group ) {
-				#>
-							<# menuLabel = group.replace(/-/g, ' '); #>
-							<li class=""><a href="#{{ group }}">{{ menuLabel }}</a></li>
-				<# 
-						}
-					});
-				#>
+				<# _.each( group_options, function( options, group) { #>
+					<# menuLabel = group.replace(/-/g, ' '); #>
+					<li class=""><a href="#{{ group }}">{{ menuLabel }}</a></li>
+				<# }); #>
 			</ul>
 		<# }; #>
 	</div>
@@ -115,15 +109,11 @@
 
 					<!-- Show group options -->
 					<div class="fusion-tabs">
-						<# _.each( group_options, function( options, group) { 
-								if ( 'children' !== group ) {
-							#>
+						<# _.each( group_options, function( options, group) { #>
 							<div id="{{ group }}" class="fusion-tab-content">
 								<?php fusion_element_options_loop( 'options' ); ?>
 							</div>
-						<# 
-							}
-							} ); #>
+						<# } ); #>
 					</div>
 
 				<# } else { #>
@@ -144,52 +134,19 @@
 		<# if ( elementData.multi !== 'undefined' && elementData.multi == 'multi_element_parent' ) {  #>
 
 			<# element_child = elementData.element_child #>
-			<#
-				let dynamicClass = '';
-				if ( atts.params.dynamic_params ) {
-					let dynamicData = FusionPageBuilderApp.base64Decode( atts.params.dynamic_params );
-						dynamicData = _.unescape( dynamicData );
-						dynamicData = JSON.parse( dynamicData );
 
-					if ( dynamicData.parent_dynamic_content ) {
-						dynamicClass = 'has-dynamic-data';
-					}
-				}
-			#>
-
-			<div class="fusion-builder-option-advanced-module-settings {{ dynamicClass }}" data-element_type="{{ element_child }}">
+			<div class="fusion-builder-option-advanced-module-settings" data-element_type="{{ element_child }}">
 				<div class="fusion-builder-option-advanced-module-settings-content">
-
-					<# if ( Object.keys( group_options ).length > 1 ) { #>
-							<# 
-								_.each( group_options, function( options, group) {
-									if ( 'children' === group ) {
-							#>
-								<?php fusion_element_options_loop( 'options', 'fusion-dynamic-parent-option' ); ?>
-							<# 
-									}
-								});
-							#>
-					<# }; #>
 
 					<#
 					addEditItems      = 'undefined' !== typeof elementData.add_edit_items ? elementData.add_edit_items : fusionBuilderText.add_edit_items;
 					sortableItemsInfo = 'undefined' !== typeof elementData.sortable_items_info ? elementData.sortable_items_info : fusionBuilderText.sortable_items_info;
 					#>
-					<h3 class="fusion-multi-child-title">{{ addEditItems }}</h3>
-					<p class="fusion-multi-child-desc">{{ sortableItemsInfo }}</p>
+					<h3>{{ addEditItems }}</h3>
+					<p>{{ sortableItemsInfo }}</p>
 
 					<ul class="fusion-builder-sortable-options"></ul>
-					<a href="#" class="fusion-multi-child-button fusion-builder-add-multi-child"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionAllElements[element_child].name }}</span></a>
-					<# if ( 'fusion_checklist' === elementData.shortcode ) { #>
-					<a href="#" class="fusion-multi-child-button fusion-builder-add-predefined-multi-child"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.bulk_add }}</span></a>
-					<# } #>
-					<# if ( 'fusion_gallery' === elementData.shortcode ) { #>
-					<a href="#" class="fusion-multi-child-button fusion-builder-add-multi-gallery-images"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.bulk_add }}</span></a>
-					<# } #>
-					<# if ( 'fusion_images' === elementData.shortcode ) { #>
-					<a href="#" class="fusion-multi-child-button fusion-builder-add-multi-gallery-images"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.bulk_add }}</span></a>
-					<# } #>
+					<a href="#" class="fusion-builder-add-multi-child"><span class="fusiona-plus"></span> {{ fusionAllElements[element_child].name }}</a>
 				</div>
 			</div>
 

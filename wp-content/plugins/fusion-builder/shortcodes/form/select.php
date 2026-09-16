@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_select' ) ) {
 		class FusionForm_Select extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -35,12 +53,11 @@ if ( fusion_is_element_enabled( 'fusion_form_select' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'label'            => '',
 					'name'             => '',
 					'required'         => '',
-					'empty_notice'     => '',
 					'placeholder'      => '',
 					'input_field_icon' => '',
 					'options'          => '',
@@ -83,15 +100,13 @@ if ( fusion_is_element_enabled( 'fusion_form_select' ) ) {
 				foreach ( $this->args['options'] as $option ) {
 					$selected = $option[0] ? ' selected ' : '';
 					$label    = trim( $option[1] );
-					$value    = '' !== $option[2] ? trim( $option[2] ) : $label;
+					$value    = ! empty( $option[2] ) ? trim( $option[2] ) : $label;
 
 					$options .= '<option value="' . $value . '" ' . $selected . '>' . $label . '</option>';
 				}
 
 				$element_html  = '<div class="fusion-select-wrapper">';
-				$element_html .= '<select ';
-				$element_html .= '' !== $element_data['empty_notice'] ? 'data-empty-notice="' . $element_data['empty_notice'] . '" ' : '';
-				$element_html .= 'tabindex="' . $this->args['tab_index'] . '" id="' . $this->args['name'] . '" name="' . $this->args['name'] . '"' . $element_data['class'] . $element_data['required'] . $element_data['style'] . $element_data['holds_private_data'] . '>';
+				$element_html .= '<select tabindex="' . $this->args['tab_index'] . '" id="' . $this->args['name'] . '" name="' . $this->args['name'] . '"' . $element_data['class'] . $element_data['required'] . $element_data['style'] . $element_data['holds_private_data'] . '>';
 				$element_html .= $options;
 				$element_html .= '</select>';
 
@@ -100,7 +115,7 @@ if ( fusion_is_element_enabled( 'fusion_form_select' ) ) {
 
 				if ( isset( $this->args['input_field_icon'] ) && '' !== $this->args['input_field_icon'] ) {
 					$icon_html     = '<div class="fusion-form-input-with-icon">';
-					$icon_html    .= '<i class=" ' . fusion_font_awesome_name_handler( $this->args['input_field_icon'] ) . '"></i>';
+					$icon_html    .= '<i class=" ' . $this->args['input_field_icon'] . '"></i>';
 					$element_html  = $icon_html . $element_html;
 					$element_html .= '</div>';
 				}
@@ -137,6 +152,8 @@ if ( fusion_is_element_enabled( 'fusion_form_select' ) ) {
  */
 function fusion_form_select() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_Select',
@@ -159,7 +176,7 @@ function fusion_form_select() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,
@@ -173,20 +190,6 @@ function fusion_form_select() {
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Empty Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter text validation notice that should display if data input is empty.', 'fusion-builder' ),
-						'param_name'  => 'empty_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'required',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
 						],
 					],
 					[
@@ -207,7 +210,7 @@ function fusion_form_select() {
 						'type'           => 'form_options',
 						'heading'        => esc_html__( 'Options', 'fusion-builder' ),
 						'param_name'     => 'options',
-						'description'    => esc_html__( 'Add options for the input field. Use the checkbox to preselect a value.', 'fusion-builder' ),
+						'description'    => esc_html__( 'Add options for the input field.', 'fusion-builder' ),
 						'value'          => 'W1tmYWxzZSwiT3B0aW9uIiwiIl1d',
 						'allow_multiple' => 'no',
 					],

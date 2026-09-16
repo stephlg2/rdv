@@ -5,7 +5,7 @@
  * @package fusion-builder
  */
 
-$fusion_settings = awb_get_fusion_settings();
+$fusion_settings = fusion_get_fusion_settings();
 $border_size     = $fusion_settings->get( 'chart_border_size' );
 ?>
 <script type="text/template" id="fusion-builder-block-module-settings-chart-template">
@@ -237,7 +237,7 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 									<#
 									for ( c = columnOffset; c <= max_columns; c++ ) {
 										var txt_color = 'undefined' !== typeof legend_text_colors[ c - columnOffset ] && '' !== legend_text_colors[ c - columnOffset ] ? legend_text_colors[ c - columnOffset ] : ''; #>
-									<th class="th-{{ c }}" data-th-id="{{ c }}"><div class="option-field"><input type="text" value="{{ txt_color }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-{{ c }}" data-th-id="{{ c }}"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="{{ txt_color }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
 									<# } #>
 								</tr>
 
@@ -248,9 +248,9 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 									<th class="th-2" data-th-id="2"></th>
 									<th class="th-3" data-th-id="3"></th>
 									<th class="th-4" data-th-id="4"></th>
-									<th class="th-5" data-th-id="5"><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
-									<th class="th-6" data-th-id="6"><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
-									<th class="th-7" data-th-id="7"><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-5" data-th-id="5"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-6" data-th-id="6"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-7" data-th-id="7"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
 								</tr>
 
 							<# } #>
@@ -265,7 +265,7 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 									<#
 									for ( c = columnOffset; c <= max_columns; c++ ) {
 										var bg_color = 'undefined' !== typeof bg_colors[ c - columnOffset ] && '' !== bg_colors[ c - columnOffset ] ? bg_colors[ c - columnOffset ] : ''; #>
-									<th class="th-{{ c }}" data-th-id="{{ c }}"><div class="option-field"><input type="text" value="{{ bg_color }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-{{ c }}" data-th-id="{{ c }}"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="{{ bg_color }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
 									<# } #>
 								</tr>
 
@@ -276,9 +276,9 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 									<th class="th-2" data-th-id="2"></th>
 									<th class="th-3" data-th-id="3"></th>
 									<th class="th-4" data-th-id="4"></th>
-									<th class="th-5" data-th-id="5"><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
-									<th class="th-6" data-th-id="6"><div class="option-field"><input type="text" value="#8bc34a" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
-									<th class="th-7" data-th-id="7"><div class="option-field"><input type="text" value="#ff9800" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-5" data-th-id="5"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-6" data-th-id="6"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#8bc34a" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-7" data-th-id="7"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#ff9800" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
 								</tr>
 
 							<# } #>
@@ -293,7 +293,7 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 									<#
 									for ( c = columnOffset; c <= max_columns; c++ ) {
 										var border_color = 'undefined' !== typeof border_colors[ c - columnOffset ] && '' !== border_colors[ c - columnOffset ] ? border_colors[ c - columnOffset ] : ''; #>
-									<th class="th-{{ c }}" data-th-id="{{ c }}"><div class="option-field"><input type="text" value="{{ border_color }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-{{ c }}" data-th-id="{{ c }}"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="{{ border_color }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
 									<# } #>
 								</tr>
 
@@ -304,9 +304,9 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 									<th class="th-2" data-th-id="2"></th>
 									<th class="th-3" data-th-id="3"></th>
 									<th class="th-4" data-th-id="4"></th>
-									<th class="th-5" data-th-id="5"><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
-									<th class="th-6" data-th-id="6"><div class="option-field"><input type="text" value="#8bc34a" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
-									<th class="th-7" data-th-id="7"><div class="option-field"><input type="text" value="#ff9800" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-5" data-th-id="5"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-6" data-th-id="6"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#8bc34a" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
+									<th class="th-7" data-th-id="7"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#ff9800" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></th>
 								</tr>
 							<# } #>
 
@@ -322,9 +322,9 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 									<tr class="fusion-table-row tr-{{ i }}" data-tr-id="{{ i }}">
 
 										<td class="td-1" data-td-id="1"><input type="text" placeholder="{{ fusionBuilderText.legend_label }}" value="{{ td[ i ][1] }}" /><span class="fa fusiona-trash-o fusion-builder-table-delete-row" title="{{ fusionBuilderText.delete_row }}" data-row-id="{{ 1 }}" /></td>
-										<td class="td-2" data-td-id="2"><div class="option-field"><input type="text" value="{{ td[ i ][2] }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
-										<td class="td-3" data-td-id="3"><div class="option-field"><input type="text" value="{{ td[ i ][3] }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
-										<td class="td-4" data-td-id="4"><div class="option-field"><input type="text" value="{{ td[ i ][4] }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
+										<td class="td-2" data-td-id="2"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="{{ td[ i ][2] }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
+										<td class="td-3" data-td-id="3"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="{{ td[ i ][3] }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
+										<td class="td-4" data-td-id="4"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="{{ td[ i ][4] }}" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
 
 										<# for ( c = columnOffset; c <= max_columns; c++ ) {
 
@@ -350,9 +350,9 @@ $border_size     = $fusion_settings->get( 'chart_border_size' );
 
 								<tr class="fusion-table-row tr-1" data-tr-id="1">
 									<td class="td-1" data-td-id="1"><input type="text" placeholder="{{ fusionBuilderText.legend_label }}" value="Data Set 1" /><span class="fa fusiona-trash-o fusion-builder-table-delete-row" title="{{ fusionBuilderText.delete_row }}" data-row-id="{{ 1 }}" /></td>
-									<td class="td-2" data-td-id="2"><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
-									<td class="td-3" data-td-id="3"><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
-									<td class="td-4" data-td-id="4"><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
+									<td class="td-2" data-td-id="2"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#ffffff" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
+									<td class="td-3" data-td-id="3"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
+									<td class="td-4" data-td-id="4"><span class="fusion-color-preview"></span><div class="option-field"><input type="text" value="#00bcd4" class="fusion-builder-color-picker-hex-new color-picker" data-alpha="true" /></div></td>
 									<td class="td-5" data-td-id="5"><input type="text" placeholder="{{ fusionBuilderText.enter_value }}" value="5" /></td>
 									<td class="td-6" data-td-id="6"><input type="text" placeholder="{{ fusionBuilderText.enter_value }}" value="7" /></td>
 									<td class="td-7" data-td-id="7"><input type="text" placeholder="{{ fusionBuilderText.enter_value }}" value="9" /></td>

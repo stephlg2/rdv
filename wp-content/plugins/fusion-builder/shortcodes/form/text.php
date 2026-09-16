@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_text' ) ) {
 		class FusionForm_Text extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -35,6 +53,7 @@ if ( fusion_is_element_enabled( 'fusion_form_text' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'label'            => '',
 					'name'             => '',
@@ -45,15 +64,10 @@ if ( fusion_is_element_enabled( 'fusion_form_text' ) ) {
 					'disabled'         => '',
 					'logics'           => '',
 					'input_field_icon' => '',
-					'pattern'          => '',
-					'custom_pattern'   => '',
 					'required'         => '',
-					'invalid_notice'   => '',
-					'empty_notice'     => '',
 					'maxlength'        => '0',
 					'minlength'        => '0',
 					'tooltip'          => '',
-					'value'            => '',
 				];
 			}
 
@@ -66,10 +80,6 @@ if ( fusion_is_element_enabled( 'fusion_form_text' ) ) {
 			 * @return string
 			 */
 			public function render_input_field( $content ) {
-				// If no value, unset so the isset checks which are shared remain the same.
-				if ( '' === $this->args['value'] ) {
-					unset( $this->args['value'] );
-				}
 				return $this->generate_input_field( $this->args, 'text' );
 			}
 
@@ -92,7 +102,8 @@ if ( fusion_is_element_enabled( 'fusion_form_text' ) ) {
 				$content = apply_filters( 'fusion_shortcode_content', $content, $this->shortcode_handle, $args );
 
 				$this->args = $defaults;
-				$html       = $this->get_form_field( $content );
+
+				$html = $this->get_form_field( $content );
 
 				return apply_filters( 'fusion_form_component_' . $this->shortcode_handle . '_content', $html, $args );
 			}
@@ -108,6 +119,8 @@ if ( fusion_is_element_enabled( 'fusion_form_text' ) ) {
  * @since 3.1
  */
 function fusion_form_text() {
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -131,18 +144,10 @@ function fusion_form_text() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,
-					],
-					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Field Value', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Enter a starting value for the element.  Usually this should be empty and a placeholder used instead.', 'fusion-builder' ),
-						'param_name'   => 'value',
-						'value'        => '',
-						'dynamic_data' => true,
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -153,20 +158,6 @@ function fusion_form_text() {
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Empty Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter text validation notice that should display if data input is empty.', 'fusion-builder' ),
-						'param_name'  => 'empty_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'required',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
 						],
 					],
 					[
@@ -200,52 +191,6 @@ function fusion_form_text() {
 						'param_name'  => 'input_field_icon',
 						'value'       => '',
 						'description' => esc_attr__( 'Select an icon for the input field, click again to deselect.', 'fusion-builder' ),
-					],
-					[
-						'type'        => 'select',
-						'heading'     => esc_attr__( 'Allowed Input Pattern', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select allowed input pattern. Select custom to add your own pattern.', 'fusion-builder' ),
-						'param_name'  => 'pattern',
-						'value'       => [
-							''                   => esc_attr__( 'None', 'fusion-builder' ),
-							'custom'             => esc_attr__( 'Custom', 'fusion-builder' ),
-							'letters'            => esc_attr__( 'Letters', 'fusion-builder' ),
-							'alpha_numeric'      => esc_attr__( 'Alpha Numeric', 'fusion-builder' ),
-							'number'             => esc_attr__( 'Numbers Only', 'fusion-builder' ),
-							'credit_card_number' => esc_attr__( 'Credit Card Number', 'fusion-builder' ),
-							'phone'              => esc_attr__( 'Phone Number', 'fusion-builder' ),
-							'url'                => esc_attr__( 'URL', 'fusion-builder' ),
-						],
-						'default'     => '',
-					],
-					[
-						'type'        => 'raw_text',
-						'heading'     => esc_attr__( 'Custom Pattern', 'fusion-builder' ),
-						'param_name'  => 'custom_pattern',
-						'value'       => '',
-						/* translators: Patterns link. */
-						'description' => sprintf( __( 'Enter the custom pattern. For pattern examples, you can check %s.', 'fusion-builder' ), '<a href="https://www.html5pattern.com/" target="_blank">' . esc_attr__( 'HTML5 Pattern', 'fusion-builder' ) . '</a>' ),
-						'dependency'  => [
-							[
-								'element'  => 'pattern',
-								'value'    => 'custom',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Invalid Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter validation notice that should display if data input is invalid.', 'fusion-builder' ),
-						'param_name'  => 'invalid_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'pattern',
-								'value'    => '',
-								'operator' => '!=',
-							],
-						],
 					],
 					[
 						'type'        => 'range',

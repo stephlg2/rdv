@@ -46,7 +46,7 @@
 		// Add the loading mechanism
 		jQuery( '.fusionredux-action_bar .spinner' ).addClass( 'is-active' );
 
-		jQuery( '.fusionredux-action_bar input, .awb-ignore' ).attr( 'disabled', 'disabled' );
+		jQuery( '.fusionredux-action_bar input' ).attr( 'disabled', 'disabled' );
 		var $notification_bar = jQuery( document.getElementById( 'fusionredux_notification_bar' ) );
 		$notification_bar.slideUp();
 		jQuery( '.fusionredux-save-warn' ).slideUp();
@@ -110,7 +110,7 @@
 			};
 			console.log( fusionredux.ajax.console );
 			console.log( response.responseText );
-			jQuery( '.fusionredux-action_bar input, .awb-ignore' ).removeAttr( 'disabled' );
+			jQuery( '.fusionredux-action_bar input' ).removeAttr( 'disabled' );
 			overlay.fadeOut( 'fast' );
 			jQuery( '.fusionredux-action_bar .spinner' ).removeClass( 'is-active' );
 			alert( fusionredux.ajax.alert );
@@ -119,7 +119,7 @@
 			if ( response.action && response.action == "reload" ) {
 				location.reload( true );
 			} else if ( response.status == "success" ) {
-				jQuery( '.fusionredux-action_bar input, .awb-ignore' ).removeAttr( 'disabled' );
+				jQuery( '.fusionredux-action_bar input' ).removeAttr( 'disabled' );
 				overlay.fadeOut( 'fast' );
 				jQuery( '.fusionredux-action_bar .spinner' ).removeClass( 'is-active' );
 				fusionredux.options = response.options;
@@ -135,7 +135,7 @@
 				$save_notice.slideDown();
 				$save_notice.delay( 4000 ).slideUp();
 			} else {
-				jQuery( '.fusionredux-action_bar input, .awb-ignore' ).removeAttr( 'disabled' );
+				jQuery( '.fusionredux-action_bar input' ).removeAttr( 'disabled' );
 				jQuery( '.fusionredux-action_bar .spinner' ).removeClass( 'is-active' );
 				overlay.fadeOut( 'fast' );
 				jQuery( '.wrap h2:first' ).parent().append( '<div class="error fusionredux_ajax_save_error" style="display:none;"><p>' + response.status + '</p></div>' );
@@ -654,39 +654,14 @@
 	};
 
 	$.fusionredux.initFields = function() {
-
-		// Theme-Fusion Change:
-		// Some fields needs to be init even when the tab is not displayed, because
-		// the settings are not rendered via PHP, and they are not saved from other section.
-		$( ".fusionredux-group-tab .fusionredux-field-init" ).each( function() {
-			if ( 'typography_sets' !== $( this ).attr( 'data-type' ) ) {
-				return;
-			}
-
-			var type = $( this ).attr( 'data-type' );
-			if ( typeof fusionredux.field_objects != 'undefined' && fusionredux.field_objects[type] ) {
-				fusionredux.field_objects[type].init();
-			}
-
-			if ( !fusionredux.customizer && $( this ).hasClass( 'fusionredux_remove_th' )  ) {
-
-				var tr = $( this ).parents( 'tr:first' );
-				var th = tr.find( 'th:first' );
-				if ( th.html() && th.html().length > 0 ) {
-					$( this ).prepend( th.html() );
-					$( this ).find( '.fusionredux_field_th' ).css( 'padding', '0 0 10px 0' );
-				}
-				$( this ).parent().attr( 'colspan', '2' );
-				th.remove();
-			}
-		} );
-
 		$( ".fusionredux-group-tab:visible" ).find( ".fusionredux-field-init:visible" ).each(
 			function() {
 
 				// Initialize color picker
-				$( this ).find( ".color-picker:not( .fusionredux-typography-color )" ).each( function() {
-					$(this).awbColorPicker();
+				$( this ).find( ".color-picker" ).each( function() {
+					$(this).wpColorPicker({
+						palettes: ['#000000','#ffffff','#f44336','#E91E63','#03A9F4','#00BCD4','#8BC34A','#FFEB3B','#FFC107','#FF9800','#607D8B']
+					});
 				});
 
 				var type = $( this ).attr( 'data-type' );
@@ -1114,7 +1089,11 @@
 						classNames = $( '#' + fusionredux.args.opt_name + '-' + id ).parents( 'tr:first' ).prop( 'className' ).split( ' ' );
 
 						gutterSequence = $.grep( classNames, function( value ) {
-							return value.includes( 'fusion-gutter-' );
+							if ( -1 !== value.indexOf( 'fusion-gutter-' ) ) {
+								return true;
+							} else {
+								return false;
+							}
 						});
 						gutterSequence = ( gutterSequence[0] ) ? gutterSequence[0].replace( 'fusion-gutter-', '' ).split( '-' ) : false;
 					}

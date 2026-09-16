@@ -68,7 +68,7 @@ class Fusion_Font_Awesome {
 	 * @return string
 	 */
 	public function get_local_subsets_tags() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		$transient_name = 'fusion_local_subsets_preload_tags';
 		$tags           = get_transient( $transient_name );
@@ -147,7 +147,7 @@ class Fusion_Font_Awesome {
 	 * @return string
 	 */
 	public function get_css() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		$transient_name  = 'fusion_fontawesome';
 		$active_language = Fusion_Multilingual::get_active_language();
@@ -234,7 +234,7 @@ class Fusion_Font_Awesome {
 	 * @return bool
 	 */
 	public static function is_fa_enabled() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		return '' !== $fusion_settings->get( 'status_fontawesome' ) ? true : false;
 	}
@@ -246,7 +246,7 @@ class Fusion_Font_Awesome {
 	 * @return bool
 	 */
 	public static function is_fa_pro_enabled() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		return '1' === $fusion_settings->get( 'status_fontawesome_pro' ) ? true : false;
 	}
@@ -323,7 +323,7 @@ class Fusion_Font_Awesome {
 	 * @return string
 	 */
 	protected function get_local_subsets_font_face() {
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
 
 		$subsets = $fusion_settings->get( 'status_fontawesome' );
 		$css     = '';

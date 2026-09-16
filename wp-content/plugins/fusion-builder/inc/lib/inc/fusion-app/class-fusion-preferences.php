@@ -142,17 +142,6 @@ class Fusion_Preferences {
 		$params = [
 			[
 				'type'        => 'radio_button_set',
-				'heading'     => esc_html__( 'Builder Styling Mode', 'fusion-builder' ),
-				'description' => esc_html__( 'Choose if you want a light or dark builder UI style.', 'fusion-builder' ),
-				'param_name'  => 'styling_mode',
-				'value'       => [
-					'light' => esc_html__( 'Light', 'fusion-builder' ),
-					'dark'  => esc_html__( 'Dark', 'fusion-builder' ),
-				],
-				'default'     => ( isset( self::$preferences['styling_mode'] ) ? self::$preferences['styling_mode'] : 'light' ),
-			],
-			[
-				'type'        => 'radio_button_set',
 				'heading'     => esc_html__( 'Sidebar Panel Position', 'fusion-builder' ),
 				'description' => esc_html__( 'Select the side which you want the sidebar panel to be displayed on.', 'fusion-builder' ),
 				'param_name'  => 'sidebar_position',
@@ -194,17 +183,6 @@ class Fusion_Preferences {
 					'off' => esc_html__( 'Off', 'fusion-builder' ),
 				],
 				'default'     => ( isset( self::$preferences['keyboard_shortcuts'] ) ? self::$preferences['keyboard_shortcuts'] : 'on' ),
-			],
-			[
-				'type'        => 'radio_button_set',
-				'heading'     => esc_html__( 'Show Option Descriptions By Default', 'fusion-builder' ),
-				'description' => esc_html__( 'Choose if option descriptions should be shown or hidden by default.', 'fusion-builder' ),
-				'param_name'  => 'descriptions',
-				'value'       => [
-					'show' => esc_html__( 'Show', 'fusion-builder' ),
-					'hide' => esc_html__( 'Hide', 'fusion-builder' ),
-				],
-				'default'     => ( isset( self::$preferences['descriptions'] ) ? self::$preferences['descriptions'] : 'hide' ),
 			],
 			[
 				'type'        => 'radio_button_set',
@@ -252,18 +230,6 @@ class Fusion_Preferences {
 			],
 			[
 				'type'        => 'radio_button_set',
-				'heading'     => esc_html__( 'Enable Preview for Transform Options', 'fusion-builder' ),
-				'description' => esc_html__( 'Choose if element transform options preview.', 'fusion-builder' ),
-				'param_name'  => 'element_transform',
-				'value'       => [
-					'always'  => esc_html__( 'Always', 'fusion-builder' ),
-					'editing' => esc_html__( 'Editing', 'fusion-builder' ),
-					'never'   => esc_html__( 'Never', 'fusion-builder' ),
-				],
-				'default'     => ( isset( self::$preferences['element_transform'] ) ? self::$preferences['element_transform'] : 'editing' ),
-			],
-			[
-				'type'        => 'radio_button_set',
 				'heading'     => esc_html__( 'Show Droppable Areas While Dragging', 'fusion-builder' ),
 				'description' => esc_html__( 'Enable in order to see all dropppable areas while dragging element.', 'fusion-builder' ),
 				'param_name'  => 'droppables_visible',
@@ -283,17 +249,6 @@ class Fusion_Preferences {
 					'off' => esc_html__( 'Off', 'fusion-builder' ),
 				],
 				'default'     => ( isset( self::$preferences['sidebar_overlay'] ) ? self::$preferences['sidebar_overlay'] : 'off' ),
-			],
-			[
-				'type'        => 'radio_button_set',
-				'heading'     => esc_html__( 'Options Sub Tabs', 'fusion-builder' ),
-				'description' => esc_html__( 'Choose if options sub tabs expanded or collapsed.', 'fusion-builder' ),
-				'param_name'  => 'options_subtabs',
-				'value'       => [
-					'expanded'  => esc_html__( 'Expanded', 'fusion-builder' ),
-					'collapsed' => esc_html__( 'Collapsed', 'fusion-builder' ),
-				],
-				'default'     => ( isset( self::$preferences['options_subtabs'] ) ? self::$preferences['options_subtabs'] : 'expanded' ),
 			],
 		];
 

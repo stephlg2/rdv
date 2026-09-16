@@ -132,7 +132,7 @@
 
 				echo json_encode( array(
 					'status'  => 'error',
-					'message' => esc_html__( "Support hash could not be generated. Please try again later.", 'fusion-builder' ),
+					'message' => $response->get_error_message()
 				) );
 				die( 1 );
 			}

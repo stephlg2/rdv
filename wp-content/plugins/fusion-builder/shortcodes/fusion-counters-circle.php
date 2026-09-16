@@ -57,18 +57,15 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 			 * @static
 			 * @access public
 			 * @since 2.0.0
-			 * @param 'parent'|'child' $context Whether we want parent or child.
+			 * @param string $context Whether we want parent or child.
+			 *                        Returns array( parent, child ) if empty.
 			 * @return array
 			 */
 			public static function get_element_defaults( $context = '' ) {
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$parent = [
-					'margin_top'       => '',
-					'margin_right'     => '',
-					'margin_bottom'    => '',
-					'margin_left'      => '',
 					'hide_on_mobile'   => fusion_builder_default_visibility( 'string' ),
 					'class'            => '',
 					'id'               => '',
@@ -136,14 +133,14 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_parent( $args, $content = '' ) {
-				$this->defaults    = self::get_element_defaults( 'parent' );
-				$this->parent_args = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_counters_circle' );
 
-				$this->parent_args['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_bottom'], 'px' );
-				$this->parent_args['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_left'], 'px' );
-				$this->parent_args['margin_right']  = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_right'], 'px' );
-				$this->parent_args['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $this->parent_args['margin_top'], 'px' );
-				$this->args                         = $this->parent_args;
+				global $fusion_settings;
+
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_counters_circle' );
+
+				extract( $defaults );
+
+				$this->parent_args = $defaults;
 
 				$html = '<div ' . FusionBuilder::attributes( 'counters-circle-shortcode' ) . '>' . do_shortcode( $content ) . '</div>';
 
@@ -162,18 +159,10 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 			 */
 			public function parent_attr() {
 
-				$css_vars = [
-					'margin_top',
-					'margin_right',
-					'margin_bottom',
-					'margin_left',
-				];
-
 				$attr = fusion_builder_visibility_atts(
 					$this->parent_args['hide_on_mobile'],
 					[
 						'class' => 'fusion-counters-circle counters-circle',
-						'style' => $this->get_css_vars_for_options( $css_vars ),
 					]
 				);
 
@@ -183,11 +172,6 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 
 				if ( $this->parent_args['id'] ) {
 					$attr['id'] = $this->parent_args['id'];
-				}
-
-				if ( $this->parent_args['animation_offset'] ) {
-					$animations = FusionBuilder::animations( [ 'offset' => $this->parent_args['animation_offset'] ] );
-					$attr       = array_merge( $attr, $animations );
 				}
 
 				return $attr;
@@ -204,13 +188,27 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_child( $args, $content = '' ) {
-				$this->defaults   = self::get_element_defaults( 'child' );
-				$this->child_args = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_counter_circle' );
-				$content          = apply_filters( 'fusion_shortcode_content', $content, 'fusion_counter_circle', $args );
 
-				$this->child_args['size']      = FusionBuilder::validate_shortcode_attr_value( $this->child_args['size'], '' );
-				$this->child_args['scales']    = 'yes' === $this->child_args['scales'];
-				$this->child_args['countdown'] = 'yes' === $this->child_args['countdown'];
+				global $fusion_settings;
+
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'child' ), $args, 'fusion_counter_circle' );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_counter_circle', $args );
+
+				$defaults['size'] = FusionBuilder::validate_shortcode_attr_value( $defaults['size'], '' );
+
+				extract( $defaults );
+
+				$this->child_args = $defaults;
+
+				$this->child_args['scales'] = false;
+				if ( 'yes' === $scales ) {
+					$this->child_args['scales'] = true;
+				}
+
+				$this->child_args['countdown'] = false;
+				if ( 'yes' === $countdown ) {
+					$this->child_args['countdown'] = true;
+				}
 
 				$output = '<div ' . FusionBuilder::attributes( 'counter-circle-shortcode' ) . '><div class="fusion-counter-circle-content-inner">' . do_shortcode( $content ) . '</div></div>';
 				$output = '<div ' . FusionBuilder::attributes( 'counter-circle-wrapper-shortcode' ) . '>' . $output . '</div>';
@@ -240,19 +238,24 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 					$attr['id'] = $this->child_args['id'];
 				}
 
-				$attr['data-percent'] = $this->sanitize_percentage( $this->child_args['value'] );
+				$multiplicator = $this->child_args['size'] / 220;
+				$stroke_size   = 11 * $multiplicator;
+				$font_size     = 50 * $multiplicator;
+
+				$attr['data-percent'] = $this->child_args['value'];
 
 				if ( $this->child_args['countdown'] ) {
-					$attr['data-percent-original'] = $this->sanitize_percentage( $this->child_args['value'] );
+					$attr['data-percent-original'] = $this->child_args['value'];
 				}
-
 				$attr['data-countdown']     = $this->child_args['countdown'];
-				$attr['data-filledcolor']   = Fusion_Color::new_color( $this->child_args['filledcolor'] )->toCss( 'rgba' );
-				$attr['data-unfilledcolor'] = Fusion_Color::new_color( $this->child_args['unfilledcolor'] )->toCss( 'rgba' );
+				$attr['data-filledcolor']   = $this->child_args['filledcolor'];
+				$attr['data-unfilledcolor'] = $this->child_args['unfilledcolor'];
 				$attr['data-scale']         = $this->child_args['scales'];
 				$attr['data-size']          = $this->child_args['size'];
 				$attr['data-speed']         = $this->child_args['speed'];
-				$attr['data-strokesize']    = 11 * ( $this->child_args['size'] / 220 );
+				$attr['data-strokesize']    = $stroke_size;
+
+				$attr['style'] = 'font-size:' . $font_size . 'px;height:' . $this->child_args['size'] . 'px;width:' . $this->child_args['size'] . 'px;';
 
 				return $attr;
 
@@ -266,43 +269,18 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 			 * @return array
 			 */
 			public function child_wrapper_attr() {
-				$multiplicator = $this->child_args['size'] / 220;
-				$font_size     = 50 * $multiplicator;
-
-				$custom_vars = [
-					'font-size' => $font_size . 'px',
-					'size'      => $this->child_args['size'] . 'px',
-				];
 
 				$attr = [
 					'class'             => 'counter-circle-wrapper',
-					'style'             => $this->get_custom_css_vars( $custom_vars ),
+					'style'             => 'height:' . $this->child_args['size'] . 'px;width:' . $this->child_args['size'] . 'px;',
 					'data-originalsize' => $this->child_args['size'],
 				];
 
+				if ( $this->parent_args['animation_offset'] ) {
+					$animations = FusionBuilder::animations( [ 'offset' => $this->parent_args['animation_offset'] ] );
+					$attr       = array_merge( $attr, $animations );
+				}
 				return $attr;
-			}
-
-			/**
-			 * Sanitize the percentage value, because this can come also from a
-			 * dynamic data which can be a string or a float.
-			 *
-			 * @since 3.6
-			 * @param int|string $percentage The value to be sanitized.
-			 * @return int
-			 */
-			protected function sanitize_percentage( $percentage ) {
-				$percentage = round( floatval( $percentage ), 0 );
-
-				if ( 0 > $percentage ) {
-					$percentage = 0;
-				}
-
-				if ( 100 < $percentage ) {
-					$percentage = 100;
-				}
-
-				return $percentage;
 			}
 
 			/**
@@ -326,7 +304,7 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 								'label'       => esc_html__( 'Counter Circles Filled Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the filled circle.', 'fusion-builder' ),
 								'id'          => 'counter_filled_color',
-								'default'     => 'var(--awb-color5)',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 							],
@@ -334,7 +312,7 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 								'label'       => esc_html__( 'Counter Circles Unfilled Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the unfilled circle.', 'fusion-builder' ),
 								'id'          => 'counter_unfilled_color',
-								'default'     => 'var(--awb-color2)',
+								'default'     => '#f2f3f5',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 							],
@@ -375,7 +353,7 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 					FusionBuilder::$js_folder_url . '/library/jquery.easyPieChart.js',
 					FusionBuilder::$js_folder_path . '/library/jquery.easyPieChart.js',
 					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
+					'2.1.7',
 					true
 				);
 
@@ -383,8 +361,8 @@ if ( fusion_is_element_enabled( 'fusion_counters_circle' ) ) {
 					'fusion-counters-circle',
 					FusionBuilder::$js_folder_url . '/general/fusion-counters-circle.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-counters-circle.js',
-					[ 'jquery', 'fusion-animations', 'jquery-count-to', 'jquery-easy-pie-chart' ],
-					FUSION_BUILDER_VERSION,
+					[ 'jquery', 'fusion-animations', 'jquery-count-to', 'jquery-easy-pie-chart', 'jquery-appear' ],
+					'1',
 					true
 				);
 			}
@@ -422,7 +400,7 @@ function fusion_element_counters_circle() {
 				'element_child' => 'fusion_counter_circle',
 				'sortable'      => false,
 				'icon'          => 'fusiona-clock',
-				'help_url'      => 'https://avada.com/documentation/counter-circles-element/',
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/counter-circles-element/',
 				'params'        => [
 					[
 						'type'        => 'tinymce',
@@ -443,16 +421,6 @@ function fusion_element_counters_circle() {
 							'bottom-in-view'  => esc_attr__( 'Bottom of element enters viewport', 'fusion-builder' ),
 						],
 						'default'     => '',
-					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_right'  => '',
-							'margin_bottom' => '',
-							'margin_left'   => '',
-						],
 					],
 					[
 						'type'        => 'checkbox_button_set',
@@ -490,7 +458,8 @@ add_action( 'fusion_builder_before_init', 'fusion_element_counters_circle' );
  * Map shortcode to Avada Builder
  */
 function fusion_element_counter_circle() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -502,12 +471,11 @@ function fusion_element_counter_circle() {
 				'hide_from_builder' => true,
 				'params'            => [
 					[
-						'type'         => 'range',
-						'heading'      => esc_attr__( 'Filled Area Percentage', 'fusion-builder' ),
-						'description'  => esc_attr__( 'From 1% to 100%.', 'fusion-builder' ),
-						'dynamic_data' => true,
-						'param_name'   => 'value',
-						'value'        => '50',
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Filled Area Percentage', 'fusion-builder' ),
+						'description' => esc_attr__( 'From 1% to 100%.', 'fusion-builder' ),
+						'param_name'  => 'value',
+						'value'       => '50',
 					],
 					[
 						'type'        => 'colorpickeralpha',
@@ -527,7 +495,7 @@ function fusion_element_counter_circle() {
 					],
 					[
 						'type'        => 'range',
-						'heading'     => esc_attr__( 'Counter Size', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'Size of the Counter', 'fusion-builder' ),
 						'description' => esc_attr__( 'Insert size of the counter in px. ex: 220.', 'fusion-builder' ),
 						'param_name'  => 'size',
 						'value'       => '200',

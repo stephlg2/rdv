@@ -7,85 +7,19 @@
  */
 
 ?>
-<div class="awb-typography">
-	<# var allowGlobalButton = ( 'undefined' !== typeof param.allow_globals && false === param.allow_globals ? false : true ); #>
-	<# if ( 'undefined' === typeof FusionApp && allowGlobalButton ) { #>
-	<a class="option-global-typography awb-quick-set" href="JavaScript:void(0);" aria-label="<?php esc_html_e( 'Global Typography', 'fusion-builder' ); ?>'"><i class="fusiona-globe" aria-hidden="true"></i></a>
-	<# } #>
-	<#
-	var optionType,
-		optionId,
-		elOptions  = param.choices || {},
-		defaults   = {
-			'font-family': 'typography',
-			'font-size': 'font_size',
-			'line-height': 'line_height',
-			'letter-spacing': 'letter_spacing',
-			'text-transform': false,
-			'margin-top': false,
-			'margin-bottom': false,
-			'color': false
-		},
-		options  = jQuery.extend( {}, defaults, elOptions ),
-		displayBackupFont = ( 'undefined' !== typeof param.backup_font ? param.backup_font : true ),
-		saveData;
+<div class="wrapper fusion-builder-typography">
 
-		if ( 'undefined' === typeof param.param_name ) {
-			if ( 'undefined' !== typeof type && 'PO' === type ) {
-				optionType = 'PO';
-			} else {
-				optionType = 'TO';
-			}
-			optionId   = param.id;
-		} else {
-			optionType = 'EO';
-			optionId   = param.param_name;
-		}
+	<# if ( param.default['font-family'] ) { #>
+		<# if ( '' == option_value['font-family'] ) { option_value['font-family'] = param.default['font-family']; } #>
+		<# if ( param.choices['fonts'] ) { param.fonts = param.choices['fonts']; } #>
+		<div class="font-family">
+			<h5><?php esc_html_e( 'Font Family', 'fusion-builder' ); ?></h5>
 
-		if ( 'TO' === optionType ) {
-			saveData = Object.assign( {}, FusionApp.settings );
-			if ( 'object' === typeof saveData[ optionId ] ) {
-				saveData = saveData[ optionId ];
-			} else {
-				saveData[ optionId ] = param.default;
-			}
-		} else if ( 'PO' === optionType ) {
-			if ( 'object' === typeof option_value ) {
-				saveData = option_value;
-			} else {
-				saveData = {};
-			}
-		} else {
-			saveData = atts.params;
-		}
-	#>
-	<# if ( false !== options['font-family'] ) { #>
-		<#
-		var fontId        = options['font-family'],
-			familyId      = 'EO' === optionType ? 'fusion_font_family_' + fontId : 'font-family',
-			familyDefault = 'object' === typeof param.default && 'undefined' !== typeof param.default['font-family'] ? param.default['font-family'] : '';
-			familyValue   = 'undefined' !== typeof saveData[ familyId ] ? saveData[ familyId ] : familyDefault;
-
-			if ( 'TO' === optionType || 'PO' === optionType ) {
-				familyId = optionId + '[' + familyId + ']';
-			}
-		#>
-		<div class="input-wrapper family-selection awb-contains-global">
-			<div class="awb-typo-heading">
-				<label><?php esc_html_e( 'Font Family', 'fusion-builder' ); ?></label>
-				<# if ( allowGlobalButton ) { #>
-					<span class="awb-global"><i class="fusiona-globe" aria-hidden="true"></i></span>
-				<# } #>
-			</div>
 			<div class="fusion-skip-init fusion-select-field<?php echo ( is_rtl() ) ? ' fusion-select-field-rtl' : ''; ?>">
 				<div class="fusion-select-preview-wrap">
 					<span class="fusion-select-preview">
-						<# if ( '' !== familyValue ) { #>
-							<# if ( window.awbTypographySelect.isAdobeFont( familyValue ) ) { #>
-								{{ _.unescape( window.awbTypographySelect.getAdobeDisplayName( familyValue ) ) }}
-							<# } else { #>
-								{{ _.unescape( familyValue ) }}
-							<# } #>
+						<# if ( 'undefined' !== typeof option_value['font-family'] ) { #>
+							{{ option_value['font-family'] }}
 						<# } else { #>
 							<span class="fusion-select-placeholder"><?php esc_attr_e( 'Select Font Family', 'fusion-builder' ); ?></span>
 						<# } #>
@@ -98,22 +32,18 @@
 					</div>
 					<div class="fusion-select-options"></div>
 				</div>
-				<input type="hidden" id="{{{ familyId }}}" name="{{{ familyId }}}" value="{{ _.unescape( familyValue ) }}" data-default="{{ familyDefault }}" class="input-font_family fusion-select-option-value awb-typo-input" data-subset="font-family">
+				<input type="hidden" id="fusion-typography-font-family-{{{ param.id }}}" name="font-family" class="fusion-select-option-value">
 			</div>
-			<span class="awb-global-label"></span>
 		</div>
 
-		<# if ( displayBackupFont && ( 'TO' === optionType || 'PO' === optionType ) ) { #>
-		<div class="input-wrapper font-backup fusion-font-backup-wrapper">
-			<div class="awb-typo-heading">
-				<label><?php esc_html_e( 'Backup Font', 'fusion-builder' ); ?></label>
-			</div>
+		<div class="font-backup hide-on-standard-fonts fusion-font-backup-wrapper">
+			<h5><?php esc_html_e( 'Backup Font', 'fusion-builder' ); ?></h5>
 
 			<div class="fusion-skip-init fusion-select-field<?php echo ( is_rtl() ) ? ' fusion-select-field-rtl' : ''; ?>">
 				<div class="fusion-select-preview-wrap">
 					<span class="fusion-select-preview">
-						<# if ( 'string' === typeof saveData['font-backup'] && '' !== saveData['font-backup'] ) { #>
-							{{ _.unescape( saveData['font-backup'] ) }}
+						<# if ( 'string' === typeof option_value['font-backup'] && '' !== option_value['font-backup'] ) { #>
+							{{ option_value['font-backup'] }}
 						<# } else { #>
 							<span class="fusion-select-placeholder"><?php esc_attr_e( 'Select Backup Font Family', 'fusion-builder' ); ?></span>
 						<# } #>
@@ -126,156 +56,148 @@
 					</div>
 					<div class="fusion-select-options"></div>
 				</div>
-				<input type="hidden" id="fusion-typography-font-backup-{{{ param.id }}}" name="{{ optionId }}[font-backup]" class="fusion-select-option-value">
+				<input type="hidden" id="fusion-typography-font-backup-{{{ param.id }}}" name="font-backup" class="fusion-select-option-value">
 			</div>
+
 		</div>
-		<# } #>
-
-		<#
-		var variantId      = 'EO' === optionType ? 'fusion_font_variant_' + fontId : 'variant',
-			variantDefault = 'object' === typeof param.default && 'undefined' !== typeof param.default['variant'] ? param.default['variant'] : '',
-			variantValue   = 'undefined' !== typeof saveData[ variantId ] ? saveData[ variantId ] : variantDefault;
-
-		if ( 'TO' === optionType || 'PO' === optionType ) {
-			var variantId    = 'variant',
-				variantValue = 'undefined' !== typeof saveData[ variantId ] ? saveData[ variantId ] : param.default['font-weight'];
-			if ( 'undefined' !== typeof saveData['font-weight'] ) {
-				variantValue = saveData['font-weight'];
-				if ( 'string' !== typeof variantValue ) {
-					variantValue = variantValue.toString();
-				}
-				if ( 'string' === typeof saveData['font-style'] && 'italic' === saveData['font-style'] ) {
-					variantValue += 'italic';
-				}
-			}
-			variantId = optionId + '[' + variantId + ']';
-		} else {
-			var variantId      = 'fusion_font_variant_' + fontId,
-				variantDefault = 'object' === typeof param.default && 'undefined' !== typeof param.default['variant'] ? param.default['variant'] : '',
-				variantValue   = 'undefined' !== typeof saveData[ variantId ] ? saveData[ variantId ] : variantDefault;
-		}
-		#>
-		<div class="input-wrapper fusion-builder-typography" style="display:none">
-			<div class="awb-typo-heading">
-				<label><?php esc_html_e( 'Variant', 'fusion-builder' ); ?></label>
-			</div>
-			<div class="input fusion-typography-select-wrapper">
-				<select name="{{ variantId }}" class="input-variant variant" id="{{ variantId }}" data-default="{{ variantDefault }}" data-value="{{ variantValue }}" data-subset="variant"></select>
+		<div class="variant fusion-variant-wrapper">
+			<h5><?php esc_html_e( 'Variant', 'fusion-builder' ); ?></h5>
+			<div class="fusion-typography-select-wrapper">
+				<select name="variant" class="variant" id="fusion-typography-variant-{{{ param.id }}}"></select>
 				<div class="fusiona-arrow-down"></div>
 			</div>
 		</div>
+
 	<# } #>
 
-	<#
-	var stringMap = {};
-	stringMap['font-size']      = '<?php esc_attr_e( 'Font Size', 'fusion-builder' ); ?>';
-	stringMap['line-height']    = '<?php esc_attr_e( 'Line Height', 'fusion-builder' ); ?>';
-	stringMap['letter-spacing'] = '<?php esc_attr_e( 'Letter Spacing', 'fusion-builder' ); ?>';
-	stringMap['margin-top']     = '<?php esc_attr_e( 'Margin Top', 'fusion-builder' ); ?>';
-	stringMap['margin-bottom']  = '<?php esc_attr_e( 'Margin Bottom', 'fusion-builder' ); ?>';
-	#>
-	<# _.each( [ 'font-size', 'line-height', 'letter-spacing', 'margin-top', 'margin-bottom' ], function( field ) { #>
-		<# if ( false !== options[ field ] ) { #>
-			<#
-			var fieldId      = 'EO' === optionType ? options[ field ] : field,
-				fieldDefault = 'object' === typeof param.default && 'undefined' !== typeof param.default[ field ] ? param.default[ field ] : '',
-				fieldValue   = 'undefined' !== typeof saveData[ fieldId ] ? saveData[ fieldId ] : fieldDefault,
-				containsGlobal = -1 === field.indexOf( 'margin' ) ? ' awb-contains-global' : '';
-
-			if ( 'TO' === optionType || 'PO' === optionType ) {
-				fieldId = optionId + '[' + fieldId + ']';
-			}
-			#>
-			<div class="input-wrapper{{ containsGlobal }} third">
-				<div class="awb-typo-heading">
-					<label>{{{ stringMap[ field ] }}}</label>
-					<# if ( 'margin-top' !== field && 'margin-bottom' !== field && allowGlobalButton ) { #>
-						<span class="awb-global"><i class="fusiona-globe" aria-hidden="true"></i></span>
-					<# } #>
-				</div>
-				<div class="input">
-					<input type="text" data-subset="{{ field }}" class="awb-typo-input" name="{{ fieldId }}" value="{{ fieldValue }}">
-					<span class="awb-global-label"></span>
-				</div>
-			</div>
-		<# } #>
-	<# } ); #>
-
-	<# if ( false !== options['text-transform'] ) { #>
-		<#
-		var fieldId      =  'EO' === optionType ? options['text-transform'] : 'text-transform',
-			fieldDefault = 'object' === typeof param.default && 'undefined' !== typeof param.default['text-transform'] ? param.default['text-transform'] : '',
-			fieldValue   = 'undefined' !== typeof saveData[ fieldId ] ? saveData[ fieldId ] : fieldDefault,
-			choices      = {};
-
-		if ( 'TO' === optionType || 'PO' === optionType ) {
-			fieldId = optionId + '[' + fieldId + ']';
-		}
-
-		if ( ! param.text_transform_no_inherit || true !== param.text_transform_no_inherit ) {
-			choices[''] = {
-				icon: '<span class="fusiona-cog onlyIcon"></span>',
-				label: '<?php esc_attr_e( 'Default', 'fusion-builder' ); ?>'
-			};
-		}
-		choices['none']       = {
-			icon: '<span class="fusiona-minus onlyIcon"></span>',
-			label: '<?php esc_attr_e( 'None', 'fusion-builder' ); ?>'
-		};
-		choices['uppercase']       = {
-			icon: '<span class="fusiona-uppercase onlyIcon"></span>',
-			label: '<?php esc_attr_e( 'Uppercase', 'fusion-builder' ); ?>'
-		};
-		choices['lowercase']       = {
-			icon: '<span class="fusiona-lowercase onlyIcon"></span>',
-			label: '<?php esc_attr_e( 'Lowercase', 'fusion-builder' ); ?>'
-		};
-		choices['capitalize']       = {
-			icon: '<span class="fusiona-caps onlyIcon"></span>',
-			label: '<?php esc_attr_e( 'Capitalize', 'fusion-builder' ); ?>'
-		};
-		#>
-		<div class="input-wrapper awb-contains-global">
-			<div class="awb-typo-heading">
-				<label><?php esc_attr_e( 'Text Transform', 'fusion-builder' ); ?></label>
-				<# if ( allowGlobalButton ) { #>
-					<span class="awb-global"><i class="fusiona-globe" aria-hidden="true"></i></span>
-				<# } #>
-			</div>
-			<div class="input radio-button-set ui-buttonset">
-				<input type="hidden" id="{{ fieldId }}" name="{{ fieldId }}" value="{{ fieldValue }}" class="button-set-value" data-subset="text-transform"/>
-				<# _.each( choices, function( data, value ) { #>
-					<# var selected  = value == fieldValue ? ' ui-state-active' : ''; #>
-					<a href="#" class="ui-button buttonset-item{{ selected }} has-tooltip" data-value="{{ value }}" aria-label="{{ data.label }}"><div class="fusion-button-set-title">{{{ data.icon }}}</div></a>
-				<# } ); #>
-			</div>
-			<span class="awb-global-label"></span>
+	<# if ( param.default['font-size'] ) { #>
+		<div class="font-size">
+			<h5><?php esc_html_e( 'Font Size', 'fusion-builder' ); ?></h5>
+			<input name="font-size" type="text" value="{{ option_value['font-size'] }}"/>
 		</div>
 	<# } #>
 
-	<# if ( false !== options['color'] ) { #>
-		<#
-		var fieldId      =  'EO' === optionType ? options['color'] : 'color',
-			fieldDefault = 'object' === typeof param.default && 'undefined' !== typeof param.default['color'] ? param.default['color'] : '',
-			fieldValue   = 'undefined' !== typeof saveData[ fieldId ] ? saveData[ fieldId ] : fieldDefault;
+	<# if ( param.default['line-height'] ) { #>
+		<div class="line-height">
+			<h5><?php esc_html_e( 'Line Height', 'fusion-builder' ); ?></h5>
+			<input name="line-height" type="text" value="{{ option_value['line-height'] }}"/>
+		</div>
+	<# } #>
 
-		if ( 'TO' === optionType || 'PO' === optionType ) {
-			fieldId = optionId + '[' + fieldId + ']';
-		}
+	<# if ( param.default['letter-spacing'] ) { #>
+		<div class="letter-spacing">
+			<h5><?php esc_html_e( 'Letter Spacing', 'fusion-builder' ); ?></h5>
+			<input name="letter-spacing" type="text" value="{{ option_value['letter-spacing'] }}"/>
+		</div>
+	<# } #>
+
+	<# if ( param.default['word-spacing'] ) { #>
+		<div class="word-spacing">
+			<h5><?php esc_html_e( 'Word Spacing', 'fusion-builder' ); ?></h5>
+			<input name="word-spacing" type="text" value="{{ option_value['word-spacing'] }}"/>
+		</div>
+	<# } #>
+
+	<# if ( param.default['text-align'] ) { #>
+		<div class="text-align">
+			<h5><?php esc_html_e( 'Text Align', 'fusion-builder' ); ?></h5>
+			<input type="radio" value="inherit" name="text-align" id="{{ param.id }}-text-align-inherit" <# if ( option_value['text-align'] === 'inherit' ) { #> checked="checked"<# } #>>
+				<label for="{{ param.id }}-text-align-inherit">
+					<span class="dashicons dashicons-editor-removeformatting"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Inherit', 'fusion-builder' ); ?></span>
+				</label>
+			</input>
+			<input type="radio" value="left" name="text-align" id="{{ param.id }}-text-align-left" <# if ( option_value['text-align'] === 'left' ) { #> checked="checked"<# } #>>
+				<label for="{{ param.id }}-text-align-left">
+					<span class="dashicons dashicons-editor-alignleft"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Left', 'fusion-builder' ); ?></span>
+				</label>
+			</input>
+			<input type="radio" value="center" name="text-align" id="{{ param.id }}-text-align-center" <# if ( option_value['text-align'] === 'center' ) { #> checked="checked"<# } #>>
+				<label for="{{ param.id }}-text-align-center">
+					<span class="dashicons dashicons-editor-aligncenter"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Center', 'fusion-builder' ); ?></span>
+				</label>
+			</input>
+			<input type="radio" value="right" name="text-align" id="{{ param.id }}-text-align-right" <# if ( option_value['text-align'] === 'right' ) { #> checked="checked"<# } #>>
+				<label for="{{ param.id }}-text-align-right">
+					<span class="dashicons dashicons-editor-alignright"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Right', 'fusion-builder' ); ?></span>
+				</label>
+			</input>
+			<input type="radio" value="justify" name="text-align" id="{{ param.id }}-text-align-justify" <# if ( option_value['text-align'] === 'justify' ) { #> checked="checked"<# } #>>
+				<label for="{{ param.id }}-text-align-justify">
+					<span class="dashicons dashicons-editor-justify"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Justify', 'fusion-builder' ); ?></span>
+				</label>
+			</input>
+		</div>
+	<# } #>
+
+	<# if ( param.default['text-transform'] ) { #>
+		<div class="text-transform">
+			<h5><?php esc_html_e( 'Text Transform', 'fusion-builder' ); ?></h5>
+			<select name="text-transform" id="fusion-typography-text-transform-{{{ param.id }}}">
+				<option value="none"<# if ( 'none' === option_value['text-transform'] ) { #>selected<# } #>><?php esc_html_e( 'None', 'fusion-builder' ); ?></option>
+				<option value="capitalize"<# if ( 'capitalize' === option_value['text-transform'] ) { #>selected<# } #>><?php esc_html_e( 'Capitalize', 'fusion-builder' ); ?></option>
+				<option value="uppercase"<# if ( 'uppercase' === option_value['text-transform'] ) { #>selected<# } #>><?php esc_html_e( 'Uppercase', 'fusion-builder' ); ?></option>
+				<option value="lowercase"<# if ( 'lowercase' === option_value['text-transform'] ) { #>selected<# } #>><?php esc_html_e( 'Lowercase', 'fusion-builder' ); ?></option>
+				<option value="initial"<# if ( 'initial' === option_value['text-transform'] ) { #>selected<# } #>><?php esc_html_e( 'Initial', 'fusion-builder' ); ?></option>
+				<option value="inherit"<# if ( 'inherit' === option_value['text-transform'] ) { #>selected<# } #>><?php esc_html_e( 'Inherit', 'fusion-builder' ); ?></option>
+			</select>
+		</div>
+	<# } #>
+
+	<# if ( false !== param.default['color'] && param.default['color'] ) { #>
+		<#
+		var fieldId = param.id;
 		#>
-		<div class="input-wrapper">
-			<div class="awb-typo-heading">
-				<label><?php esc_attr_e( 'Font Color', 'fusion-builder' ); ?></label>
+		<# if ( 'undefined' !== typeof FusionApp ) { #>
+			<# var location = 'undefined' !== typeof param.location ? param.location : ''; #>
+			<div class="fusion-colorpicker-container">
+				<h5><?php esc_html_e( 'Font Color', 'fusion-builder' ); ?></h5>
+				<input
+					id="color"
+					name="color"
+					class="fusion-builder-color-picker-hex color-picker"
+					type="text"
+					value="{{ option_value['color'] }}"
+					data-alpha="true"
+					data-default="{{ param.default['color'] }}"
+					data-location="{{ location }}"
+				/>
+				<span class="wp-picker-input-container">
+					<label>
+						<input name="{{ fieldId }}" class="{{ fieldId }} color-picker color-picker-placeholder" type="text" value="{{ option_value['color'] }}">
+					</label>
+					<button class="button button-small wp-picker-clear"><i class="fusiona-eraser-solid" aria-hidden="true"></i></button>
+				</span>
+				<span class="fusion-colorpicker-icon fusiona-color-dropper"></span>
 			</div>
+		<# } else { #>
 			<input
 				id="{{ fieldId }}"
-				name="{{ fieldId }}"
+				name="color"
 				class="fusion-builder-color-picker-hex color-picker"
 				type="text"
-				value="{{ fieldValue }}"
+				value="{{ option_value['color'] }}"
 				data-alpha="true"
-				data-default="{{ fieldDefault }}"
+				data-default="{{ param.default['color'] }}"
 			/>
+		<# } #>
+	<# } #>
+
+	<# if ( param.default['margin-top'] ) { #>
+		<div class="margin-top">
+			<h5><?php esc_html_e( 'Margin Top', 'fusion-builder' ); ?></h5>
+			<input name="margin-top" type="text" value="{{ option_value['margin-top'] }}"/>
+		</div>
+	<# } #>
+
+	<# if ( param.default['margin-bottom'] ) { #>
+		<div class="margin-bottom">
+			<h5><?php esc_html_e( 'Margin Bottom', 'fusion-builder' ); ?></h5>
+			<input name="margin-bottom" type="text" value="{{ option_value['margin-bottom'] }}"/>
 		</div>
 	<# } #>
 </div>

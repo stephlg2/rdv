@@ -32,8 +32,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				templateData = {
 					params: FusionPageBuilderApp.dynamicValues.getOrderedParams(),
-					option: $option.attr( 'data-option-type' ),
-					customOptions: $option.attr( 'data-dynamic-options' )
+					option: $option.attr( 'data-option-type' )
 				};
 
 				this.$el.html( this.template( templateData ) );

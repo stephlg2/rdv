@@ -15,6 +15,15 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 	class FusionSC_Global extends Fusion_Element {
 
 		/**
+		 * An array of the shortcode arguments.
+		 *
+		 * @access protected
+		 * @since 1.2.2
+		 * @var array
+		 */
+		protected $args;
+
+		/**
 		 * An array of global elements in content
 		 *
 		 * @access private
@@ -50,6 +59,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 		 * @return string          HTML output.
 		 */
 		public function render( $args, $content = '' ) {
+
 			$defaults = FusionBuilder::set_shortcode_defaults(
 				[
 					'id' => '',
@@ -68,13 +78,11 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 				// Get post contents.
 				$post = get_post( $this->args['id'] );
 				// Check if post exists.
-				if ( ! is_null( $post ) && false === strpos( $post->post_content, 'fusion_global id="' . $this->args['id'] ) ) {
+				if ( ! is_null( $post ) ) {
 					// Return contents.
 					return apply_filters( 'fusion_element_global_content', do_shortcode( fusion_builder_fix_shortcodes( shortcode_unautop( wpautop( wptexturize( $post->post_content ) ) ) ) ), $args );
 				}
 			}
-
-			return '';
 		}
 
 		/**
@@ -118,19 +126,15 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 						$result = shortcode_parse_atts( $matches[3][ $key ] );
 						// Get relative global element CPT and replace in content.
 						if ( isset( $result['id'] ) && ! empty( $result['id'] ) ) {
-							$result['id'] = apply_filters( 'wpml_object_id', $result['id'], 'fusion_element', true );
-							$post         = get_post( $result['id'] );
+							$post = get_post( $result['id'] );
 							if ( ! is_null( $post ) && false === strpos( $post->post_content, 'fusion_global id="' . $result['id'] ) ) {
 								$position           = strpos( $post->post_content, ']' );
 								$post->post_content = substr_replace( $post->post_content, ' fusion_global="' . $result['id'] . '"]', $position, 1 );
-								$post->post_content = fusion_builder_fix_shortcodes( shortcode_unautop( wpautop( wptexturize( $post->post_content ) ) ) );
-
 								if ( ! empty( $base_content ) ) {
 									$base_content = str_replace( $matches[0][ $key ], $post->post_content, $base_content );
 								} else {
 									$base_content = str_replace( $matches[0][ $key ], $post->post_content, $content );
 								}
-
 								$base_content = $this->recursively_add_global_elements( $post->post_content, $base_content );
 							} else {
 								if ( ! empty( $base_content ) ) {
@@ -204,7 +208,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 						'ID'           => $this->global_elements[ $x ]['id'],
 						'post_content' => $post_content,
 					];
-					if ( ! in_array( $this->global_elements[ $x ]['id'], $duplicates ) && apply_filters( 'awb_global_elements_access', true ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
+					if ( ! in_array( $this->global_elements[ $x ]['id'], $duplicates ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 						// Update global element CPT.
 						$post_id = wp_update_post( $post );
 					}
@@ -271,7 +275,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 			// get all registered short-code matches.
 			$matches = $this->get_shortcode_matches( $content );
 			if ( ! empty( $matches ) ) {
-				list( $shortcodes, $d, $parents, $atts, $d, $contents ) = $matches; // phpcs:ignore PHPCompatibility.Lists.AssignmentOrder.Affected
+				list( $shortcodes, $d, $parents, $atts, $d, $contents ) = $matches;
 				$child_arr_shortcodes                                   = [];
 
 				foreach ( $parents as $k => $parent ) {

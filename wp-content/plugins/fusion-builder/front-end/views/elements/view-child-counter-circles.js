@@ -27,34 +27,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			filterTemplateAtts: function( atts ) {
-				var countersCircleAtts;
-
-				// Validate values.
-				this.validateValues( atts.values );
-				this.values = atts.values;
-
-				countersCircleAtts = this.computeAtts( atts.values );
+				var countersCircleAtts = this.computeAtts( atts.values );
 
 				atts = {};
 				atts.countersCircleAtts = countersCircleAtts;
 
 				return atts;
-			},
-
-			/**
-			 * Modifies values.
-			 *
-			 * @since 3.8
-			 * @param {Object} values - The values.
-			 * @param {Object} params - The parameters.
-			 * @return {void}
-			 */
-			validateValues: function( values ) {
-
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -65,16 +43,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			computeAtts: function( values ) {
-				var cssVars = [
-						'margin_top',
-						'margin_right',
-						'margin_bottom',
-						'margin_left'
-					],
-					countersCircleAtts = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-counters-circle counters-circle',
-						style: this.getCssVarsForOptions( cssVars )
-					} );
+				var countersCircleAtts = _.fusionVisibilityAtts( values.hide_on_mobile, {
+					class: 'fusion-counters-circle counters-circle'
+				} );
 
 				if ( '' !== values[ 'class' ] ) {
 					countersCircleAtts[ 'class' ] += ' ' + values[ 'class' ];

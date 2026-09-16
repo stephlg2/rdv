@@ -11,22 +11,17 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			isOriginLeft: jQuery( 'body.rtl' ).length ? false : true,
 			resizable: true,
 			initLayout: true,
-			view: false,
-			sortBy: 'number',
-			sortAscending: true
+			view: false
 		},
 
 		initialize: function() {
 			this.listenTo( window.FusionEvents, 'fusion-frame-size-changed', this.updateLayout );
 			this.listenTo( window.FusionEvents, 'fusion-column-resized', this.updateLayout );
-			this.listenTo( window.FusionEvents, 'fusion-preview-viewport-update', this.updateLayout );
 		},
 
 		init: function() {
 			var self      = this,
-				container = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( self.get( 'view' ).$el.find( self.get( 'selector' ) ) ),
-				sortBy        = 'rand' === container.attr( 'data-order' ) ? 'random' : 'number',
-				sortAscending = 'number' === sortBy && 'desc' === container.attr( 'data-order' ) ? true : false;
+				container = self.get( 'view' ).$el.find( self.get( 'selector' ) );
 
 			self.set( 'container', container );
 
@@ -36,9 +31,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					itemSelector: self.get( 'itemSelector' ),
 					isOriginLeft: jQuery( 'body.rtl' ).length ? false : true,
 					resizable: true,
-					initLayout: true,
-					sortBy: sortBy,
-					sortAscending: sortAscending
+					initLayout: true
 				} );
 			}
 		},

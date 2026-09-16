@@ -1105,7 +1105,10 @@ $has_recaptcha = !empty($recaptcha_site_key) && !empty($settings['recaptcha_secr
                 }
             } else {
                 // Erreur
-                alert(data.data?.message || 'Erreur lors de l\'envoi du formulaire');
+                var errorMessage = (typeof data.data === 'string')
+                    ? data.data
+                    : (data.data && data.data.message ? data.data.message : 'Erreur lors de l\'envoi du formulaire');
+                alert(errorMessage);
                 resetButton();
             }
         })

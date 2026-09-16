@@ -118,23 +118,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		 * @return {Object} this.
 		 */
 		render: function() {
-			var attributes = _.extend( {}, this.model.get( 'data' ) ),
-				urlParams      = new URLSearchParams( window.location.search );
+			var attributes = _.extend( {}, this.model.get( 'data' ) );
 
 			attributes.id		  = this.model.get( 'id' );
 			attributes.title      = this.model.get( 'title' );
 			attributes.terms 	  = this.model.getAssignedTemplates();
 			attributes.conditions = this.model.getConditions();
 
-			if ( urlParams.has( 'layout' ) && String( attributes.id ) === urlParams.get( 'layout' ) ) {
-				attributes.highlight = true;
-			}
-
-			if ( 'global' === attributes.id ) {
-				this.$el.addClass( 'awb-layout-not-sortable' );
-			}
 			this.$el.html( this.template( attributes ) );
-
 			return this;
 		},
 
@@ -156,8 +147,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		 */
 		removeLayout: function( event ) {
 			var self = this,
-				$layoutOrderInput,
-				layoutOrder,
 				data = {
 					action: 'fusion_admin_layout_delete',
 					post_id: this.model.get( 'id' ),
@@ -174,12 +163,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					_.each( self.model.getConditions(), function( condition, id ) {
 						self.model.unregisterCondition( id, condition.mode );
 					} );
-
-					$layoutOrderInput = jQuery( '.avada-db-layouts' ).find( '.awb-layout-order' );
-					layoutOrder       = $layoutOrderInput.val();
-
-					$layoutOrderInput.val( layoutOrder.replace( ',' + self.model.get( 'id' ), '' ) );
-
 					self.remove();
 				}
 			} );

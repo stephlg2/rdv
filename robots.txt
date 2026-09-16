@@ -1,19 +1,17 @@
-# robots.txt – Optimisé SEO Google (WordPress)
-
+User-agent: Baiduspider
+Disallow: /
+User-agent: AhrefsBot 
+Disallow: /
+User-agent: MJ12bot 
+Disallow: /
+User-agent: BLEXBot 
+Disallow: /
+User-agent: DotBot
+Disallow: /
+User-agent: SemrushBot
+Disallow: /
+User-agent: YandexBot
+Disallow: /
 User-agent: *
-Disallow: /wp-admin/
-Allow: /wp-admin/admin-ajax.php
-
-Disallow: /xmlrpc.php
-Disallow: /readme.html
-Disallow: /license.txt
-
-Disallow: /?s=
-Disallow: /search/
-Disallow: /trackback/
-Disallow: /comments/
-Disallow: */feed/
-
-Allow: /wp-content/uploads/
-
-Sitemap: https://www.rdvasie.com/sitemap.xml
+Allow: /
+Sitemap: https://www.rdvasie.com/sitemap22.xml

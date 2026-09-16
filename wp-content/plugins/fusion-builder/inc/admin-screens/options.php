@@ -14,7 +14,7 @@ if ( null === FusionBuilder()->registration ) {
 }
 ?>
 <?php Fusion_Builder_Admin::header( 'builder-options' ); ?>
-	<?php $existing_settings = get_option( 'fusion_builder_settings', [] ); ?>
+	<?php $existing_settings = get_option( 'fusion_builder_settings' ); ?>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 
 		<section class="avada-db-card avada-db-card-first avada-db-settings-start">
@@ -40,9 +40,9 @@ if ( null === FusionBuilder()->registration ) {
 			<section class="avada-db-card">
 				<div class="fusion-builder-option">
 					<div class="fusion-builder-option-title">
-						<h2><?php esc_html_e( 'Builder Auto Activation', 'fusion-builder' ); ?></h2>
+						<h2><?php esc_html_e( 'Avada Builder Auto Activation', 'fusion-builder' ); ?></h2>
 						<span class="fusion-builder-option-label">
-							<p><?php esc_html_e( 'Turn on to enable the desired Builder user interface by default when opening a page or post. Turn off to enable the default WP editor view.', 'fusion-builder' ); ?></p>
+							<p><?php esc_html_e( 'Turn on to enable the Avada Builder user interface by default when opening a page or post. Turn off to enable the default WP editor view.', 'fusion-builder' ); ?></p>
 						</span>
 					</div>
 
@@ -55,8 +55,7 @@ if ( null === FusionBuilder()->registration ) {
 							}
 							?>
 							<input type="hidden" class="button-set-value" value="<?php echo esc_attr( $enable_builder_ui_by_default ); ?>" name="enable_builder_ui_by_default" id="enable_builder_ui_by_default">
-							<a data-value="live" class="ui-button buttonset-item<?php echo ( 'live' === $enable_builder_ui_by_default ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'Live Builder', 'fusion-builder' ); ?></a>
-							<a data-value="backend" class="ui-button buttonset-item<?php echo ( 'backend' === $enable_builder_ui_by_default ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'Back-end Builder', 'fusion-builder' ); ?></a>
+							<a data-value="1" class="ui-button buttonset-item<?php echo ( $enable_builder_ui_by_default ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'On', 'fusion-builder' ); ?></a>
 							<a data-value="0" class="ui-button buttonset-item<?php echo ( ! $enable_builder_ui_by_default ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'Off', 'fusion-builder' ); ?></a>
 						</div>
 					</div>
@@ -211,7 +210,7 @@ if ( null === FusionBuilder()->registration ) {
 					<div class="fusion-builder-option-title">
 						<h2><?php esc_html_e( 'Post Types', 'fusion-builder' ); ?></h2>
 						<span class="fusion-builder-option-label">
-							<p><?php esc_html_e( 'Avada Builder can be enabled or disabled on registered post types. Check the box to enable, uncheck to disable. Please note the Avada element generator will still be active on any post type that is disabled.', 'fusion-builder' ); ?></p>
+							<p><?php esc_html_e( 'Avada Builder can be enabled or disabled on registered post types. Check the box to enable, uncheck to disable. Please note the Fusion element generator will still be active on any post type that is disabled.', 'fusion-builder' ); ?></p>
 						</span>
 					</div>
 
@@ -256,9 +255,9 @@ if ( null === FusionBuilder()->registration ) {
 			<section class="avada-db-card">
 				<div class="fusion-builder-option">
 					<div class="fusion-builder-option-title">
-						<h2><?php esc_html_e( 'Import Library Content', 'fusion-builder' ); ?></h2>
+						<h2><?php esc_html_e( 'Import Avada Builder Content', 'fusion-builder' ); ?></h2>
 						<span class="fusion-builder-option-label">
-							<p><?php esc_html_e( 'Choose to import Avada Builder Library content. You can import either your saved containers, columns and elements, or your saved full page templates. Click "Choose File" and select your Avada Builder XML file.', 'fusion-builder' ); ?></p>
+							<p><?php esc_html_e( 'Choose to import Avada Builder content; custom saved containers / columns / elements or full page templates. Click "Choose File" and select your Avada Builder XML file.', 'fusion-builder' ); ?></p>
 						</span>
 					</div>
 
@@ -275,9 +274,9 @@ if ( null === FusionBuilder()->registration ) {
 			<section class="avada-db-card">
 				<div class="fusion-builder-option">
 					<div class="fusion-builder-option-title">
-						<h2><?php esc_html_e( 'Export Library Content', 'fusion-builder' ); ?></h2>
+						<h2><?php esc_html_e( 'Export Avada Builder Content', 'fusion-builder' ); ?></h2>
 						<span class="fusion-builder-option-label">
-							<p><?php esc_html_e( 'Choose to export Avada Builder Library content. You can export your saved containers, columns and elements, or your saved full page templates. A corresponding XML file will be downloaded to your computer.' ); ?></p>
+							<p><?php esc_html_e( 'Choose to export Avada Builder content; custom saved containers / columns / elements or full page templates. An XML file will be downloaded to your computer.' ); ?></p>
 						</span>
 					</div>
 
@@ -313,113 +312,6 @@ if ( null === FusionBuilder()->registration ) {
 					</div>
 				</div>
 			</section>
-
-			<section class="avada-db-card">
-				<div class="fusion-builder-option">
-					<div class="fusion-builder-option-title">
-						<h2><?php esc_html_e( 'Remove Empty Attributes', 'fusion-builder' ); ?></h2>
-						<span class="fusion-builder-option-label">
-							<p><?php esc_html_e( 'Set to "on" to remove empty attributes from elements at saving.', 'fusion-builder' ); ?></p>
-						</span>
-					</div>
-
-					<div class="fusion-builder-option-field">
-						<div class="fusion-form-radio-button-set ui-buttonset enable-builder-ui">
-							<?php
-							$remove_empty_attributes = 'off';
-							if ( isset( $existing_settings['remove_empty_attributes'] ) ) {
-								$remove_empty_attributes = $existing_settings['remove_empty_attributes'];
-							}
-							?>
-							<input type="hidden" class="button-set-value" value="<?php echo esc_attr( $remove_empty_attributes ); ?>" name="remove_empty_attributes" id="remove_empty_attributes">
-							<a data-value="on" class="ui-button buttonset-item<?php echo ( 'on' === $remove_empty_attributes ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'On', 'fusion-builder' ); ?></a>
-							<a data-value="off" class="ui-button buttonset-item<?php echo ( 'off' === $remove_empty_attributes ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'Off', 'fusion-builder' ); ?></a>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<?php if ( class_exists( 'AWB_Studio' ) && AWB_Studio::is_studio_enabled() ) : ?>
-				<?php wp_nonce_field( 'awb_remove_studio_content', 'awb_remove_studio_content' ); ?>
-			<section class="avada-db-card">
-				<div class="fusion-builder-option">
-					<div class="fusion-builder-option-title">
-						<h2><?php esc_html_e( 'Remove Avada Studio Content', 'fusion-builder' ); ?></h2>
-						<span class="fusion-builder-option-label">
-							<p>
-								<?php
-								/* translators: Opening and closing strong tags. */
-								printf( esc_html__( 'Remove previously imported Avada Studio content. %1$sWARNING:%2$s Use with caution. It will remove all imported content including images which might be used in your pages.', 'fusion-builder' ), '<strong>', '</strong>' );
-								?>
-							</p>
-						</span>
-					</div>
-
-					<div class="fusion-builder-option-field">
-						<div class="awb-studio-content-remove-wrap">
-							<button id="awb-remove-studio-content" class="button"><?php esc_html_e( 'Remove', 'fusion-builder' ); ?></button>
-							<span class="spinner avada-db-loader"></span>
-							<div class="awb-remove-studio-content-status"><i class="fusiona-exclamation-sign"></i><?php esc_html_e( 'Something went wrong.', 'fusion-builder' ); ?></div>
-						</div>
-					</div>
-				</div>
-			</section>
-			<?php endif; ?>
-
-			<section class="avada-db-card">
-				<div class="fusion-builder-option">
-					<div class="fusion-builder-option-title">
-						<h2><?php esc_html_e( 'Share Usage Data', 'fusion-builder' ); ?></h2>
-						<span class="fusion-builder-option-label">
-							<p>
-								<?php esc_html_e( 'Set to "on" to opt-in to share non-personal usage data with us. Set to "off" to opt-out again.', 'fusion-builder' ); ?>
-								<a href="https://avada.com/documentation/share-usage-data/" target="_blank"><?php esc_html_e( 'Learn more.', 'fusion-builder' ); ?></a>
-							</p>
-						</span>
-					</div>
-
-					<div class="fusion-builder-option-field">
-						<div class="fusion-form-radio-button-set ui-buttonset enable-builder-ui">
-							<?php
-							$send_site_data = 'on';
-							if ( isset( $existing_settings['site_data_consent'] ) ) {
-								$send_site_data = $existing_settings['site_data_consent'];
-							}
-							?>
-							<input type="hidden" class="button-set-value" value="<?php echo esc_attr( $send_site_data ); ?>" name="site_data_consent" id="site_data_consent">
-							<a data-value="on" class="ui-button buttonset-item<?php echo ( 'on' === $send_site_data ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'On', 'fusion-builder' ); ?></a>
-							<a data-value="off" class="ui-button buttonset-item<?php echo ( 'off' === $send_site_data ) ? ' ui-state-active' : ''; ?>" href="#"><?php esc_html_e( 'Off', 'fusion-builder' ); ?></a>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<section class="avada-db-card">
-				<div class="fusion-builder-option">
-					<div class="fusion-builder-option-title">
-						<h2><?php esc_html_e( 'Role Manager', 'fusion-builder' ); ?></h2>
-						<span class="fusion-builder-option-label">
-							<p>
-								<?php esc_html_e( 'Manage access to various Avada components based on user roles.', 'fusion-builder' ); ?>
-							</p>
-						</span>
-					</div>
-
-					<div class="fusion-builder-option-field">
-						<?php
-						AWB_Access_Control::display_options();
-						?>
-					</div>
-				</div>
-			</section>
-
-			<?php
-			$awb_layout_order = '';
-			if ( isset( $existing_settings['awb_layout_order'] ) ) {
-				$awb_layout_order = $existing_settings['awb_layout_order'];
-			}
-			?>
-			<input type="hidden" class="button-set-value" value="<?php echo esc_attr( $awb_layout_order ); ?>" name="awb_layout_order" id="awb_layout_order">			
 
 			<section class="fusion-builder-settings-save-settings avada-db-card avada-db-card-transparent">
 				<input type="hidden" name="action" value="save_fb_settings">

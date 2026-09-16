@@ -5,7 +5,7 @@
  * @package fusion-builder
  */
 
-$fusion_settings          = awb_get_fusion_settings();
+$fusion_settings          = fusion_get_fusion_settings();
 $column_min_width_default = $fusion_settings->get( 'text_column_min_width' );
 $column_spacing_default   = $fusion_settings->get( 'text_column_spacing' );
 $rule_style_default       = $fusion_settings->get( 'text_rule_style' );
@@ -47,10 +47,6 @@ $rule_color_default       = $fusion_settings->get( 'text_rule_color' );
 			text_block_html += jQuery(this).outerHTML();
 		}
 	});
-
-	if ( 'none' !== params.text_transform ) {
-		style += 'text-transform: ' + params.text_transform + ';';
-	}
 
 	if ( 1 < parseInt( params.columns ) ) {
 

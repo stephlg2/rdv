@@ -1,3 +1,4 @@
+/* global extras */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -18,13 +19,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var attributes = {};
 
 				attributes.cid    = this.model.get( 'cid' );
-				this.values       = atts.values;
 
 				attributes.wooCartShippingAttr = this.buildAttr( atts.values, attributes.cid );
 				attributes.cart_shipping_content = '';
 				if ( 'undefined' !== typeof atts.query_data  ) {
 					attributes.cart_shipping_content = atts.query_data;
 				}
+				attributes.styles = this.buildStyleBlock( atts.values );
 
 				return attributes;
 			},
@@ -40,11 +41,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// WooFeaturedProductsSliderShortcode attributes.
 				var wooCartShippingAttr = {
-					class: 'woocommerce-shipping-calculator awb-live fusion-woocommerce-shipping-calculator fusion-woocommerce-shipping-calculator-' + cid,
-					style: ''
+					class: 'woocommerce-shipping-calculator fusion-woocommerce-shipping-calculator fusion-woocommerce-shipping-calculator-' + cid
 				};
-
-				wooCartShippingAttr = _.fusionVisibilityAtts( values.hide_on_mobile, wooCartShippingAttr );
 
 				if ( '' !== values[ 'class' ] ) {
 					wooCartShippingAttr[ 'class' ] += ' ' + values[ 'class' ];
@@ -55,45 +53,114 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					wooCartShippingAttr.id = values.id;
 				}
 
-				wooCartShippingAttr.style += this.getStyleVariables( values );
-
 				wooCartShippingAttr = _.fusionAnimations( values, wooCartShippingAttr );
 
 				return wooCartShippingAttr;
 			},
 
+
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
+			 * @since  3.3
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var inputs, hoverColor, placeholderColor, placeHolderInputs, hoverInputs, css;
+				this.values = values;
+				// variables into current scope
+				this.baseSelector = '.fusion-woocommerce-shipping-calculator-' +  this.model.get( 'cid' );
+				this.dynamic_css = {};
 
-				if ( ! this.isDefault( 'field_border_focus_color' ) ) {
-					customVars.hover_color = jQuery.AWB_Color( values.field_border_focus_color ).alpha( 0.5 ).toVarOrRgbaString();
+
+				if ( !this.isDefault( 'margin_top' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-top',  this.values.margin_top, true );
+				}
+
+				if ( !this.isDefault( 'margin_bottom' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-bottom',  this.values.margin_bottom );
+				}
+
+				if ( !this.isDefault( 'margin_left' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-left',  this.values.margin_left );
+				}
+
+				if ( !this.isDefault( 'margin_right' ) ) {
+				this.addCssProperty( this.baseSelector, 'margin-right',  this.values.margin_right );
+				}
+
+				inputs = [ this.baseSelector + ' input', this.baseSelector + ' select', this.baseSelector + ' textarea', this.baseSelector + ' .avada-select-parent .select-arrow', this.baseSelector + '.select2-container--default .select2-selection--single' ];
+
+				if ( ! this.isDefault( 'field_bg_color' ) ) {
+					this.addCssProperty( inputs, 'background',  this.values.field_bg_color, true );
+
 				}
 
 				if ( ! this.isDefault( 'field_text_color' ) ) {
-					customVars.placeholder_color = jQuery.AWB_Color( values.field_text_color ).alpha( 0.5 ).toVarOrRgbaString();
+					placeholderColor = jQuery.Color( this.values.field_text_color ).alpha( 0.5 ).toRgbaString();
+					this.addCssProperty( inputs, 'color',  this.values.field_text_color, true );
+
+					placeHolderInputs = [ this.baseSelector + ' input::placeholder', this.baseSelector + ' textarea::placeholder' ];
+					this.addCssProperty( placeHolderInputs, 'color',  placeholderColor );
 				}
 
-				cssVarsOptions = [
-					'field_bg_color',
-					'field_text_color',
-					'field_border_color',
-					'field_border_focus_color'
-				];
+				if ( ! this.isDefault( 'field_border_color' ) ) {
+					this.addCssProperty( inputs, 'border-color',  this.values.field_border_color, true );
 
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
+					// Select 2.
+					this.addCssProperty( this.baseSelector + ' .avada-select-parent .select-arrow', 'border-color', this.values.field_border_color, true );
+					this.addCssProperty( this.baseSelector + ' .avada-select-parent .select-arrow', 'color', this.values.field_border_color, true );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				if ( ! this.isDefault( 'field_border_focus_color' ) ) {
+					hoverColor = jQuery.Color( this.values.field_border_focus_color ).alpha( 0.5 ).toRgbaString();
+
+					hoverInputs = [
+						this.baseSelector + ' input:hover',
+						this.baseSelector + ' select:hover',
+						this.baseSelector + ' textarea:hover',
+						this.baseSelector + ' input:focus',
+						this.baseSelector + ' select:focus',
+						this.baseSelector + ' textarea:focus'
+					];
+					this.addCssProperty( hoverInputs, 'border-color', hoverColor, true );
+
+					// Select 2.
+					this.addCssProperty( this.baseSelector + ' .avada-select-parent:hover .select-arrow', 'border-color', hoverColor, true );
+					this.addCssProperty( this.baseSelector + ' .avada-select-parent:hover .select-arrow', 'color', hoverColor, true );
+				}
+
+
+				css  = this.parseCSS();
+				css += this.mediaQueryStyles();
+
+				return ( css ) ? '<style>' + css + '</style>' : '';
+
+			},
+
+			/**
+			 * Builds media query styles.
+			 *
+			 * @since  3.3
+			 * @param  {Object} values - The values object.
+			 * @return {String}
+			 */
+			mediaQueryStyles: function(  ) {
+				var baseSelector = '.fusion-woocommerce-shipping-calculator-' + this.model.get( 'cid' ),
+					css = '';
+
+				css  = '@media only screen and (max-width:' + extras.content_break_point + 'px) {';
+				css += baseSelector + ' p.fusion-layout-column.fusion-column-last:last-of-type {';
+				css += 'margin-bottom: 0px;';
+				css += '}}';
+
+				css  = '@media only screen and (min-width:' + extras.content_break_point + 'px) {';
+				css += baseSelector + ' .fusion-layout-column.fusion-column-last {';
+				css += 'margin-bottom: 0px;';
+				css += '}}';
+
+				return css;
 			}
 
 		} );

@@ -13,22 +13,16 @@ var iconHTML = '';
 if ( values.icon ) {
 	iconHTML = '<i' + _.fusionGetAttributes( IconAttr ) + '></i>';
 	if ( 'yes' === values.icon_divider ) {
-		iconHTML = '<span class="fusion-button-icon-divider button-icon-divider-' + values.icon_position + '">' + iconHTML + '</span>';
-	} else if ( 'icon_position' === values.hover_transition ) {
-		iconHTML += iconHTML;
+		iconHTML = '<span class="' + 'fusion-button-icon-divider button-icon-divider-' + values.icon_position + '">' + iconHTML + '</span>';
 	}
 }
 
-buttonText = '<span' + _.fusionGetAttributes( textAttr ) + '>' + values.element_content + '</span>';
-
-if ( 'text_slide_up' === values.hover_transition || 'text_slide_down' === values.hover_transition ) {
-	buttonText = '<div class="awb-button-text-transition">' + buttonText + buttonText + '</div>';
-}
-
+buttonText   = '<span' + _.fusionGetAttributes( textAttr ) + '>' + values.element_content + '</span>';
 innerContent = ( 'left' === values.icon_position ) ? iconHTML + buttonText : buttonText + iconHTML;
 #>
 
 <div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
+	{{{ buttonStyles }}}
 	<# if ( 'undefined' !== typeof values.button_el_type && 'submit' === values.button_el_type ) { #>
 		<button {{{ _.fusionGetAttributes( attr ) }}} >
 			{{{ innerContent }}}

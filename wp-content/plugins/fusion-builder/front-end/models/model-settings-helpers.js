@@ -1,4 +1,3 @@
-/* global FusionPageBuilderViewManager */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -17,8 +16,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			this.modalDialogMoreView   = null;
 
-			this.listenTo( window.FusionEvents, 'fusion-settings-modal-save', this.removeElementSettingsViewForModal );
-			this.listenTo( window.FusionEvents, 'fusion-settings-modal-cancel', this.removeElementSettingsViewForModal );
+			this.listenTo( window.FusionEvents, 'fusion-settings-modal-save', this.removeElementSettingsView );
+			this.listenTo( window.FusionEvents, 'fusion-settings-modal-cancel', this.removeElementSettingsView );
 			this.listenTo( window.FusionEvents, 'fusion-settings-removed', this.removeElementSettingsView );
 
 			this.listenTo( window.FusionEvents, 'fusion-preferences-editing_mode-updated', this.editingModeChanged );
@@ -114,44 +113,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		},
 
 		removeElementSettingsView: function( cid ) {
-			var settingsWrappers,
-				foundCid;
-
 			if ( this.openSettingsView && cid === this.openSettingsView.model.get( 'cid' ) ) {
 				this.openSettingsView  = false;
 			}
 			if ( this.openChildSettingsView && cid === this.openChildSettingsView.model.get( 'cid' ) ) {
-				// If the cid is from a child removed, and the settings there are present from it's parent, then show them.
-				settingsWrappers = window.FusionApp.sidebarView.$el.find( '.fusion-builder-custom-tab' );
-				foundCid = parseInt( settingsWrappers.attr( 'data-cid' ) );
-
-				if ( foundCid === this.openChildSettingsView.model.get( 'parent' ) ) {
-					setTimeout( function() {
-						FusionPageBuilderViewManager.getView( foundCid ).settings();
-					}, 20 );
-				}
 				this.openChildSettingsView = false;
-			}
-		},
-
-		/**
-		 * Remove Element Settings for Modals.
-		 *
-		 * A dialog modal can be either for an element settings(when the dialog option is on),
-		 * or for another thing. This function will not remove the open setting if the element
-		 * settings are inside the left panel(sidebar settings mode).
-		 */
-		removeElementSettingsViewForModal: function( cid ) {
-			if ( this.openSettingsView && cid === this.openSettingsView.model.get( 'cid' ) ) {
-				// Verify if the settings are inside left panel. Settings can also be out
-				if ( 0 === this.openSettingsView.$el.closest( '#fusion-builder-sections-eo' ).length ) {
-					this.openSettingsView = false;
-				}
-			}
-			if ( this.openChildSettingsView && cid === this.openChildSettingsView.model.get( 'cid' ) ) {
-				if ( 0 === this.openChildSettingsView.$el.closest( '#fusion-builder-sections-eo' ).length ) {
-					this.openChildSettingsView = false;
-				}
 			}
 		},
 
@@ -182,7 +148,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		},
 
 		/**
-         * Things to be done when editing_mode preference is changed.
+         * Things to be done when editing_mode pregerence is changed.
          */
 		editingModeChanged: function() {
 			if ( this.openSettingsView ) {

@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Fusion-Library
  * @since      2.2.0
  */
@@ -262,7 +262,7 @@ class Fusion_Data_PostMeta {
 			}
 		}
 
-		return (array) apply_filters( 'fusion_get_all_meta', (array) $this->data, $this->post_id );
+		return apply_filters( 'fusion_get_all_meta', $this->data, $this->post_id );
 	}
 
 	/**

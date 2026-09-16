@@ -41,10 +41,10 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 			add_action( 'in_admin_footer', [ $this, 'get_admin_screens_footer' ] );
 
 			// Add settings.
-			add_action( 'slide-page_add_form_fields', [ $this, 'slider_add_new_meta_fields' ] );
-			add_action( 'slide-page_edit_form_fields', [ $this, 'slider_edit_meta_fields' ] );
-			add_action( 'edited_slide-page', [ $this, 'slider_save_taxonomy_custom_meta' ] );
-			add_action( 'create_slide-page', [ $this, 'slider_save_taxonomy_custom_meta' ] );
+			add_action( 'slide-page_add_form_fields', [ $this, 'slider_add_new_meta_fields' ], 10, 2 );
+			add_action( 'slide-page_edit_form_fields', [ $this, 'slider_edit_meta_fields' ], 10, 2 );
+			add_action( 'edited_slide-page', [ $this, 'slider_save_taxonomy_custom_meta' ], 10, 2 );
+			add_action( 'create_slide-page', [ $this, 'slider_save_taxonomy_custom_meta' ], 10, 2 );
 
 			// Clone slide.
 			add_action( 'admin_action_save_as_new_slide', [ $this, 'save_as_new_slide' ] );
@@ -74,9 +74,7 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 		 */
 		public function change_slide_labels( $labels ) {
 			foreach ( $labels as $index => $label ) {
-				if ( null !== $label ) {
-					$labels->$index = str_replace( [ 'Categories', 'Category', 'categories', 'category' ], [ 'Slides', 'Slides', 'slides', 'slide' ], $label );
-				}
+				$labels->$index = str_replace( [ 'Categories', 'Category', 'categories', 'category' ], [ 'Slides', 'Slides', 'slides', 'slide' ], $label );
 			}
 
 			return $labels;
@@ -102,7 +100,6 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 					'hierarchical'        => false,
 					'publicly_queryable'  => false,
 					'exclude_from_search' => true,
-					'show_ui'             => apply_filters( 'awb_dashboard_menu_cpt', true, 'slide' ),
 					'show_in_menu'        => false,
 					'labels'              => [
 						'name'                     => _x( 'Avada Slides', 'Post Type General Name', 'fusion-core' ),
@@ -137,7 +134,6 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 					'query_var'          => true,
 					'rewrite'            => true,
 					'show_in_nav_menus'  => false,
-					'show_ui'            => apply_filters( 'awb_dashboard_menu_cpt', true, 'slide' ),
 					'show_tagcloud'      => false,
 					'publicly_queryable' => false,
 					'labels'             => [
@@ -170,10 +166,11 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 			if ( ! class_exists( 'Fusion' ) || ! class_exists( 'Fusion_Settings' ) ) {
 				return;
 			}
-			global $fusion_library;
 
-			$fusion_settings = awb_get_fusion_settings();
-
+			global $fusion_settings, $fusion_library;
+			if ( ! $fusion_settings ) {
+				$fusion_settings = Fusion_Settings::get_instance();
+			}
 			if ( ! $fusion_library ) {
 				$fusion_library = Fusion::get_instance();
 			}
@@ -190,10 +187,6 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 				}
 				if ( $fusion_settings->get( 'status_vimeo' ) ) {
 					$dependencies[] = 'vimeo-player';
-				}
-
-				if ( $fusion_settings->get( 'status_yt' ) ) {
-					$dependencies[] = 'fusion-youtube';
 				}
 
 				$dependencies[] = 'fusion-responsive-typography';
@@ -296,12 +289,14 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 		public function admin_menu() {
 			global $submenu;
 
-			if ( ! apply_filters( 'awb_dashboard_menu_cpt', true, 'slide' ) ) {
-				return;
+			// Admin role menu entry.
+			if ( current_user_can( 'switch_themes' ) ) {
+				$sliders = add_submenu_page( 'avada', esc_html__( 'Avada Sliders', 'fusion-core' ), esc_html__( 'Sliders', 'fusion-core' ), 'manage_options', 'avada_sliders', null, 7 );
+			} else { // Editor role menu entry.
+				$sliders     = add_menu_page( esc_html__( 'Avada Sliders', 'fusion-core' ), esc_html__( 'Avada Sliders', 'fusion-core' ), 'edit_pages', 'avada_sliders', '', 'dashicons-avada', '2.111111' );
+				$sliders_sub = add_submenu_page( 'avada_sliders', esc_html__( 'Avada Slides', 'fusion-core' ), esc_html__( 'Avada Slides', 'fusion-core' ), 'edit_pages', 'avada_slides', null, 1 );
 			}
 
-			// Menu entry.
-			add_submenu_page( 'avada', esc_html__( 'Avada Sliders', 'fusion-core' ), esc_html__( 'Sliders', 'fusion-core' ), 'edit_posts', 'avada_sliders', null, 9 );
 			add_submenu_page( 'avada', __( 'Export / Import', 'fusion-core' ), __( 'Export / Import', 'fusion-core' ), 'manage_options', 'avada_slider_export_import', [ $this, 'add_slider_import_export' ], 30 );
 
 			add_action( 'admin_print_styles', [ $this, 'add_styles' ] );
@@ -378,44 +373,39 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 		 * @return void
 		 */
 		public function add_avada_dashboard_sticky_menu_items( $screen ) {
-			if ( apply_filters( 'awb_dashboard_menu_cpt', true, 'slide' ) ) : ?>
-				<li class="avada-db-menu-item avada-db-menu-item-sliders"><a class="avada-db-menu-item-link<?php echo ( 'sliders' === $screen || 'slides' === $screen || 'slide-edit' === $screen || 'slider-export' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'sliders' === $screen || ! current_user_can( 'manage_categories' ) ) ? '#' : admin_url( 'edit-tags.php?taxonomy=slide-page&post_type=slide' ) ); ?>" ><i class="fusiona-carousel"></i><span class="avada-db-menu-item-text"><?php esc_html_e( 'Sliders', 'fusion-core' ); ?></span></a>
-					<ul class="avada-db-menu-sub avada-db-menu-sub-sliders">
-					<?php if ( current_user_can( 'manage_categories' ) ) : ?>
-						<li class="avada-db-menu-sub-item avada-db-menu-sub-item-sliders">
-							<a class="avada-db-menu-sub-item-link<?php echo ( 'sliders' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'sliders' === $screen ) ? '#' : admin_url( 'edit-tags.php?taxonomy=slide-page&post_type=slide' ) ); ?>">
-								<i class="fusiona-layouts"></i>
-								<div class="avada-db-menu-sub-item-text">
-									<div class="avada-db-menu-sub-item-label"><?php esc_html_e( 'Sliders', 'fusion-core' ); ?></div>
-									<div class="avada-db-menu-sub-item-desc"><?php esc_html_e( 'Edit your Avada Sliders.', 'fusion-core' ); ?></div>
-								</div>
-							</a>
-						</li>
-					<?php endif; ?>
-						<li class="avada-db-menu-sub-item avada-db-menu-sub-item-slides">
-							<a class="avada-db-menu-sub-item-link<?php echo ( 'slides' === $screen || 'slide-edit' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'slides' === $screen ) ? '#' : admin_url( 'edit.php?post_type=slide' ) ); ?>">
-								<i class="fusiona-content"></i>
-								<div class="avada-db-menu-sub-item-text">
-									<div class="avada-db-menu-sub-item-label"><?php esc_html_e( 'Slides', 'fusion-core' ); ?></div>
-									<div class="avada-db-menu-sub-item-desc"><?php esc_html_e( 'Edit your Avada Slides.', 'fusion-core' ); ?></div>
-								</div>
-							</a>
-						</li>
-					<?php if ( current_user_can( 'manage_options' ) ) : ?>
-						<li class="avada-db-menu-sub-item avada-db-menu-sub-item-slider-export">
-							<a class="avada-db-menu-sub-item-link<?php echo ( 'slider-export' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'slider-export' === $screen ) ? '#' : admin_url( 'admin.php?page=avada_slider_export_import' ) ); ?>">
-								<i class="fusiona-file-import-solid"></i>
-								<div class="avada-db-menu-sub-item-text">
-									<div class="avada-db-menu-sub-item-label"><?php esc_html_e( 'Export / Import Sliders', 'fusion-core' ); ?></div>
-									<div class="avada-db-menu-sub-item-desc"><?php esc_html_e( 'Export & import your Avada sliders.', 'fusion-core' ); ?></div>
-								</div>
-							</a>
-						</li>
-					<?php endif; ?>
-					</ul>
-				</li>
-				<?php
-			endif;
+			?>
+			<li class="avada-db-menu-item avada-db-menu-item-sliders"><a class="avada-db-menu-item-link<?php echo ( 'sliders' === $screen || 'slides' === $screen || 'slide-edit' === $screen || 'slider-export' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'sliders' === $screen ) ? '#' : admin_url( 'edit-tags.php?taxonomy=slide-page&post_type=slide' ) ); ?>" ><i class="fusiona-carousel"></i><span class="avada-db-menu-item-text"><?php esc_html_e( 'Sliders', 'fusion-core' ); ?></span></a>
+				<ul class="avada-db-menu-sub avada-db-menu-sub-sliders">
+					<li class="avada-db-menu-sub-item avada-db-menu-sub-item-sliders">
+						<a class="avada-db-menu-sub-item-link<?php echo ( 'sliders' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'sliders' === $screen ) ? '#' : admin_url( 'edit-tags.php?taxonomy=slide-page&post_type=slide' ) ); ?>">
+							<i class="fusiona-layouts"></i>
+							<div class="avada-db-menu-sub-item-text">
+								<div class="avada-db-menu-sub-item-label"><?php esc_html_e( 'Sliders', 'fusion-core' ); ?></div>
+								<div class="avada-db-menu-sub-item-desc"><?php esc_html_e( 'Edit your Avada Sliders.', 'fusion-core' ); ?></div>
+							</div>
+						</a>
+					</li>
+					<li class="avada-db-menu-sub-item avada-db-menu-sub-item-slides">
+						<a class="avada-db-menu-sub-item-link<?php echo ( 'slides' === $screen || 'slide-edit' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'slides' === $screen ) ? '#' : admin_url( 'edit.php?post_type=slide' ) ); ?>">
+							<i class="fusiona-content"></i>
+							<div class="avada-db-menu-sub-item-text">
+								<div class="avada-db-menu-sub-item-label"><?php esc_html_e( 'Slides', 'fusion-core' ); ?></div>
+								<div class="avada-db-menu-sub-item-desc"><?php esc_html_e( 'Edit your Avada Slides.', 'fusion-core' ); ?></div>
+							</div>
+						</a>
+					</li>
+					<li class="avada-db-menu-sub-item avada-db-menu-sub-item-slider-export">
+						<a class="avada-db-menu-sub-item-link<?php echo ( 'slider-export' === $screen ) ? ' avada-db-active' : ''; ?>" href="<?php echo esc_url( ( 'slider-export' === $screen ) ? '#' : admin_url( 'admin.php?page=avada_slider_export_import' ) ); ?>">
+							<i class="fusiona-file-import-solid"></i>
+							<div class="avada-db-menu-sub-item-text">
+								<div class="avada-db-menu-sub-item-label"><?php esc_html_e( 'Export / Import Sliders', 'fusion-core' ); ?></div>
+								<div class="avada-db-menu-sub-item-desc"><?php esc_html_e( 'Export & import your Avada sliders.', 'fusion-core' ); ?></div>
+							</div>
+						</a>
+					</li>
+				</ul>
+			</li>
+			<?php
 		}
 
 		/**
@@ -468,7 +458,6 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 							</p>
 						</div>
 					</section>
-					<div class="wp-header-end"></div>
 					<?php
 				elseif ( 'slide' === $screen->id && 'slide' === $screen->post_type ) :
 					Avada_Admin::get_admin_screens_footer( 'slide-edit' );
@@ -738,16 +727,11 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 							$sub_array = 'url';
 						}
 						if ( is_string( $value ) ) {
-
-							$base = false === strpos( $value, 'avada.website' ) ? 'https://avada.theme-fusion.com/' : 'https://avada.website/';
-
 							// Replace URLs.
 							$value = str_replace(
 								[
 									'http://avada.theme-fusion.com/' . $this->demo_type,
 									'https://avada.theme-fusion.com/' . $this->demo_type,
-									'http://avada.website/' . $this->demo_type,
-									'https://avada.website/' . $this->demo_type,
 								],
 								$home_url,
 								$value
@@ -758,7 +742,7 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 							// since static assets don't require https anyway.
 							$value = str_replace(
 								$home_url . '/wp-content/',
-								$base . $this->demo_type . '/wp-content/',
+								'http://avada.theme-fusion.com/' . $this->demo_type . '/wp-content/',
 								$value
 							);
 
@@ -841,27 +825,23 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 					include $wp_importer;
 				}
 
-				if ( ! class_exists( 'WP_Importer_Logger' ) ) { // If WP importer doesn't exist.
-					include FUSION_LIBRARY_PATH . '/inc/importer/class-logger.php';
-				}
-
-				if ( ! class_exists( 'AWB_Importer_Logger' ) ) { // If WP importer doesn't exist.
-					include FUSION_LIBRARY_PATH . '/inc/importer/class-awb-importer-logger.php';
-				}
-
 				if ( ! class_exists( 'WXR_Importer' ) ) { // If WP importer doesn't exist.
-					include FUSION_LIBRARY_PATH . '/inc/importer/class-wxr-importer.php';
+					include FUSION_LIBRARY_PATH . '/inc/importer/class-logger.php';
+					include FUSION_LIBRARY_PATH . '/inc/importer/class-logger-html.php';
+
+					$wp_import = FUSION_LIBRARY_PATH . '/inc/importer/class-wxr-importer.php';
+					include $wp_import;
 				}
 
 				if ( ! class_exists( 'Fusion_WXR_Importer' ) ) {
 					include FUSION_LIBRARY_PATH . '/inc/importer/class-fusion-wxr-importer.php';
 				}
 
-				if ( class_exists( 'AWB_Importer_Logger' ) && class_exists( 'WP_Importer' ) && class_exists( 'WXR_Importer' ) && class_exists( 'Fusion_WXR_Importer' ) ) { // Check for main import class and wp import class.
+				if ( class_exists( 'WP_Importer' ) && class_exists( 'WXR_Importer' ) && class_exists( 'Fusion_WXR_Importer' ) ) { // Check for main import class and wp import class.
 
 					$xml = $fs_dir . 'sliders.xml';
 
-					$logger = new AWB_Importer_Logger();
+					$logger = new WP_Importer_Logger_HTML();
 
 					// It's important to disable 'prefill_existing_posts'.
 					// In case GUID of importing post matches GUID of an existing post it won't be imported.
@@ -890,7 +870,6 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 						]
 					);
 
-					$thumbnail_ids = [];
 					if ( $loop->have_posts() ) {
 
 						while ( $loop->have_posts() ) {
@@ -1280,7 +1259,10 @@ if ( ! class_exists( 'Fusion_Slider' ) ) {
 		 */
 		public static function render_fusion_slider( $term ) {
 
-			$fusion_settings = awb_get_fusion_settings();
+			global $fusion_settings;
+			if ( ! $fusion_settings ) {
+				$fusion_settings = Fusion_Settings::get_instance();
+			}
 
 			if ( $fusion_settings->get( 'status_fusion_slider' ) ) {
 				$term_details    = get_term_by( 'slug', $term, 'slide-page' );

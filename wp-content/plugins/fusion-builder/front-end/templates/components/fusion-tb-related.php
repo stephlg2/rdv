@@ -16,11 +16,13 @@
 	if ( 'undefined' !== typeof query_data && 'undefined' !== typeof query_data.related_items ) {
 	#>
 	<div {{{ _.fusionGetAttributes( carouselAttrs ) }}}>
-		<div class="swiper-wrapper">
-			{{{ relatedCarousel }}}
-		</div>
+		<div class="fusion-carousel-positioner">
+			<ul class="fusion-carousel-holder">
+				{{{ relatedCarousel }}}
+			</ul>
 
-		{{{ carouselNav }}}
+			{{{ carouselNav }}}
+		</div>
 	</div>
 	<#
 	} else if ( 'undefined' !== typeof query_data && 'undefined' !== typeof query_data.placeholder ) {

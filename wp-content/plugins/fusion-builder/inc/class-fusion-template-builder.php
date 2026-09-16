@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 2.2
  */
-class Fusion_Template_Builder extends AWB_Layout_Conditions {
+class Fusion_Template_Builder {
 
 	/**
 	 * The one, true instance of this object.
@@ -72,7 +72,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	/**
 	 * The default layout data.
 	 *
-	 * @static
 	 * @access public
 	 * @var array
 	 */
@@ -80,31 +79,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		'conditions'     => [],
 		'template_terms' => [],
 	];
-
-	/**
-	 * The layout order.
-	 *
-	 * @since 2.9
-	 * @access public
-	 * @var mixed(bool|string)
-	 */
-	public $layout_order = false;
-
-	/**
-	 * The name of currently rendered override.
-	 *
-	 * @access public
-	 * @var bool|string
-	 */
-	public $current_override_name = false;
-
-	/**
-	 * Holds the number of layout section loop recursion.
-	 *
-	 * @access protected
-	 * @var int
-	 */
-	protected $rendering_override_loop = 0;
 
 	/**
 	 * Class constructor.
@@ -120,10 +94,10 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		$this->set_global_overrides();
 
 		add_action( 'fusion_builder_shortcodes_init', [ $this, 'init_shortcodes' ] );
+		add_action( 'fusion_template_content', [ $this, 'render_content' ] );
 
-		// Using priority 51 to come after EC of 50.
-		add_filter( 'template_include', [ $this, 'template_include' ], 51 );
-		add_filter( 'fusion_is_hundred_percent_template', [ $this, 'is_hundred_percent_template' ], 25 );
+		add_filter( 'template_include', [ $this, 'template_include' ], 12 );
+		add_filter( 'fusion_is_hundred_percent_template', [ $this, 'is_hundred_percent_template' ], 25, 2 );
 
 		// Requirements for live editor.
 		add_action( 'fusion_builder_load_templates', [ $this, 'load_component_templates' ] );
@@ -138,11 +112,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		add_filter( 'avada_setting_get_search_sidebar', [ $this, 'filter_search_sidebar_1' ] );
 		add_filter( 'avada_setting_get_search_sidebar_2', [ $this, 'filter_search_sidebar_2' ] );
 		add_filter( 'avada_sidebar_post_meta_option_names', [ $this, 'load_template_sidebars' ], 10, 2 );
-
-		// Headerr override option overrides.
-		add_filter( 'avada_setting_get_header_position', [ $this, 'filter_header_position' ] );
-		add_filter( 'avada_setting_get_side_header_width', [ $this, 'filter_side_header_width' ] );
-		add_filter( 'avada_setting_get_side_header_break_point', [ $this, 'filter_side_header_break_point' ] );
 
 		// New layout hook.
 		add_action( 'admin_action_fusion_tb_new_layout', [ $this, 'add_new_layout' ] );
@@ -171,18 +140,16 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		// Front end page edit trigger.
 		add_action( 'admin_bar_menu', [ $this, 'builder_trigger' ], 999 );
 
-		// Render Hedaer override if it exists.
-		add_action( 'wp_head', [ $this, 'maybe_render_header' ] );
-
-		// Render Page Title Bar override if it exists.
-		add_action( 'wp_head', [ $this, 'maybe_render_page_title_bar' ] );
-
-		add_action( 'fusion_template_content', [ $this, 'render_content_override' ] );
-
 		// Render footer override if it exists.
 		add_action( 'get_footer', [ $this, 'maybe_render_footer' ] );
 		add_filter( 'avada_setting_get_footer_special_effects', [ $this, 'filter_special_effects' ] );
 		add_filter( 'generate_css_get_footer_special_effects', [ $this, 'filter_special_effects' ] );
+
+		// Render Page Title Bar override if it exists.
+		add_action( 'wp_head', [ $this, 'maybe_render_page_title_bar' ] );
+
+		// Render Hedaer override if it exists.
+		add_action( 'wp_head', [ $this, 'maybe_render_header' ] );
 
 		// Add custom CSS.
 		// This has a priority of 1000 because we need it to be
@@ -200,17 +167,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		// Polylang sync taxonomies.
 		add_filter( 'pll_copy_taxonomies', [ $this, 'copy_taxonomies' ], 10, 2 );
-
-		// Add layout CSS vars, 1004 to come after globals and page options.
-		add_filter( 'fusion_dynamic_css_array', [ $this, 'layout_css' ], 1004 );
-
-		// Handle media-query styles.
-		add_action( 'wp', [ $this, 'add_media_query_styles' ] );
-
-		// WCFM Plugin Compatibility.
-		if ( class_exists( 'WCFM' ) && class_exists( 'WooCommerce' ) ) {
-			add_action( 'wp', [ $this, 'wcfm_ignore_template' ] );
-		}
 	}
 
 	/**
@@ -240,7 +196,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		// Layout post type, where you select templates.
 		$labels = [
-			'name'                     => _x( 'Avada Layouts', 'Layout general name', 'fusion-builder' ),
+			'name'                     => _x( 'Avada Builder Layouts', 'Layout general name', 'fusion-builder' ),
 			'singular_name'            => _x( 'Layout', 'Layout singular name', 'fusion-builder' ),
 			'add_new'                  => _x( 'Add New', 'Layout item', 'fusion-builder' ),
 			'add_new_item'             => esc_html__( 'Add New Layout', 'fusion-builder' ),
@@ -280,7 +236,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		// Individual Templates.
 		$labels = [
-			'name'                     => _x( 'Avada Layout Sections', 'Section type general name', 'fusion-builder' ),
+			'name'                     => _x( 'Avada Builder Sections', 'Section type general name', 'fusion-builder' ),
 			'singular_name'            => _x( 'Section', 'Section type singular name', 'fusion-builder' ),
 			'add_new'                  => _x( 'Add New', 'Section item', 'fusion-builder' ),
 			'add_new_item'             => esc_html__( 'Add New Section', 'fusion-builder' ),
@@ -328,13 +284,12 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			'fusion_tb_category',
 			[ 'fusion_tb_section' ],
 			[
-				'hierarchical'       => true,
-				'labels'             => $labels,
-				'publicly_queryable' => $is_builder,
-				'show_ui'            => false,
-				'show_admin_column'  => true,
-				'query_var'          => true,
-				'show_in_nav_menus'  => false,
+				'hierarchical'      => true,
+				'labels'            => $labels,
+				'show_ui'           => false,
+				'show_admin_column' => true,
+				'query_var'         => true,
+				'show_in_nav_menus' => false,
 			]
 		);
 
@@ -362,7 +317,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 				],
 				'content'        => [
 					'label' => esc_html__( 'Content', 'fusion-builder' ),
-					'alias' => esc_html__( 'Live Builder', 'fusion-builder' ),
 					'icon'  => 'fusiona-content',
 				],
 				'footer'         => [
@@ -468,7 +422,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 				self::$default_layout_data
 			);
 
-			$post->{'post_content'} = wp_slash( str_replace( "\'", "'", wp_json_encode( $updated_layout, JSON_UNESCAPED_UNICODE ) ) );
+			$post->{'post_content'} = wp_slash( wp_json_encode( $updated_layout ) );
 			wp_update_post( $post );
 		}
 
@@ -523,112 +477,43 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	}
 
 	/**
-	 * Returns the order of the layouts, and sets if, if called for the first time..
+	 * Returns registered layouts
 	 *
-	 * @since 2.9
-	 * @access public
-	 * @return string The layout order.
+	 * @access private
+	 * @since 2.2
+	 * @return array
 	 */
-	public function get_layout_order() {
-		if ( false === $this->layout_order ) {
-			$options = get_option( 'fusion_builder_settings', [] );
-
-			$this->layout_order = ( isset( $options['awb_layout_order'] ) && '' !== $options['awb_layout_order'] ) ? $options['awb_layout_order'] : '';
-		}
-
-		return $this->layout_order;
-	}
-
-	/**
-	 * Returns registered layouts query results.
-	 *
-	 * @since 2.9
-	 * @access public
-	 * @param bool $is_search Whether the query is done for search results.
-	 * @return array The queried layouts.
-	 */
-	public function get_registered_layouts_posts( $is_search = false ) {
-		$args = [
+	public function get_registered_layouts() {
+		$args               = [
 			'post_type'      => [ 'fusion_tb_layout' ],
 			'post_status'    => [ 'any' ],
 			'posts_per_page' => -1,
 		];
-
-		if ( $is_search ) {
-			$args['post_status']      = 'publish';
-			$args['suppress_filters'] = true;
-		}
-
-		if ( $is_search && class_exists( 'WooCommerce' ) ) {
-			remove_filter( 'the_posts', [ WC()->query, 'remove_product_query_filters' ] );
-			$posts = fusion_cached_query( $args );
-			add_filter( 'the_posts', [ WC()->query, 'remove_product_query_filters' ] );
-		} else {
-			$posts = fusion_cached_query( $args );
-		}
-
-		$layout_order = $this->get_layout_order();
-		$layouts      = [];
-
-		if ( $posts->have_posts() ) {
-
-			if ( '' !== $layout_order ) {
-				$layout_order = explode( ',', str_replace( 'global,', '', $layout_order ) );
-
-				foreach ( $posts->posts as $post ) {
-					$layouts[ $post->ID ] = $post;
-				}
-
-				$layouts = array_replace( array_flip( $layout_order ), $layouts );
-			} else {
-				$layouts = $posts->posts;
-			}
-		}
-
-		return $layouts;
-	}
-
-	/**
-	 * Returns registered layouts.
-	 *
-	 * @since 2.2
-	 * @access public
-	 * @return array
-	 */
-	public function get_registered_layouts() {
-		$layouts            = $this->get_registered_layouts_posts();
+		$layouts            = fusion_cached_query( $args );
 		$registered_layouts = [];
 		// Add default layout.
 		$registered_layouts[0] = self::get_default_layout();
 
-		if ( ! empty( $layouts ) ) {
-			foreach ( $layouts as $layout ) {
-
-				if ( ! is_object( $layout ) ) {
-					continue;
-				}
-
-				$data                         = json_decode( str_replace( '\\', '', wp_unslash( $layout->post_content ) ), true );
-				$index                        = $layout->ID;
-				$registered_layouts[ $index ] = [
+		if ( $layouts->have_posts() ) {
+			foreach ( $layouts->posts as $layout ) {
+				$data                              = json_decode( wp_unslash( $layout->post_content ), true );
+				$registered_layouts[ $layout->ID ] = [
 					'id'    => $layout->ID,
 					'title' => $layout->post_title,
 					'data'  => wp_parse_args( $data, self::$default_layout_data ),
 				];
 			}
 		}
-
 		return $registered_layouts;
 	}
 
 	/**
 	 * Handles the update of the default layout content.
 	 *
-	 * @since 2.2
-	 * @static
 	 * @access public
 	 * @param string $value The value to update.
 	 * @return string
+	 * @since 2.2
 	 */
 	public static function update_default_layout( $value ) {
 		$updated_content = wp_parse_args(
@@ -656,8 +541,22 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		if ( ! is_admin() && $query->is_main_query() && ( $query->is_search() || $query->is_archive() ) ) {
 			if ( null === $this->layout ) {
 				$this->override_paused = true;
+				$args                  = [
+					'post_type'        => 'fusion_tb_layout',
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'suppress_filters' => true,
+				];
 
-				$layouts = $this->get_registered_layouts_posts( true );
+				if ( class_exists( 'WooCommerce' ) ) {
+					remove_filter( 'the_posts', [ WC()->query, 'remove_product_query_filters' ] );
+					$layouts = fusion_cached_query( $args );
+					add_filter( 'the_posts', [ WC()->query, 'remove_product_query_filters' ] );
+				} else {
+					$layouts = fusion_cached_query( $args );
+				}
+
+				$layouts = $layouts->posts;
 
 				/**
 				 * Check if whatever is being loaded should have a template override.
@@ -667,7 +566,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 				 * @param string $type Type of override you are checking for.
 				 * @return object
 				 */
-				if ( ! empty( $layouts ) ) {
+				if ( is_array( $layouts ) ) {
 					$wp_query->is_search = $query->is_search();
 					foreach ( $layouts as $layout ) {
 						if ( $this->check_full_conditions( $layout, null ) ) {
@@ -697,9 +596,9 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 				 * Filter the layout override.
 				 *
 				 * @since 2.2.0
-				 * @param stdClass|false   $layout    The layout override.
-				 * @param int|string|false $c_page_id The page-ID as returned from fusion_library()->get_page_id().
-				 * @return stdClass|false
+				 * @param Post|false $this->layout The layout override.
+				 * @param int|string $c_page_id    The page-ID as returned from fusion_library()->get_page_id().
+				 * @return Post|false
 				 */
 				$this->layout = apply_filters( 'fusion_tb_override', $this->layout, false );
 
@@ -719,10 +618,10 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			 * Filter overrides.
 			 *
 			 * @since 2.2.0
-			 * @param stdClass|false   $override  The override.
-			 * @param string           $type      The type of override we're querying.
-			 * @param int|string|false $c_page_id The page-ID as returned from fusion_library()->get_page_id().
-			 * @return stdClass|false
+			 * @param Post|false $override  The override.
+			 * @param string     $type      The type of override we're querying.
+			 * @param int|string $c_page_id The page-ID as returned from fusion_library()->get_page_id().
+			 * @return Post|false
 			 */
 			return apply_filters( 'fusion_get_override', $override, 'content', false );
 		}
@@ -753,7 +652,13 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		if ( null === $this->layout ) {
 			$this->override_paused = true;
 
-			$layouts = $this->get_registered_layouts_posts();
+			$args    = [
+				'post_type'      => [ 'fusion_tb_layout' ],
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+			];
+			$layouts = fusion_cached_query( $args );
+			$layouts = $layouts->posts;
 
 			if ( fusion_is_preview_frame() || ( is_admin() && in_array( $pagenow, $backend_pages ) ) ) { // phpcs:ignore WordPress.PHP.StrictInArray
 				if ( 'fusion_tb_section' === get_post_type() ) {
@@ -762,15 +667,12 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 					$option      = fusion_get_page_option( 'dynamic_content_preview_type', $post->ID );
 				} elseif ( fusion_is_post_card() ) {
 					add_filter( 'fusion_app_preview_data', [ $this, 'add_post_data' ], 10, 3 );
-				} elseif ( class_exists( 'WooCommerce' ) && is_object( $post ) && fusion_is_shop( $post->ID ) ) {
+				} elseif ( class_exists( 'WooCommerce' ) && is_shop() ) {
 					$target_post = get_post( $c_page_id );
-				} elseif ( 'awb_off_canvas' === get_post_type() ) {
-					add_filter( 'fusion_app_preview_data', [ $this, 'add_post_data' ], 10, 3 );
-					$option = fusion_get_page_option( 'dynamic_content_preview_type', $post->ID );
 				}
 
 				// Check if front page.
-				if ( isset( $target_post ) && 'page' === get_option( 'show_on_front' ) && (int) get_option( 'page_on_front' ) === $target_post->ID ) {
+				if ( isset( $target_post ) && 'page' === get_option( 'show_on_front' ) && get_option( 'page_on_front' ) === $target_post->ID ) {
 					$target_post->is_front_page = true;
 				}
 				// Check if singular.
@@ -796,7 +698,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 					wp_reset_query(); // phpcs:ignore WordPress.WP.DiscouragedFunctions
 				}
 			}
-			if ( ! empty( $layouts ) ) {
+			if ( is_array( $layouts ) ) {
 				foreach ( $layouts as $layout ) {
 					if ( $this->check_full_conditions( $layout, $target_post ) ) {
 						$layout->permalink = get_permalink( $layout->ID );
@@ -821,9 +723,9 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			 * Filter the layout override.
 			 *
 			 * @since 2.2.0
-			 * @param stdClass|false   $override  The override.
-			 * @param int|string|false $c_page_id The page-ID as returned from fusion_library()->get_page_id().
-			 * @return stdClass|false
+			 * @param Post|false $this->layout The layout override.
+			 * @param int|string $c_page_id    The page-ID as returned from fusion_library()->get_page_id().
+			 * @return Post|false
 			 */
 			$this->layout = apply_filters( 'fusion_tb_override', $this->layout, $c_page_id );
 
@@ -862,7 +764,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 */
 	public function set_overrides() {
 		if ( $this->layout && 'global' !== $this->layout->ID ) {
-			$data  = json_decode( str_replace( "'", "\'", wp_unslash( $this->layout->post_content ) ), true );
+			$data  = json_decode( wp_unslash( $this->layout->post_content ), true );
 			$types = isset( $data['template_terms'] ) ? $data['template_terms'] : false;
 			if ( is_array( $types ) ) {
 				foreach ( $types as $type_name => $template_id ) {
@@ -880,21 +782,12 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 						$this->overrides[ $type_name ]            = $template_post;
 						$this->overrides[ $type_name ]->permalink = get_permalink( $template_id );
-						$this->overrides[ $type_name ]->layout_id = $this->layout->ID;
 					}
 				}
 			}
 		}
 
 		$this->overrides = apply_filters( 'fusion_set_overrides', $this->overrides );
-
-		// Header override, reset options to get new filtered values, needed becaused cached ones that are early are incorrect.
-		if ( isset( $this->overrides['header'] ) ) {
-			$fusion_settings = awb_get_fusion_settings();
-			$fusion_settings->reset_option( 'side_header_width' );
-			$fusion_settings->reset_option( 'header_position' );
-			$fusion_settings->reset_option( 'side_header_break_point' );
-		}
 
 		// If not on single, but we have content override, ensure PO is read like it was a page.
 		if ( ! is_singular() && isset( $this->overrides['content'] ) ) {
@@ -924,7 +817,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 				$this->overrides[ $type_name ]            = $template_post;
 				$this->overrides[ $type_name ]->permalink = get_permalink( $template_id );
-				$this->overrides[ $type_name ]->layout_id = 'global';
 			}
 		}
 	}
@@ -990,75 +882,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	}
 
 	/**
-	 * Change header position global based on layout section override.
-	 *
-	 * @since 3.4
-	 * @param string $value The global option for portfolio sidebars.
-	 * @return string
-	 */
-	public function filter_header_position( $value ) {
-		$header_override = $this->get_override( 'header' );
-
-		if ( $header_override ) {
-			$position = fusion_get_page_option( 'position', $header_override->ID );
-			if ( 'left' === $position || 'right' === $position ) {
-				return $position;
-			}
-			return 'top';
-		}
-		return $value;
-	}
-
-	/**
-	 * Change side header width.
-	 *
-	 * @since 3.4
-	 * @param string $value The global option for portfolio sidebars.
-	 * @return string
-	 */
-	public function filter_side_header_width( $value ) {
-		$header_override = $this->get_override( 'header' );
-		if ( $header_override ) {
-			$position = fusion_get_page_option( 'position', $header_override->ID );
-			$width    = fusion_get_page_option( 'side_header_width', $header_override->ID );
-			if ( 'left' === $position || 'right' === $position ) {
-				return $width;
-			}
-			return 0;
-		}
-		return $value;
-	}
-
-	/**
-	 * Change side header breakpoint.
-	 *
-	 * @since 3.4
-	 * @param string $value The global option for portfolio sidebars.
-	 * @return string
-	 */
-	public function filter_side_header_break_point( $value ) {
-		$header_override = $this->get_override( 'header' );
-		if ( $header_override ) {
-			$position = fusion_get_page_option( 'position', $header_override->ID );
-			if ( 'left' === $position || 'right' === $position ) {
-				$breakpoint = fusion_get_page_option( 'header_breakpoint', $header_override->ID );
-				if ( 'never' === $breakpoint ) {
-					return 0;
-				}
-
-				if ( 'small' === $breakpoint || 'medium' === $breakpoint ) {
-					return fusion_library()->get_option( 'visibility_' . $breakpoint );
-				}
-
-				if ( 'custom' === $breakpoint ) {
-					return fusion_get_page_option( 'header_custom_breakpoint', $header_override->ID );
-				}
-			}
-		}
-		return $value;
-	}
-
-	/**
 	 * Add any special case classes we need.
 	 *
 	 * @since 2.2.2
@@ -1091,30 +914,10 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			add_action(
 				'avada_render_header',
 				function() use ( $header_override ) {
-					$this->current_override_name = 'header';
-
-					$tag                = apply_filters( 'fusion_tb_section_tag', 'div', 'header' );
-					$position           = fusion_data()->post_meta( $header_override->ID )->get( 'position' );
-					$side_header_markup = ! fusion_is_preview_frame() && ( 'left' === $position || 'right' === $position );
-					$header_id          = 'left' === $position || 'right' === $position ? ' id="side-header"' : '';
-
-					echo '<' . sanitize_key( $tag ) . ' class="fusion-tb-header"' . $header_id . '>'; // phpcs:ignore WordPress.Security.EscapeOutput
-
-					if ( $side_header_markup ) {
-						$header_breakpoint = fusion_data()->post_meta( $header_override->ID )->get( 'header_breakpoint' );
-						$data_attr         = 'never' === $header_breakpoint ? 'data-sticky-small-visibility="1"' : '';
-						$data_attr        .= 'medium' !== $header_breakpoint ? 'data-sticky-medium-visibility="1"' : '';
-						echo '<div class="fusion-sticky-container awb-sticky-content side-header-wrapper" data-sticky-large-visibility="1" ' . $data_attr . '>'; // phpcs:ignore WordPress.Security.EscapeOutput
-					}
-
+					$tag = apply_filters( 'fusion_tb_section_tag', 'section', 'header' );
+					echo '<' . sanitize_key( $tag ) . ' class="fusion-tb-header">';
 					$this->render_content( $header_override );
-
-					if ( $side_header_markup ) {
-						echo '</div>';
-					}
 					echo '</' . sanitize_key( $tag ) . '>';
-
-					$this->current_override_name = false;
 				},
 				10
 			);
@@ -1136,46 +939,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	}
 
 	/**
-	 * Check if we have a page title bar and if so render it.
-	 *
-	 * @since 2.2
-	 * @return void
-	 * @access public
-	 */
-	public function maybe_render_page_title_bar() {
-		$page_title_bar_override = $this->get_override( 'page_title_bar' );
-
-		if ( $page_title_bar_override ) {
-			add_action(
-				'avada_override_current_page_title_bar',
-				function() use ( $page_title_bar_override ) {
-					$this->current_override_name = 'page_title_bar';
-
-					$tag = apply_filters( 'fusion_tb_section_tag', 'section', 'page_title_bar' );
-					echo '<' . sanitize_key( $tag ) . ' class="fusion-page-title-bar fusion-tb-page-title-bar">';
-					$this->render_content( $page_title_bar_override );
-					echo '</' . sanitize_key( $tag ) . '>';
-
-					$this->current_override_name = false;
-				}
-			);
-		}
-	}
-
-	/**
-	 * Check if we have a content override and if so render it.
-	 *
-	 * @since 3.8
-	 * @access public
-	 * @return void
-	 */
-	public function render_content_override() {
-		$this->current_override_name = 'content';
-		$this->render_content();
-		$this->current_override_name = false;
-	}
-
-	/**
 	 * Check if we have a footer and if so render it.
 	 *
 	 * @since 2.2
@@ -1189,30 +952,37 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			add_action(
 				'avada_render_footer',
 				function() use ( $footer_override ) {
-					$this->current_override_name = 'footer';
-
-					$tag = apply_filters( 'fusion_tb_section_tag', 'div', 'footer' );
+					$tag = apply_filters( 'fusion_tb_section_tag', 'section', 'footer' );
 					echo '<' . sanitize_key( $tag ) . ' class="fusion-tb-footer fusion-footer' . ( class_exists( 'Avada' ) && 'footer_parallax_effect' === Avada()->settings->get( 'footer_special_effects' ) ? ' fusion-footer-parallax' : '' ) . '">';
 					echo '<div class="fusion-footer-widget-area fusion-widget-area">';
 					$this->render_content( $footer_override );
 					echo '</div></' . sanitize_key( $tag ) . '>';
-
-					$this->current_override_name = false;
 				}
 			);
 		}
 	}
 
 	/**
-	 * Returns the name of the currently rendered override.
+	 * Check if we have a page title bar and if so render it.
 	 *
-	 * @since 3.8
+	 * @since 2.2
+	 * @return void
 	 * @access public
-	 * @return bool|string The current override.
 	 */
-	public function get_current_override_name() {
-		return $this->current_override_name;
+	public function maybe_render_page_title_bar() {
+		$page_title_bar_override = $this->get_override( 'page_title_bar' );
 
+		if ( $page_title_bar_override ) {
+			add_action(
+				'avada_override_current_page_title_bar',
+				function() use ( $page_title_bar_override ) {
+					$tag = apply_filters( 'fusion_tb_section_tag', 'section', 'page_title_bar' );
+					echo '<' . sanitize_key( $tag ) . ' class="fusion-page-title-bar fusion-tb-page-title-bar">';
+					$this->render_content( $page_title_bar_override );
+					echo '</' . sanitize_key( $tag ) . '>';
+				}
+			);
+		}
 	}
 
 	/**
@@ -1225,10 +995,37 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @access public
 	 */
 	public static function get_conditions( $template ) {
-		if ( $template && is_object( $template ) ) {
-			$data = json_decode( str_replace( "'", "\'", wp_unslash( $template->post_content ) ), true );
+		if ( $template ) {
+			$data = json_decode( wp_unslash( $template->post_content ), true );
 			if ( isset( $data['conditions'] ) ) {
-				return self::group_conditions( $data['conditions'] );
+				$conditions = [];
+
+				// Group child conditions into same id.
+				foreach ( $data['conditions'] as $id => $condition ) {
+					if ( ! isset( $condition['parent'] ) ) {
+						$conditions[ $id ] = $condition;
+						continue;
+					}
+					// Create unique id for the parent condition to avoid collitions between same conditions with different modes.
+					$parent_id = $condition['parent'] . '-' . $condition['mode'] . '-' . $condition['type'];
+					if ( ! isset( $conditions[ $parent_id ] ) ) {
+						$conditions[ $parent_id ] = [
+							'mode'             => $condition['mode'],
+							'type'             => $condition['type'],
+							$condition['type'] => $condition['parent'],
+						];
+					}
+					$conditions[ $parent_id ][ $condition['parent'] ][ $id ] = $condition;
+				}
+				// Sort exclude conditions first and remove unique id.
+				usort(
+					$conditions,
+					function( $a, $b ) {
+						return strcmp( $a['mode'], $b['mode'] );
+					}
+				);
+
+				return $conditions;
 			}
 		}
 		return false;
@@ -1290,49 +1087,40 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		$exclude        = isset( $condition['mode'] ) && 'exclude' === $condition['mode'];
 		$condition_type = isset( $condition['type'] ) ? $condition['type'] : '';
 		$sub_condition  = isset( $condition[ $archive_type ] ) ? $condition[ $archive_type ] : '';
-		$is_admin       = is_admin();
-		$post_id        = is_admin() ? get_the_id() : fusion_library()->get_page_id();
 
 		if ( '' === $sub_condition ) {
 			if ( 'all_archives' === $archive_type ) {
-				if ( $is_admin ) {
-					return $exclude ? 'term.php' !== $pagenow && ! fusion_is_shop( $post_id ) : 'term.php' === $pagenow || fusion_is_shop( $post_id );
+				if ( is_admin() ) {
+					return $exclude ? 'term.php' !== $pagenow : 'term.php' === $pagenow;
 				}
 				return $exclude ? ! is_archive() : is_archive();
 			}
 
-			// Shop page.
-			if ( 'archive_of_product' === $archive_type ) {
-				return $exclude ? ! fusion_is_shop( $post_id ) : fusion_is_shop( $post_id );
-			}
-
 			if ( 'author_archive' === $archive_type ) {
-				if ( $is_admin ) {
+				if ( is_admin() ) {
 					return $exclude ? 'profile.php' !== $pagenow : 'profile.php' === $pagenow;
 				}
 				return $exclude ? ! is_author() : is_author();
 			}
 			// Check if it's a archive page.
 			if ( 'term.php' === $pagenow ) {
-				if ( $is_admin ) {
+				if ( is_admin() ) {
 					return $exclude ? $archive_type !== $_GET['taxonomy'] : $archive_type === $_GET['taxonomy']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification
 				}
 
-				$queried_object = get_queried_object();
-				if ( ! is_null( $queried_object ) && property_exists( $queried_object, 'taxonomy' ) ) {
-					return $exclude ? ! $queried_object->taxonomy === $archive_type : $queried_object->taxonomy === $archive_type;
+				if ( ! is_null( get_queried_object() ) ) {
+					return $exclude ? ! get_queried_object()->taxonomy === $archive_type : get_queried_object()->taxonomy === $archive_type;
 				}
 			}
 
 			// Only check live editor, cannot edit search or taxonomy archive on back-end.
-			if ( ! $is_admin ) {
+			if ( ! is_admin() ) {
 				if ( 'search_results' === $archive_type ) {
 					return $exclude ? ! is_search() : is_search();
 				}
 
-				$queried_object = get_queried_object();
-				if ( 'archives' === $condition_type && taxonomy_exists( $archive_type ) && ! is_null( $queried_object ) && property_exists( $queried_object, 'taxonomy' ) ) {
-					return $exclude ? ! ( $queried_object->taxonomy === $archive_type ) : $queried_object->taxonomy === $archive_type;
+				if ( 'archives' === $condition_type && taxonomy_exists( $archive_type ) && ! is_null( get_queried_object() ) ) {
+					return $exclude ? ! ( get_queried_object()->taxonomy === $archive_type ) : get_queried_object()->taxonomy === $archive_type;
 				}
 			}
 
@@ -1391,7 +1179,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			foreach ( array_keys( $sub_condition ) as $id ) {
 				$terms[] = explode( '|', $id )[1];
 			}
-			if ( $is_admin && isset( $_GET['tag_ID'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( is_admin() && isset( $_GET['tag_ID'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				return $exclude ? ! in_array( $_GET['tag_ID'], $terms ) : in_array( $_GET['tag_ID'], $terms ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification, WordPress.PHP.StrictInArray
 			}
 
@@ -1400,6 +1188,164 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 				// Intentionally not strict comparison.
 				return $exclude ? ! in_array( $queried_object->term_id, $terms ) : in_array( $queried_object->term_id, $terms ); // phpcs:ignore WordPress.PHP.StrictInArray
 			}
+		}
+		return $exclude;
+	}
+
+	/**
+	 * Check if archive condition is true.
+	 *
+	 * @since 2.2
+	 * @param array $condition Condition array to check.
+	 * @return bool  $return Whether it passed or not.
+	 * @access public
+	 */
+	public function check_archive_condition( $condition ) {
+		$archive_type   = isset( $condition['archives'] ) ? $condition['archives'] : '';
+		$exclude        = isset( $condition['mode'] ) && 'exclude' === $condition['mode'];
+		$condition_type = isset( $condition['type'] ) ? $condition['type'] : '';
+		$sub_condition  = isset( $condition[ $archive_type ] ) ? $condition[ $archive_type ] : '';
+
+		if ( '' === $sub_condition ) {
+			if ( 'all_archives' === $archive_type ) {
+				return $exclude ? ! is_archive() : is_archive();
+			}
+
+			if ( 'author_archive' === $archive_type ) {
+				return $exclude ? ! is_author() : is_author();
+			}
+
+			if ( 'date_archive' === $archive_type ) {
+				return $exclude ? ! is_date() : is_date();
+			}
+
+			if ( 'search_results' === $archive_type ) {
+				return $exclude ? ! is_search() : is_search();
+			}
+
+			if ( 'archives' === $condition_type && taxonomy_exists( $archive_type ) ) {
+				if ( 'category' === $archive_type ) {
+					return $exclude ? ! is_category() : is_category();
+				}
+				if ( 'post_tag' === $archive_type ) {
+					return $exclude ? ! is_tag() : is_tag();
+				}
+
+				return $exclude ? ! is_tax( $archive_type ) : is_tax( $archive_type );
+			}
+
+			// Blog archive, treat separately.
+			if ( 'archive_of_post' === $archive_type ) {
+				$blog_conditional = ( is_home() && get_option( 'page_for_posts' ) === fusion_library()->get_page_id() ) || is_post_type_archive( 'post' );
+				return $exclude ? ! $blog_conditional : $blog_conditional;
+			}
+
+			// Check for general archive pages.
+			if ( false !== strpos( $archive_type, 'archive_of_' ) && is_archive() && null !== get_queried_object() ) {
+				$taxonomy = str_replace( 'archive_of_', '', $archive_type );
+				return $exclude ? ! is_post_type_archive( $taxonomy ) : is_post_type_archive( $taxonomy );
+			}
+
+			return $exclude;
+		}
+
+		// Check for specific author pages.
+		if ( false !== strpos( $archive_type, 'author_archive_' ) ) {
+			$author_ids = [];
+			foreach ( array_keys( $sub_condition ) as $id ) {
+				$author_ids[] = explode( '|', $id )[1];
+			}
+			$curauth = ( get_query_var( 'author_name' ) ) ? get_user_by( 'slug', get_query_var( 'author_name' ) ) : get_userdata( get_query_var( 'author' ) );
+
+			if ( ! $curauth ) {
+				return $exclude;
+			}
+			// Intentionally not strict comparison.
+			return $exclude ? ! in_array( $curauth->ID, $author_ids ) : in_array( $curauth->ID, $author_ids ); // phpcs:ignore WordPress.PHP.StrictInArray
+		}
+
+		// Check for general archive pages.
+		if ( false === strpos( $archive_type, 'taxonomy_of_' ) && is_archive() && null !== get_queried_object() ) {
+			$terms = [];
+			foreach ( array_keys( $sub_condition ) as $id ) {
+				$terms[] = explode( '|', $id )[1];
+			}
+
+			if ( ! isset( get_queried_object()->term_id ) ) {
+				return $exclude;
+			}
+
+			// Intentionally not strict comparison.
+			return $exclude ? ! in_array( get_queried_object()->term_id, $terms ) : in_array( get_queried_object()->term_id, $terms ); // phpcs:ignore WordPress.PHP.StrictInArray
+		}
+
+		// Check if we're checking for specific terms.
+		if ( false !== strpos( $archive_type, 'taxonomy_of_' ) && ! is_archive() ) {
+			$taxonomy = str_replace( 'taxonomy_of_', '', $archive_type );
+			$terms    = [];
+			foreach ( array_keys( $sub_condition ) as $id ) {
+				$terms[] = explode( '|', $id )[1];
+			}
+			switch ( $taxonomy ) {
+				case 'category':
+					return $exclude ? ! in_category( $terms ) : in_category( $terms );
+				case 'post_tag':
+					return $exclude ? ! has_tag( $terms ) : has_tag( $terms );
+				default:
+					return $exclude ? ! has_term( $terms, $taxonomy ) : has_term( $terms, $taxonomy );
+			}
+		}
+
+		return $exclude;
+	}
+
+	/**
+	 * Check if singular condition is true.
+	 *
+	 * @since 2.2
+	 * @param array $condition Condition array to check.
+	 * @return bool  $return Whether it passed or not.
+	 * @access public
+	 */
+	public function check_singular_condition( $condition ) {
+		global $post;
+
+		$singular_type = isset( $condition['singular'] ) ? $condition['singular'] : '';
+		$exclude       = isset( $condition['mode'] ) && 'exclude' === $condition['mode'];
+		$sub_condition = isset( $condition[ $singular_type ] ) ? $condition[ $singular_type ] : '';
+		$post_type     = str_replace( 'singular_', '', $singular_type );
+
+		if ( '' === $sub_condition ) {
+			if ( 'front_page' === $singular_type ) {
+				return $exclude ? ! is_front_page() : is_front_page();
+			}
+			if ( 'not_found' === $singular_type ) {
+				return $exclude ? ! is_404() : is_404();
+			}
+			$is_single = is_singular( $post_type ) || ( get_post_type() === $post_type && is_admin() && isset( $_GET['action'] ) && 'edit' === sanitize_text_field( wp_unslash( $_GET['action'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			return $exclude ? ! $is_single : $is_single;
+		}
+		// Specific post check.
+		if ( false !== strpos( $singular_type, 'specific_' ) ) {
+			$specific_posts = [];
+			foreach ( array_keys( $sub_condition ) as $id ) {
+				$specific_posts[] = explode( '|', $id )[1];
+			}
+			// Intentionally not strict comparison.
+			return $exclude ? ! in_array( get_the_id(), $specific_posts, false ) : in_array( get_the_id(), $specific_posts, false ); // phpcs:ignore WordPress.PHP.StrictInArray
+		}
+		// Hierarchy check.
+		if ( false !== strpos( $singular_type, 'children_of' ) ) {
+			$ancestors   = get_post_ancestors( $post );
+			$is_children = false;
+			foreach ( array_keys( $sub_condition ) as $id ) {
+				$parent = explode( '|', $id )[1];
+				if ( in_array( $parent, $ancestors ) ) { // phpcs:ignore WordPress.PHP.StrictInArray
+					$is_children = true;
+					break;
+				}
+			}
+			return $exclude ? ! $is_children : $is_children;
 		}
 		return $exclude;
 	}
@@ -1484,7 +1430,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			return $template;
 		}
 
-		if ( $this->get_override( 'content' ) || is_singular( 'fusion_tb_section' ) || is_singular( 'fusion_template' ) ) {
+		if ( $this->get_override( 'content' ) || is_singular( 'fusion_tb_section' ) ) {
 			$new_template = locate_template( [ 'template-page.php' ] );
 			if ( ! empty( $new_template ) ) {
 				return $new_template;
@@ -1500,13 +1446,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			} else {
 				return FUSION_BUILDER_PLUGIN_DIR . 'templates/template-card.php';
 			}
-		} elseif ( fusion_is_mega_menu() ) {
-			$new_template = locate_template( [ 'template-mega-menu.php' ] );
-			if ( ! empty( $new_template ) ) {
-				return $new_template;
-			} else {
-				return FUSION_BUILDER_PLUGIN_DIR . 'templates/template-mega-menu.php';
-			}
 		}
 
 		return $template;
@@ -1518,20 +1457,16 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @since 2.2
 	 * @param mixed   $override    Pass post object to to be used.
 	 * @param boolean $live_editor Is it live editor.
-	 * @param boolean $return      Whether to return or not.
 	 * @access public
 	 */
-	public function render_content( $override = false, $live_editor = false, $return = false ) {
+	public function render_content( $override = false, $live_editor = false ) {
 		global $post;
-
-		$this->rendering_override_loop++;
 
 		$post_object = $override ? $override : $this->get_override( 'content' );
 
 		if ( $post_object ) {
 
 			add_filter( 'fusion_is_hundred_percent_template', [ $this, 'return_true' ] );
-
 			if ( ! $live_editor ) {
 				// Override means target post load. Means lets make actual post content non editable in live editor.
 				do_action( 'fusion_pause_live_editor_filter' );
@@ -1546,7 +1481,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			$this->readd_third_party_the_content_changes( $override );
 
 			$content = str_replace( ']]>', ']]&gt;', $content );
-
 			if ( ! $live_editor ) {
 				do_action( 'fusion_resume_live_editor_filter' );
 			}
@@ -1560,11 +1494,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			$content = str_replace( ']]>', ']]&gt;', $content );
 		}
 
-		$this->rendering_override_loop--;
-
-		if ( $return ) {
-			return $content;
-		}
 		echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
@@ -1577,35 +1506,10 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @return void
 	 */
 	public function remove_third_party_the_content_changes( $override = false ) {
-		global $avada_events_calender, $wp_query, $post;
 
 		// Make sure the_content filters run on bbPress pages, to get elements rendered.
-		if ( 2 > $this->rendering_override_loop && class_exists( 'bbPress' ) && Fusion_Helper::is_bbpress() && ! Fusion_Helper::is_buddypress() && ! bbp_is_template_included() && bbp_is_theme_compat_active() ) {
+		if ( class_exists( 'bbPress' ) && Fusion_Helper::is_bbpress() && ! Fusion_Helper::is_buddypress() && ! bbp_is_template_included() && bbp_is_theme_compat_active() ) {
 			bbp_restore_all_filters( 'the_content' );
-		}
-
-		if ( class_exists( 'Tribe__Events__Main' ) ) {
-
-			// Event Tickets Plus.
-			try {
-				$ar_template = tribe( 'tickets.attendee_registration.template' );
-			} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
-				// Not handled.
-			}
-
-			if ( function_exists( 'tribe' ) && class_exists( 'Tribe__Tickets__Attendee_Registration__Template' ) && is_object( $ar_template ) && $ar_template->is_on_ar_page() && $wp_query->is_main_query() && ( ! $post instanceof WP_Post || ! has_shortcode( $post->post_content, 'tribe_attendee_registration' ) ) ) {
-				remove_filter( 'the_content', tribe_callback( 'tickets-plus.attendee-registration.view', 'get_page_content' ) );
-			}
-
-			// Make sure TEC ticket forms don't get double added. Removing / re-adding is not congruent.
-			if ( ! is_null( $avada_events_calender ) ) {
-				remove_filter( 'the_content', [ $avada_events_calender, 'single_events_blocks_sharing_box' ], 10 );
-			}
-
-			// Tec Pro 6.0+ Event Series.
-			if ( function_exists( 'tribe' ) && class_exists( 'TEC\Events_Pro\Custom_Tables\V1\Templates\Series_Filters' ) && has_filter( 'the_content', [ tribe( 'TEC\Events_Pro\Custom_Tables\V1\Templates\Series_Filters' ), 'inject_content' ] ) ) {
-				remove_filter( 'the_content', [ tribe( 'TEC\Events_Pro\Custom_Tables\V1\Templates\Series_Filters' ), 'inject_content' ] );
-			}
 		}
 
 		// Make sure the_content filters run on Events Manager pages, to get elements rendered.
@@ -1620,35 +1524,14 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 				remove_filter( 'the_content', 'wpdm_downloadable' );
 			}
 
-			// MemberPress plugin.
-			if ( defined( 'MEPR_PLUGIN_NAME' ) ) {
-				remove_filter( 'the_content', 'MeprAppCtrl::page_route', 100 );
-				remove_filter( 'the_content', 'MeprGroupsCtrl::render_pricing_boxes', 10 );
-				remove_filter( 'the_content', 'MeprProductsCtrl::display_registration_form', 10 );
-				remove_filter( 'the_content', 'MeprRulesCtrl::rule_content', 999999, 1 );
-			}
-
 			// Member plugin.
 			if ( function_exists( 'members_content_permissions_protect' ) ) {
 				remove_filter( 'the_content', 'members_content_permissions_protect', 95 );
 			}
 
-			// WooCommerce Membership.
-			if ( function_exists( 'wc_memberships' ) ) {
-				remove_filter( 'the_content', [ wc_memberships()->get_restrictions_instance()->get_posts_restrictions_instance(), 'handle_restricted_post_content_filtering' ], 999 );
-			}
-
-			// Ultimate Member.
-			add_filter( 'um_ignore_restricted_content', '__return_true' );
-
 			// Remove LearnDash the_content filters.
 			if ( class_exists( 'SFWD_LMS' ) ) {
 				SFWD_LMS::content_filter_control( false );
-
-				if ( class_exists( 'CTLearnDash' ) ) {
-					$custom_ld_template = CTLearnDash::get_instance();
-					remove_filter( 'the_content', [ $custom_ld_template, 'render' ], 1001 );
-				}
 			}
 
 			// Remove Jetpack sharing icons.
@@ -1666,59 +1549,10 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		// Remove PrivateContent the_content filters.
 		if ( isset( $GLOBALS['is_pc_bundle'] ) && $GLOBALS['is_pc_bundle'] ) {
 			remove_filter( 'the_content', 'pc_perform_contents_restriction', 999 );
-		}
-
-		// Cooked plugin.
-		if ( class_exists( 'Cooked_Plugin' ) ) {
-			global $_cooked_content_unfiltered;
-			$_cooked_content_unfiltered = true;
-		}
-
-		// Tutor LMS plugin.
-		if ( defined( 'TUTOR_VERSION' ) ) {
-			add_filter( 'tutor_dashboard_page_id', '__return_false' );
-			add_filter( 'instructor_register_page', '__return_false' );
-			add_filter( 'student_register_page', '__return_false' );
+			remove_filter( 'the_content', 'pc_pvt_page_management', 500 );
 		}
 
 		add_filter( 'dpsp_is_location_displayable', '__return_false' );
-
-		// Remove Thrive Leads.
-		if ( function_exists( 'tve_leads_get_default_form_types' ) ) {
-			foreach ( tve_leads_get_default_form_types() as $_type => $config ) {
-				if ( ! isset( $GLOBALS['tve_lead_forms'][ $_type ] ) || ( 'widget' !== $_type && 'php_insert' !== $_type && empty( $config['wp_hook'] ) ) ) {
-					continue;
-				}
-
-				if ( isset( $config['wp_hook'] ) ) {
-					remove_action( $config['wp_hook'], 'tve_leads_display_form_' . $_type, isset( $config['priority'] ) ? $config['priority'] : 10 );
-				}
-			}
-		}
-
-		// WP Customer Area plugin.
-		if ( class_exists( 'CUAR_CustomerPagesAddOn' ) && function_exists( 'cuar_addon' ) ) {
-			$cp_addon = cuar_addon( 'customer-pages' );
-			remove_filter( 'the_content', [ $cp_addon, 'define_main_content_filter' ], 9998 );
-		}
-
-		// Event Tickets Plus.
-		if ( function_exists( 'tribe_callback' ) ) {
-			remove_filter( 'the_content', tribe_callback( 'tickets-plus.attendee-registration.view', 'get_page_content' ) );
-		}
-
-		// FlexMLS IDX.
-		if ( class_exists( 'flexmlsConnectPage' ) ) {
-			remove_filter( 'the_content', [ 'flexmlsConnectPage', 'custom_post_content' ] );
-		}
-
-		// WP Members plugin.
-		if ( 1 === $this->rendering_override_loop && class_exists( 'WP_Members' ) ) {
-			global $wpmem;
-			remove_filter( 'the_content', [ $wpmem, 'do_securify' ], 99 );
-		}
-
-		do_action( 'awb_remove_third_party_the_content_changes' );
 	}
 
 	/**
@@ -1730,62 +1564,12 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @return void
 	 */
 	public function readd_third_party_the_content_changes( $override = false ) {
-		global $avada_events_calender, $wp_query, $post;
-
-		do_action( 'awb_readd_third_party_the_content_changes' );
-
-		if ( 1 === $this->rendering_override_loop && class_exists( 'WP_Members' ) ) {
-			global $wpmem;
-			add_filter( 'the_content', [ $wpmem, 'do_securify' ], 99 );
-		}
-
-		if ( 2 > $this->rendering_override_loop && class_exists( 'bbPress' ) && Fusion_Helper::is_bbpress() && ! Fusion_Helper::is_buddypress() && ! bbp_is_template_included() && bbp_is_theme_compat_active() ) {
-			bbp_remove_all_filters( 'the_content' );
-		}
-
-		if ( class_exists( 'flexmlsConnectPage' ) ) {
-			global $fmc_special_page_caught;
-			if ( isset( $fmc_special_page_caught['fmc-page'] ) && ! is_null( $fmc_special_page_caught['fmc-page'] ) ) {
-				add_filter( 'the_content', [ 'flexmlsConnectPage', 'custom_post_content' ] );
-			}
-		}
-
-		if ( class_exists( 'Tribe__Events__Main' ) ) {
-			try {
-				$ar_template = tribe( 'tickets.attendee_registration.template' );
-			} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
-				// Not handled.
-			}
-
-			if ( function_exists( 'tribe' ) && class_exists( 'Tribe__Tickets__Attendee_Registration__Template' ) && is_object( $ar_template ) && $ar_template->is_on_ar_page() && $wp_query->is_main_query() && ( ! $post instanceof WP_Post || ! has_shortcode( $post->post_content, 'tribe_attendee_registration' ) ) ) {
-				remove_filter( 'the_content', tribe_callback( 'tickets-plus.attendee-registration.view', 'get_page_content' ) );
-			}
-
-			if ( ! is_null( $avada_events_calender ) ) {
-				add_filter( 'the_content', [ $avada_events_calender, 'single_events_blocks_sharing_box' ], 10 );
-			}
-
-			$queried_object = get_queried_object();
-			if ( function_exists( 'tribe' ) && class_exists( 'TEC\Events_Pro\Custom_Tables\V1\Series\Post_Type' ) && $queried_object instanceof WP_Post && tribe( 'TEC\Events_Pro\Custom_Tables\V1\Series\Post_Type' )->is_same_type( $queried_object ) ) {
-				add_filter( 'the_content', [ tribe( 'TEC\Events_Pro\Custom_Tables\V1\Templates\Series_Filters' ), 'inject_content' ] );
-			}
-		}
 
 		remove_filter( 'dpsp_is_location_displayable', '__return_false' );
 
-		if ( defined( 'TUTOR_VERSION' ) ) {
-			remove_filter( 'tutor_dashboard_page_id', '__return_false' );
-			remove_filter( 'instructor_register_page', '__return_false' );
-			remove_filter( 'student_register_page', '__return_false' );
-		}
-
-		if ( class_exists( 'Cooked_Plugin' ) ) {
-			global $_cooked_content_unfiltered;
-			$_cooked_content_unfiltered = false;
-		}
-
 		if ( isset( $GLOBALS['is_pc_bundle'] ) && $GLOBALS['is_pc_bundle'] ) {
 			add_filter( 'the_content', 'pc_perform_contents_restriction', 999 );
+			add_filter( 'the_content', 'pc_pvt_page_management', 500 );
 		}
 
 		if ( is_singular( 'dwqa-question' ) ) {
@@ -1800,30 +1584,10 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 			if ( class_exists( 'SFWD_LMS' ) ) {
 				SFWD_LMS::content_filter_control( true );
-
-				if ( class_exists( 'CTLearnDash' ) ) {
-					$custom_ld_template = CTLearnDash::get_instance();
-					add_filter( 'the_content', [ $custom_ld_template, 'render' ], 1001 );
-				}
-			}
-
-			// Ultimate Member.
-			remove_filter( 'um_ignore_restricted_content', '__return_true' );
-
-			// WooCommerce Membership.
-			if ( function_exists( 'wc_memberships' ) ) {
-				add_filter( 'the_content', [ wc_memberships()->get_restrictions_instance()->get_posts_restrictions_instance(), 'handle_restricted_post_content_filtering' ], 999 );
 			}
 
 			if ( function_exists( 'members_content_permissions_protect' ) ) {
 				add_filter( 'the_content', 'members_content_permissions_protect', 95 );
-			}
-
-			if ( defined( 'MEPR_PLUGIN_NAME' ) ) {
-				add_filter( 'the_content', 'MeprAppCtrl::page_route', 100 );
-				add_filter( 'the_content', 'MeprGroupsCtrl::render_pricing_boxes', 10 );
-				add_filter( 'the_content', 'MeprProductsCtrl::display_registration_form', 10 );
-				add_filter( 'the_content', 'MeprRulesCtrl::rule_content', 999999, 1 );
 			}
 
 			if ( class_exists( 'WordPressDownloadManager' ) ) {
@@ -1835,22 +1599,8 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			add_filter( 'the_content', [ 'EM_Event_Post', 'the_content' ] );
 		}
 
-		if ( function_exists( 'tve_leads_get_default_form_types' ) ) {
-			foreach ( tve_leads_get_default_form_types() as $_type => $config ) {
-				if ( ! isset( $GLOBALS['tve_lead_forms'][ $_type ] ) || ( 'widget' !== $_type && 'php_insert' !== $_type && empty( $config['wp_hook'] ) ) ) {
-					continue;
-				}
-
-				if ( isset( $config['wp_hook'] ) ) {
-					add_action( $config['wp_hook'], 'tve_leads_display_form_' . $_type, isset( $config['priority'] ) ? $config['priority'] : 10 );
-				}
-			}
-		}
-
-		// WP Customer Area plugin.
-		if ( class_exists( 'CUAR_CustomerPagesAddOn' ) && function_exists( 'cuar_addon' ) ) {
-			$cp_addon = cuar_addon( 'customer-pages' );
-			add_filter( 'the_content', [ $cp_addon, 'define_main_content_filter' ], 9998 );
+		if ( class_exists( 'bbPress' ) && Fusion_Helper::is_bbpress() && ! Fusion_Helper::is_buddypress() && ! bbp_is_template_included() && bbp_is_theme_compat_active() ) {
+			bbp_remove_all_filters( 'the_content' );
 		}
 	}
 
@@ -1884,16 +1634,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-tabs.php';
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-related.php';
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-archives.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-filters-active.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-filters-price.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-filters-rating.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-filters-attribute.php';
-
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-order-details.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-order-customer-details.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-order-table.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-order-downloads.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/components/woo-order-additional-info.php';
 
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/woo-checkout-billing.php';
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/woo-checkout-tabs.php';
@@ -1903,7 +1643,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/woo-notices.php';
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/woo-upsells.php';
 			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/fusion-woo-checkout-form.php';
-			require_once FUSION_BUILDER_PLUGIN_DIR . 'shortcodes/woo-mini-cart.php';
 		}
 	}
 
@@ -1974,47 +1713,40 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @access public
 	 */
 	public function load_component_templates() {
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-author.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-archives.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-comments.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-content.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-meta.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-pagination.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-related.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-featured-slider.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-author.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-archives.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-comments.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-content.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-meta.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-pagination.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-related.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-featured-slider.php';
 
 		// WooCommerce.
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-price.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-stock.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-rating.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-cart.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-product-images.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-short-description.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-reviews.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-additional-info.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-tabs.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-related.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-archives.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-woo-filters.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-price.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-stock.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-rating.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-cart.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-product-images.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-short-description.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-reviews.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-additional-info.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-tabs.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-related.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-woo-archives.php';
 
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-woo-order-details.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-woo-order-customer-details.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-woo-order-table.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-woo-order-downloads.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-woo-order-additional-info.php';
-
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/fusion-tb-woo-checkout-billing.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/fusion-tb-woo-checkout-tabs.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/fusion-tb-woo-checkout-shipping.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/fusion-tb-woo-checkout-payment.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/fusion-tb-woo-checkout-order-review.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/fusion-tb-woo-notices.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/fusion-tb-woo-upsells.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/fusion-tb-woo-checkout-billing.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/fusion-tb-woo-checkout-tabs.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/fusion-tb-woo-checkout-shipping.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/fusion-tb-woo-checkout-payment.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/fusion-tb-woo-checkout-order-review.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/fusion-tb-woo-notices.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/fusion-tb-woo-upsells.php';
 
 		// Post Card.
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/post-card-image.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/components/fusion-tb-post-card-archives.php';
-		include FUSION_BUILDER_PLUGIN_DIR . 'front-end/templates/post-card-cart.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/post-card-image.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/components/fusion-tb-post-card-archives.php';
+		include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/post-card-cart.php';
 	}
 
 	/**
@@ -2047,12 +1779,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		wp_enqueue_script( 'fusion_builder_tb_woo_tabs', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-tabs.js', [], FUSION_BUILDER_VERSION, true );
 		wp_enqueue_script( 'fusion_builder_tb_woo_related', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-related.js', [], FUSION_BUILDER_VERSION, true );
 		wp_enqueue_script( 'fusion_builder_tb_woo_archives', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-archives.js', [], FUSION_BUILDER_VERSION, true );
-		wp_enqueue_script( 'fusion_builder_tb_woo_filters', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-filters.js', [], FUSION_BUILDER_VERSION, true );
-		wp_enqueue_script( 'fusion_woo_order_details', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-order-details.js', [], FUSION_BUILDER_VERSION, true );
-		wp_enqueue_script( 'fusion_woo_order_customer_details', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-order-customer-details.js', [], FUSION_BUILDER_VERSION, true );
-		wp_enqueue_script( 'fusion_woo_order_table', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-order-table.js', [], FUSION_BUILDER_VERSION, true );
-		wp_enqueue_script( 'fusion_woo_order_downloads', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-order-downloads.js', [], FUSION_BUILDER_VERSION, true );
-		wp_enqueue_script( 'fusion_builder_woo_order_additional_info', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-woo-order-additional-info.js', [], FUSION_BUILDER_VERSION, true );
 
 		// Post Card.
 		wp_enqueue_script( 'fusion_builder_tb_post_card_archives', FUSION_BUILDER_PLUGIN_URL . 'front-end/views/components/view-post-card-archives.js', [], FUSION_BUILDER_VERSION, true );
@@ -2153,7 +1879,8 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		check_admin_referer( 'fusion_tb_new_post' );
 
-		if ( ! AWB_Access_Control::wp_user_can_for_post( 'fusion_tb_section', 'create_posts' ) ) {
+		$post_type_object = get_post_type_object( 'fusion_tb_section' );
+		if ( ! current_user_can( $post_type_object->cap->edit_posts ) ) {
 			return;
 		}
 
@@ -2168,11 +1895,11 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		$template = [
 			'post_title'  => isset( $_GET['name'] ) ? sanitize_text_field( wp_unslash( $_GET['name'] ) ) : '',
-			'post_status' => AWB_Access_Control::wp_user_can_for_post( 'fusion_tb_section', 'publish_posts' ) ? 'publish' : 'pending',
+			'post_status' => 'publish',
 			'post_type'   => 'fusion_tb_section',
 		];
 
-		$template_id = wp_insert_post( $template, true );
+		$template_id = wp_insert_post( $template );
 		if ( is_wp_error( $template_id ) ) {
 			$error_string = $template_id->get_error_message();
 			wp_die( esc_html( $error_string ) );
@@ -2185,7 +1912,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		}
 
 		// Just redirect to back-end editor.  In future tie it to default editor option.
-		wp_safe_redirect( awb_get_new_post_edit_link( $template_id ) );
+		wp_safe_redirect( get_edit_post_link( $template_id, false ) );
 		die();
 	}
 
@@ -2200,24 +1927,22 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		check_admin_referer( 'fusion_tb_new_layout' );
 
-		if ( ! AWB_Access_Control::wp_user_can_for_post( 'fusion_tb_layout', 'create_posts' ) ) {
+		$post_type_object = get_post_type_object( 'fusion_tb_layout' );
+		if ( ! current_user_can( $post_type_object->cap->edit_posts ) ) {
 			return;
 		}
 
 		$layout = [
 			'post_title'  => isset( $_GET['name'] ) ? sanitize_text_field( wp_unslash( $_GET['name'] ) ) : '',
-			'post_status' => AWB_Access_Control::wp_user_can_for_post( 'fusion_tb_layout', 'publish_posts' ) ? 'publish' : 'pending',
+			'post_status' => 'publish',
 			'post_type'   => 'fusion_tb_layout',
 		];
 
-		$layout_id = wp_insert_post( $layout, true );
-
+		$layout_id = wp_insert_post( $layout );
 		if ( is_wp_error( $layout_id ) ) {
 			$error_string = $layout_id->get_error_message();
 			wp_die( esc_html( $error_string ) );
 		}
-
-		Fusion_Builder_Admin::save_layout_order( $layout_id, 'add' );
 
 		// Reset caches.
 		fusion_reset_all_caches();
@@ -2238,7 +1963,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @return array
 	 */
 	public function dynamic_data( $post_data ) {
-		if ( 'fusion_tb_section' === $post_data['post_type'] || fusion_is_post_card() || 'awb_off_canvas' === $post_data['post_type'] ) {
+		if ( 'fusion_tb_section' === $post_data['post_type'] || fusion_is_post_card() ) {
 			$post = $this->get_target_example();
 			if ( $post ) {
 				$post_data['id']        = $post->ID;
@@ -2259,7 +1984,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @return int
 	 */
 	public function dynamic_id( $id ) {
-		if ( 'fusion_tb_section' === get_post_type( $id ) || fusion_is_post_card() || 'awb_off_canvas' === get_post_type( $id ) ) {
+		if ( 'fusion_tb_section' === get_post_type( $id ) || fusion_is_post_card() ) {
 			$post = $this->get_target_example( $id );
 
 			if ( $post ) {
@@ -2278,9 +2003,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 * @param int $id   Post ID to get values from.
 	 * @return array|string $post Post data.
 	 */
-	public function get_dynamic_content_selection( $id = '' ) {
-		$id = ! $id ? get_the_id() : $id;
-
+	public function get_dynamic_content_selection( $id ) {
 		$post = $option = $value = false;
 
 		// Filter data.
@@ -2338,72 +2061,20 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		$type = $post_id = $option = false;
 
-		if ( fusion_is_preview_frame() || isset( $_GET['awb-studio-content'] ) ) {
+		if ( fusion_is_preview_frame() ) {
 			$type    = fusion_get_page_option( 'dynamic_content_preview_type', $post->ID );
 			$option  = fusion_get_page_option( 'preview_archives', $post->ID );
 			$post_id = $post->ID;
 		}
 
 		if ( isset( $_POST['fusion_meta'] ) && isset( $_POST['post_id'] ) && false === $option ) {
-			$meta    = fusion_string_to_array( $_POST['fusion_meta'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$meta    = fusion_string_to_array( wp_unslash( $_POST['fusion_meta'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$option  = isset( $meta['_fusion']['preview_archives'] ) ? $meta['_fusion']['preview_archives'] : 'post';
 			$type    = isset( $meta['_fusion']['dynamic_content_preview_type'] ) && in_array( $meta['_fusion']['dynamic_content_preview_type'], [ 'search', 'archives' ], true ) ? $meta['_fusion']['dynamic_content_preview_type'] : false;
 			$post_id = sanitize_text_field( wp_unslash( $_POST['post_id'] ) );
 		}
 
 		$defaults['post_type'] = 'search' !== $type && false !== $option ? $option : 'any';
-
-		// Emulate search for studio.
-		if ( isset( $_GET['awb-studio-content'] ) && isset( $_GET['search'] ) && 'search' === $type ) {
-			$defaults['s']         = trim( strip_tags( $_GET['search'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification, WordPress.WP.AlternativeFunctions
-			$defaults['post_type'] = 'post';
-		}
-
-		// phpcs:enable WordPress.Security.NonceVerification
-		return $defaults;
-	}
-
-	/**
-	 * Checks and returns taxonomy for archives component.
-	 *
-	 * @since 3.6
-	 * @access public
-	 * @param  array $defaults current params array.
-	 * @return array $defaults Updated params array.
-	 */
-	public function taxonomy_type( $defaults ) {
-
-		// No DB changes, we can skip the nonce checks in this function.
-		// phpcs:disable WordPress.Security.NonceVerification
-		global $post;
-
-		$type = $option = false;
-
-		if ( fusion_is_preview_frame() || isset( $_GET['awb-studio-content'] ) ) {
-			$type   = fusion_get_page_option( 'dynamic_content_preview_type', $post->ID );
-			$option = fusion_get_page_option( 'preview_term', $post->ID );
-		}
-
-		if ( isset( $_POST['fusion_meta'] ) && isset( $_POST['post_id'] ) && false === $option ) {
-			$meta   = fusion_string_to_array( $_POST['fusion_meta'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$option = isset( $meta['_fusion']['preview_term'] ) ? $meta['_fusion']['preview_term'] : 'category';
-			$type   = isset( $meta['_fusion']['dynamic_content_preview_type'] ) ? $meta['_fusion']['dynamic_content_preview_type'] : false;
-		}
-
-		if ( 'term' === $type && false !== $option ) {
-			$defaults['taxonomy'] = $option;
-			$terms                = get_terms(
-				[
-					'taxonomy' => $option,
-					'fields'   => 'ids',
-					'orderby'  => 'id',
-					'order'    => 'DESC',
-				]
-			);
-			if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
-				$defaults['include'] = implode( ',', $terms );
-			}
-		}
 
 		// phpcs:enable WordPress.Security.NonceVerification
 		return $defaults;
@@ -2509,7 +2180,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		$admin_bar->add_node(
 			[
 				'id'    => 'fb-edit',
-				'title' => esc_html__( 'Live Builder', 'fusion-builder' ),
+				'title' => esc_html__( 'Avada Live', 'fusion-builder' ),
 				'href'  => $customize_url,
 			]
 		);
@@ -2538,7 +2209,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 
 		$post_type_object = get_post_type_object( $post_type );
 		$labels           = get_post_type_labels( $post_type_object );
-
 		/* Translators: The layout-section type. */
 		$type_label = ( 'layout' === $type ) ? esc_html__( 'Layout', 'fusion-builder' ) : sprintf( esc_html__( '%s Layout Section', 'fusion-builder' ), esc_html( $this->types[ $type ]['label'] ) );
 		$edit_link  = get_edit_post_link( $override );
@@ -2702,7 +2372,7 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 			'conditions' => [
 				[
 					'id'    => 'search_results',
-					'label' => esc_html__( 'Search Results', 'fusion-builder' ),
+					'label' => 'Search Results',
 					'type'  => 'archives',
 				],
 				[
@@ -2712,14 +2382,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 				],
 			],
 		];
-
-		if ( class_exists( 'WooCommerce' ) ) {
-			$sections['other']['conditions'][] = [
-				'id'    => 'woo_order_received',
-				'label' => esc_html__( 'WooCommerce Thank You Page', 'fusion-builder' ),
-				'type'  => 'singular',
-			];
-		}
 
 		return $sections;
 	}
@@ -2913,7 +2575,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 		if ( false !== strpos( $parent, 'children_of_' ) || false !== strpos( $parent, 'specific_' ) ) {
 			$post_type = preg_replace( '/specific_|children_of_/', '', $parent );
 			$args      = [
-				'post_status'    => [ 'publish', 'private' ],
 				'post_type'      => $post_type,
 				'posts_per_page' => $posts_per_page,
 				'paged'          => $page,
@@ -2961,7 +2622,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 					'id'     => $parent . '|' . $term->term_id,
 					'parent' => $parent,
 					'label'  => $term->name,
-					'slug'   => $term->slug,
 					'type'   => 'archives',
 				];
 			}
@@ -3123,95 +2783,6 @@ class Fusion_Template_Builder extends AWB_Layout_Conditions {
 	 */
 	public function return_true() {
 		return true;
-	}
-
-	/**
-	 * Adds media-query styles.
-	 *
-	 * @access public
-	 * @since 7.10.2
-	 * @return void
-	 */
-	public function add_media_query_styles() {
-		$header = $this->get_override( 'header' );
-
-		if ( $header ) {
-			$position = fusion_data()->post_meta( $header->ID )->get( 'position' );
-			if ( 'left' === $position || 'right' === $position || fusion_is_preview_frame() ) {
-				$header_breakpoint = fusion_data()->post_meta( $header->ID )->get( 'header_breakpoint' );
-
-				if ( 'never' !== $header_breakpoint || fusion_is_preview_frame() ) {
-					Fusion_Media_Query_Scripts::$media_query_assets[] = [
-						'awb-side-header',
-						FUSION_BUILDER_PLUGIN_DIR . 'assets/css/side-header.min.css',
-						[],
-						FUSION_BUILDER_VERSION,
-						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-min-shbp' ),
-					];
-				}
-			}
-		}
-	}
-
-	/**
-	 * Add CSS for layout options.
-	 *
-	 * @since 7.4
-	 * @param string $dynamic_css Dynamic CSS.
-	 * @return string
-	 */
-	public function layout_css( $dynamic_css ) {
-		$header = $this->get_override( 'header' );
-
-		if ( $header ) {
-			$position     = fusion_data()->post_meta( $header->ID )->get( 'position' );
-			$header_color = fusion_data()->post_meta( $header->ID )->get( 'awb_header_bg_color' );
-			if ( 'left' === $position || 'right' === $position || fusion_is_preview_frame() ) {
-
-				$header_breakpoint = fusion_data()->post_meta( $header->ID )->get( 'header_breakpoint' );
-
-				if ( 'never' === $header_breakpoint && ! fusion_is_preview_frame() ) {
-					Fusion_Dynamic_CSS::enqueue_style( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/side-header.min.css', FUSION_BUILDER_PLUGIN_URL . 'assets/css/side-header.min.css' );
-				}
-
-				$width = (int) fusion_data()->post_meta( $header->ID )->get( 'side_header_width' );
-				Fusion_Dynamic_CSS::add_css_var(
-					[
-						'name'    => '--side_header_width',
-						'value'   => ( ! $width ? 200 : $width ) . 'px',
-						'element' => ':root',
-					]
-				);
-			}
-
-			if ( $header_color ) {
-				Fusion_Dynamic_CSS::add_css_var(
-					[
-						'name'    => '--awb_header_bg_color',
-						'value'   => $header_color,
-						'element' => '.fusion-tb-header',
-					]
-				);
-			}
-		}
-
-		return $dynamic_css;
-	}
-
-	/**
-	 * Remove hook for WCFM dashboard template.
-	 *
-	 * @since 3.9
-	 * @return void
-	 */
-	public function wcfm_ignore_template() {
-		global $WCFM, $WCFMvm, $post; // phpcs:ignore WordPress.NamingConventions
-		if ( wc_post_content_has_shortcode( 'wc_frontend_manager' ) && is_user_logged_in() ) {
-			remove_action( 'page_template', [ $WCFM->frontend, 'wcfm_dashboard_template' ] ); // phpcs:ignore WordPress.NamingConventions
-		}
-		if ( wc_post_content_has_shortcode( 'wcfm_vendor_membership' ) && apply_filters( 'wcfm_is_allow_membership_empty_template', true ) ) {
-			remove_action( 'page_template', [ $WCFMvm->frontend, 'wcfm_membership_template' ] ); // phpcs:ignore WordPress.NamingConventions
-		}
 	}
 }
 

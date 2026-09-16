@@ -49,13 +49,6 @@ class Fusion {
 	public $multilingual;
 
 	/**
-	 * An instance of the Fusion_Sanitize class.
-	 *
-	 * @var Fusion_Sanitize
-	 */
-	public $sanitize;
-
-	/**
 	 * An instance of the Fusion_Scripts class.
 	 *
 	 * @access public
@@ -128,15 +121,6 @@ class Fusion {
 	public $conditional_loading = [];
 
 	/**
-	 * An instance of the Fusion_Device_Detection class.
-	 *
-	 * @access public
-	 * @since 3.4
-	 * @var Fusion_Device_Detection
-	 */
-	public $device_detection;
-
-	/**
 	 * The class constructor
 	 */
 	private function __construct() {
@@ -147,15 +131,12 @@ class Fusion {
 			$this->images = new Fusion_Images();
 		}
 
-		$this->sanitize         = new Fusion_Sanitize();
-		$this->scripts          = new Fusion_Scripts();
-		$this->dynamic_js       = new Fusion_Dynamic_JS();
-		$this->mq_scripts       = new Fusion_Media_Query_Scripts();
-		$this->fa               = new Fusion_Font_Awesome();
-		$this->social_sharing   = new Fusion_Social_Sharing();
-		$this->device_detection = new Fusion_Device_Detection();
-
-		$widget_framework = AWB_Widget_Framework::get_instance();
+		$this->sanitize       = new Fusion_Sanitize();
+		$this->scripts        = new Fusion_Scripts();
+		$this->dynamic_js     = new Fusion_Dynamic_JS();
+		$this->mq_scripts     = new Fusion_Media_Query_Scripts();
+		$this->fa             = new Fusion_Font_Awesome();
+		$this->social_sharing = new Fusion_Social_Sharing();
 
 		// To early for class_exists( 'WooCommerce' ) check.
 		$this->woocommerce = new Fusion_WooCommerce();
@@ -169,23 +150,14 @@ class Fusion {
 			new Fusion_Privacy();
 		}
 
-		add_filter( 'admin_body_class', [ $this, 'admin_body_class' ] );
+		add_action( 'admin_body_class', [ $this, 'admin_body_class' ] );
 
 		add_action( 'wp_head', [ $this, 'add_analytics_code' ], 10000 );
 
-		add_action( 'wp_loaded', [ $this, 'add_styles' ] );
 
 		// Add needed action and filter to make sure queries with offset have correct pagination.
 		add_action( 'pre_get_posts', [ $this, 'query_offset' ], 1 );
 		add_filter( 'found_posts', [ $this, 'adjust_offset_pagination' ], 1, 2 );
-
-		add_action( 'wp_loaded', [ $this, 'clear_object_cache' ] );
-
-		// Rename default template.
-		add_filter( 'default_page_template_title', [ $this, 'default_page_template_title' ] );
-
-		// Set default template.
-		add_action( 'add_meta_boxes', [ $this, 'set_default_teamplte' ], 1 );
 	}
 
 	/**
@@ -203,7 +175,7 @@ class Fusion {
 	/**
 	 * Gets the current page ID.
 	 *
-	 * @return int The current page ID.
+	 * @return string The current page ID.
 	 */
 	public function get_page_id() {
 		if ( ! self::$c_page_id ) {
@@ -275,8 +247,10 @@ class Fusion {
 	 */
 	public function get_option( $option = null, $subset = false, $default = null ) {
 
-		$fusion_settings = awb_get_fusion_settings();
-
+		global $fusion_settings;
+		if ( ! $fusion_settings ) {
+			$fusion_settings = Fusion_Settings::get_instance();
+		}
 		return $fusion_settings->get( $option, $subset, $default );
 	}
 
@@ -386,7 +360,7 @@ class Fusion {
 	 */
 	public function query_offset( $query ) {
 		// Check if we are in a blog shortcode query and if offset is set.
-		if ( is_admin() || ( is_object( $query ) && ( $query->is_main_query() || is_array( $query->query ) && ! isset( $query->query['blog_sc_query'] ) && ! isset( $query->query['portfolio_sc_query'] ) && ! isset( $query->query['post_cards_query'] ) ) ) || ! isset( $query->query['offset'] ) ) {
+		if ( is_admin() || ( is_object( $query ) && ( $query->is_main_query() || is_array( $query->query ) && ! isset( $query->query['blog_sc_query'] ) && ! isset( $query->query['portfolio_sc_query'] ) ) ) || ! isset( $query->query['offset'] ) ) {
 			return;
 		}
 
@@ -415,61 +389,10 @@ class Fusion {
 	 */
 	public function adjust_offset_pagination( $found_posts, $query ) {
 		// Modification only in a blog shortcode query with set offset.
-		if ( ( isset( $query->query['blog_sc_query'] ) || isset( $query->query['portfolio_sc_query'] ) || isset( $query->query['post_cards_query'] ) ) && isset( $query->query['offset'] ) && '' !== $query->query['offset'] ) {
+		if ( ( isset( $query->query['blog_sc_query'] ) || isset( $query->query['portfolio_sc_query'] ) ) && isset( $query->query['offset'] ) && '' !== $query->query['offset'] ) {
 			// Reduce found_posts count by the offset.
 			return $found_posts - $query->query['offset'];
 		}
 		return $found_posts;
-	}
-
-	/**
-	 * Enqueue shared styles.
-	 *
-	 * @since 3.4
-	 * @return void
-	 */
-	public function add_styles() {
-
-		if ( apply_filters( 'avada_load_icomoon', true ) ) {
-			Fusion_Dynamic_CSS::enqueue_style( FUSION_LIBRARY_PATH . '/assets/css/icomoon.min.css', FUSION_LIBRARY_URL . '/assets/css/icomoon.min.css' );
-		}
-	}
-
-	/**
-	 * Clear the object cache ob post save and removal.
-	 *
-	 * @access public
-	 * @since 7.8
-	 * @return void
-	 */
-	public function clear_object_cache() {
-		if ( '1' === $this->get_option( 'clear_object_cache' ) ) {
-			add_action( 'save_post', 'wp_cache_flush' ); // @phpstan-ignore-line
-			add_action( 'delete_post', 'wp_cache_flush' ); // @phpstan-ignore-line
-		}
-	}
-
-	/**
-	 * Renames default page template title.
-	 *
-	 * @since 7.8
-	 * @return string
-	 */
-	public function default_page_template_title() {
-		return __( 'Site Width', 'fusion-builder' );
-	}
-
-	/**
-	 * Sets default template.
-	 *
-	 * @since 7.8
-	 * @return void
-	 */
-	public function set_default_teamplte() {
-		global $post;
-
-		if ( 'page' === $post->post_type && '' === $post->page_template && function_exists( 'Avada' ) && '100_width' === Avada()->settings->get( 'page_template' ) ) {
-			$post->page_template = '100-width.php';
-		}
 	}
 }

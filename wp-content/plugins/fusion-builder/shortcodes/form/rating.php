@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_rating' ) ) {
 		class FusionForm_Rating extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -35,12 +53,11 @@ if ( fusion_is_element_enabled( 'fusion_form_rating' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'label'             => '',
 					'name'              => '',
 					'required'          => '',
-					'empty_notice'      => '',
 					'placeholder'       => '',
 					'icon'              => '',
 					'limit'             => '5',
@@ -88,6 +105,7 @@ if ( fusion_is_element_enabled( 'fusion_form_rating' ) ) {
 
 				$options      = '';
 				$html         = '';
+				$styles       = '';
 				$element_html = '';
 				$hover_color  = '';
 
@@ -97,13 +115,41 @@ if ( fusion_is_element_enabled( 'fusion_form_rating' ) ) {
 
 				while ( $limit > 0 ) {
 					$option   = $limit;
-					$options .= '<input ';
-					$options .= '' !== $element_data['empty_notice'] ? 'data-empty-notice="' . $element_data['empty_notice'] . '" ' : '';
-					$options .= 'id="' . $option . '-' . $this->counter . '" type="radio" value="' . $option . '" name="' . $element_name . '"' . $element_data['class'] . $element_data['required'] . $element_data['checked'] . $element_data['holds_private_data'] . '/>';
+					$options .= '<input id="' . $option . '-' . $this->counter . '" type="radio" value="' . $option . '" name="' . $element_name . '"' . $element_data['class'] . $element_data['required'] . $element_data['checked'] . $element_data['holds_private_data'] . '/>';
 					$options .= '<label for="' . $option . '-' . $this->counter . '" class="fusion-form-rating-icon">';
 					$options .= '<i class="' . $this->args['icon'] . '"></i>';
 					$options .= '</label>';
 					$limit--;
+				}
+
+				$form_id = isset( $this->params['id'] ) ? $this->params['id'] : 1;
+
+				// CSS for .rating-icon.
+				if ( $this->args['icon_color'] || ( isset( $this->args['icon_size'] ) && '' !== $this->args['icon_size'] ) ) {
+					$styles .= '.fusion-form-' . $form_id . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' . $this->counter . '.fusion-form-rating-area .fusion-form-rating-icon {';
+					if ( $this->args['icon_color'] ) {
+						$styles .= 'color: ' . fusion_library()->sanitize->color( $this->args['icon_color'] ) . ';';
+					}
+					if ( isset( $this->args['icon_size'] ) && '' !== $this->args['icon_size'] ) {
+						$styles .= 'font-size: ' . FusionBuilder::validate_shortcode_attr_value( $this->args['icon_size'], 'px' ) . ';';
+					}
+					$styles .= '}';
+				}
+
+				// CSS for .rating-icon:hover, .rating-icon:checked.
+				if ( $this->args['active_icon_color'] ) {
+					$hover_color = Fusion_Color::new_color( $this->args['active_icon_color'] )->get_new( 'alpha', '0.5' )->to_css( 'rgba' );
+
+					$styles .= '.fusion-form-' . $form_id . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' . $this->counter . '.fusion-form-rating-area .fusion-form-input:checked~label i{ color: ' . $this->args['active_icon_color'] . ';}';
+
+					$styles .= '.fusion-form-' . $form_id . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' . $this->counter . '.fusion-form-rating-area .fusion-form-input:checked:hover ~ label i,';
+					$styles .= '.fusion-form-' . $form_id . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' . $this->counter . '.fusion-form-rating-area .fusion-form-rating-icon:hover i,';
+					$styles .= '.fusion-form-' . $form_id . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' . $this->counter . '.fusion-form-rating-area .fusion-form-rating-icon:hover ~ label i,';
+					$styles .= '.fusion-form-' . $form_id . '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' . $this->counter . '.fusion-form-rating-area .fusion-form-input:hover ~ label i{ color: ' . $hover_color . ';}';
+				}
+
+				if ( '' !== $styles ) {
+					$element_html .= '<style type="text/css">' . $styles . '</style>';
 				}
 
 				$element_html .= '<fieldset class="fusion-form-rating-area fusion-form-rating-area-' . $this->counter . ( is_rtl() ? ' rtl' : '' ) . '">';
@@ -121,31 +167,6 @@ if ( fusion_is_element_enabled( 'fusion_form_rating' ) ) {
 				}
 
 				return $html;
-			}
-
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_style_variables() {
-				$custom_vars = [];
-
-				if ( $this->args['active_icon_color'] ) {
-					$custom_vars['hover-color'] = Fusion_Color::new_color( $this->args['active_icon_color'] )->get_new( 'alpha', '0.5' )->to_css_var_or_rgba();
-				}
-
-				$css_vars_options = [
-					'icon_color'        => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'active_icon_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'icon_size'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
 			}
 
 			/**
@@ -171,6 +192,8 @@ if ( fusion_is_element_enabled( 'fusion_form_rating' ) ) {
  */
 function fusion_form_rating() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_Rating',
@@ -193,7 +216,7 @@ function fusion_form_rating() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,
@@ -207,20 +230,6 @@ function fusion_form_rating() {
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Empty Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter text validation notice that should display if data input is empty.', 'fusion-builder' ),
-						'param_name'  => 'empty_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'required',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
 						],
 					],
 					[
@@ -254,13 +263,14 @@ function fusion_form_rating() {
 						'value'       => '',
 						'description' => esc_html__( 'Choose icon color for rating.', 'fusion-builder' ),
 						'default'     => fusion_get_option( 'form_border_color' ),
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover / Active', 'fusion-builder' ),
-								'default'    => fusion_get_option( 'form_focus_border_color' ),
-								'param_name' => 'active_icon_color',
-							],
-						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_html__( 'Hover/Active Icon Color', 'fusion-builder' ),
+						'param_name'  => 'active_icon_color',
+						'value'       => '',
+						'description' => esc_html__( 'Choose icon color for rating.', 'fusion-builder' ),
+						'default'     => fusion_get_option( 'form_focus_border_color' ),
 					],
 					[
 						'type'        => 'textfield',

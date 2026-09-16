@@ -11,25 +11,17 @@
 <head>
 <?php
 global $wp;
-
-$page_id = fusion_library()->get_page_id();
-if ( is_home() && get_option( 'page_on_front' ) ) {
-	$page_id = get_option( 'page_on_front' );
-}
-
-$is_global         = 'yes' === get_post_meta( $page_id, '_fusion_is_global', true ) ? true : false;
-$current_post_type = get_post_type( $page_id );
-
-if ( ! apply_filters( 'awb_dashboard_menu_cpt', true, $current_post_type ) || ! apply_filters( 'live_editor_cpt', true, $current_post_type ) || ( $is_global && ! apply_filters( 'awb_global_elements_access', true ) ) ) {
-	wp_safe_redirect( home_url() );
-}
-
 do_action( 'wp_enqueue_scripts' );
 $permalink = fusion_app_get_permalink();
 if ( '' === $permalink ) {
 	$permalink = home_url();
 }
 $permalink = remove_query_arg( 'fb-edit', $permalink );
+
+$page_id = fusion_library()->get_page_id();
+if ( is_home() && get_option( 'page_on_front' ) ) {
+	$page_id = get_option( 'page_on_front' );
+}
 ?>
 <?php if ( wp_is_mobile() ) : ?>
 	<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=1.2" />

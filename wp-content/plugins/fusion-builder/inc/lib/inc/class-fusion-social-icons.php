@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      4.0.0
@@ -64,7 +64,7 @@ class Fusion_Social_Icons extends Fusion_Social_Icon {
 				$custom_source        = ( isset( $social_networks['custom_source'][ $i ] ) && isset( $social_networks['custom_source'][ $i ]['url'] ) && ! empty( $social_networks['custom_source'][ $i ]['url'] ) ) ? $social_networks['custom_source'][ $i ]['url'] : '';
 				$custom_source_height = ( isset( $social_networks['custom_source'][ $i ] ) && isset( $social_networks['custom_source'][ $i ]['height'] ) && ! empty( $social_networks['custom_source'][ $i ]['height'] ) ) ? $social_networks['custom_source'][ $i ]['height'] : '';
 				$custom_source_width  = ( isset( $social_networks['custom_source'][ $i ] ) && isset( $social_networks['custom_source'][ $i ]['width'] ) && ! empty( $social_networks['custom_source'][ $i ]['width'] ) ) ? $social_networks['custom_source'][ $i ]['width'] : '';
-				$custom_icon          = isset( $social_networks['icon_mark'][ $i ] ) ? $social_networks['icon_mark'][ $i ] : false;
+
 				if ( ! isset( $social_networks_full_array[ $icon ] ) && 'custom' !== $icon ) {
 					continue;
 				}
@@ -72,9 +72,8 @@ class Fusion_Social_Icons extends Fusion_Social_Icon {
 				// Make sure we have a URL & an icon defined.
 				if ( $icon && $url ) {
 					$icon_args = [
-						'icon'        => $icon,
-						'custom_icon' => $custom_icon,
-						'url'         => $url,
+						'icon' => $icon,
+						'url'  => $url,
 					];
 
 					if ( $use_brand_colors ) {
@@ -87,7 +86,7 @@ class Fusion_Social_Icons extends Fusion_Social_Icon {
 					$icon_args['last'] = ( $count === $i );
 
 					// Custom icons.
-					if ( 'custom' === $icon && ( ! empty( $custom_source ) || $custom_icon ) ) {
+					if ( 'custom' === $icon && ! empty( $custom_source ) ) {
 						$icon_args['custom_source']        = $custom_source;
 						$icon_args['custom_source_height'] = $custom_source_height;
 						$icon_args['custom_source_width']  = $custom_source_width;

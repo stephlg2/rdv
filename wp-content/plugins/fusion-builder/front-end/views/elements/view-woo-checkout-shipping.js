@@ -62,6 +62,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock();
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -76,10 +77,25 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildAttr: function( values ) {
 				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-woo-checkout-shipping-tb awb-live fusion-woo-checkout-shipping-tb-' + this.model.get( 'cid' ),
+						class: 'fusion-woo-checkout-shipping-tb fusion-woo-checkout-shipping-tb-' + this.model.get( 'cid' ),
 						style: ''
 					} );
 
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
@@ -88,8 +104,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.id ) {
 					attr.id = values.id;
 				}
-
-				attr.style += this.getStyleVariables( values );
 
 				attr = _.fusionAnimations( values, attr );
 
@@ -117,37 +131,52 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
+			 * @since  3.3
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function() {
+				var inputs, hoverColor, placeholderColor, placeHolderInputs, hoverInputs, focusInputs, css;
 
-				if ( ! this.isDefault( 'field_border_focus_color' ) ) {
-					customVars.hover_color = jQuery.AWB_Color( values.field_border_focus_color ).alpha( 0.5 ).toVarOrRgbaString();
+				this.baseSelector = '.fusion-woo-checkout-shipping-tb-' +  this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				inputs = [ this.baseSelector + ' input', this.baseSelector + ' select', this.baseSelector + ' textarea' ];
+
+				if ( ! this.isDefault( 'field_bg_color' ) ) {
+					this.addCssProperty( inputs, 'background',  this.values.field_bg_color, true );
+
+					this.addCssProperty( this.baseSelector + ' .avada-select-parent .select-arrow', 'background-color', this.values.field_bg_color, true );
 				}
 
 				if ( ! this.isDefault( 'field_text_color' ) ) {
-					customVars.placeholder_color = jQuery.AWB_Color( values.field_text_color ).alpha( 0.5 ).toVarOrRgbaString();
+					placeholderColor = jQuery.Color( this.values.field_text_color ).alpha( 0.5 ).toRgbaString();
+					this.addCssProperty( inputs, 'color',  this.values.field_text_color, true );
+
+					placeHolderInputs = [ this.baseSelector + ' input::placeholder', this.baseSelector + ' textarea::placeholder' ];
+					this.addCssProperty( placeHolderInputs, 'color',  placeholderColor );
+
+					this.addCssProperty( this.baseSelector + ' .avada-select-parent .select-arrow', 'color', this.values.field_text_color, true );
 				}
 
-				cssVarsOptions = [
-					'field_bg_color',
-					'field_text_color',
-					'field_border_color',
-					'field_border_focus_color'
-				];
+				if ( ! this.isDefault( 'field_border_color' ) ) {
+					this.addCssProperty( inputs, 'border-color',  this.values.field_border_color, true );
 
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
+					this.addCssProperty( this.baseSelector + ' .avada-select-parent .select-arrow', 'border-color', this.values.field_border_color, true );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				if ( ! this.isDefault( 'field_border_focus_color' ) ) {
+					hoverColor = jQuery.Color( this.values.field_border_focus_color ).alpha( 0.5 ).toRgbaString();
+					hoverInputs = [ this.baseSelector + ' input:hover', this.baseSelector + ' select:hover', this.baseSelector + ' textarea:hover' ];
+					this.addCssProperty( hoverInputs, 'border-color', hoverColor );
+					focusInputs = [ this.baseSelector + ' input:focus', this.baseSelector + ' select:focus', this.baseSelector + ' textarea:focus' ];
+					this.addCssProperty( focusInputs, 'border-color',  this.values.field_border_focus_color );
+				}
+
+				css = this.parseCSS();
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

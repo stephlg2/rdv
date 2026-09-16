@@ -24,13 +24,24 @@ final class Fusion_Updater {
 	private $args = [];
 
 	/**
+	 * An instance of the Fusion_Product_Registration class.
+	 *
+	 * @access private
+	 * @since 1.0.0
+	 * @var object Fusion_Product_Registration.
+	 */
+	private $registration;
+
+	/**
 	 * Constructor
 	 *
 	 * @access public
-	 * @param Fusion_Product_Registration $registration Registration instance class.
+	 * @param object $registration An instance of the Fusion_Product_Registration class.
 	 */
 	public function __construct( $registration ) {
-		$this->args = $registration->get_args();
+
+		$this->registration = $registration;
+		$this->args         = $registration->get_args();
 
 		// Check for theme & plugin updates.
 		add_filter( 'http_request_args', [ $this, 'update_check' ], 5, 2 );
@@ -67,7 +78,7 @@ final class Fusion_Updater {
 		}
 
 		// Process Avada updates.
-		if ( class_exists( 'Avada' ) ) {
+		if ( isset( $transient->checked ) && class_exists( 'Avada' ) ) {
 
 			// Get the installed version of Avada.
 			$latest_avada = '';
@@ -79,7 +90,7 @@ final class Fusion_Updater {
 			$_theme = [
 				'theme'        => 'Avada',
 				'new_version'  => $latest_avada,
-				'url'          => 'https://avada.com/wp-content/uploads/2023/03/changelog.txt',
+				'url'          => 'https://theme-fusion.com/avada-documentation/changelog.txt',
 				'package'      => '',
 				'required'     => AVADA_MIN_WP_VER_REQUIRED,
 				'requires_php' => AVADA_MIN_PHP_VER_REQUIRED,
@@ -268,7 +279,6 @@ final class Fusion_Updater {
 		}
 
 		$parsed_args['headers']['Referer'] = site_url();
-		$parsed_args['user-agent']         = 'avada-user-agent';
 
 		return $parsed_args;
 	}
@@ -278,9 +288,9 @@ final class Fusion_Updater {
 	 *
 	 * @since 3.3
 	 *
-	 * @param array|WP_Error $response    Remote response.
-	 * @param array          $parsed_args Parsed request args.
-	 * @param string         $url         Request URL.
+	 * @param array  $response    Remote response.
+	 * @param array  $parsed_args Parsed request args.
+	 * @param string $url         Request URL.
 	 * @return array
 	 */
 	public function response_errors( $response = [], $parsed_args = [], $url = [] ) {

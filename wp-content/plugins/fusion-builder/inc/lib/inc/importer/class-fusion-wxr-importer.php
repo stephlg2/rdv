@@ -231,9 +231,6 @@ if( class_exists( 'WXR_Importer') ) {
 						$value = maybe_unserialize( $meta_item['value'] );
 					}
 
-					if ( '_fusion' === $key ) {
-						delete_post_meta( $post_id, $key );
-					}
 					add_post_meta( $post_id, $key, $value );
 					do_action( 'import_post_meta', $post_id, $key, $value );
 
@@ -362,7 +359,7 @@ if( class_exists( 'WXR_Importer') ) {
 
 			// ThemeFusion edit.
 			// We're just returning false if this post isn't already imported.
-			return apply_filters( 'wxr_importer.checking_exists.post', false, $data );
+			return false;
 
 			/**
 			 * ThemeFusion edit.
@@ -594,98 +591,6 @@ if( class_exists( 'WXR_Importer') ) {
 				do_action( 'import_term_meta', $term_id, $key, $value );
 			}
 			return true;
-		}
-
-		/**
-		 * The main controller for the actual import stage.
-		 *
-		 * @param string $file Path to the WXR file for importing
-		 */
-		public function import_attachment( $file ) {
-			add_filter( 'import_post_meta_key', array( $this, 'is_valid_meta_key' ) );
-			add_filter( 'http_request_timeout', array( &$this, 'bump_request_timeout' ) );
-
-			$result = $this->import_start( $file );
-			if ( is_wp_error( $result ) ) {
-				return $result;
-			}
-
-			// Let's run the actual importer now, woot
-			$reader = $this->get_reader( $file );
-			if ( is_wp_error( $reader ) ) {
-				return $reader;
-			}
-
-			// Set the version to compatibility mode first
-			$this->version = '1.0';
-
-			// Reset other variables
-			$this->base_url = '';
-
-			// Start parsing!
-			while ( $reader->read() ) {
-				// Only deal with element opens
-				if ( $reader->nodeType !== XMLReader::ELEMENT ) {
-					continue;
-				}
-
-				switch ( $reader->name ) {
-					case 'wp:wxr_version':
-						// Upgrade to the correct version
-						$this->version = $reader->readString();
-
-						if ( version_compare( $this->version, self::MAX_WXR_VERSION, '>' ) ) {
-							$this->logger->warning( sprintf(
-								__( 'This WXR file (version %s) is newer than the importer (version %s) and may not be supported. Please consider updating.', 'fusion-builder' ),
-								$this->version,
-								self::MAX_WXR_VERSION
-							) );
-						}
-
-						// Handled everything in this node, move on to the next
-						$reader->next();
-						break;
-
-					case 'wp:base_site_url':
-						$this->base_url = $reader->readString();
-
-						// Handled everything in this node, move on to the next
-						$reader->next();
-						break;
-
-					case 'item':
-						$node = $reader->expand();
-						$parsed = $this->parse_post_node( $node );
-						if ( is_wp_error( $parsed ) ) {
-							$this->log_error( $parsed );
-
-							// Skip the rest of this post
-							$reader->next();
-							break;
-						}
-
-						if ( 'attachment' !== $parsed['data']['post_type'] ) {
-							$reader->next();
-							break;
-						}
-
-						$this->process_post( $parsed['data'], $parsed['meta'], $parsed['comments'], $parsed['terms'] );
-
-						// Handled everything in this node, move on to the next
-						$reader->next();
-						break;
-
-					default:
-						// Skip this node, probably handled by something already
-						break;
-				}
-			}
-
-			// Now that we've done the main processing, do any required
-			// post-processing and remapping.
-			$this->post_process();
-
-			$this->import_end();
 		}
 	}
 

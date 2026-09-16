@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 			private $counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.0.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -34,7 +43,6 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 			public function __construct() {
 				parent::__construct();
 				add_filter( 'fusion_attr_lottie-shortcode', [ $this, 'attr' ] );
-				add_filter( 'fusion_attr_lottie-player', [ $this, 'player_attr' ] );
 				add_filter( 'fusion_attr_lottie-wrapper', [ $this, 'wrapper_attr' ] );
 
 				add_shortcode( 'fusion_lottie', [ $this, 'render' ] );
@@ -52,7 +60,7 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'align'                   => '',
 					'align_medium'            => '',
@@ -60,9 +68,7 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 					'animation_direction'     => 'left',
 					'animation_offset'        => $fusion_settings->get( 'animation_offset' ),
 					'animation_speed'         => '',
-					'animation_delay'         => '',
 					'animation_type'          => '',
-					'animation_color'         => '',
 					'class'                   => '',
 					'filter_blur'             => '0',
 					'filter_blur_hover'       => '0',
@@ -71,7 +77,6 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 					'filter_contrast'         => '100',
 					'filter_contrast_hover'   => '100',
 					'filter_hue'              => '0',
-					'filter_hover_element'    => 'self',
 					'filter_hue_hover'        => '0',
 					'filter_invert'           => '0',
 					'filter_invert_hover'     => '0',
@@ -97,11 +102,6 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 					'speed'                   => '1',
 					'trigger'                 => 'none',
 					'trigger_offset'          => $fusion_settings->get( 'animation_offset' ),
-					'start_point'             => '',
-					'end_point'               => '',
-					'scroll_relative_to'      => '',
-					'scroll_element'          => '',
-					'cursor_direction'        => 'horizontal',
 				];
 			}
 
@@ -179,13 +179,19 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 			public function render( $args, $content = '' ) {
 				$this->set_element_id( $this->counter );
 
-				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_lottie' );
+				$defaults   = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_lottie' );
+				$this->args = $defaults;
 
 				$tag  = '' !== $this->args['link'] ? 'a' : 'div';
-				$html = '<' . $tag . ' ' . FusionBuilder::attributes( 'lottie-shortcode' ) . '><lottie-player ' . FusionBuilder::attributes( 'lottie-player' ) . '></lottie-player></' . $tag . '>';
-				$html = '<div ' . FusionBuilder::attributes( 'lottie-wrapper' ) . '>' . $html . '</div>';
+				$html = '<' . $tag . ' ' . FusionBuilder::attributes( 'lottie-shortcode' ) . '></' . $tag . '>';
 
+				// Add filter styles.
+				$filter_style = Fusion_Builder_Filter_Helper::get_filter_style_element( $this->args, '.fusion-lottie-' . $this->element_id );
+				if ( '' !== $filter_style ) {
+					$html .= $filter_style;
+				}
+
+				$html = '<div ' . FusionBuilder::attributes( 'lottie-wrapper' ) . '>' . $html . '</div>';
 				$this->counter++;
 
 				$this->on_render();
@@ -213,38 +219,22 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 					$attr['data-reverse'] = 'yes' === $this->args['reverse'] ? 1 : 0;
 					$attr['data-speed']   = $this->args['speed'];
 					$attr['data-trigger'] = $this->args['trigger'];
-					if ( '' !== $this->args['start_point'] ) {
-						$attr['data-start_point'] = $this->args['start_point'];
-					}
-					if ( '' !== $this->args['end_point'] ) {
-						$attr['data-end_point'] = $this->args['end_point'];
-					}
-
 					if ( 'viewport' === $this->args['trigger'] ) {
-						$attr['data-animationoffset'] = $this->args['trigger_offset'];
-					}
-
-					if ( 'scroll' === $this->args['trigger'] && '' !== $this->args['scroll_relative_to'] ) {
-						$attr['data-scroll_relative_to'] = $this->args['scroll_relative_to'];
-					}
-
-					if ( 'scroll' === $this->args['trigger'] && 'element' === $this->args['scroll_relative_to'] && '' !== $this->args['scroll_element'] ) {
-						$attr['data-scroll_element'] = $this->args['scroll_element'];
-					}
-
-					if ( 'cursor' === $this->args['trigger'] ) {
-						$attr['data-cursor_direction'] = $this->args['cursor_direction'];
+						if ( 'top-into-view' === $this->args['trigger_offset'] ) {
+							$this->args['trigger_offset'] = '100%';
+						} elseif ( 'top-mid-of-view' === $this->args['trigger_offset'] ) {
+							$this->args['trigger_offset'] = '50%';
+						}
+						$attr['data-offset'] = $this->args['trigger_offset'];
 					}
 				}
 
-				$align_classes = [
-					'center' => 'mx-auto',
-					'left'   => 'mr-auto',
-					'right'  => 'ml-auto',
-				];
+				if ( $this->args['max_width'] ) {
+					$attr['style'] = 'width:100%;max-width:' . $this->args['max_width'] . ';';
 
-				if ( $this->args['max_width'] && 'none' !== $this->args['align'] ) {
-					$attr['class'] .= ' lg-' . $align_classes[ $this->args['align'] ];
+					if ( '' !== $this->args['link'] ) {
+						$attr['style'] .= 'display:block;';
+					}
 				}
 
 				// Link if set.
@@ -258,6 +248,12 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 					// Add additional, custom link attributes correctly formatted to the anchor.
 					$attr = fusion_get_link_attributes( $this->args, $attr );
 				}
+
+				$align_classes = [
+					'center' => 'mx-auto',
+					'left'   => 'mr-auto',
+					'right'  => 'ml-auto',
+				];
 
 				$align_large = ! empty( $this->args['align'] ) && 'none' !== $this->args['align'] ? $this->args['align'] : false;
 				if ( $align_large ) {
@@ -286,23 +282,10 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 			 */
 			public function wrapper_attr() {
 
-				$css_vars = [
-					'margin_top',
-					'margin_right',
-					'margin_bottom',
-					'margin_left',
-					'max_width',
-				];
-
-				$custom_vars = [];
-				if ( $this->args['max_width'] ) {
-					$custom_vars['width'] = '100%';
-				}
-
 				$attr = [
 					'class'   => 'fusion-lottie fusion-lottie-' . $this->element_id,
 					'data-id' => $this->element_id,
-					'style'   => $this->get_css_vars_for_options( $css_vars ) . $this->get_custom_css_vars( $custom_vars ) . Fusion_Builder_Filter_Helper::get_filter_vars( $this->args ),
+					'style'   => '',
 				];
 
 				// Hide on mobile.
@@ -319,28 +302,7 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				return $attr;
-			}
-
-			/**
-			 * Player attributes array.
-			 *
-			 * @access public
-			 * @since 3.9.2
-			 * @return array
-			 */
-			public function player_attr() {
-				$attr = [];
-
-				if ( '' !== $this->args['json'] ) {
-					if ( 'yes' === $this->args['loop'] ) {
-						$attr['loop'] = true;
-					}
-					if ( 'yes' === $this->args['reverse'] ) {
-						$attr['direction'] = '-1';
-					}
-					$attr['speed'] = $this->args['speed'];
-				}
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				return $attr;
 			}
@@ -353,22 +315,12 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 			 * @return void
 			 */
 			public function on_first_render() {
-
 				Fusion_Dynamic_JS::enqueue_script(
-					'lottie-player',
-					FusionBuilder::$js_folder_url . '/library/lottie-player.js',
-					FusionBuilder::$js_folder_path . '/library/lottie-player.js',
+					'lottie',
+					FusionBuilder::$js_folder_url . '/library/lottie.js',
+					FusionBuilder::$js_folder_path . '/library/lottie.js',
 					[],
-					FUSION_BUILDER_VERSION,
-					true
-				);
-
-				Fusion_Dynamic_JS::enqueue_script(
-					'lottie-interactivity',
-					FusionBuilder::$js_folder_url . '/library/lottie-interactivity.js',
-					FusionBuilder::$js_folder_path . '/library/lottie-interactivity.js',
-					[ 'lottie-player' ],
-					FUSION_BUILDER_VERSION,
+					'5.7.1',
 					true
 				);
 
@@ -376,8 +328,8 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
 					'fusion-lottie',
 					FusionBuilder::$js_folder_url . '/general/fusion-lottie.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-lottie.js',
-					[ 'jquery', 'lottie-interactivity' ],
-					FUSION_BUILDER_VERSION,
+					[ 'jquery', 'lottie' ],
+					'1',
 					true
 				);
 			}
@@ -406,6 +358,8 @@ if ( fusion_is_element_enabled( 'fusion_lottie' ) ) {
  */
 function fusion_element_lottie() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionSC_Lottie',
@@ -413,7 +367,7 @@ function fusion_element_lottie() {
 				'name'      => esc_attr__( 'Lottie Animation', 'fusion-builder' ),
 				'shortcode' => 'fusion_lottie',
 				'icon'      => 'fusiona-lottie',
-				'help_url'  => 'https://avada.com/documentation/lottie-animation-element/',
+				'help_url'  => 'https://theme-fusion.com/documentation/avada/elements/lottie-animation-element/',
 				'params'    => [
 					[
 						'type'        => 'uploadfile',
@@ -435,11 +389,11 @@ function fusion_element_lottie() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => __( '_self = open in same window<br />_blank = open in new window.', 'fusion-builder' ),
 						'param_name'  => 'target',
 						'value'       => [
-							'_self'  => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'  => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => '_self',
 						'dependency'  => [
@@ -461,9 +415,6 @@ function fusion_element_lottie() {
 							'viewport' => esc_attr__( 'Viewport', 'fusion-builder' ),
 							'hover'    => esc_attr__( 'Hover', 'fusion-builder' ),
 							'click'    => esc_attr__( 'Click', 'fusion-builder' ),
-							'toggle'   => esc_attr__( 'Toggle Click', 'fusion-builder' ),
-							'scroll'   => esc_attr__( 'Scroll', 'fusion-builder' ),
-							'cursor'   => esc_attr__( 'Cursor Move', 'fusion-builder' ),
 						],
 					],
 					[
@@ -487,66 +438,9 @@ function fusion_element_lottie() {
 						],
 					],
 					[
-						'type'        => 'select',
-						'heading'     => esc_attr__( 'Animation Relative To', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select to what the start of the scroll animation should be relative to.', 'fusion-builder' ),
-						'param_name'  => 'scroll_relative_to',
-						'default'     => '',
-						'dependency'  => [
-							[
-								'element'  => 'trigger',
-								'value'    => 'scroll',
-								'operator' => '==',
-							],
-						],
-						'value'       => [
-							''        => esc_attr__( 'Animation Viewport', 'fusion-builder' ),
-							'page'    => esc_attr__( 'Entire Page', 'fusion-builder' ),
-							'element' => esc_attr__( 'Element', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Element Selector', 'fusion-builder' ),
-						'description' => esc_attr__( 'Insert the element CSS selector.', 'fusion-builder' ),
-						'param_name'  => 'scroll_element',
-						'default'     => '',
-						'dependency'  => [
-							[
-								'element'  => 'trigger',
-								'value'    => 'scroll',
-								'operator' => '==',
-							],
-							[
-								'element'  => 'scroll_relative_to',
-								'value'    => 'element',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'select',
-						'heading'     => esc_attr__( 'Cursor Direction', 'fusion-builder' ),
-						'description' => esc_attr__( 'Control the direction of cursor movement to trigger the animation.', 'fusion-builder' ),
-						'param_name'  => 'cursor_direction',
-						'default'     => 'horizontal',
-						'dependency'  => [
-							[
-								'element'  => 'trigger',
-								'value'    => 'cursor',
-								'operator' => '==',
-							],
-						],
-						'value'       => [
-							'horizontal' => esc_attr__( 'Horizontal', 'fusion-builder' ),
-							'vertical'   => esc_attr__( 'Vertical', 'fusion-builder' ),
-							'both'       => esc_attr__( 'Horizontal & Vertical', 'fusion-builder' ),
-						],
-					],
-					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Loop', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls whether the animation should loop.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls whether the animation should loop or not.', 'fusion-builder' ),
 						'param_name'  => 'loop',
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
@@ -556,21 +450,14 @@ function fusion_element_lottie() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Reverse Animation', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select "yes" to play the animation in reverse.', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'Reverse', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select yes to play the animation in reverse.', 'fusion-builder' ),
 						'param_name'  => 'reverse',
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
 						],
 						'default'     => 'no',
-						'dependency'  => [
-							[
-								'element'  => 'trigger',
-								'value'    => 'scroll',
-								'operator' => '!=',
-							],
-						],
 					],
 					[
 						'type'        => 'range',
@@ -581,26 +468,6 @@ function fusion_element_lottie() {
 						'min'         => '0',
 						'max'         => '5',
 						'step'        => '0.1',
-					],
-					[
-						'type'        => 'range',
-						'value'       => '0',
-						'min'         => '0',
-						'max'         => '100',
-						'step'        => '1',
-						'heading'     => esc_attr__( 'Start Point', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set the animation start point.', 'fusion-builder' ),
-						'param_name'  => 'start_point',
-					],
-					[
-						'type'        => 'range',
-						'value'       => '100',
-						'min'         => '0',
-						'max'         => '100',
-						'step'        => '1',
-						'heading'     => esc_attr__( 'End Point', 'fusion-builder' ),
-						'description' => esc_attr__( 'Set the animation end point.', 'fusion-builder' ),
-						'param_name'  => 'end_point',
 					],
 					[
 						'type'        => 'checkbox_button_set',

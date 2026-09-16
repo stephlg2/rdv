@@ -1,4 +1,4 @@
-/* global fusionBuilderText, fusionGlobalManager, FusionApp, FusionPageBuilderViewManager, fusionAllElements, FusionPageBuilderApp, FusionEvents, fusionAppConfig */
+/* global FusionPageBuilderElements, fusionBuilderText, fusionGlobalManager, FusionApp, FusionPageBuilderViewManager, fusionAllElements, FusionPageBuilderApp, FusionEvents */
 /* eslint no-empty-function: 0 */
 /* eslint no-shadow: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
@@ -80,103 +80,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Runs just after render on cancel.
-			 *
-			 * @since 3.0.2
-			 * @return null
-			 */
-			beforeGenerateShortcode: function() {
-				var elementType = this.model.get( 'element_type' ),
-					options     = fusionAllElements[ elementType ].params,
-					values      = jQuery.extend( true, {}, fusionAllElements[ elementType ].defaults, _.fusionCleanParameters( this.model.get( 'params' ) ) ),
-					self        = this,
-					iconWithoutFusionPrefix;
-
-				if ( 'object' !== typeof options ) {
-					return;
-				}
-
-				// If images needs replaced lets check element to see if we have media being used to add to object.
-				if ( 'undefined' !== typeof FusionApp.data.replaceAssets && FusionApp.data.replaceAssets && ( 'undefined' !== typeof FusionApp.data.fusion_element_type || 'fusion_template' === FusionApp.getPost( 'post_type' ) ) ) {
-
-					this.mapStudioImages( options, values );
-
-					if ( 'undefined' !== typeof this.model.get( 'multi' ) && 'multi_element_parent' === this.model.get( 'multi' ) ) {
-						this.model.children.each( function( child ) {
-							var elementType = child.attributes.element_type,
-								childOptions = fusionAllElements[ elementType ].params,
-								childValues  = jQuery.extend( true, {}, fusionAllElements[ elementType ].defaults, _.fusionCleanParameters( child.attributes.params ) );
-
-							self.mapStudioImages( childOptions, childValues );
-						} );
-					}
-
-					if ( 'fusion_form' === elementType && '' !== values.form_post_id ) {
-						// If its not within object already, add it.
-						if ( 'undefined' === typeof FusionPageBuilderApp.mediaMap.forms[ values.form_post_id ] ) {
-							FusionPageBuilderApp.mediaMap.forms[ values.form_post_id ] = true;
-						}
-					}
-
-					// Add custom icons that used in forms to media map.
-					if ( this.isString( elementType ) && elementType.startsWith( 'fusion_form_' ) && this.isString( values.input_field_icon ) && 'fusion-prefix-' === values.input_field_icon.substr( 0, 14 ) ) {
-						if ( 'undefined' !== typeof fusionAppConfig.customIcons ) {
-							iconWithoutFusionPrefix = values.input_field_icon.substr( 14 );
-
-							// TODO: try to optimize this check.
-							jQuery.each( fusionAppConfig.customIcons, function( iconPostName, iconSet ) {
-
-							if ( 0 === iconWithoutFusionPrefix.indexOf( iconSet.css_prefix ) ) {
-									FusionPageBuilderApp.mediaMap.icons[ iconSet.post_id ] = iconSet.css_prefix;
-									return false;
-								}
-							} );
-						}
-					}
-
-				}
-			},
-
-			/**
-			 * Add studio images to media map.
-			 * @param {Object} options
-			 * @param {Object} values
-			 * @returns void
-			 */
-			mapStudioImages: function( options, values ) {
-
-				if ( 'object' !== typeof options ) {
-					return;
-				}
-
-				// If images needs replaced lets check element to see if we have media being used to add to object.
-				_.each( options, function( option ) {
-					var value;
-					if ( 'upload' === option.type && 'undefined' !== typeof values[ option.param_name ] && '' !== values[ option.param_name ] ) {
-						value = values[ option.param_name ];
-
-						if ( 'undefined' === typeof value || 'undefined' === value ) {
-							return;
-						}
-
-						// If its not within object already, add it.
-						if ( 'undefined' === typeof FusionPageBuilderApp.mediaMap.images[ value ] ) {
-							FusionPageBuilderApp.mediaMap.images[ value ] = true;
-						}
-
-						// Check if we have an image ID for this param.
-						if ( 'undefined' !== typeof values[ option.param_name + '_id' ] && '' !== values[ option.param_name + '_id' ] )	{
-							if ( 'object' !== typeof FusionPageBuilderApp.mediaMap.images[ value ] ) {
-								FusionPageBuilderApp.mediaMap.images[ value ] = {};
-							}
-							FusionPageBuilderApp.mediaMap.images[ value ][ option.param_name + '_id' ] = values[ option.param_name + '_id' ];
-						}
-					}
-				} );
-
-			},
-
-			/**
 			 * Triggers a refresh.
 			 *
 			 * @since 2.0.0
@@ -224,13 +127,15 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					diff,
 					heightBeforePatch;
 
-				if ( 'generated_element' === this.model.get( 'type' ) || 'fusion_builder_form_step' === this.model.get( 'type' ) ) {
+				if ( 'generated_element' === this.model.get( 'type' ) ) {
 					return;
 				}
 
 				heightBeforePatch = this.$el.outerHeight();
 				this.beforePatch();
 				FusionPageBuilderApp.disableDocumentWrite();
+
+				this.renderWireframePreview();
 
 				$oldContent = this.getElementContent();
 				$newContent = $oldContent.clone();
@@ -691,6 +596,56 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
+			 * Generate wireframe preview.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			renderWireframePreview: function() {
+				var elementType = this.model.get( 'element_type' ),
+					viewSettings,
+					params,
+					emptySectionText,
+					self = this;
+
+				// Skip wireframe rendering unless required.
+				if ( ! FusionPageBuilderApp.wireframeActive ) {
+					return;
+				}
+
+				// Change empty section desc depending on bg image param.
+				if ( 'fusion_builder_container' === elementType ) {
+					params           = this.model.get( 'params' );
+					emptySectionText = fusionBuilderText.empty_section;
+
+					if ( '' !== params.background_image ) {
+						emptySectionText = fusionBuilderText.empty_section_with_bg;
+					}
+
+					this.$el.find( '.fusion-builder-empty-section' ).html( emptySectionText );
+				}
+
+				// If child element is changed we need to reRender parent.
+				if ( this.model.get( 'parent' ) && ( 'true' === this.model.get( 'child_element' ) || true === this.model.get( 'child_element' ) ) ) {
+					self        = FusionPageBuilderViewManager.getView( this.model.get( 'parent' ) );
+					elementType = self.model.get( 'element_type' );
+				}
+
+				if ( 'undefined' !== typeof fusionAllElements[ elementType ].preview || 'element' === self.model.get( 'type' ) ) {
+					if ( 'undefined' === typeof self.previewView || ! self.previewView ) {
+						viewSettings = {
+							model: self.model,
+							collection: FusionPageBuilderElements,
+							dynamicParams: self.dynamicParams
+						};
+						self.previewView = new FusionPageBuilder.ElementPreviewView( viewSettings );
+					}
+
+					self.$el.find( '.fusion-builder-module-preview' ).html( self.previewView.render().el );
+				}
+			},
+
+			/**
 			 * Extendable function for when settings is opened.
 			 *
 			 * @since 2.0.0
@@ -760,32 +715,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Removes loading overlay after ajax is done.
-			 *
-			 * @since 3.5
-			 * @return {void}
-			 */
-			removeLoadingOverlay: function() {
-				var contentType = 'element',
-					$elementContent;
-
-				if ( _.isObject( this.model.attributes ) ) {
-					if ( 'fusion_builder_container' === this.model.attributes.element_type ) {
-						contentType = 'container';
-					} else if ( 'fusion_builder_column' === this.model.attributes.element_type ) {
-						contentType = 'columns';
-					}
-				}
-
-				$elementContent = this.$el.find( '.fusion-builder-' + contentType + '-content' );
-
-				if ( $elementContent.hasClass( 'fusion-loader' ) ) {
-					$elementContent.removeClass( 'fusion-loader' );
-					$elementContent.find( '.fusion-builder-loader' ).remove();
-				}
-			},
-
-			/**
 			 * Removes an element.
 			 *
 			 * @since 2.0.0
@@ -811,7 +740,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Update column trigger.
 				this.triggerColumn( parentCid );
 
-				// Destroy dynamic param model.
+				// Destroy dyamic param model.
 				if ( this.dynamicParam ) {
 					this.dynamicParam.destroy();
 				}
@@ -895,7 +824,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					cursorAt: { top: 15, left: 15 },
 					iframeScroll: true,
 					containment: $body,
-					cancel: '.fusion-live-editable, .fusion-builder-live-child-element:not( [data-fusion-no-dragging] ), .variations select, .awb-openstreet-map',
+					cancel: '.fusion-live-editable, .fusion-builder-live-child-element:not( [data-fusion-no-dragging] ), .variations select',
 					helper: function() {
 						var $classes = FusionPageBuilderApp.DraggableHelpers.draggableClasses( cid );
 						return jQuery( '<div class="fusion-element-helper ' + $classes + '" data-cid="' + cid + '"><span class="' + fusionAllElements[ self.model.get( 'element_type' ) ].icon + '"></span></div>' );
@@ -904,7 +833,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						$body.addClass( 'fusion-element-dragging fusion-active-dragging' );
 						$el.addClass( 'fusion-being-dragged' );
 						$el.prev( '.fusion-builder-live-element' ).find( '.target-after' ).addClass( 'target-disabled' );
-						console.log( 'start' );
 					},
 					stop: function() {
 						setTimeout( function() {
@@ -920,46 +848,45 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					hoverClass: 'ui-droppable-active',
 					accept: '.fusion-builder-live-element, .fusion_builder_row_inner',
 					drop: function( event, ui ) {
-						var handleDropElement = self.handleDropElement.bind( self );
-						handleDropElement( ui.draggable, $el, jQuery( event.target ) );
+						var parentCid      = jQuery( event.target ).closest( '.fusion-builder-column' ).data( 'cid' ),
+							columnView     = FusionPageBuilderViewManager.getView( parentCid ),
+							elementCid     = ui.draggable.data( 'cid' ),
+							elementView    = FusionPageBuilderViewManager.getView( elementCid ),
+							MultiGlobalArgs,
+							newIndex;
+
+						// Move the actual html.
+						if ( jQuery( event.target ).hasClass( 'target-after' ) ) {
+							$el.after( ui.draggable );
+						} else {
+							$el.before( ui.draggable );
+						}
+
+						newIndex = ui.draggable.parent().children( '.fusion-builder-live-element, .fusion_builder_row_inner' ).index( ui.draggable );
+
+						FusionPageBuilderApp.onDropCollectionUpdate( elementView.model, newIndex, parentCid );
+
+						// Save history state
+						FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.moved + ' ' + fusionAllElements[ elementView.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element );
+
+						// Handle multiple global elements.
+						MultiGlobalArgs = {
+							currentModel: elementView.model,
+							handleType: 'save',
+							attributes: elementView.model.attributes
+						};
+						fusionGlobalManager.handleMultiGlobal( MultiGlobalArgs );
+
+						FusionEvents.trigger( 'fusion-content-changed' );
+
+						columnView._equalHeights();
 					}
 				} );
 
-			},
-
-			handleDropElement: function( $element, $targetEl, $dropTarget ) {
-				var parentCid      = $dropTarget.closest( '.fusion-builder-column' ).data( 'cid' ),
-					columnView     = FusionPageBuilderViewManager.getView( parentCid ),
-					elementCid     = $element.data( 'cid' ),
-					elementView    = FusionPageBuilderViewManager.getView( elementCid ),
-					MultiGlobalArgs,
-					newIndex;
-
-				// Move the actual html.
-				if ( $dropTarget.hasClass( 'target-after' ) ) {
-					$targetEl.after( $element );
-				} else {
-					$targetEl.before( $element );
+				// If we are in wireframe mode, then disable.
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableElement();
 				}
-
-				newIndex = $element.parent().children( '.fusion-builder-live-element, .fusion_builder_row_inner' ).index( $element );
-
-				FusionPageBuilderApp.onDropCollectionUpdate( elementView.model, newIndex, parentCid );
-
-				// Save history state
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.moved + ' ' + fusionAllElements[ elementView.model.get( 'element_type' ) ].name + ' ' + fusionBuilderText.element );
-
-				// Handle multiple global elements.
-				MultiGlobalArgs = {
-					currentModel: elementView.model,
-					handleType: 'save',
-					attributes: elementView.model.attributes
-				};
-				fusionGlobalManager.handleMultiGlobal( MultiGlobalArgs );
-
-				FusionEvents.trigger( 'fusion-content-changed' );
-
-				columnView._equalHeights();
 			},
 
 			/**
@@ -999,6 +926,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					// No sign of init, then need to call it.
 					this.droppableElement();
+				}
+			},
+
+			/**
+			 * Fired when wireframe mode is toggled.
+			 *
+			 * @since 2.0.0
+			 * @return {void}
+			 */
+			wireFrameToggled: function() {
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.renderWireframePreview();
+					this.disableDroppableElement();
+				} else {
+					this.enableDroppableElement();
 				}
 			},
 
@@ -1132,8 +1074,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( ( 'undefined' === typeof params[ param ] || '' === params[ param ] || 'default' === params[ param ] ) && ! this.dynamicParams.hasDynamicParam( param ) ) {
 
 					callbackFunction = FusionPageBuilderApp.getCallbackFunction( modelData, param, value, this, true );
-					callbackFunction.args = 'undefined' === typeof callbackFunction.args ? {} : callbackFunction.args;
-					callbackFunction.args.skipRerender = false;
 					if ( false !== callbackFunction && 'function' === typeof FusionApp.callback[ callbackFunction[ 'function' ] ] ) {
 						reRender = this.doCallbackFunction( callbackFunction, false, param, value, modelData, true );
 					}
@@ -1207,11 +1147,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							if ( 'object' === typeof paramObject && 'string' === typeof paramObject.heading ) {
 								paramTitle = paramObject.heading;
 							}
-						} else if (  'object' !== typeof paramObject && jQuery( '.typography [name="' + param + '"]' ).length ) {
-							paramObject = elementMap.params[ jQuery( '.typography [name="' + param + '"]' ).closest( '.fusion-builder-option' ).attr( 'data-option-id' ) ];
-							if ( 'object' === typeof paramObject && 'string' === typeof paramObject.heading ) {
-								paramTitle = paramObject.heading;
-							}
 						}
 
 						state.oldValue = this.initialValue[ param ];
@@ -1240,9 +1175,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.logChangeEvent( param, value, label );
 				} else {
 					this.model.attributes.params[ param ] = value;
-				}
-				if ( 'function' === typeof this.updateInlineParams && 'fusion_builder_form_step' === this.model.get( 'element_type' ) ) {
-					this.updateInlineParams( param, value );
 				}
 			},
 
@@ -1289,10 +1221,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			triggerCallback: function( event, callbackFunction, paramName, paramValue, cid, modelData ) {
 
-				if ( 'undefined' === typeof cid && 'undefined' !== typeof callbackFunction.cid ) {
-					cid = callbackFunction.cid;
-				}
-
 				if ( 'undefined' === typeof modelData ) {
 					modelData = jQuery.extend( this.model.attributes, {} );
 				}
@@ -1330,183 +1258,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 			},
 
-			/**
-			 * Get a string with each of the option as a CSS variable, if the option is not default.
-			 *
-			 * @since 3.9
-			 * @param {array} options The array with the options ids.
-			 * @return {string}
-			 */
-			getCssVarsForOptions( options ) {
-				var css = '',
-					varName,
-					value,
-					callback_args,
-					key;
-
-				for ( key in options ) {
-					if ( ! options.hasOwnProperty( key ) || 'length' === key ) {
-						continue; // eslint-disable-line no-continue
-					}
-
-					value = options[ key ];
-
-					if ( 'object' === typeof value ) { // If the value is an array, then the CSS var name is the key.
-						if ( ! this.isDefault( key ) ) {
-							varName       = '--awb-' + key.replaceAll( '_', '-' );
-							callback_args = ( 'object' === typeof value.args ? value.args : [ this.values[ key ] ] );
-							css          += varName + ':' + value.callback.apply( null, callback_args ) + ';';
-						}
-					} else {
-						if ( ! this.isDefault( value ) ) { // eslint-disable-line no-lonely-if
-							varName = '--awb-' + value.replaceAll( '_', '-' );
-							css    += varName + ':' + this.values[ value ] + ';';
-						}
-					}
-				}
-
-				return css;
-			},
-
-			/**
-			 * Get a string with custom CSS variables, created from array key => value pairs.
-			 *
-			 * @since 3.9
-			 * @param {Object} $options The object with the custom css vars. The property
-			 * represents the option name, while the value represents the custom value.
-			 * @return {string}
-			 */
-			getCustomCssVars( options, prefix ) {
-				var css = '',
-					varName,
-					property;
-
-				if ( 'undefined' === typeof prefix ) {
-					prefix = true;
-				}
-				for ( property in options ) {
-					if ( ! options.hasOwnProperty( property ) ) {
-						continue; // eslint-disable-line no-continue
-					}
-
-					if ( prefix ) {
-						varName = '--awb-' + property.replaceAll( '_', '-' );
-					} else {
-						varName = '--' + property;
-					}
-					css    += varName + ':' + options[ property ] + ';';
-				}
-
-				return css;
-			},
-
-			/**
-			 * Get declaration for typography vars with the given values.
-			 *
-			 * @since 3.9
-			 * @param {string} titleTag An HTML tag, Ex: 'h2', 'h3', 'div'.. etc.
-			 * @param {Object} nameValueMap The key is a css property, the array value is the CSS value.
-			 * @return string
-			 */
-			getHeadingFontVars( titleTag, nameValueMap ) {
-				var varPrefix = '',
-					cssProp,
-					style     = '';
-
-					if ( [ 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ].includes( titleTag ) ) {
-						varPrefix = '--' + titleTag + '_typography-';
-					} else if ( 'div' === titleTag || 'p' === titleTag ) {
-						varPrefix = '--body_typography-';
-					} else {
-						return style;
-					}
-
-				for ( cssProp in nameValueMap ) {
-					if ( nameValueMap[ cssProp ] && '' !== nameValueMap[ cssProp ] ) {
-						style += varPrefix + cssProp + ':' + nameValueMap[ cssProp ] + ';';
-					}
-				}
-
-				return style;
-			},
-
 			isDefault: function( param ) {
 				return this.values[ param ] === fusionAllElements[ this.model.get( 'element_type' ) ].defaults[ param ];
-			},
-
-			/**
-			 * Get font styling vars, created from _.fusionGetFontStyle helper.
-			 *
-			 * @since 3.9
-			 * @param string key typography options key.
-			 * @param object values  the values object.
-			 * @return string
-			 */
-			getFontStylingVars( key, values ) {
-				let css = '';
-
-				const font_styles = _.fusionGetFontStyle( key, values, 'object' );
-				Object.keys( font_styles ).forEach( ( rule ) => {
-					const value = font_styles[ rule ];
-					key = key.replace( '_font', '' );
-					let name = key + '-' + rule;
-					name = name.replaceAll( '_', '-' );
-
-					css += `--awb-${name}: ${value};`;
-				} );
-
-				return css;
-			},
-
-			/**
-			 * Get aspect ratio vars.
-			 *
-			 * @since 3.9
-			 * @param object values  the values object.
-			 * @return string
-			 */
-			getAspectRatioVars( values ) {
-				if ( '' ===  values.aspect_ratio ) {
-					return '';
-				}
-
-				let css = '';
-
-				// Calc Ratio
-				if ( 'custom' ===  values.aspect_ratio && '' !==  values.custom_aspect_ratio ) {
-					css += '--awb-aspect-ratio: 100 / ' + values.custom_aspect_ratio + ';';
-				} else {
-					const 	aspectRatio = values.aspect_ratio.split( '-' ),
-							width 		= aspectRatio[ 0 ] || '',
-							height 		= aspectRatio[ 1 ] || '';
-					css += `--awb-aspect-ratio: ${width / height};`;
-				}
-
-				//Ratio Position
-				if ( '' !== values.aspect_ratio_position ) {
-					css += '--awb-object-position:' + values.aspect_ratio_position + ';';
-				}
-
-				return css;
-			},
-
-			/**
-			 * Check if parent using dynamic content.
-			 *
-			 * @since 3.11
-			 * @param object values the values object.
-			 * @return string
-			 */
-			isParentHasDynamicContent( values ) {
-				if ( values.dynamic_params ) {
-					let dynamicData = FusionPageBuilderApp.base64Decode( values.dynamic_params );
-					dynamicData = _.unescape( dynamicData );
-					dynamicData = JSON.parse( dynamicData );
-
-					return dynamicData.parent_dynamic_content ? true : false;
-				}
-
-				return false;
 			},
 
 			parseCSS: function () {
@@ -1527,54 +1280,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} );
 
 				return css;
-			},
-
-			// Scroll to element and highlight it.
-			scrollHighlight: function( scroll = true, highlight = true ) {
-				var $trigger       = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( '.fusion-one-page-text-link' ),
-					$el            = this.$el,
-					elementIdAdded = false,
-					$highlightedEl,
-					elId           = $el.attr( 'id' );
-
-				scroll = 'undefined' === typeof scroll ? true : scroll;
-
-				if ( ! elId ) {
-					$el.attr( 'id', 'fusion-temporary-id-' + this.cid );
-					elId = 'fusion-temporary-id-' + this.cid;
-					elementIdAdded = true;
-				}
-
-				setTimeout( function() {
-					if ( scroll && $trigger.length && 'function' === typeof $trigger.fusion_scroll_to_anchor_target ) {
-						$trigger.attr( 'href', '#' + elId ).fusion_scroll_to_anchor_target( 15 );
-					}
-
-					if ( elementIdAdded ) {
-						setTimeout( function() {
-							$el.removeAttr( 'id' );
-						}, 10 );
-					}
-
-					if ( highlight ) {
-						$highlightedEl = $el;
-						// This is intended to be only for columns.
-						if ( $el.find( '> .fusion-column-wrapper' ).length ) {
-							$highlightedEl = $el.find( '> .fusion-column-wrapper' );
-						}
-
-						$highlightedEl.addClass( 'fusion-active-highlight' );
-						setTimeout( function() {
-							$highlightedEl.removeClass( 'fusion-active-highlight' );
-						}, 6000 );
-					}
-				}, 10 );
-			},
-			isString( s ) {
-				if ( 'string' === typeof s || s instanceof String ) {
-					return true;
-				}
-				return false;
 			}
 
 		} );

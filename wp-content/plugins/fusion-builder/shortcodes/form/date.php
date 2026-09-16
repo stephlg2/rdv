@@ -18,6 +18,24 @@ if ( fusion_is_element_enabled( 'fusion_form_date' ) ) {
 		class FusionForm_Date extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -36,17 +54,12 @@ if ( fusion_is_element_enabled( 'fusion_form_date' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'label'            => '',
 					'name'             => '',
 					'picker'           => 'custom',
-					'format'           => '',
 					'required'         => '',
-					'empty_notice'     => '',
-					'min'              => '',
-					'max'              => '',
-					'disabled_days'    => '',
 					'placeholder'      => '',
 					'input_field_icon' => '',
 					'tab_index'        => '',
@@ -71,7 +84,7 @@ if ( fusion_is_element_enabled( 'fusion_form_date' ) ) {
 					FusionBuilder::$js_folder_url . '/library/flatpickr.js',
 					FusionBuilder::$js_folder_path . '/library/flatpickr.js',
 					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 			}
@@ -106,20 +119,13 @@ if ( fusion_is_element_enabled( 'fusion_form_date' ) ) {
 
 				// If we are using a script the autocomplete popup blocks selection.
 				$auto_complete = 'native' !== $this->args['picker'] ? 'autocomplete="no"' : '';
-				$start_of_week = get_option( 'start_of_week', 0 );
 
 				// Input markup.
-				$element_html  = '<input autocomplete="no" type="date"';
-				$element_html .= '' !== $element_data['empty_notice'] ? ' data-empty-notice="' . $element_data['empty_notice'] . '" ' : '';
-				$element_html .= '' !== $this->args['min'] ? ' min="' . $this->args['min'] . '" ' : '';
-				$element_html .= '' !== $this->args['max'] ? ' max="' . $this->args['max'] . '" ' : '';
-				$element_html .= '' !== $this->args['disabled_days'] ? ' data-disabled-days="' . $this->args['disabled_days'] . '" ' : '';
-				$element_html .= '' !== $start_of_week ? ' data-first-day="' . $start_of_week . '" ' : '';
-				$element_html .= ' data-format="' . $this->args['format'] . '" tabindex="' . $this->args['tab_index'] . '" id="' . $this->args['name'] . '" name="' . $this->args['name'] . '" data-type="' . esc_attr( $this->args['picker'] ) . '" value="' . $this->args['value'] . '"' . $element_data['holds_private_data'] . $element_data['class'] . $element_data['required'] . $element_data['placeholder'] . $element_data['style'] . $auto_complete . '/>';
+				$element_html = '<input autocomplete="no" type="date" tabindex="' . $this->args['tab_index'] . '" id="' . $this->args['name'] . '" name="' . $this->args['name'] . '" data-type="' . esc_attr( $this->args['picker'] ) . '" value="' . $this->args['value'] . '"' . $element_data['holds_private_data'] . $element_data['class'] . $element_data['required'] . $element_data['placeholder'] . $element_data['style'] . $auto_complete . '/>';
 
 				if ( isset( $this->args['input_field_icon'] ) && '' !== $this->args['input_field_icon'] ) {
 					$icon_html     = '<div class="fusion-form-input-with-icon">';
-					$icon_html    .= '<i class="' . fusion_font_awesome_name_handler( $this->args['input_field_icon'] ) . '"></i>';
+					$icon_html    .= '<i class=" ' . $this->args['input_field_icon'] . '"></i>';
 					$element_html  = $icon_html . $element_html;
 					$element_html .= '</div>';
 				}
@@ -144,21 +150,8 @@ if ( fusion_is_element_enabled( 'fusion_form_date' ) ) {
  * @since 3.1
  */
 function fusion_form_date() {
-	$start_of_week    = get_option( 'start_of_week', 0 );
-	$days_of_the_week = [
-		'sunday'    => esc_attr__( 'Sunday', 'fusion-builder' ),
-		'monday'    => esc_attr__( 'Monday', 'fusion-builder' ),
-		'tuesday'   => esc_attr__( 'Tuesday', 'fusion-builder' ),
-		'wednesday' => esc_attr__( 'Wednesday', 'fusion-builder' ),
-		'thursday'  => esc_attr__( 'Thursday', 'fusion-builder' ),
-		'friday'    => esc_attr__( 'Friday', 'fusion-builder' ),
-		'saturday'  => esc_attr__( 'Saturday', 'fusion-builder' ),
-	];
 
-	// Get first and second half of week days and merge them.
-	$first_half       = array_slice( $days_of_the_week, $start_of_week, 7 - $start_of_week );
-	$second_half      = array_diff( $days_of_the_week, $first_half );
-	$days_of_the_week = array_merge( $first_half, $second_half );
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -182,7 +175,7 @@ function fusion_form_date() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,
@@ -196,20 +189,6 @@ function fusion_form_date() {
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Empty Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter text validation notice that should display if data input is empty.', 'fusion-builder' ),
-						'param_name'  => 'empty_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'required',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
 						],
 					],
 					[
@@ -236,66 +215,6 @@ function fusion_form_date() {
 							'native'  => esc_attr__( 'Never', 'fusion-builder' ),
 							'desktop' => esc_attr__( 'Desktop Only', 'fusion-builder' ),
 							'custom'  => esc_attr__( 'Always', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'date_time_picker',
-						'time'        => false,
-						'heading'     => esc_attr__( 'Minimum Date', 'fusion-builder' ),
-						'param_name'  => 'min',
-						'value'       => '',
-						'description' => esc_attr__( 'Set the minimum date.', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'picker',
-								'value'    => 'native',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'date_time_picker',
-						'time'        => false,
-						'heading'     => esc_attr__( 'Maximum Date', 'fusion-builder' ),
-						'param_name'  => 'max',
-						'value'       => '',
-						'description' => esc_attr__( 'Set the maximum date.', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'picker',
-								'value'    => 'native',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'multiple_select',
-						'heading'     => esc_attr__( 'Disabled Days', 'fusion-builder' ),
-						'description' => esc_attr__( 'Disables the days of week you want to exlcude from selection.', 'fusion-builder' ),
-						'param_name'  => 'disabled_days',
-						'default'     => '',
-						'choices'     => $days_of_the_week,
-						'dependency'  => [
-							[
-								'element'  => 'picker',
-								'value'    => 'native',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Date Format', 'fusion-builder' ),
-						'param_name'  => 'format',
-						'value'       => '',
-						/* translators: The link. */
-						'description' => sprintf( __( 'Enter the date format you need. You can check the complete list of available formatting tokens <a href="%s" target="_blank">here</a>.' ), 'https://flatpickr.js.org/formatting/' ),
-						'dependency'  => [
-							[
-								'element'  => 'picker',
-								'value'    => 'native',
-								'operator' => '!=',
-							],
 						],
 					],
 					[

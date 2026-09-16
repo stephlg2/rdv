@@ -17,13 +17,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				this.values = atts.values;
-
 				// Validate values.
-				this.validateValues();
+				this.validateValues( atts.values );
 
 				// Create attribute objects
-				attributes.attr = this.buildAttr( this.values );
+				attributes.attr = this.buildAttr( atts.values );
 
 				// Any extras that need passed on.
 				attributes.output = atts.values.element_content;
@@ -37,49 +35,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @param {Object} values - The values.
 			 * @return {void}
 			 */
-			validateValues: function() {
+			validateValues: function( values ) {
 
 				// Make sure the title text is not wrapped with an unattributed p tag.
-				if ( 'undefined' !== typeof this.values.element_content ) {
-					this.values.element_content = this.values.element_content.trim();
-					this.values.element_content = this.values.element_content.replace( /(<p[^>]+?>|<p>|<\/p>)/img, '' );
+				if ( 'undefined' !== typeof values.element_content ) {
+					values.element_content = values.element_content.trim();
+					values.element_content = values.element_content.replace( /(<p[^>]+?>|<p>|<\/p>)/img, '' );
 				}
-			},
-
-			/**
-			 * Get the styling vars.
-			 *
-			 * @since 3.9
-			 * @return string
-			 */
-			getStyleVariables: function() {
-				var customVars = {};
-				if ( 'yes' === this.values.boxed ) {
-					if ( this.values.boxed_radius || '0' === this.values.boxed_radius ) {
-						this.values.boxed_radius = ( 'round' === this.values.boxed_radius ) ? '50%' : this.values.boxed_radius;
-						customVars[ 'border-radius' ] = this.values.boxed_radius;
-					}
-
-					if ( '' !== this.values.text_color ) {
-						customVars.color = this.values.text_color;
-					}
-					if ( '' !== this.values.color ) {
-						customVars.background = this.values.color;
-					}
-				} else if ( '' !== this.values.color ) {
-					customVars.color = this.values.color;
-				}
-
-				if ( 'yes' === this.values.boxed ) {
-					if ( '' !== this.values.text_color ) {
-						customVars.color = this.values.text_color;
-					}
-					if ( '' !== this.values.color ) {
-						customVars.background = this.values.color;
-					}
-				}
-
-				return this.getCustomCssVars( customVars );
 			},
 
 			/**
@@ -90,13 +52,27 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object} - Returns the element attributes.
 			 */
 			buildAttr: function( values ) {
-				var attr   = {
+				var params = this.model.get( 'params' ),
+					attr   = {
 						class: 'fusion-dropcap dropcap',
-						style: this.getStyleVariables()
-					};
+						style: ''
+					},
+					usingDefaultColor = ( 'undefined' !== typeof params.color && '' === params.color ) || 'undefined' === typeof params.color;
 
 				if ( 'yes' === values.boxed ) {
 					attr[ 'class' ] += ' dropcap-boxed';
+
+					if ( values.boxed_radius || '0' === values.boxed_radius ) {
+						values.boxed_radius = ( 'round' === values.boxed_radius ) ? '50%' : values.boxed_radius;
+						attr.style = 'border-radius:' + values.boxed_radius + ';';
+					}
+
+					if ( ! usingDefaultColor ) {
+						attr.style += 'background-color:' + values.color + ';';
+						attr.style += 'color:' + values.text_color + ';';
+					}
+				} else if ( ! usingDefaultColor ) {
+					attr.style += 'color:' + values.color + ';';
 				}
 
 				if ( '' !== values[ 'class' ] ) {

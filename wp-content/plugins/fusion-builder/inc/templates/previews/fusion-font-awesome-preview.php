@@ -5,7 +5,7 @@
  * @package fusion-builder
  */
 
-$fusion_settings   = awb_get_fusion_settings();
+$fusion_settings   = fusion_get_fusion_settings();
 $icon_circle       = $fusion_settings->get( 'icon_circle' );
 $icon_color        = $fusion_settings->get( 'icon_color' );
 $icon_circle_color = $fusion_settings->get( 'icon_circle_color' );
@@ -36,12 +36,10 @@ $icon_circle_color = $fusion_settings->get( 'icon_circle_color' );
 		icon_color = '#dddddd';
 	}
 
-	if ( 'undefined' !== typeof icon ) {
-		if ( 'fusion-prefix-' === icon.substr( 0, 14 ) ) {
-			icon = icon.replace( 'fusion-prefix-', '' );
-		} else if ( -1 === icon.trim().indexOf( ' ' ) && -1 !== icon.indexOf( 'fa-' ) ) {
-			icon = 'fa ' + icon;
-		}
+	if ( 'fusion-prefix-' === icon.substr( 0, 14 ) ) {
+		icon = icon.replace( 'fusion-prefix-', '' );
+	} else if ( 'undefined' !== typeof icon && -1 === icon.trim().indexOf( ' ' ) && -1 !== icon.indexOf( 'fa-' ) ) {
+		icon = 'fa ' + icon;
 	}
 	#>
 

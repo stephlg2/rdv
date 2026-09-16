@@ -45,11 +45,55 @@
                         );
                         $( this ).closest( 'label' ).find( 'input[type="radio"]' ).prop( 'checked' );
 
-                        el.find( 'label[for="' + id + '"]' ).addClass( 'fusionredux-image-select-selected' ).find( "input[type='radio']" ).attr(
-                            "checked", true
-                        ).trigger('change');
+                        if ( $( this ).closest( 'label' ).hasClass( 'fusionredux-image-select-preset-' + id ) ) { // If they clicked on a preset, import!
+                            e.preventDefault();
 
-                        fusionredux_change( $( this ).closest( 'label' ).find( 'input[type="radio"]' ) );
+                            var presets = $( this ).closest( 'label' ).find( 'input' );
+                            var data = presets.data( 'presets' );
+                            var merge = presets.data( 'merge' );
+
+                            if( merge !== undefined && merge !== null ) {
+                                if( $.type( merge ) === 'string' ) {
+                                    merge = merge.split('|');
+                                }
+
+                                $.each(data, function( index, value ) {
+                                    if( ( merge === true || $.inArray( index, merge ) != -1 ) && $.type( fusionredux.options[index] ) === 'object' ) {
+                                        data[index] = $.extend(fusionredux.options[index], data[index]);
+                                    }
+                                });
+                            }
+
+                            if ( presets !== undefined && presets !== null ) {
+                                var answer = confirm( fusionredux.args.preset_confirm );
+
+                                if ( answer ) {
+                                    el.find( 'label[for="' + id + '"]' ).addClass( 'fusionredux-image-select-selected' ).find( "input[type='radio']" ).attr(
+                                        "checked", true
+                                    );
+                                    window.onbeforeunload = null;
+                                    if ( $( '#import-code-value' ).length === 0 ) {
+                                        $( this ).append( '<textarea id="import-code-value" style="display:none;" name="' + fusionredux.args.opt_name + '[import_code]">' + JSON.stringify( data ) + '</textarea>' );
+                                    } else {
+                                        $( '#import-code-value' ).val( JSON.stringify( data ) );
+                                    }
+                                    if ( $( '#publishing-action #publish' ).length !== 0 ) {
+                                        $( '#publish' ).click();
+                                    } else {
+                                        $( '#fusionredux-import' ).click();
+                                    }
+                                }
+                            } else {
+                            }
+
+                            return false;
+                        } else {
+                            el.find( 'label[for="' + id + '"]' ).addClass( 'fusionredux-image-select-selected' ).find( "input[type='radio']" ).attr(
+                                "checked", true
+                            ).trigger('change');
+
+                            fusionredux_change( $( this ).closest( 'label' ).find( 'input[type="radio"]' ) );
+                        }
                     }
                 );
 

@@ -1,3 +1,4 @@
+/* global fusionAllElements */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -30,40 +31,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			afterPatch: function() {
 				this.generateChildElements();
 				this._refreshJs();
-
-				this.initListeners();
-			},
-
-			/**
-			 * Runs after view DOM is loaded for first time.
-			 *
-			 * @since 2.0
-			 * @return {void}
-			 */
-			onRender: function() {
-				this.initListeners();
-			},
-
-			/**
-			 * Add mouse listeners for effects.
-			 *
-			 * @since 3.9
-			 * @return {void}
-			 */
-			initListeners: function() {
-				this.$el.find( '.link-area-link-icon .fusion-read-more-button, .link-area-link-icon .fusion-read-more, .link-area-link-icon .heading' ).off( 'mouseenter.awb' ).on( 'mouseenter.awb', function() {
-					jQuery( this ).parents( '.link-area-link-icon' ).addClass( 'link-area-link-icon-hover' );
-				} );
-				this.$el.find( '.link-area-link-icon .fusion-read-more-button, .link-area-link-icon .fusion-read-more, .link-area-link-icon .heading' ).off( 'mouseleave.awb' ).on( 'mouseleave.awb', function() {
-					jQuery( this ).parents( '.link-area-link-icon' ).removeClass( 'link-area-link-icon-hover' );
-				} );
-
-				this.$el.find( '.link-area-box' ).off( 'mouseenter.awb' ).on( 'mouseenter.awb', function() {
-					jQuery( this ).addClass( 'link-area-box-hover' );
-				} );
-				this.$el.find( '.link-area-box' ).off( 'mouseleave.awb' ).on( 'mouseleave.awb', function() {
-					jQuery( this ).removeClass( 'link-area-box-hover' );
-				} );
 			},
 
 			/**
@@ -81,6 +48,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Create attribute objects.
 				attributes.attr   = this.buildAttr( atts.values );
+
+				// Build styles.
+				attributes.styles = this.buildStyles( atts.values );
 
 				return attributes;
 			},
@@ -124,10 +94,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					values.animation_type      = 'fade';
 					values.animation_direction = '';
 				}
-
-				if ( 5 >= values.animation_delay ) {
-					values.animation_delay = values.animation_delay * 1000;
-				}
 			},
 
 			/**
@@ -140,7 +106,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function( values ) {
 				var attr              = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-content-boxes content-boxes',
-						style: this.getParentCssVars( values )
+						style: ''
 					} ),
 					cid               = this.model.get( 'cid' ),
 					totalNumOfColumns = 'undefined' !== typeof values.element_content ? values.element_content.match( /\[fusion_content_box ((.|\n|\r)*?)\]/g ) : 1,
@@ -183,9 +149,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				attr[ 'class' ] += ' fusion-child-element';
 
-				if ( values.alignment && 'transparent' !== values.backgroundcolor && 0 !== jQuery.AWB_Color( values.backgroundcolor ).alpha() ) {
-					attr[ 'class' ] += ' has-flex-alignment';
-				}
+				attr.style += 'margin-top:' + values.margin_top + ';';
+				attr.style += 'margin-bottom:' + values.margin_bottom + ';';
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
@@ -200,49 +165,62 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return attr;
 			},
 
-			getParentCssVars: function( values ) {
-				var cssVars = [
-					'backgroundcolor',
-					'body_color',
-					'title_color',
-					'iconcolor',
-					'iconcolor_hover',
-					'circlecolor_hover',
-					'margin_top',
-					'margin_bottom',
-					'alignment'
-				];
-				var customCssVars = [];
-				this.values = values;
+			/**
+			 * Builds styles.
+			 *
+			 * @since 2.0
+			 * @param {Object} values - The values.
+			 * @return {string}
+			 */
+			buildStyles: function( values ) {
 
-				cssVars.item_margin_top = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.item_margin_bottom = { 'callback': _.fusionGetValueWithUnit };
+				var styles                 = '',
+					cid                    = this.model.get( 'cid' ),
+					circleHoverAccentColor = '';
 
-				cssVars.border_radius_top_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_radius_top_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_radius_bottom_right = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_radius_bottom_left = { 'callback': _.fusionGetValueWithUnit };
+				if ( '' !== values.title_color ) {
+					styles += '.fusion-content-boxes-cid' + cid + ' .heading .content-box-heading{color:' + values.title_color + ';}';
+				}
 
-				customCssVars.hover_accent_color = values.hover_accent_color;
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover .heading .content-box-heading, .fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover .heading .heading-link .content-box-heading,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover .heading .content-box-heading,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover .heading .heading-link .content-box-heading,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover.link-area-box .fusion-read-more,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover.link-area-box .fusion-read-more::after,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover.link-area-box .fusion-read-more::before,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .fusion-read-more:hover:after,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .fusion-read-more:hover:before,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .fusion-read-more:hover,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover.link-area-box .fusion-read-more,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover.link-area-box .fusion-read-more::after,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover.link-area-box .fusion-read-more::before,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover .icon .circle-no, .fusion-content-boxes-cid' + cid + ' .heading .heading-link:hover .content-box-heading { color: ' + values.hover_accent_color + ';}';
 
-				let circleHoverAccentColor = values.hover_accent_color;
-				if ( 'transparent' === values.circlecolor || 0 === jQuery.AWB_Color( values.circlecolor ).alpha() || 'no' === values.icon_circle ) {
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover .icon .circle-no {color: ' + values.hover_accent_color + ' !important;}';
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box.link-area-box-hover .fusion-content-box-button {';
+				styles += 'background: ' + fusionAllElements.fusion_button.defaults.button_gradient_top_color_hover + ';';
+				styles += 'color: ' +  fusionAllElements.fusion_button.defaults.button_accent_hover_color + ';';
+
+				if ( fusionAllElements.fusion_button.defaults.button_gradient_top_color_hover !== fusionAllElements.fusion_button.defaults.button_gradient_bottom_color_hover ) {
+					styles += 'background-image: -webkit-gradient( linear, left bottom, left top, from( ' + fusionAllElements.fusion_button.defaults.button_gradient_bottom_color_hover + ' ), to( ' + fusionAllElements.fusion_button.defaults.button_gradient_top_color_hover + ' ) );';
+					styles += 'background-image: linear-gradient( to top, ' + fusionAllElements.fusion_button.defaults.button_gradient_bottom_color_hover + ', ' + fusionAllElements.fusion_button.defaults.button_gradient_top_color_hover + ' )';
+				}
+
+				styles += '}';
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box.link-area-box-hover .fusion-content-box-button .fusion-button-text {';
+				styles += 'color: ' + fusionAllElements.fusion_button.defaults.button_accent_hover_color + ';';
+				styles += '}';
+
+				circleHoverAccentColor = values.hover_accent_color;
+
+				if ( 'transparent' === values.circlecolor || 0 === jQuery.Color( values.circlecolor ).alpha() || 'no' === values.icon_circle ) {
 					circleHoverAccentColor = 'transparent';
 				}
-				customCssVars.circle_hover_accent_color = circleHoverAccentColor;
 
-				// if 1 column and not margin bottom is set, then set margin-bottom to 40px.
-				if ( 1 === parseInt( values.columns ) && ! values.item_margin_bottom ) {
-					customCssVars.item_margin_bottom = '40px';
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover .heading .icon > span,';
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover .heading .icon i.circle-yes { background-color: ' + circleHoverAccentColor + ' !important;}';
+
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover .heading .icon > span,';
+				styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover .heading .icon i.circle-yes { border-color: ' + values.hover_accent_color + ' !important; }';
+
+				if ( 'pulsate' === values.icon_hover_type && '' !== values.hover_accent_color ) {
+
+					styles += '.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover.icon-hover-animation-pulsate .fontawesome-icon:after,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover.icon-hover-animation-pulsate .fontawesome-icon:after,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-link-icon-hover.icon-wrapper-hover-animation-pulsate .icon span:after,.fusion-content-boxes-cid' + cid + ' .fusion-content-box-hover .link-area-box-hover.icon-wrapper-hover-animation-pulsate .icon span:after {-webkit-box-shadow:0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' + values.hover_accent_color + ', 0 0 0 10px rgba(255,255,255,0.5);-moz-box-shadow:0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' + values.hover_accent_color + ', 0 0 0 10px rgba(255,255,255,0.5);box-shadow: 0 0 0 2px rgba(255,255,255,0.1), 0 0 10px 10px ' + values.hover_accent_color + ', 0 0 0 10px rgba(255,255,255,0.5);}';
 				}
 
-				// Box Shadow.
-				let boxShadow = '';
-				if ( 'transparent' !== values.backgroundcolor && 0 !== jQuery.AWB_Color( values.backgroundcolor ).alpha() && 'yes' === values.box_shadow ) {
-					boxShadow = _.awbGetBoxShadowCssVar( '--awb-box-shadow', this.values );
+				if ( 'clean-horizontal' === values.layout || 'clean-vertical' === values.layout ) {
+					styles += '.fusion-content-boxes-cid' + cid + '.fusion-columns-' + values.columns + ' .content-box-column:nth-of-type(' + values.columns + 'n) {border-right-width:1px;}';
 				}
 
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCssVars ) + boxShadow;
+				return styles;
 			},
 
 			/**

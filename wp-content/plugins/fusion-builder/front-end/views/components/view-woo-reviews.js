@@ -9,24 +9,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		// Woo Rating Component View.
 		FusionPageBuilder.fusion_tb_woo_reviews = FusionPageBuilder.ElementView.extend( {
 
-			onInit: function() {
-				var params = this.model.get( 'params' );
-
-				// Check for newer margin params.  If unset but regular is, copy from there.
-				if ( 'object' === typeof params ) {
-
-					// Split border width into 4.
-					if ( 'undefined' === typeof params.button_border_top && 'undefined' !== typeof params.button_border_width && '' !== params.button_border_width ) {
-						params.button_border_top    = parseInt( params.button_border_width ) + 'px';
-						params.button_border_right  = params.button_border_top;
-						params.button_border_bottom = params.button_border_top;
-						params.button_border_left   = params.button_border_top;
-						delete params.button_border_width;
-					}
-					this.model.set( 'params', params );
-				}
-			},
-
 			/**
 			 * Runs during render() call.
 			 *
@@ -61,6 +43,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -86,16 +69,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( 'no' == values.show_tab_title ) {
 					attr[ 'class' ] += ' woo-reviews-hide-heading';
 				}
-
-				if ( ! this.isDefault( 'button_size' ) ) {
-					attr[ 'class' ] += ' button-size-' + values.button_size;
-				}
-
-				if ( ! this.isDefault( 'button_stretch' ) ) {
-					attr[ 'class' ] += ' button-stretch';
-				}
-
-				attr.style += this.getStyleVariables( values );
 
 				if ( '' !== values.id ) {
 					attr.id = values.id;
@@ -141,63 +114,152 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var self = this,
+					textStyles = {},
+					css = '',
+					button,
+					button_hover,
+					button_size_map,
+					button_dimensions;
 
-				// Text typography.
-				jQuery.each( _.fusionGetFontStyle( 'text_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'text-' + rule ] = value;
+				this.baseSelector = '.fusion-woo-reviews-tb.fusion-woo-reviews-tb-' + this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				jQuery.each( [ 'top', 'right', 'bottom', 'left' ], function( index, side ) {
+					var marginName = 'margin_' + side;
+
+					// Element margin.
+					if ( '' !==  values[ marginName ] ) {
+						self.addCssProperty( self.baseSelector, 'margin-' + side,  _.fusionGetValueWithUnit( values[ marginName ] ) );
+					}
 				} );
 
-				if ( ( 'string' === typeof this.params.button_gradient_top && '' !==  this.params.button_gradient_top ) ||  ( 'string' === typeof this.params.button_gradient_bottom && '' !==  this.params.button_gradient_bottom ) ) {
-					customVars.button_gradient_top     = this.values.button_gradient_top;
-					customVars.button_background_image = 'linear-gradient( to top, ' +  this.values.button_gradient_bottom + ', ' +  this.values.button_gradient_top + ' )';
+				// Text styles.
+				if ( ! this.isDefault( 'text_color' ) ) {
+					this.addCssProperty( this.baseSelector, 'color',  this.values.text_color );
+					this.addCssProperty( '#wrapper ' + this.baseSelector + ' .meta', 'color',  this.values.text_color );
+					this.addCssProperty( [ this.baseSelector + ' .stars a', this.baseSelector + ' .stars a:after' ], 'color',  this.values.text_color );
 				}
 
-				if ( ( 'string' === typeof this.params.button_gradient_top_hover && '' !== this.params.button_gradient_top_hover ) ||  ( 'string' === typeof this.params.button_gradient_bottom_hover && '' !== this.params.button_gradient_bottom_hover ) ) {
-					customVars.button_gradient_top_hover     = this.values.button_gradient_top_hover;
-					customVars.button_background_image_hover = 'background-image', 'linear-gradient( to top, ' +  this.values.button_gradient_bottom_hover + ', ' +  this.values.button_gradient_top_hover + ' )';
+				if ( ! this.isDefault( 'text_font_size' ) ) {
+					this.addCssProperty( this.baseSelector, 'font-size',  _.fusionGetValueWithUnit( this.values.text_font_size ) );
 				}
 
-				if ( 'string' === typeof this.params.text_color && '' !== this.params.text_color ) {
-					customVars.stars_default_color = this.values.text_color;
+				// Text typography styles.
+				textStyles = _.fusionGetFontStyle( 'text_font', values, 'object' );
+				jQuery.each( textStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector, rule, value );
+				} );
+
+				// Border.
+				if ( ! this.isDefault( 'border_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' #reviews li .comment-text', 'border-width',  this.values.border_size + 'px' );
 				}
 
-				cssVarsOptions = [
-					'text_color',
-					'border_color',
-					'stars_color',
-					'rating_box_bg_color',
-					'rating_box_active_bg_color',
-					'button_color',
-					'button_border_color',
-					'button_color_hover',
-					'button_border_color_hover',
-					'text_line_height',
-					'text_text_transform'
-				];
+				if ( ! this.isDefault( 'border_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' #reviews li .comment-text', 'border-color',  this.values.border_color );
+				}
 
-				cssVarsOptions.margin_bottom        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_font_size       = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_letter_spacing  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_size          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_border_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_border_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_border_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.button_border_left   = { 'callback': _.fusionGetValueWithUnit };
+				// Stars color.
+				if ( ! this.isDefault( 'stars_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .comment-text .star-rating:before', 'color',  this.values.stars_color );
+					this.addCssProperty( this.baseSelector + ' .comment-text .star-rating span:before', 'color',  this.values.stars_color );
+				}
 
+				if ( ! this.isDefault( 'rating_box_bg_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .stars > span > a', 'background-color',  this.values.rating_box_bg_color );
+				}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				if ( ! this.isDefault( 'rating_box_active_bg_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .stars > span > a:hover', 'background-color',  this.values.rating_box_active_bg_color );
+					this.addCssProperty( this.baseSelector + ' .stars > span > a.active', 'background-color',  this.values.rating_box_active_bg_color );
+				}
+
+				if ( !this.isDefault( 'button_style' ) ) {
+					button = '.fusion-body ' +  this.baseSelector + ' #reviews input#submit.submit';
+					// Button size.
+					if (  !  this.isDefault( 'button_size' ) ) {
+					  button_size_map = {
+						  small: {
+							  padding: '9px 20px',
+							  line_height: '14px',
+							  font_size: '12px'
+						  },
+						  medium: {
+							  padding: '11px 23px',
+							  line_height: '16px',
+							  font_size: '13px'
+						  },
+						  large: {
+							  padding: '13px 29px',
+							  line_height: '17px',
+							  font_size: '14px'
+						  },
+						  xlarge: {
+							  padding: '17px 40px',
+							  line_height: '21px',
+							  font_size: '18px'
+						  }
+					  };
+
+					  if ( 'object' === typeof button_size_map[ this.values.button_size ] ) {
+						button_dimensions = button_size_map[ this.values.button_size ];
+						this.addCssProperty( button, 'padding', button_dimensions.padding );
+						this.addCssProperty( button, 'line-height', button_dimensions.line_height );
+						this.addCssProperty( button, 'font-size', button_dimensions.font_size );
+					  }
+
+					}
+
+					if (  !  this.isDefault( 'button_stretch' ) ) {
+					  this.addCssProperty( button, 'flex', '1' );
+					  this.addCssProperty( button, 'width', '100%' );
+					}
+
+					if (  !  this.isDefault( 'button_border_width' ) ) {
+					  this.addCssProperty( button, 'border-width', _.fusionGetValueWithUnit( this.values.button_border_width ) );
+					  this.addCssProperty( button, 'border-style', 'solid' );
+					}
+
+					if (  !  this.isDefault( 'button_color' ) ) {
+					  this.addCssProperty( button, 'color',  this.values.button_color );
+					}
+
+					if ( ( 'string' === typeof this.params.button_gradient_top && '' !==  this.params.button_gradient_top ) ||  ( 'string' === typeof this.params.button_gradient_bottom && '' !==  this.params.button_gradient_bottom ) ) {
+					  this.addCssProperty( button, 'background', this.values.button_gradient_top );
+					  this.addCssProperty( button, 'background-image', 'linear-gradient( to top, ' +  this.values.button_gradient_bottom + ', ' +  this.values.button_gradient_top + ' )' );
+					}
+
+					if (  !  this.isDefault( 'button_border_color' ) ) {
+					  this.addCssProperty( button, 'border-color',  this.values.button_border_color );
+					}
+
+					button_hover = button + ':hover';
+					// Button hover text color
+					if (  !  this.isDefault( 'button_color_hover' ) ) {
+					  this.addCssProperty( button_hover, 'color',  this.values.button_color_hover );
+					}
+
+					if ( ( 'string' === typeof this.params.button_gradient_top_hover && '' !== this.params.button_gradient_top_hover ) ||  ( 'string' === typeof this.params.button_gradient_bottom_hover && '' !== this.params.button_gradient_bottom_hover ) ) {
+					  this.addCssProperty( button_hover, 'background',  this.values.button_gradient_top_hover );
+					  this.addCssProperty( button_hover, 'background-image', 'linear-gradient( to top, ' +  this.values.button_gradient_bottom_hover + ', ' +  this.values.button_gradient_top_hover + ' )' );
+					}
+
+					if ( ! this.isDefault( 'button_border_color_hover' ) ) {
+					  this.addCssProperty( button_hover, 'border-color',  this.values.button_border_color_hover );
+					}
+				  }
+
+				css = this.parseCSS();
+
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

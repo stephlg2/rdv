@@ -8,12 +8,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 
 	/**
-	 * @package WordPress
-	 * @since   1.0.0
-	 * @uses    Walker
+	 * Custom walker that extends Walker_Nav_Menu to integrate Mega Menu features,
+	 * such as injecting widgets and custom classes into the menu output.
+	 *
+	 * @since   1.0
+	 * @package MegaMenu
 	 */
 	class Mega_Menu_Walker extends Walker_Nav_Menu {
 
+		/**
+		 * Stores the current menu item being processed.
+		 *
+		 * @var object|null
+		 */
 		private $currentItem;
 
 		/**
@@ -22,14 +29,15 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 		 * @see Walker::start_lvl()
 		 *
 		 * @since 1.0
-		 *
 		 * @param string $output Passed by reference. Used to append additional content.
 		 * @param int    $depth  Depth of menu item. Used for padding.
 		 * @param array  $args   An array of arguments. @see wp_nav_menu()
+		 * @return void
 		 */
-		function start_lvl( &$output, $depth = 0, $args = array() ) {
+		public function start_lvl( &$output, $depth = 0, $args = [] ) {
 			$style = "";
 			$role = "";
+			$id_attr = "";
 
 			if ( $this->currentItem !== null ) {
 				$id = $this->currentItem->ID;
@@ -41,46 +49,50 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 					}
 				}
 
-				if ( is_array( $classes ) && ( in_array( 'menu-row', $classes ) || in_array( 'menu-grid', $classes ) ) ) {
+				if ( is_array($classes) && array_intersect( ['menu-row', 'menu-grid'], $classes ) ) {
 					$role = " role='presentation'";
+				}
+
+				if ( is_array($classes) && ! array_intersect( ['menu-row', 'menu-column'], $classes ) ) {
+					$id_attr = " id='mega-sub-menu-{$id}'";
 				}
 			}
 			
 			$indent = str_repeat( "\t", $depth );
 
-			$output .= "\n$indent<ul class=\"mega-sub-menu\"{$style}{$role}>\n";
+			$output .= "\n$indent<ul class=\"mega-sub-menu\"{$style}{$role}{$id_attr}>\n";
 		}
 
 		/**
-		 * Ends the list of after the elements are added.
+		 * Ends the list after the elements are added.
 		 *
 		 * @see Walker::end_lvl()
 		 *
 		 * @since 1.0
-		 *
 		 * @param string $output Passed by reference. Used to append additional content.
 		 * @param int    $depth  Depth of menu item. Used for padding.
 		 * @param array  $args   An array of arguments. @see wp_nav_menu()
+		 * @return void
 		 */
-		function end_lvl( &$output, $depth = 0, $args = array() ) {
+		public function end_lvl( &$output, $depth = 0, $args = [] ) {
 			$indent  = str_repeat( "\t", $depth );
 			$output .= "$indent</ul>\n";
 		}
 
 		/**
-		 * Custom walker. Add the widgets into the menu.
+		 * Custom walker that adds widgets and Mega Menu classes into the menu output.
 		 *
 		 * @see Walker::start_el()
 		 *
 		 * @since 1.0
-		 *
 		 * @param string $output Passed by reference. Used to append additional content.
 		 * @param object $item   Menu item data object.
 		 * @param int    $depth  Depth of menu item. Used for padding.
 		 * @param array  $args   An array of arguments. @see wp_nav_menu()
 		 * @param int    $id     Current item ID.
+		 * @return void
 		 */
-		function start_el( &$output, $item, $depth = 0, $args = array(), $id = 0 ) {
+		public function start_el( &$output, $item, $depth = 0, $args = [], $id = 0 ) {
 
 			$this->currentItem = $item;
 
@@ -93,8 +105,8 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 			}
 
 			// Item Class
-			$classes = empty( $item->classes ) ? array() : (array) $item->classes;
-			$styles = empty( $item->styles ) ? array() : (array) $item->styles;
+			$classes = empty( $item->classes ) ? [] : (array) $item->classes;
+			$styles = empty( $item->styles ) ? [] : (array) $item->styles;
 
 			if ( is_array( $classes ) && ! in_array( 'menu-column', $classes ) && ! in_array( 'menu-row', $classes ) ) {
 				$classes[] = 'menu-item-' . $item->ID;
@@ -102,7 +114,7 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 
 			// remove style attribute from rows
 			if ( is_array( $classes ) && in_array( 'menu-row', $classes ) ) {
-				$styles = array();
+				$styles = [];
 			}
 
 			$class = join( ' ', apply_filters( 'megamenu_nav_menu_css_class', array_filter( $classes ), $item, $args ) );
@@ -123,11 +135,11 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 
 			$id = esc_attr( apply_filters( 'megamenu_nav_menu_item_id', $id, $item, $args ) );
 
-			$list_item_attributes = array(
+			$list_item_attributes = [
 				'class' => $class,
 				'style' => $style,
 				'id' => $id
-			);
+			];
 
 			$attributes = '';
 
@@ -148,35 +160,37 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 					$item_output = "<!-- widget is empty -->";
 				}
 
-			//} else if ( 'block' === $item->type ) {
-			//  /** This filter is documented in wp-includes/post-template.php */
-			//  $item_output = apply_filters( 'the_content', $item->content );
 			} else {
 
-				$atts = array();
+				$atts = [];
 
 				$atts['title']  = ! empty( $item->attr_title ) ? $item->attr_title : '';
 				$atts['target'] = ! empty( $item->target ) ? $item->target : '';
-				$atts['class']  = '';
+				$atts['class']  = [];
 				$atts['rel']    = ! empty( $item->xfn ) ? $item->xfn : '';
+				$atts['href']   = ! empty( $item->url ) ? $item->url : '';
 
-				if ( isset( $settings['disable_link'] ) && $settings['disable_link'] != 'true' ) {
-					$atts['href'] = ! empty( $item->url ) ? $item->url : '';
-				} else {
-					$atts['tabindex'] = 0;
+				if ( isset( $settings['disable_link'] ) && $settings['disable_link'] == 'true' ) {
+					unset( $atts['href'] );
+					$atts['tabindex'] = "0";
 				}
 
 				if ( isset( $settings['icon'] ) && $settings['icon'] != 'disabled' && $settings['icon'] != 'custom' ) {
-					$atts['class'] = $settings['icon'];
+					$atts['class'] = array_filter( explode( ' ', $settings['icon'] ) );
+					$atts          = apply_filters( 'megamenu_icon_link_atts', $atts, $settings['icon'] );
 				}
 
 				if ( isset( $settings['icon'] ) && $settings['icon'] == 'custom' ) {
-					$atts['class'] = 'mega-custom-icon';
+					$atts['class'] = [ 'mega-custom-icon' ];
 				}
 
-				if ( is_array( $classes ) && in_array( 'menu-item-has-children', $classes ) && $item->parent_submenu_type == 'flyout' ) {
+				// Convert class array to string before broader attribute filters and rendering.
+				$atts['class'] = implode( ' ', array_unique( array_values( array_filter( $atts['class'] ) ) ) );
+
+				if ( is_array( $classes ) && in_array( 'menu-item-has-children', $classes ) && ( $item->parent_submenu_type == 'flyout' || $item->parent_submenu_type == 'tabbed') ) {
 
 					$atts['aria-expanded'] = 'false';
+					$atts['aria-controls'] = 'mega-sub-menu-' . $item->ID;
 
 					if ( is_array( $mega_classes ) && in_array( 'mega-toggle-on', $mega_classes ) ) {
 						$atts['aria-expanded'] = 'true';
@@ -184,16 +198,11 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 
 					if ( isset( $settings['disable_link'] ) && $settings['disable_link'] == 'true' ) {
 						$atts['role'] = 'button';
-						//$atts['aria-controls'] = 'mega-sub-menu-' . $item->ID;
 					}
 				}
 
 				if ( is_array( $classes ) && in_array( 'current-menu-item', $classes ) ) {
 					$atts['aria-current'] = 'page';
-				}
-
-				if ( $depth == 0 ) {
-					$atts['tabindex'] = '0';
 				}
 
 				if ( isset( $settings['hide_text'] ) && $settings['hide_text'] == 'true' ) {
@@ -224,11 +233,9 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 					$item_output .= "<span class='mega-title-below'>";
 				}
 
-				if ( isset( $settings['hide_text'] ) && $settings['hide_text'] == 'true' ) {
-								/**
-				 * This filter is documented in wp-includes/post-template.php
-*/
-				} elseif ( property_exists( $item, 'mega_description' ) && strlen( $item->mega_description ) ) {
+			if ( isset( $settings['hide_text'] ) && $settings['hide_text'] == 'true' ) {
+				// Title is hidden; aria-label is set on the anchor instead.
+			} elseif ( property_exists( $item, 'mega_description' ) && strlen( $item->mega_description ) ) {
 					$item_output .= '<span class="mega-description-group"><span class="mega-menu-title">' . $args->link_before . apply_filters( 'megamenu_the_title', $item->title, $item->ID ) . $args->link_after . '</span><span class="mega-menu-description">' . $item->description . '</span></span>';
 				} else {
 					$item_output .= $args->link_before . apply_filters( 'megamenu_the_title', $item->title, $item->ID ) . $args->link_after;
@@ -242,7 +249,7 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 
 					$item_output .= '<span class="mega-indicator"';
 
-					$indicator_atts = array();
+					$indicator_atts = [];
 					$indicator_atts['aria-hidden'] = 'true';
 					$indicator_atts = apply_filters( 'megamenu_indicator_atts', $indicator_atts, $item, $args, $mega_classes );
 
@@ -252,7 +259,7 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 						}
 					}
 
-					$item_output .= "></span>";
+					$item_output .= '></span>';
 				}
 
 				$item_output .= '</a>';
@@ -273,13 +280,13 @@ if ( ! class_exists( 'Mega_Menu_Walker' ) ) :
 		 * @see Walker::end_el()
 		 *
 		 * @since 1.7
-		 *
 		 * @param string $output Passed by reference. Used to append additional content.
-		 * @param object $item   Page data object. Not used.
-		 * @param int    $depth  Depth of page. Not Used.
+		 * @param object $item   Menu item data object.
+		 * @param int    $depth  Depth of menu item. Not used.
 		 * @param array  $args   An array of arguments. @see wp_nav_menu()
+		 * @return void
 		 */
-		public function end_el( &$output, $item, $depth = 0, $args = array() ) {
+		public function end_el( &$output, $item, $depth = 0, $args = [] ) {
 			$output .= '</li>'; // remove new line to remove the 4px gap between menu items
 		}
 	}

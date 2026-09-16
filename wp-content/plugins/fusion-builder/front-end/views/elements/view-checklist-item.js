@@ -1,4 +1,4 @@
-/* global fusionAllElements, FusionPageBuilderElements, FusionPageBuilderViewManager */
+/* global fusionAllElements, FusionPageBuilderElements */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -7,20 +7,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 		// Toggle child View
 		FusionPageBuilder.fusion_li_item = FusionPageBuilder.ChildElementView.extend( {
-
-			/**
-			 * Runs after view DOM is patched.
-			 *
-			 * @since 3.9
-			 * @return {void}
-			 */
-			afterPatch: function() {
-				var parentView = FusionPageBuilderViewManager.getView( this.model.get( 'parent' ) );
-
-				if ( 'undefined' !== typeof parentView ) {
-					parentView.updateList();
-				}
-			},
 
 			/**
 			 * Modify template attributes.
@@ -44,29 +30,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.checklistShortcodeSpan        = this.buildChecklistShortcodeSpanAttr( atts.values );
 				attributes.checklistShortcodeIcon        = this.buildChecklistShortcodeIconAttr( atts.values );
 				attributes.checklistShortcodeItemContent = this.buildChecklistShortcodeItemContentAttr( atts.values );
-				this.$el.attr( 'style', this.getChildCssVars( atts.values ) );
 
 				// Any extras that need passed on.
-				attributes.cid          = this.model.get( 'cid' );
-				attributes.parent       = parent;
-				attributes.parentValues = this.parentValues;
-				attributes.output       = atts.values.element_content;
-				attributes.counter      = this.model.get( 'counter' );
-
-				attributes.usingDynamicParent = this.isParentHasDynamicContent( this.parentValues );
+				attributes.cid    = this.model.get( 'cid' );
+				attributes.parent = parent;
+				attributes.output = atts.values.element_content;
 
 				return attributes;
-			},
-
-			getChildCssVars: function( values ) {
-				var cssVarsOptions = [
-					'circlecolor',
-					'iconcolor'
-				];
-
-				this.values = values;
-
-				return this.getCssVarsForOptions( cssVarsOptions );
 			},
 
 			/**
@@ -80,15 +50,28 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var checklistShortcodeSpan = {
 						style: ''
 					},
-					circleClass = 'circle-no';
+					circleClass = 'circle-no',
+					circlecolor;
 
 				this.parentValues.circle = ( 1 == this.parentValues.circle ) ? 'yes' : this.parentValues.circle;
 
 				if ( 'yes' === values.circle || ( 'yes' === this.parentValues.circle && 'no' !== values.circle ) ) {
 					circleClass = 'circle-yes';
+
+					if ( ! values.circlecolor || '' === values.circlecolor ) {
+						circlecolor = this.parentValues.circlecolor;
+					} else {
+						circlecolor = values.circlecolor;
+					}
+					checklistShortcodeSpan.style = 'background-color:' + circlecolor + ';';
+					checklistShortcodeSpan.style += 'font-size:' + this.parentExtras.circle_yes_font_size + 'px;';
 				}
 
 				checklistShortcodeSpan[ 'class' ] = 'icon-wrapper ' + circleClass;
+
+				checklistShortcodeSpan.style += 'height:' + this.parentExtras.line_height + 'px;';
+				checklistShortcodeSpan.style += 'width:' + this.parentExtras.line_height + 'px;';
+				checklistShortcodeSpan.style += 'margin-' + this.parentExtras.icon_margin_position + ':' + this.parentExtras.icon_margin + 'px;';
 
 				return checklistShortcodeSpan;
 			},
@@ -102,7 +85,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildChecklistShortcodeIconAttr: function( values ) {
 				var checklistShortcodeIcon = {},
-					icon;
+					icon,
+					iconcolor;
 
 				if ( ! values.icon || '' === values.icon ) {
 					icon = _.fusionFontAwesome( this.parentValues.icon );
@@ -110,8 +94,15 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					icon = _.fusionFontAwesome( values.icon );
 				}
 
+				if ( ! values.iconcolor || '' === values.iconcolor ) {
+					iconcolor = this.parentValues.iconcolor;
+				} else {
+					iconcolor = values.iconcolor;
+				}
+
 				checklistShortcodeIcon = {
 					class: 'fusion-li-icon ' + icon,
+					style: 'color:' + iconcolor + ';',
 					'aria-hidden': 'true'
 				};
 
@@ -127,7 +118,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildChecklistShortcodeItemContentAttr: function() {
 				var checklistShortcodeItemContent = {
 					class: 'fusion-li-item-content',
-					style: ''
+					style: 'margin-' + this.parentExtras.content_margin_position + ':' + this.parentExtras.content_margin + 'px;'
 				};
 
 				checklistShortcodeItemContent = _.fusionInlineEditor( {

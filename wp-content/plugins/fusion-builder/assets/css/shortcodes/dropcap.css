@@ -1,7 +1,6 @@
 /* stylelint-disable length-zero-no-unit */
 /* stylelint-enable length-zero-no-unit */
 .fusion-body .fusion-dropcap {
-  --awb-color: var(--dropcap_color);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -12,21 +11,18 @@
   padding: 0;
   height: 52px;
   line-height: 52px;
-  color: var(--awb-color);
+  color: var(--dropcap_color);
   font-size: 60px;
   text-transform: uppercase;
 }
 .fusion-body .fusion-dropcap.dropcap-boxed {
-  --awb-color: var(--dropcap_text_color, #fff);
-  --awb-background: var(--dropcap_color);
-  --awb-border-radius: 8px;
   height: 51px;
   width: 51px;
   line-height: 51px;
-  border-radius: var(--awb-border-radius);
+  border-radius: 8px;
   background-clip: padding-box;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-  color: var(--awb-color);
+  color: var(--dropcap_text_color, #fff);
   font-size: 45px;
-  background-color: var(--awb-background);
+  background-color: var(--dropcap_color);
 }

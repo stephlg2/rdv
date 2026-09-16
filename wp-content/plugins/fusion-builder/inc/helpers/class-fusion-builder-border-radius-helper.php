@@ -39,7 +39,7 @@ class Fusion_Builder_Border_Radius_Helper {
 	 */
 	public static function get_params( $args ) {
 
-		$params = [
+		return [
 			[
 				'type'             => 'dimension',
 				'remove_from_atts' => true,
@@ -55,18 +55,6 @@ class Fusion_Builder_Border_Radius_Helper {
 				],
 			],
 		];
-
-		// Override params.
-		foreach ( $args as $key => $value ) {
-			if ( 'fusion_remove_param' === $value && isset( $params[0][ $key ] ) ) {
-				unset( $params[0][ $key ] );
-				continue;
-			}
-
-			$params[0][ $key ] = $value;
-		}
-
-		return $params;
 	}
 
 	/**
@@ -84,30 +72,5 @@ class Fusion_Builder_Border_Radius_Helper {
 			'bottom_right' => isset( $border_radius['bottom_right'] ) ? fusion_library()->sanitize->get_value_with_unit( $border_radius['bottom_right'] ) : '0px',
 			'bottom_left'  => isset( $border_radius['bottom_left'] ) ? fusion_library()->sanitize->get_value_with_unit( $border_radius['bottom_left'] ) : '0px',
 		];
-	}
-
-	/**
-	 * Generates border radius CSS vars properties.
-	 *
-	 * @since 3.11
-	 * @param array $args Element arguments.
-	 * @return string
-	 */
-	public static function get_border_radius_vars( $args ) {
-		$style               = '';
-		$border_radius_edges = [
-			'border_radius_top_left'     => 'border-top-left-radius',
-			'border_radius_top_right'    => 'border-top-right-radius',
-			'border_radius_bottom_right' => 'border-bottom-left-radius',
-			'border_radius_bottom_left'  => 'border-bottom-right-radius',
-		];
-
-		foreach ( $border_radius_edges as $key => $value ) {
-			if ( isset( $args[ $key ] ) && $args[ $key ] ) {
-				$style .= '--awb-' . $value . ':' . fusion_library()->sanitize->get_value_with_unit( $args[ $key ] ) . ';';
-			}
-		}
-
-		return $style;
 	}
 }

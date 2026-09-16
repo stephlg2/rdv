@@ -61,9 +61,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			filterTemplateAtts: function( atts ) {
 
-				// Validate values.
-				this.validateValues( atts.values );
-
 				atts.attr   = this.buildAttr( atts.values );
 				atts.slider = '';
 
@@ -78,16 +75,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return atts;
 			},
 
-			validateValues: function( values ) {
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
-
-			},
-
 			buildAttr: function( values ) {
 				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-fusionslider-placeholder',
-					style: ''
+					class: 'fusion-fusionslider-placeholder'
 				} );
 
 				attr[ 'class' ] += ' fusion-slider-' + values.name;
@@ -98,14 +88,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				attr[ 'data-full_height' ]	= 'yes' === values.full_height ? 1 : 0;
 				attr[ 'data-offset' ] 		= values.offset;
-
-				if ( '' !== values.margin_top ) {
-					attr.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
 
 				if ( '' !== values.id ) {
 					attr.id = values.id;

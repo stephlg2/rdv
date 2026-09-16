@@ -21,7 +21,7 @@
 		} );
 #>
 <div class="fusion-form-form-options fusion-option-{{ fieldId }}">
-	<a href="#" class="fusion-builder-add-sortable-child"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{ fusionBuilderText.add_new_option }}</span></a>
+	<a href="#" class="fusion-builder-add-sortable-child"><span class="fusiona-plus"></span> {{ fusionBuilderText.add_new_option }}</a>
 	<div class="options-grid {{valuesEnabled ? 'show-values' : '' }}" data-multiple="{{ allowMultiple }}">
 		<ul class="fusion-form-options">
 			<label class="header-label">{{ fusionBuilderText.option_label }}</label>

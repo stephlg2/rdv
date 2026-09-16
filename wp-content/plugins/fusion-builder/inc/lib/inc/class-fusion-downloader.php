@@ -134,8 +134,11 @@ class Fusion_Downloader {
 		if ( is_wp_error( $response ) ) {
 			return;
 		}
-
-		return wp_remote_retrieve_body( $response );
+		$html = wp_remote_retrieve_body( $response );
+		if ( is_wp_error( $html ) ) {
+			return;
+		}
+		return $html;
 	}
 
 	/**

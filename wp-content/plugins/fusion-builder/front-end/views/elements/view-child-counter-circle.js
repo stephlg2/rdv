@@ -79,8 +79,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			computeAtts: function( values ) {
-				var customVars                    = {},
-					scales                        = '',
+				var scales                        = '',
 					countdown                     = '',
 					counterCircleWrapperShortcode = '',
 					counterCircleShortcode        = {
@@ -114,59 +113,27 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				strokeSize    = 11 * multiplicator;
 				fontSize      = 50 * multiplicator;
 
-				counterCircleShortcode[ 'data-percent' ]       = this.sanitizePercentage( values.value );
+				counterCircleShortcode[ 'data-percent' ]       = values.value;
 				counterCircleShortcode[ 'data-countdown' ]     = countdown;
-				counterCircleShortcode[ 'data-filledcolor' ]   = jQuery.AWB_Color( values.filledcolor ).toRgbaString();
-				counterCircleShortcode[ 'data-unfilledcolor' ] = jQuery.AWB_Color( values.unfilledcolor ).toRgbaString();
+				counterCircleShortcode[ 'data-filledcolor' ]   = values.filledcolor;
+				counterCircleShortcode[ 'data-unfilledcolor' ] = values.unfilledcolor;
 				counterCircleShortcode[ 'data-scale' ]         = scales;
 				counterCircleShortcode[ 'data-size' ]          = values.size.toString();
 				counterCircleShortcode[ 'data-speed' ]         = values.speed.toString();
 				counterCircleShortcode[ 'data-strokesize' ]    = strokeSize.toString();
 
-				customVars = {
-					'font-size': fontSize +  'px',
-					'size': values.size + 'px'
-				};
+				counterCircleShortcode.style = 'font-size:' + fontSize + 'px;height:' + values.size + 'px;width:' + values.size + 'px;';
 
 				// counterCircleWrapperShortcode Attributes.
 				counterCircleWrapperShortcode = {
 					class: 'counter-circle-wrapper',
-					style: this.getCustomCssVars( customVars )
+					style: 'height:' + values.size + 'px;width:' + values.size + 'px;'
 				};
 
 				counterCircleWrapperShortcode[ 'data-originalsize' ] = values.size.toString();
-				console.log( 'Rendered', counterCircleWrapperShortcode );
+
 				this.model.set( 'selectors', counterCircleWrapperShortcode );
 				this.model.set( 'childSelectors', counterCircleShortcode );
-			},
-
-			/**
-			 * Sanitize the percentage value, because this can come also from a
-			 * dynamic data which can be a string or a float.
-			 *
-			 * @since 3.6
-			 * @param {Object} values - The values object.
-			 * @return {Object}
-			 */
-			sanitizePercentage: function( percentage ) {
-				percentage = parseFloat( percentage );
-
-				// percentage can be NaN if parseFloat failed.
-				if ( ! percentage ) {
-					percentage = 0;
-				}
-
-				percentage = Math.round( percentage );
-
-				if ( 0 > percentage ) {
-					percentage = 0;
-				}
-
-				if ( 100 < percentage ) {
-					percentage = 100;
-				}
-
-				return percentage;
 			}
 
 		} );

@@ -32,48 +32,6 @@
 		class FusionReduxFramework_import_export extends FusionReduxFramework {
 
 			/**
-			 * Field options.
-			 *
-			 * @var array
-			 */
-			public $field = [];
-
-			/**
-			 * The parent.
-			 *
-			 * @var mixed
-			 */
-			public $parent;
-
-			/**
-			 * The value.
-			 *
-			 * @var array|string
-			 */
-			public $value = '';
-
-			/**
-			 * Is field value.
-			 *
-			 * @var bool
-			 */
-			public $is_field = '';
-
-			/**
-			 * Is field value.
-			 *
-			 * @var string
-			 */
-			public $extension_dir = '';
-
-			/**
-			 * Is field value.
-			 *
-			 * @var string
-			 */
-			public $extension_url = '';
-
-			/**
 			 * Field Constructor.
 			 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
 			 *

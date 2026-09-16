@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 			private $element_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Shortcode name.
 			 *
 			 * @access public
@@ -60,7 +69,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'hide_on_mobile'          => fusion_builder_default_visibility( 'string' ),
 					'class'                   => '',
@@ -88,7 +97,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'box_design'        => $fusion_settings->get( 'woocommerce_product_box_design', false, 'classic' ),
 					'load_more_text'    => apply_filters( 'avada_load_more_products_name', esc_attr__( 'Load More Products', 'fusion-builder' ) ),
@@ -152,6 +161,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 
 				$html  = '<div ' . FusionBuilder::attributes( $this->shortcode_name . '-shortcode' ) . '>';
 				$html .= $this->get_sorting_elements();
+				$html .= $this->get_styles();
 				$html .= '</div>';
 
 				$this->element_counter++;
@@ -297,9 +307,9 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 								<ul class="order">
 									<?php if ( isset( $po ) ) : ?>
 										<?php if ( 'desc' === $po ) : ?>
-											<li class="desc"><a aria-label="<?php esc_attr_e( 'Ascending order', 'fusion-builder' ); ?>" aria-haspopup="true" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_order', 'asc' ) ); ?>"><i class="awb-icon-arrow-down2 icomoon-up" aria-hidden="true"></i></a></li>
+											<li class="desc"><a aria-label="<?php esc_attr_e( 'Ascending order', 'fusion-builder' ); ?>" aria-haspopup="true" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_order', 'asc' ) ); ?>"><i class="fusion-icon-arrow-down2 icomoon-up" aria-hidden="true"></i></a></li>
 										<?php else : ?>
-											<li class="asc"><a aria-label="<?php esc_attr_e( 'Descending order', 'fusion-builder' ); ?>" aria-haspopup="true" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_order', 'desc' ) ); ?>"><i class="awb-icon-arrow-down2" aria-hidden="true"></i></a></li>
+											<li class="asc"><a aria-label="<?php esc_attr_e( 'Descending order', 'fusion-builder' ); ?>" aria-haspopup="true" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_order', 'desc' ) ); ?>"><i class="fusion-icon-arrow-down2" aria-hidden="true"></i></a></li>
 										<?php endif; ?>
 									<?php endif; ?>
 								</ul>
@@ -367,21 +377,20 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 							$content .= ob_get_clean();
 							break;
 						case 'view':
-							$fusion_settings = awb_get_fusion_settings();
-							$product_view    = 'grid';
+							$product_view = 'grid';
 							if ( isset( $_SERVER['QUERY_STRING'] ) ) {
 								parse_str( sanitize_text_field( wp_unslash( $_SERVER['QUERY_STRING'] ) ), $params );
-								$product_view = ( isset( $params['product_view'] ) ) ? $params['product_view'] : $fusion_settings->get( 'woocommerce_product_view' );
+								$product_view = ( isset( $params['product_view'] ) ) ? $params['product_view'] : Avada()->settings->get( 'woocommerce_product_view' );
 							}
 							ob_start();
 							?>
 
 							<ul class="fusion-grid-list-view">
 								<li class="fusion-grid-view-li<?php echo ( 'grid' === $product_view ) ? ' active-view' : ''; ?>">
-									<a class="fusion-grid-view" aria-label="<?php esc_attr_e( 'View as grid', 'fusion-builder' ); ?>" aria-haspopup="true" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_view', 'grid' ) ); ?>"><i class="awb-icon-grid icomoon-grid" aria-hidden="true"></i></a>
+									<a class="fusion-grid-view" aria-label="<?php esc_attr_e( 'View as grid', 'fusion-builder' ); ?>" aria-haspopup="true" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_view', 'grid' ) ); ?>"><i class="fusion-icon-grid icomoon-grid" aria-hidden="true"></i></a>
 								</li>
 								<li class="fusion-list-view-li<?php echo ( 'list' === $product_view ) ? ' active-view' : ''; ?>">
-									<a class="fusion-list-view" aria-haspopup="true" aria-label="<?php esc_attr_e( 'View as list', 'fusion-builder' ); ?>" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_view', 'list' ) ); ?>"><i class="awb-icon-list icomoon-list" aria-hidden="true"></i></a>
+									<a class="fusion-list-view" aria-haspopup="true" aria-label="<?php esc_attr_e( 'View as list', 'fusion-builder' ); ?>" href="<?php echo esc_url_raw( fusion_add_url_parameter( $query_string, 'product_view', 'list' ) ); ?>"><i class="fusion-icon-list icomoon-list" aria-hidden="true"></i></a>
 								</li>
 							</ul>
 
@@ -419,15 +428,12 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 					$this->args['hide_on_mobile'],
 					[
 						'class' => 'catalog-ordering fusion-woo-sorting fusion-woo-sorting-' . $this->element_counter,
-						'style' => '',
 					]
 				);
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['id'] ) {
 					$attr['id'] = $this->args['id'];
@@ -449,30 +455,6 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 				if ( null === $this->args || empty( $this->args ) ) {
 					return;
 				}
-
-				if ( class_exists( 'Avada' ) && class_exists( 'WooCommerce' ) ) {
-					global $avada_woocommerce;
-
-					$js_folder_suffix = FUSION_BUILDER_DEV_MODE ? '/assets/js' : '/assets/min/js';
-					$js_folder_url    = Avada::$template_dir_url . $js_folder_suffix;
-					$js_folder_path   = Avada::$template_dir_path . $js_folder_suffix;
-					$version          = Avada::get_theme_version();
-
-					Fusion_Dynamic_JS::enqueue_script(
-						'avada-woo-products',
-						$js_folder_url . '/general/avada-woo-products.js',
-						$js_folder_path . '/general/avada-woo-products.js',
-						[ 'jquery', 'fusion-flexslider' ],
-						$version,
-						true
-					);
-
-					Fusion_Dynamic_JS::localize_script(
-						'avada-woo-products',
-						'avadaWooCommerceVars',
-						$avada_woocommerce::get_avada_wc_vars()
-					);
-				}
 			}
 
 			/**
@@ -486,34 +468,104 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 				if ( class_exists( 'Avada' ) ) {
 					Fusion_Dynamic_CSS::enqueue_style( Avada::$template_dir_path . '/assets/css/dynamic/woocommerce/woo-sorting.min.css', Avada::$template_dir_url . '/assets/css/dynamic/woocommerce/woo-sorting.min.css' );
 				}
-
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/shortcodes/woo-sorting.min.css' );
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.3
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				global $fusion_settings;
 
-				$css_vars_options = [
-					'dropdown_bg_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'dropdown_hover_bg_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'dropdown_text_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'dropdown_border_color'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'margin_top'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
+				$this->base_selector = '.fusion-woo-sorting.fusion-woo-sorting-' . $this->element_counter;
+				$this->dynamic_css   = [];
+
+				$selectors = [
+					$this->base_selector,
 				];
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options );
+				// Fix z-index issue.
+				$this->add_css_property( $selectors, 'z-index', '100' );
+				$this->add_css_property( $selectors, 'position', 'relative' );
 
-				return $styles;
+				// Margin styles.
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $selectors, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] ) );
+				}
+				if ( ! $this->is_default( 'margin_right' ) ) {
+					$this->add_css_property( $selectors, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_right'] ) );
+				}
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $selectors, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] ) );
+				} else {
+					$this->add_css_property( $selectors, 'margin-bottom', '0px' );
+				}
+				if ( ! $this->is_default( 'margin_left' ) ) {
+					$this->add_css_property( $selectors, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_left'] ) );
+				}
+
+				$selectors = [
+					$this->base_selector . ' .order-dropdown .current-li',
+					$this->base_selector . ' .order-dropdown ul li a:not(:hover)',
+					$this->base_selector . '.catalog-ordering .order li a:not(:hover)',
+					$this->base_selector . ' .fusion-grid-list-view li:not(.active-view):not(:hover)',
+				];
+
+				// Dropdown bg color.
+				if ( ! $this->is_default( 'dropdown_bg_color' ) ) {
+					$this->add_css_property( $selectors, 'background-color', fusion_library()->sanitize->color( $this->args['dropdown_bg_color'] ) );
+				}
+
+				$selectors = [
+					$this->base_selector . ' .order-dropdown ul li a:hover',
+					$this->base_selector . '.catalog-ordering .order li a:hover',
+					$this->base_selector . ' .fusion-grid-list-view li:hover',
+					$this->base_selector . ' .fusion-grid-list-view li.active-view',
+				];
+
+				// Dropdown hover / active bg color.
+				if ( ! $this->is_default( 'dropdown_hover_bg_color' ) ) {
+					$this->add_css_property( $selectors, 'background-color', fusion_library()->sanitize->color( $this->args['dropdown_hover_bg_color'] ) );
+				}
+
+				$selectors = [
+					$this->base_selector . ' .order-dropdown',
+					$this->base_selector . ' .order-dropdown a',
+					$this->base_selector . ' .order-dropdown ul li a',
+					$this->base_selector . ' .order-dropdown a:hover',
+					$this->base_selector . ' .order-dropdown > li:after',
+					$this->base_selector . ' .order-dropdown ul li a:hover',
+					$this->base_selector . '.catalog-ordering .order li a',
+					$this->base_selector . ' .fusion-grid-list-view a',
+					$this->base_selector . ' .fusion-grid-list-view li:hover',
+					$this->base_selector . ' .fusion-grid-list-view li.active-view a i',
+				];
+
+				// Dropdown text color.
+				if ( ! $this->is_default( 'dropdown_text_color' ) ) {
+					$this->add_css_property( $selectors, 'color', fusion_library()->sanitize->color( $this->args['dropdown_text_color'] ) );
+				}
+
+				$selectors = [
+					$this->base_selector . ' .order-dropdown > li:after',
+					$this->base_selector . ' .order-dropdown .current-li',
+					$this->base_selector . ' .order-dropdown ul li a',
+					$this->base_selector . '.catalog-ordering .order li a',
+					$this->base_selector . ' .fusion-grid-list-view',
+					$this->base_selector . ' .fusion-grid-list-view li',
+				];
+
+				// Dropdown border color.
+				if ( ! $this->is_default( 'dropdown_border_color' ) ) {
+					$this->add_css_property( $selectors, 'border-color', fusion_library()->sanitize->color( $this->args['dropdown_border_color'] ) );
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 		}
 	}
@@ -528,7 +580,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_sorting' ) && class_exists( 'WooComm
 function fusion_element_woo_sorting() {
 	if ( class_exists( 'WooCommerce' ) ) {
 
-		$fusion_settings   = awb_get_fusion_settings();
+		global $fusion_settings;
 		$lookup_table_link = admin_url( 'admin.php?page=wc-status&tab=tools' );
 
 		fusion_builder_map(
@@ -538,7 +590,7 @@ function fusion_element_woo_sorting() {
 					'name'      => esc_attr__( 'Woo Sorting', 'fusion-builder' ),
 					'shortcode' => 'fusion_woo_sorting',
 					'icon'      => 'fusiona-sorting-boxes',
-					'help_url'  => 'https://avada.com/documentation/woo-sorting-element/',
+					'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/woocommerce-product-carousel-element/',
 					'params'    => [
 						[
 							'type'        => 'multiple_select',
@@ -553,7 +605,7 @@ function fusion_element_woo_sorting() {
 							'default'     => 'name,price,date,popularity,rating',
 							'heading'     => esc_html__( 'Sorting Options', 'fusion-builder' ),
 							/* translators: WooCommerce lookup table link. */
-							'description' => sprintf( __( 'Select sorting options that you want to be displayed in the sorting list box. <strong>NOTE:</strong> If Order by Price is not working, please regenerate the Product Lookup Tables <a href="%s" target="_blank">here</a>.', 'fusion-builder' ), $lookup_table_link ),
+							'description' => sprintf( __( 'Select sorting options that you want to be displayed in the sorting list box. NOTE: If Order by Price is not working, please regenerate the Product Lookup Tables <a href="%s" target="_blank">here</a>.', 'fusion-builder' ), $lookup_table_link ),
 							'callback'    => [
 								'function' => 'fusion_ajax',
 								'action'   => 'get_fusion_woo_sorting',
@@ -585,8 +637,8 @@ function fusion_element_woo_sorting() {
 							'min'         => '0',
 							'max'         => '50',
 							'step'        => '1',
-							'value'       => '',
-							'default'     => $fusion_settings->get( 'woo_items' ),
+							'value'       => $fusion_settings->get( 'woo_items' ),
+							'default'     => '',
 							'callback'    => [
 								'function' => 'fusion_ajax',
 								'action'   => 'get_fusion_woo_sorting',
@@ -615,13 +667,15 @@ function fusion_element_woo_sorting() {
 							'value'       => '',
 							'default'     => $fusion_settings->get( 'woo_dropdown_bg_color' ),
 							'group'       => esc_html__( 'Design', 'fusion-builder' ),
-							'states'      => [
-								'hover' => [
-									'label'      => __( 'Hover / Active', 'fusion-builder' ),
-									'param_name' => 'dropdown_hover_bg_color',
-									'default'    => $fusion_settings->get( 'woo_dropdown_bg_color' ),
-								],
-							],
+						],
+						[
+							'type'        => 'colorpickeralpha',
+							'heading'     => esc_attr__( 'Dropdown Hover / Active Background Color', 'fusion-builder' ),
+							'description' => esc_attr__( 'Controls the background color for the dropdowns hover / active states.', 'fusion-builder' ),
+							'param_name'  => 'dropdown_hover_bg_color',
+							'value'       => '',
+							'default'     => $fusion_settings->get( 'woo_dropdown_bg_color' ),
+							'group'       => esc_html__( 'Design', 'fusion-builder' ),
 						],
 						[
 							'type'        => 'colorpickeralpha',
@@ -674,4 +728,4 @@ function fusion_element_woo_sorting() {
 		);
 	}
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_woo_sorting' );
+add_action( 'wp_loaded', 'fusion_element_woo_sorting' );

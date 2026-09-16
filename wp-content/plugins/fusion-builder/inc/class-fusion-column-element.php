@@ -34,6 +34,15 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		private $column_counter = 0;
 
 		/**
+		 * An array of the shortcode arguments.
+		 *
+		 * @access public
+		 * @since 1.0
+		 * @var array
+		 */
+		public $args;
+
+		/**
 		 * An array of the shortcode attributes, before merging with defaults.
 		 *
 		 * @access public
@@ -97,41 +106,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		private $rendering = false;
 
 		/**
-		 * Shortcode attribute ID.
-		 *
-		 * @var string
-		 */
-		public $shortcode_attr_id = '';
-
-		/**
-		 * Shortcode CSS class name.
-		 *
-		 * @var string
-		 */
-		public $shortcode_classname = '';
-
-		/**
-		 * Shortcode name.
-		 *
-		 * @var string
-		 */
-		public $shortcode_name = '';
-
-		/**
-		 * The filter-name we want to apply using apply_filters.
-		 *
-		 * @var string
-		 */
-		public $content_filter = '';
-
-		/**
-		 * Whether or not column is nested.
-		 *
-		 * @var bool
-		 */
-		public $is_nested = false;
-
-		/**
 		 * Constructor.
 		 *
 		 * @access public
@@ -153,11 +127,31 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 
 			add_filter( "fusion_attr_{$this->shortcode_attr_id}", [ $this, 'attr' ] );
 			add_filter( "fusion_attr_{$this->shortcode_attr_id}-wrapper", [ $this, 'wrapper_attr' ] );
+			add_filter( "fusion_attr_{$this->shortcode_attr_id}-ie-extra", [ $this, 'ie_div_attr' ] );
+			add_filter( "fusion_attr_{$this->shortcode_attr_id}-ie-span-extra", [ $this, 'ie_span_attr' ] );
 			add_filter( "fusion_attr_{$this->shortcode_attr_id}-anchor", [ $this, 'anchor_attr' ] );
 			add_filter( "fusion_attr_{$this->shortcode_attr_id}-hover-wrapper", [ $this, 'hover_wrapper_attr' ] );
 			add_filter( "fusion_attr_{$this->shortcode_attr_id}-hover-inner-wrapper", [ $this, 'hover_inner_wrapper_attr' ] );
-			add_filter( "fusion_attr_{$this->shortcode_attr_id}-empty-col-bg-img", [ $this, 'empty_col_bg_img_attr' ] );
 		}
+
+		/**
+		 * Creates or returns an instance of this class.
+		 *
+		 * @static
+		 * @access public
+		 * @since 2.2
+		 * @return array An array of classes, one for parent columns, one for child columns.
+		 */
+		final public static function get_instance() {
+			$called_class = get_called_class();
+
+			if ( ! isset( self::$instances[ $called_class ] ) ) {
+				self::$instances[ $called_class ] = new $called_class();
+			}
+
+			return self::$instances[ $called_class ];
+		}
+
 
 		/**
 		 * Resets previous spacing.
@@ -179,209 +173,128 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return array
 		 */
 		public static function get_element_defaults() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 			return [
-				'hide_on_mobile'                     => fusion_builder_default_visibility( 'string' ),
-				'sticky_display'                     => '',
-				'class'                              => '',
-				'id'                                 => '',
-				'background_color'                   => '',
-				'background_color_medium'            => '',
-				'background_color_small'             => '',
-				'background_color_hover'             => '',
-				'background_color_medium_hover'      => '',
-				'background_color_small_hover'       => '',
-				'gradient_start_color'               => '',
-				'gradient_end_color'                 => '',
-				'gradient_start_position'            => '0',
-				'gradient_end_position'              => '100',
-				'gradient_type'                      => 'linear',
-				'radial_direction'                   => 'center',
-				'linear_angle'                       => '180',
-				'background_image'                   => '',
-				'background_image_id'                => '',
-				'background_image_medium'            => '',
-				'background_image_id_medium'         => '',
-				'background_image_small'             => '',
-				'background_image_id_small'          => '',
-				'background_position'                => 'left top',
-				'background_position_medium'         => '',
-				'background_position_small'          => '',
-				'background_repeat'                  => 'no-repeat',
-				'background_repeat_medium'           => '',
-				'background_repeat_small'            => '',
-				'background_size'                    => '',
-				'background_size_medium'             => '',
-				'background_size_small'              => '',
-				'background_custom_size'             => '',
-				'background_custom_size_medium'      => '',
-				'background_custom_size_small'       => '',
-				'background_blend_mode'              => 'none',
-				'background_blend_mode_medium'       => '',
-				'background_blend_mode_small'        => '',
-				'border_color'                       => '',
-				'border_color_hover'                 => '',
-				'border_position'                    => 'all',
-				'border_radius_bottom_left'          => '',
-				'border_radius_bottom_right'         => '',
-				'border_radius_top_left'             => '',
-				'border_radius_top_right'            => '',
-				'border_size'                        => '', // Backwards-compatibility.
-				'border_sizes_top'                   => '',
-				'border_sizes_bottom'                => '',
-				'border_sizes_left'                  => '',
-				'border_sizes_right'                 => '',
-				'border_style'                       => '',
-				'box_shadow'                         => '',
-				'box_shadow_blur'                    => '',
-				'box_shadow_color'                   => '',
-				'box_shadow_horizontal'              => '',
-				'box_shadow_spread'                  => '',
-				'box_shadow_style'                   => '',
-				'box_shadow_vertical'                => '',
-				'overflow'                           => '',
-				'column_tag'                         => 'div',
-				'z_index'                            => '',
-				'z_index_hover'                      => '',
-
-				'link_attributes'                    => '',
+				'hide_on_mobile'             => fusion_builder_default_visibility( 'string' ),
+				'sticky_display'             => '',
+				'class'                      => '',
+				'id'                         => '',
+				'background_color'           => '',
+				'gradient_start_color'       => '',
+				'gradient_end_color'         => '',
+				'gradient_start_position'    => '0',
+				'gradient_end_position'      => '100',
+				'gradient_type'              => 'linear',
+				'radial_direction'           => 'center',
+				'linear_angle'               => '180',
+				'background_image'           => '',
+				'background_image_id'        => '',
+				'background_position'        => 'left top',
+				'background_repeat'          => 'no-repeat',
+				'background_blend_mode'      => 'none',
+				'border_color'               => '',
+				'border_position'            => 'all',
+				'border_radius_bottom_left'  => '',
+				'border_radius_bottom_right' => '',
+				'border_radius_top_left'     => '',
+				'border_radius_top_right'    => '',
+				'border_size'                => '', // Backwards-compatibility.
+				'border_sizes_top'           => '',
+				'border_sizes_bottom'        => '',
+				'border_sizes_left'          => '',
+				'border_sizes_right'         => '',
+				'border_style'               => '',
+				'box_shadow'                 => '',
+				'box_shadow_blur'            => '',
+				'box_shadow_color'           => '',
+				'box_shadow_horizontal'      => '',
+				'box_shadow_spread'          => '',
+				'box_shadow_style'           => '',
+				'box_shadow_vertical'        => '',
 
 				// Width.
-				'type'                               => '1_3',
-				'type_medium'                        => '',
-				'type_small'                         => '',
+				'type'                       => '1_3',
+				'type_medium'                => '',
+				'type_small'                 => '',
 
 				// Margins.
-				'margin_top'                         => $fusion_settings->get( 'col_margin', 'top' ),
-				'margin_bottom'                      => $fusion_settings->get( 'col_margin', 'bottom' ),
-				'margin_top_medium'                  => '',
-				'margin_bottom_medium'               => '',
-				'margin_top_small'                   => '',
-				'margin_bottom_small'                => '',
+				'margin_top'                 => $fusion_settings->get( 'col_margin', 'top' ),
+				'margin_bottom'              => $fusion_settings->get( 'col_margin', 'bottom' ),
+				'margin_top_medium'          => '',
+				'margin_bottom_medium'       => '',
+				'margin_top_small'           => '',
+				'margin_bottom_small'        => '',
 
 				// Spacing.
-				'spacing'                            => '4%',
-				'spacing_left'                       => '',
-				'spacing_right'                      => '',
-				'spacing_left_medium'                => '',
-				'spacing_right_medium'               => '',
-				'spacing_left_small'                 => '',
-				'spacing_right_small'                => '',
+				'spacing'                    => '4%',
+				'spacing_left'               => '',
+				'spacing_right'              => '',
+				'spacing_left_medium'        => '',
+				'spacing_right_medium'       => '',
+				'spacing_left_small'         => '',
+				'spacing_right_small'        => '',
 
 				// Padding.
-				'padding_top'                        => '0px',
-				'padding_right'                      => '0px',
-				'padding_bottom'                     => '0px',
-				'padding_left'                       => '0px',
-				'padding_top_medium'                 => '',
-				'padding_right_medium'               => '',
-				'padding_bottom_medium'              => '',
-				'padding_left_medium'                => '',
-				'padding_top_small'                  => '',
-				'padding_right_small'                => '',
-				'padding_bottom_small'               => '',
-				'padding_left_small'                 => '',
+				'padding_top'                => '0px',
+				'padding_right'              => '0px',
+				'padding_bottom'             => '0px',
+				'padding_left'               => '0px',
+				'padding_top_medium'         => '',
+				'padding_right_medium'       => '',
+				'padding_bottom_medium'      => '',
+				'padding_left_medium'        => '',
+				'padding_top_small'          => '',
+				'padding_right_small'        => '',
+				'padding_bottom_small'       => '',
+				'padding_left_small'         => '',
 
-				'animation_type'                     => '',
-				'animation_direction'                => 'left',
-				'animation_speed'                    => '0.3',
-				'animation_delay'                    => '',
-				'animation_offset'                   => $fusion_settings->get( 'animation_offset' ),
-				'animation_color'                    => '',
-				'link'                               => '',
-				'link_description'                   => '',
-				'target'                             => '_self',
-				'hover_type'                         => 'none',
+				'animation_type'             => '',
+				'animation_direction'        => 'left',
+				'animation_speed'            => '0.3',
+				'animation_offset'           => $fusion_settings->get( 'animation_offset' ),
+				'link'                       => '',
+				'target'                     => '_self',
+				'hover_type'                 => 'none',
 
 				// Render logics.
-				'render_logics'                      => '',
-
-				// Lazy Loading.
-				'skip_lazy_load'                     => '',
+				'render_logics'              => '',
 
 				// Legacy only.
-				'min_height'                         => '',
-				'center_content'                     => 'no',
+				'min_height'                 => '',
+				'center_content'             => 'no',
 
 				// Filters.
-				'filter_hue'                         => '0',
-				'filter_saturation'                  => '100',
-				'filter_brightness'                  => '100',
-				'filter_contrast'                    => '100',
-				'filter_invert'                      => '0',
-				'filter_sepia'                       => '0',
-				'filter_opacity'                     => '100',
-				'filter_blur'                        => '0',
-				'filter_hover_element'               => 'self',
-				'filter_hue_hover'                   => '0',
-				'filter_saturation_hover'            => '100',
-				'filter_brightness_hover'            => '100',
-				'filter_contrast_hover'              => '100',
-				'filter_invert_hover'                => '0',
-				'filter_sepia_hover'                 => '0',
-				'filter_opacity_hover'               => '100',
-				'filter_blur_hover'                  => '0',
-
-				// Transform.
-				'transform_scale_x'                  => '1',
-				'transform_scale_y'                  => '1',
-				'transform_translate_x'              => '0',
-				'transform_translate_y'              => '0',
-				'transform_rotate'                   => '0',
-				'transform_skew_x'                   => '0',
-				'transform_skew_y'                   => '0',
-				'transform_hover_element'            => 'self',
-				'transform_scale_x_hover'            => '1',
-				'transform_scale_y_hover'            => '1',
-				'transform_translate_x_hover'        => '0',
-				'transform_translate_y_hover'        => '0',
-				'transform_rotate_hover'             => '0',
-				'transform_skew_x_hover'             => '0',
-				'transform_skew_y_hover'             => '0',
-				'transform_origin'                   => '',
-
-				// Transition.
-				'transition_duration'                => '300',
-				'transition_easing'                  => 'ease',
-				'transform_transition_custom_easing' => '',
+				'filter_hue'                 => '0',
+				'filter_saturation'          => '100',
+				'filter_brightness'          => '100',
+				'filter_contrast'            => '100',
+				'filter_invert'              => '0',
+				'filter_sepia'               => '0',
+				'filter_opacity'             => '100',
+				'filter_blur'                => '0',
+				'filter_hue_hover'           => '0',
+				'filter_saturation_hover'    => '100',
+				'filter_brightness_hover'    => '100',
+				'filter_contrast_hover'      => '100',
+				'filter_invert_hover'        => '0',
+				'filter_sepia_hover'         => '0',
+				'filter_opacity_hover'       => '100',
+				'filter_blur_hover'          => '0',
 
 				// Flex.
-				'align_self'                         => 'auto',
-				'flex_grow'                          => '0',
-				'flex_grow_medium'                   => '0',
-				'flex_grow_small'                    => '0',
-				'flex_shrink'                        => '0',
-				'flex_shrink_medium'                 => '0',
-				'flex_shrink_small'                  => '0',
-				'order'                              => '',
-				'order_medium'                       => '',
-				'order_small'                        => '',
-				'align_content'                      => 'flex-start',
-				'valign_content'                     => 'flex-start',
-				'content_wrap'                       => 'wrap',
-				'content_layout'                     => 'column',
-
-				// Sticky.
-				'sticky'                             => 'off',
-				'sticky_devices'                     => fusion_builder_default_visibility( 'string' ),
-				'sticky_offset'                      => 0,
-
-				// Absolute Position.
-				'absolute'                           => 'off',
-				'absolute_top'                       => '',
-				'absolute_right'                     => '',
-				'absolute_bottom'                    => '',
-				'absolute_left'                      => '',
+				'align_self'                 => 'auto',
+				'order'                      => '',
+				'order_medium'               => '',
+				'order_small'                => '',
+				'align_content'              => 'flex-start',
+				'valign_content'             => 'flex-start',
+				'content_wrap'               => 'wrap',
+				'content_layout'             => 'column',
 
 				// Hidden ones.
-				'padding'                            => '',
-				'row_column_index'                   => '',
-				'last'                               => '',
-
-				// Motion Effects.
-				'motion_effects'                     => '',
-				'scroll_motion_devices'              => fusion_builder_default_visibility( 'string' ),
-
+				'padding'                    => '',
+				'row_column_index'           => '',
+				'last'                       => '',
 			];
 		}
 
@@ -395,8 +308,10 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 */
 		public static function settings_to_params() {
 			return [
-				'animation_offset' => 'animation_offset',
-				'flex_align_items' => 'align_self',
+				'animation_offset'   => 'animation_offset',
+				'col_margin[top]'    => 'margin_top',
+				'col_margin[bottom]' => 'margin_bottom',
+				'flex_align_items'   => 'align_self',
 			];
 		}
 
@@ -409,7 +324,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return array
 		 */
 		public static function get_element_extras() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 			return [
 				'col_margin'        => $fusion_settings->get( 'col_margin' ),
 				'visibility_large'  => $fusion_settings->get( 'visibility_large' ),
@@ -450,7 +365,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return string          HTML output.
 		 */
 		public function render( $atts, $content = '' ) {
-			global $fusion_col_type;
+			global $is_IE, $is_edge, $fusion_col_type;
 
 			if ( ! Fusion_Builder_Conditional_Render_Helper::should_render( $atts ) ) {
 				return;
@@ -475,56 +390,20 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 				$this->set_column_map_data();
 			}
 
+			// Sets styles which are used on multiple elements.
+			$this->set_shared_styles();
+
 			// Sets attributes necessary for lazy load.
 			$this->set_lazy_load_data();
 
-			// Check empty dims bg image.
-			$this->args['empty_dims_bg_img'] = isset( $this->args['background_data'] ) && is_array( $this->args['background_data'] ) && '' === $this->args['background_data']['width'] && '' === $this->args['background_data']['height'] ? true : false;
-
 			// Sets styles for responsive options.
-			if ( ! $this->args['flex'] ) {
-				// Enqueue legacy scripts.
-				$this->add_legacy_scripts();
+			if ( $this->args['flex'] ) {
+				$this->set_responsive_column_styles();
 			}
 
-			$column_tag = apply_filters( 'fusion_column_tag', $this->args['column_tag'], $this->args );
+			$column_tag = apply_filters( 'fusion_column_tag', 'div', $this->args );
 
-			if ( '' !== $this->args['motion_effects'] ) {
-				Fusion_Dynamic_JS::enqueue_script( 'fusion-motion-effects' );
-			}
-			// Retrieve column content.
-			$column_content                    = fusion_builder_fix_shortcodes( $content );
-			$placeholder_img                   = '';
-			$this->args['empty_column_bg_img'] = false;
-
-			if ( isset( $this->args['background_data'] ) && is_array( $this->args['background_data'] ) ) {
-				$placeholder_img                   = '<img ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-empty-col-bg-img' ) . '>';
-				$this->args['empty_column_bg_img'] = empty( $column_content ) ? true : $this->args['empty_column_bg_img'];
-			}
-
-			if ( isset( $this->args['background_data_medium'] ) && is_array( $this->args['background_data_medium'] ) ) {
-				$placeholder_img .= $this->generate_placeholder_img( $this->args['background_data_medium'], '-medium' );
-			}
-
-			if ( isset( $this->args['background_data_small'] ) && is_array( $this->args['background_data_small'] ) ) {
-				$placeholder_img .= $this->generate_placeholder_img( $this->args['background_data_small'], '-small' );
-			}
-
-			$output = '<' . $column_tag . ' ' . FusionBuilder::attributes( $this->shortcode_attr_id ) . '>';
-
-			// If we have a hover or link, we need extra markup.
-			if ( $this->args['hover_or_link'] ) {
-				$output .= '<span ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-hover-wrapper' ) . '>';
-
-				$tag = ! empty( $this->args['link'] ) ? 'a' : 'span';
-
-				$output .= '<' . $tag . ' ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-anchor' ) . '>';
-
-				$output .= '<span ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-hover-inner-wrapper' ) . '></span>';
-
-				$output .= '</' . $tag . '></span>';
-			}
-
+			$output  = '<' . $column_tag . ' ' . FusionBuilder::attributes( $this->shortcode_attr_id ) . '>';
 			$output .= '<div ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-wrapper' ) . '>';
 
 			// Add opening tag for extra centering wrapper.
@@ -533,7 +412,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			}
 
 			// The actual column content.
-			$output .= ! empty( $column_content ) ? $column_content : $placeholder_img;
+			$output .= fusion_builder_fix_shortcodes( $content );
 
 			// Closing tags for centering wrapper.
 			if ( 'yes' === $this->args['center_content'] && ! $this->args['flex'] ) {
@@ -545,25 +424,58 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 				$output .= '<div class="fusion-clearfix"></div>';
 			}
 
+			// IE adds an extra stupid container, try to get rid of this.
+			if ( ( $is_IE || $is_edge ) && ! $this->args['hover_or_link'] ) {
+				$output .= '<div ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-ie-extra' ) . '></div>';
+			}
+
 			// Closing tag for fusion-column-wrapper.
 			$output .= '</div>';
 
-			$selector = 'fusion_builder_column' === $this->shortcode_name ? '.fusion-builder-column-' : '.fusion-builder-nested-column-';
-			$selector = $selector . $this->args['column_counter'];
+			// If we have a hover or link, we need extra markup.
+			if ( $this->args['hover_or_link'] ) {
+
+				// Lift up and border radius we need to apply radius to lift up markup.
+				if ( '' !== $this->args['border_radius_style'] && 'liftup' === $this->args['hover_type'] ) {
+					$this->styles .= '.' . $this->shortcode_classname . '-' . $this->args['column_counter'] . ' .hover-type-liftup:before{' . $this->args['border_radius_style'] . '}';
+				}
+
+				// zoom, zoomout or has a link and also has border radius, then set along with overflow.
+
+				$output .= '<span ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-hover-wrapper' ) . '>';
+				$output .= '<a ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-anchor' ) . '>';
+				$output .= '<span ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-hover-inner-wrapper' ) . '></span>';
+
+				// Background color and this is IE.
+				if ( '' !== $this->args['background_color_style'] && ( $is_IE || $is_edge ) ) {
+					$output .= '<span ' . FusionBuilder::attributes( $this->shortcode_attr_id . '-ie-span-extra' ) . '></span>';
+				}
+
+				$output .= '</a></span>';
+			}
 
 			if ( '' !== $this->styles ) {
 				$output .= '<style type="text/css">' . $this->styles . '</style>';
 			}
 
+			// Add filter styles.
+			$selector     = 'fusion_builder_column' === $this->shortcode_name ? '.fusion-builder-column-' : '.fusion-builder-nested-column-';
+			$filter_style = Fusion_Builder_Filter_Helper::get_filter_style_element( $this->args, $selector . $this->args['column_counter'] );
+			if ( '' !== $filter_style ) {
+				$output .= $filter_style;
+			}
+
 			$output  = apply_filters( 'fusion_column_before_close', $output, $this->shortcode_name );
 			$output .= '</' . $column_tag . '>';
+
+			$nested = $this->is_nested;
 
 			$content = apply_filters( $this->content_filter, do_shortcode( $output ), $atts );
 
 			$fusion_col_type['type'] = null;
 
 			// If we are rendering a top level column, then set render to false.
-			if ( ! $this->is_nested ) {
+			if ( ! $nested ) {
 				$this->rendering = false;
 			}
 
@@ -626,31 +538,8 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		public function attr() {
 			$attr = [
 				'class' => "fusion-layout-column {$this->shortcode_name} {$this->shortcode_classname}-" . $this->args['column_counter'],
-				'style' => $this->get_style_vars(),
+				'style' => '',
 			];
-
-			// Sticky column.
-			if ( 'on' === $this->args['sticky'] ) {
-				$attr['class'] .= ' awb-sticky';
-
-				if ( '' !== $this->args['sticky_offset'] && 0 !== $this->args['sticky_offset'] ) {
-
-					// If its not a selector then get value and set to css variable.
-					if ( false === strpos( $this->args['sticky_offset'], '.' ) && false === strpos( $this->args['sticky_offset'], '#' ) ) {
-						$attr['style'] .= '--awb-sticky-offset:' . fusion_library()->sanitize->get_value_with_unit( $this->args['sticky_offset'] ) . ';';
-					} else {
-						$attr['data-sticky-offset'] = (string) $this->args['sticky_offset'];
-					}
-				}
-
-				if ( '' !== $this->args['sticky_devices'] ) {
-					$this->args['sticky_devices'] = str_replace( '-visibility', '', $this->args['sticky_devices'] );
-					$sticky_devices               = explode( ',', (string) $this->args['sticky_devices'] );
-					foreach ( $sticky_devices as $sticky_device ) {
-						$attr['class'] .= ' awb-sticky-' . str_replace( ' ', '', $sticky_device );
-					}
-				}
-			}
 
 			if ( ! empty( $this->args['type'] ) && ( ! FusionBuilder()->post_card_data['is_rendering'] || 'fusion_builder_column' !== $this->shortcode_name ) ) {
 				$type = esc_attr( $this->args['type'] );
@@ -693,6 +582,16 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 				if ( '' !== $this->args['column_spacing_style'] ) {
 					$attr['style'] .= $this->args['column_spacing_style'];
 				}
+
+				// Top margin.
+				if ( '' !== $this->args['margin_top'] ) {
+					$attr['style'] .= 'margin-top:' . esc_attr( $this->args['margin_top'] ) . ';';
+				}
+
+				// Bottom margin.
+				if ( '' !== $this->args['margin_bottom'] ) {
+					$attr['style'] .= 'margin-bottom:' . esc_attr( $this->args['margin_bottom'] ) . ';';
+				}
 			}
 
 			// Custom CSS class.
@@ -732,10 +631,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			if ( ! empty( $this->args['id'] ) ) {
 				$attr['id'] = esc_attr( $this->args['id'] );
 			}
-
-			if ( ! empty( $this->args['motion_effects'] ) ) {
-				$attr = Fusion_Builder_Motion_Effects_Helper::get_data_attr( $this->args, $attr );
-			}
 			return $attr;
 		}
 
@@ -747,9 +642,22 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return array
 		 */
 		public function wrapper_attr() {
+			global $is_IE, $is_edge;
+
 			$attr = [
 				'class' => 'fusion-column-wrapper',
+				'style' => '',
 			];
+
+			// Check if we have a hover, markup is different so need extra.
+			if ( ! $this->args['hover_or_link'] ) {
+				// $bg_color_fix . '" ' . $lazy_bg
+				$attr['style'] .= $this->args['wrapper_style_bg'];
+
+				if ( $is_IE || $is_edge ) {
+					$attr['style'] .= 'background-color:transparent;';
+				}
+			}
 
 			// Image URL for empty dimension calculations.
 			$attr['data-bg-url'] = $this->args['background_image'];
@@ -757,40 +665,112 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			// Adds lazy loading attributes if necessary.
 			$attr = $this->add_lazy_attributes( $attr, 'wrapper' );
 
+			if ( ! $this->args['hover_or_link'] ) {
+				$attr['style'] .= $this->args['background_color_style'];
+			}
+
+			// Border.
+			if ( '' !== $this->args['border_full_style'] ) {
+				$attr['style'] .= $this->args['border_full_style'];
+			}
+
+			// Border radius.
+			if ( '' !== $this->args['border_radius_style'] ) {
+				$attr['style'] .= $this->args['border_radius_style'];
+				$attr['style'] .= 'overflow:hidden;';
+			}
+
 			// Box shadow.
-			if ( 'liftup' !== $this->args['hover_type'] && '' !== $this->args['box_shadow'] ) {
+			if ( 'liftup' !== $this->args['hover_type'] && '' !== $this->args['box_shadow_styles'] ) {
+				$attr['style'] .= $this->args['box_shadow_styles'];
 				$attr['class'] .= ' fusion-column-has-shadow'; // Move this to appropriate.
+			}
+
+			// Padding.
+			if ( ! empty( $this->args['padding'] ) ) {
+				$attr['style'] .= 'padding: ' . esc_attr( $this->args['padding'] ) . ';';
 			}
 
 			// Flex.
 			if ( ! empty( $this->args['flex'] ) ) {
-				$attr['class'] .= ' fusion-flex-justify-content-' . $this->args['align_content'];
-				$attr['class'] .= ' fusion-content-layout-' . $this->args['content_layout'];
+				$attr['class'] .= ' fusion-flex-justify-content-' . esc_attr( $this->args['align_content'] );
+				$attr['class'] .= ' fusion-content-layout-' . esc_attr( $this->args['content_layout'] );
 
 				if ( 'row' === $this->args['content_layout'] && 'flex-start' !== $this->args['valign_content'] ) {
-					$attr['class'] .= ' fusion-flex-align-items-' . $this->args['valign_content'];
+					$attr['class'] .= ' fusion-flex-align-items-' . esc_attr( $this->args['valign_content'] );
 				}
 				if ( 'wrap' !== $this->args['content_wrap'] ) {
-					$attr['class'] .= ' fusion-content-' . $this->args['content_wrap'];
+					$attr['class'] .= ' fusion-content-' . esc_attr( $this->args['content_wrap'] );
 				}
 			} else {
 				$attr['class'] .= ' fusion-flex-column-wrapper-legacy';
 			}
 
-			// Empty column with BG Image.
-			if ( $this->args['empty_column_bg_img'] ) {
-				$attr['class'] .= ' fusion-empty-column-bg-image';
+			return $attr;
+		}
+
+		/**
+		 * Sets attributes for the div IE wrapper if no hover is set.
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return array
+		 */
+		public function ie_div_attr() {
+
+			$attr = [
+				'class' => 'fusion-column-wrapper',
+				'style' => 'content:\'\';z-index:-1;position:absolute;top:0;right:0;bottom:0;left:0;',
+			];
+
+			// Border radius.
+			if ( '' !== $this->args['border_radius_style'] ) {
+
+				// TODO: check that is correct and order is correct.
+				$this->args['wrapper_style_bg'] .= $this->args['border_radius_style'];
 			}
-			// Added class if column has bg image responsive.
-			foreach ( [ '', 'medium', 'small' ] as $size ) {
-				$size = '' === $size ? '' : '_' . $size;
-				if ( isset( $this->args[ 'background_data' . $size ] ) && is_array( $this->args[ 'background_data' . $size ] ) ) {
-					$attr['class'] .= ' fusion-column-has-bg-image' . str_replace( '_', '-', $size );
+
+			if ( '' !== $this->args['background_image_style'] ) {
+				$attr['style'] .= $this->args['background_image_style'];
+				if ( ! empty( $this->args['background_color'] ) && 1 === $this->args['alpha_background_color'] ) {
+					$attr['style'] .= 'background-color:' . esc_attr( $this->args['background_color'] ) . ';';
 				}
 			}
 
-			// Escape attributes before return.
-			$attr['class'] = esc_attr( $attr['class'] );
+			// Box shadow.
+			if ( 'liftup' !== $this->args['hover_type'] && '' !== $this->args['box_shadow_styles'] ) {
+				$attr['class'] .= ' fusion-column-has-shadow';
+			}
+
+			// Adds lazy loading attributes if necessary.
+			$attr = $this->add_lazy_attributes( $attr );
+
+			return $attr;
+		}
+
+		/**
+		 * Sets attributes for the span IE wrapper if hover is set.
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return array
+		 */
+		public function ie_span_attr() {
+
+			$attr = [
+				'class' => 'fusion-column-inner-bg-image',
+				'style' => '',
+			];
+
+			if ( '' !== $this->args['background_image_style'] ) {
+				$attr['style'] .= $this->args['background_image_style'];
+				if ( ! empty( $this->args['background_color'] ) && 1 === $this->args['alpha_background_color'] ) {
+					$attr['style'] .= 'background-color:' . esc_attr( $this->args['background_color'] ) . ';';
+				}
+			}
+
+			// Adds lazy loading attributes if necessary.
+			$attr = $this->add_lazy_attributes( $attr );
 
 			return $attr;
 		}
@@ -805,273 +785,14 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		public function hover_wrapper_attr() {
 			$attr = [
 				'class' => 'fusion-column-inner-bg hover-type-' . $this->args['hover_type'],
+				'style' => '',
 			];
+
+			if ( 'liftup' !== $this->args['hover_type'] && ( 'zoomin' === $this->args['hover_type'] || 'zoomout' === $this->args['hover_type'] || ! empty( $this->args['link'] ) ) && '' !== $this->args['border_radius_style'] ) {
+				$attr['style'] .= 'overflow:hidden;' . $this->args['border_radius_style'] . ';';
+			}
 
 			return $attr;
-		}
-
-		/**
-		 * Get style variables.
-		 *
-		 * @since 3.9
-		 * @return string
-		 */
-		public function get_style_vars() {
-			$sanitize        = fusion_library()->sanitize;
-			$css_vars        = [
-				'z_index',
-				'z_index_hover',
-
-				'padding_top'           => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_right'         => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_bottom'        => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_left'          => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_top_medium'    => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_right_medium'  => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_bottom_medium' => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_left_medium'   => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_top_small'     => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_right_small'   => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_bottom_small'  => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-				'padding_left_small'    => [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ],
-			];
-			$custom_css_vars = [];
-			$this->defaults  = self::get_element_defaults();
-
-			// Overflow.
-			if ( '' !== $this->args['overflow'] ) {
-				$custom_css_vars['overflow'] = $this->args['overflow'];
-			} elseif ( '' !== $this->args['border_radius'] ) {
-				$custom_css_vars['overflow'] = 'hidden';
-			}
-
-			// Some variables needs to be placed directly on column, some on an inner div helper.
-			// This is a quick way to not check for "hover_or_link" every time.
-			$inner_var_prefix = ( $this->args['hover_or_link'] ? 'inner-' : '' );
-
-			if ( 'on' === $this->args['absolute'] && 'on' !== $this->args['sticky'] ) {
-				$custom_css_vars['container-position'] = 'absolute';
-
-				$css_vars['absolute_top']    = [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ];
-				$css_vars['absolute_right']  = [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ];
-				$css_vars['absolute_bottom'] = [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ];
-				$css_vars['absolute_left']   = [ 'callback' => [ $sanitize, 'get_value_with_unit' ] ];
-			}
-
-			// Background Images & other properties.
-			if ( ! empty( $this->args['background_color'] ) && ( empty( $this->args['background_image'] ) || 0 !== $this->args['alpha_background_color'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-color' ] = $this->args['background_color'];
-			}
-
-			if ( ! empty( $this->args['background_color_hover'] ) && ( empty( $this->args['background_image'] ) || 0 !== $this->args['alpha_background_color'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-color-hover' ] = $this->args['background_color_hover'];
-			}
-
-			if ( ! empty( $this->args['background_color_medium'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-color-medium' ] = $this->args['background_color_medium'];
-			}
-
-			if ( ! empty( $this->args['background_color_medium_hover'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-color-medium-hover' ] = $this->args['background_color_medium_hover'];
-			}
-
-			if ( ! empty( $this->args['background_color_small'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-color-small' ] = $this->args['background_color_small'];
-			}
-
-			if ( ! empty( $this->args['background_color_small_hover'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-color-small-hover' ] = $this->args['background_color_small_hover'];
-			}
-
-			if ( ! $this->args['lazy_load'] ) {
-				if ( ! empty( $this->args['background_image'] ) ) {
-					$custom_css_vars[ $inner_var_prefix . 'bg-image' ] = "url('" . esc_url( $this->args['background_image'] ) . "')";
-				}
-
-				if ( ! empty( $this->args['background_image_medium'] ) ) {
-						$custom_css_vars[ $inner_var_prefix . 'bg-image-medium' ] = "url('" . esc_url( $this->args['background_image_medium'] ) . "')";
-				}
-
-				if ( ! empty( $this->args['background_image_small'] ) ) {
-						$custom_css_vars[ $inner_var_prefix . 'bg-image-small' ] = "url('" . esc_url( $this->args['background_image_small'] ) . "')";
-				}
-			}
-
-			if ( $this->is_gradient_color() ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-image' ] = Fusion_Builder_Gradient_Helper::get_gradient_string( $this->args, 'column' );
-
-				if ( ! empty( $this->args['background_image_medium'] ) ) {
-					$custom_css_vars[ $inner_var_prefix . 'bg-image-medium' ] = Fusion_Builder_Gradient_Helper::get_gradient_string( $this->args, 'column', 'medium' );
-				}
-
-				if ( ! empty( $this->args['background_image_small'] ) ) {
-						$custom_css_vars[ $inner_var_prefix . 'bg-image-small' ] = Fusion_Builder_Gradient_Helper::get_gradient_string( $this->args, 'column', 'small' );
-				}
-			}
-
-			if ( ! empty( $this->args['background_position'] ) && ! $this->is_default( 'background_position' ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-position' ] = $this->args['background_position'];
-			}
-
-			if ( ! empty( $this->args['background_position_medium'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-position-medium' ] = $this->args['background_position_medium'];
-			}
-
-			if ( ! empty( $this->args['background_position_small'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-position-small' ] = $this->args['background_position_small'];
-			}
-
-			if ( ! $this->is_default( 'background_blend_mode' ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-blend' ] = $this->args['background_blend_mode'];
-			}
-
-			if ( ! empty( $this->args['background_blend_mode_medium'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-blend-medium' ] = $this->args['background_blend_mode_medium'];
-			}
-
-			if ( ! empty( $this->args['background_blend_mode_small'] ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-blend-small' ] = $this->args['background_blend_mode_small'];
-			}
-
-			if ( ! $this->is_default( 'background_repeat' ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-repeat' ] = $this->args['background_repeat'];
-			}
-
-			if ( ! $this->is_default( 'background_repeat_medium' ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-repeat-medium' ] = $this->args['background_repeat_medium'];
-			}
-
-			if ( ! $this->is_default( 'background_repeat_small' ) ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-repeat-small' ] = $this->args['background_repeat_small'];
-			}
-
-			if ( 'no-repeat' === $this->args['background_repeat'] ) {
-				$custom_css_vars[ $inner_var_prefix . 'bg-size' ] = 'cover';
-			}
-
-			if ( '' !== $this->args['background_size'] ) {
-				$background_size                                  = 'custom' === $this->args['background_size'] ? $this->args['background_custom_size'] : $this->args['background_size'];
-				$custom_css_vars[ $inner_var_prefix . 'bg-size' ] = $background_size;
-			}
-
-			if ( '' !== $this->args['background_size_medium'] ) {
-				$background_size_medium                                  = 'custom' === $this->args['background_size_medium'] ? $this->args['background_custom_size_medium'] : $this->args['background_size_medium'];
-				$custom_css_vars[ $inner_var_prefix . 'bg-size-medium' ] = $background_size_medium;
-			}
-
-			if ( '' !== $this->args['background_size_small'] ) {
-				$background_size_small                                  = 'custom' === $this->args['background_size_small'] ? $this->args['background_custom_size_small'] : $this->args['background_size_small'];
-				$custom_css_vars[ $inner_var_prefix . 'bg-size-small' ] = $background_size_small;
-			}
-
-			$border_vars = $this->get_border_vars();
-
-			if ( 'yes' === $this->args['box_shadow'] ) {
-				if ( 'liftup' === $this->args['hover_type'] ) {
-					$custom_css_vars['inner_bg_box_shadow'] = Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles( $this->args );
-				} else {
-					$custom_css_vars['box_shadow'] = Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles( $this->args );
-				}
-			}
-
-			$transform_vars = Fusion_Builder_Transform_Helper::get_transform_style_vars( $this->args, '--awb-transform', '--awb-transform-hover', '--awb-transform-parent-hover' );
-
-			if ( $this->args['transform_origin'] && '50% 50%' !== $this->args['transform_origin'] ) {
-				$custom_css_vars['transform_origin'] = $this->args['transform_origin'];
-			}
-
-			$filter_vars = Fusion_Builder_Filter_Helper::get_filter_vars( $this->args, true );
-
-			if ( ! $this->is_default( 'transition_duration' ) || ! $this->is_default( 'transition_easing' ) ) {
-				$custom_css_vars['transition'] = Fusion_Builder_Transition_Helper::get_transition_styles( $this->args );
-			}
-
-			return $this->get_css_vars_for_options( $css_vars ) . $this->get_custom_css_vars( $custom_css_vars ) . $border_vars . $transform_vars . $filter_vars . $this->get_responsive_column_vars();
-		}
-
-		/**
-		 * Get the border variables.
-		 *
-		 * @return string
-		 */
-		private function get_border_vars() {
-			$custom_css_vars = [];
-			$border_on_inner = ( 'liftup' === $this->args['hover_type'] ? true : false );
-
-			if ( ! empty( $this->args['border_color'] ) ) {
-				$custom_css_vars['border-color'] = $this->args['border_color'];
-
-				if ( $border_on_inner ) {
-					$custom_css_vars['inner-border-color'] = $this->args['border_color'];
-				}
-
-				if ( '' !== $this->args['border_color_hover'] ) {
-					$custom_css_vars['border-color-hover'] = $this->args['border_color_hover'];
-
-					if ( $border_on_inner ) {
-						$custom_css_vars['inner-border-color-hover'] = $this->args['border_color_hover'];
-					}
-				}
-
-				if ( '' !== $this->args['border_sizes_top'] ) {
-					$custom_css_vars['border-top'] = $this->args['border_sizes_top'];
-
-					if ( $border_on_inner ) {
-						$custom_css_vars['inner-border-top'] = $this->args['border_sizes_top'];
-					}
-				}
-
-				if ( '' !== $this->args['border_sizes_right'] ) {
-					$custom_css_vars['border-right'] = $this->args['border_sizes_right'];
-
-					if ( $border_on_inner ) {
-						$custom_css_vars['inner-border-right'] = $this->args['border_sizes_right'];
-					}
-				}
-
-				if ( '' !== $this->args['border_sizes_bottom'] ) {
-					$custom_css_vars['border-bottom'] = $this->args['border_sizes_bottom'];
-
-					if ( $border_on_inner ) {
-						$custom_css_vars['inner-border-bottom'] = $this->args['border_sizes_bottom'];
-					}
-				}
-
-				if ( '' !== $this->args['border_sizes_left'] ) {
-					$custom_css_vars['border-left'] = $this->args['border_sizes_left'];
-
-					if ( $border_on_inner ) {
-						$custom_css_vars['inner-border-left'] = $this->args['border_sizes_left'];
-					}
-				}
-
-				if ( ! empty( $this->args['border_style'] ) ) {
-					$custom_css_vars['border-style'] = $this->args['border_style'];
-
-					if ( $border_on_inner ) {
-						$custom_css_vars['inner-border-style'] = $this->args['border_style'];
-					}
-				}
-			}
-
-			if ( $this->args['border_radius'] ) {
-				$custom_css_vars['border_radius'] = $this->args['border_radius'];
-
-				if ( 'liftup' !== $this->args['hover_type'] && ( 'zoomin' === $this->args['hover_type'] || 'zoomout' === $this->args['hover_type'] || ! empty( $this->args['link'] ) ) ) {
-					$custom_css_vars['inner-bg-border-radius'] = $this->args['border_radius'];
-				}
-
-				// Lift up and border radius we need to apply radius to lift up markup.
-				if ( $this->args['hover_or_link'] && 'liftup' === $this->args['hover_type'] ) {
-					$custom_css_vars['liftup-border-radius'] = $this->args['border_radius'];
-				}
-			}
-
-			if ( 'liftup' !== $this->args['hover_type'] && ( 'zoomin' === $this->args['hover_type'] || 'zoomout' === $this->args['hover_type'] || ! empty( $this->args['link'] ) ) && '' !== $this->args['border_radius'] ) {
-				$custom_css_vars['inner-bg-overflow'] = 'hidden';
-			}
-
-			return $this->get_custom_css_vars( $custom_css_vars );
 		}
 
 		/**
@@ -1084,7 +805,13 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		public function hover_inner_wrapper_attr() {
 			$attr = [
 				'class' => 'fusion-column-inner-bg-image',
+				'style' => '',
 			];
+
+			// Background style.
+			if ( '' !== $this->args['wrapper_style_bg'] ) {
+				$attr['style'] .= $this->args['wrapper_style_bg'];
+			}
 
 			// Adds lazy loading attributes if necessary.
 			$attr = $this->add_lazy_attributes( $attr );
@@ -1100,9 +827,8 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return array
 		 */
 		public function anchor_attr() {
-			$attr = [
-				'class' => 'fusion-column-anchor',
-			];
+
+			$attr = [];
 
 			if ( ! empty( $this->args['link'] ) ) {
 				$attr['href'] = $this->args['link'];
@@ -1114,88 +840,23 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			} elseif ( 'lightbox' === $this->args['target'] ) {
 				$attr['data-rel'] = 'iLightbox';
 			}
-
-			if ( ! empty( $this->args['link_description'] ) ) {
-				$attr['aria-label'] = esc_attr( $this->args['link_description'] );
-			}
-
-			$attr = fusion_get_link_attributes( $this->args, $attr );
-
 			return $attr;
 		}
 
 		/**
-		 * Sets attributes for pseudo image placeholder.
+		 * Sets different styles to the object so they can be accessed from anywhere.
 		 *
 		 * @access public
-		 * @since 3.4
-		 * @return array
+		 * @since 3.0
+		 * @return void
 		 */
-		public function empty_col_bg_img_attr() {
-
-			$attr = [
-				'class' => 'fusion-empty-dims-img-placeholder',
-				'alt'   => '',
-				'src'   => call_user_func_array( [ fusion_library()->images, 'get_lazy_placeholder' ], [ $this->args['background_data']['width'], $this->args['background_data']['height'] ] ),
-			];
-
-			// Empty BG Image Dims.
-			if ( $this->args['empty_dims_bg_img'] ) {
-				$attr['class'] .= ' fusion-no-large-visibility';
-			}
-
-			if ( 'stretch' === $this->args['flex_align_items'] && in_array( $this->args['align_self'], [ 'auto', 'stretch' ], true ) ) {
-				if ( ! $this->args['empty_dims_bg_img'] ) {
-					$attr['class'] .= ' fusion-no-large-visibility';
-				}
-				$width_key = 'type_medium';
-
-				if ( '' !== $this->args[ $width_key ] && 'auto' !== $this->args[ $width_key ] && 0 < (float) $this->args[ $width_key ] ) {
-					if ( 100 > ( (float) $this->args[ $width_key ] * 100 ) ) {
-						$attr['class'] .= ' fusion-no-medium-visibility';
-					}
-				}
-			}
-
-			return $attr;
-		}
-
-		/**
-		 * Sets attributes for pseudo image placeholder.
-		 *
-		 * @access public
-		 * @since 3.11
-		 * @param array  $background_data background data.
-		 * @param string $classname element css classname.
-		 * @return string
-		 */
-		public function generate_placeholder_img( $background_data, $classname ) {
-
-			$attr = [
-				'class' => 'fusion-empty-dims-img-placeholder' . $classname,
-				'alt'   => '',
-				'src'   => call_user_func_array( [ fusion_library()->images, 'get_lazy_placeholder' ], [ $background_data['width'], $background_data['height'] ] ),
-			];
-
-			// Empty BG Image Dims.
-			if ( $this->args['empty_dims_bg_img'] ) {
-				$attr['class'] .= ' fusion-no-large-visibility';
-			}
-
-			if ( 'stretch' === $this->args['flex_align_items'] && in_array( $this->args['align_self'], [ 'auto', 'stretch' ], true ) ) {
-				if ( ! $this->args['empty_dims_bg_img'] ) {
-					$attr['class'] .= ' fusion-no-large-visibility';
-				}
-				$width_key = 'type_medium';
-
-				if ( '' !== $this->args[ $width_key ] && 'auto' !== $this->args[ $width_key ] && 0 < (float) $this->args[ $width_key ] ) {
-					if ( 100 > ( (float) $this->args[ $width_key ] * 100 ) ) {
-						$attr['class'] .= ' fusion-no-medium-visibility';
-					}
-				}
-			}
-
-			return '<img ' . FusionBuilder::attributes( 'empty_dims_bg_img', $attr ) . '>';
+		public function set_shared_styles() {
+			$this->set_background_color_style();
+			$this->set_background_image();
+			$this->set_border_style();
+			$this->set_border_radius_style();
+			$this->set_box_shadow_style();
+			$this->set_wrapper_style_bg();
 		}
 
 		/**
@@ -1203,49 +864,41 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 *
 		 * @access public
 		 * @since 3.0
-		 * @return string
+		 * @return void
 		 */
-		public function get_responsive_column_vars() {
+		public function set_responsive_column_styles() {
+			$fusion_settings  = fusion_get_fusion_settings();
 			$post_card_column = FusionBuilder()->post_card_data['is_rendering'] && 'fusion_builder_column' === $this->shortcode_name;
 
-			if ( ! $this->args['flex'] ) {
-				$css_vars = [
-					'margin_top',
-					'margin_bottom',
-				];
-				return $this->get_css_vars_for_options( $css_vars );
-			}
-
-			$css_vars = [];
 			foreach ( [ 'large', 'medium', 'small' ] as $size ) {
+				$column_styles         = '';
+				$column_wrapper_styles = '';
+				$hover_wrapper_styles  = '';
+
 				// Width and order come from post cards element.
 				if ( ! $post_card_column ) {
 					// Width.
 					$width_key = 'large' === $size ? 'column_size' : 'type_' . $size;
-					if ( strpos( $this->args[ $width_key ], 'px' ) || strpos( $this->args[ $width_key ], 'calc' ) ) {
-						$css_vars[ 'width-' . $size ] = esc_attr( $this->args[ $width_key ] );
-					} elseif ( '' !== $this->args[ $width_key ] && 'auto' !== $this->args[ $width_key ] && 0 < (float) $this->args[ $width_key ] ) {
-						$css_vars[ 'width-' . $size ] = esc_attr( fusion_i18_float_to_string( (float) $this->args[ $width_key ] * 100 ) ) . '%';
+					if ( '' !== $this->args[ $width_key ] && 'auto' !== $this->args[ $width_key ] && 0 < (float) $this->args[ $width_key ] ) {
+						$column_styles .= 'width:' . esc_attr( fusion_i18_float_to_string( (float) $this->args[ $width_key ] * 100 ) ) . '% !important;';
 					} elseif ( 'auto' === $this->args[ $width_key ] ) {
-						$css_vars[ 'width-' . $size ] = 'auto';
+						$column_styles .= 'width: auto;';
 					}
 
 					// Order.
 					$order_key = 'large' === $size ? 'order' : 'order_' . $size;
 					if ( '' !== $this->args[ $order_key ] ) {
-						$css_vars[ 'order-' . $size ] = (int) $this->args[ $order_key ];
+						$column_styles .= 'order : ' . (int) $this->args[ $order_key ] . ';';
 					}
-				}
-				$flex_grow_key   = 'large' === $size ? 'flex_grow' : 'flex_grow_' . $size;
-				$flex_shrink_key = 'large' === $size ? 'flex_shrink' : 'flex_shrink_' . $size;
-				if ( 0 < $this->args[ $flex_grow_key ] ) {
-					$css_vars[ $flex_grow_key ] = $this->args[ $flex_grow_key ];
-				}
-				if ( 0 < $this->args[ $flex_shrink_key ] ) {
-					$css_vars[ $flex_shrink_key ] = $this->args[ $flex_shrink_key ];
 				}
 
 				foreach ( [ 'top', 'right', 'bottom', 'left' ] as $direction ) {
+
+					// Padding.
+					$padding_key = 'large' === $size ? 'padding_' . $direction : 'padding_' . $direction . '_' . $size;
+					if ( '' !== $this->args[ $padding_key ] ) {
+						$column_wrapper_styles .= 'padding-' . $direction . ' : ' . $this->args[ $padding_key ] . ' !important;';
+					}
 
 					// Margin comes from post cards column and row spacing.
 					if ( ! $post_card_column ) {
@@ -1257,15 +910,40 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 
 							// If its top and bottom margin, add to outer column element.
 							if ( 'margin' === $key_base ) {
-								$css_vars[ 'margin-' . $direction . '-' . $size ] = $this->args[ $spacing_key ];
+								$column_styles .= 'margin-' . $direction . ' : ' . $this->args[ $spacing_key ] . ';';
 							} else {
-								$css_vars[ 'spacing-' . $direction . '-' . $size ] = $this->args[ $spacing_key ];
+								$column_wrapper_styles .= 'margin-' . $direction . ' : ' . $this->args[ $spacing_key ] . ';';
+							}
+							if ( $this->args['hover_or_link'] && 'margin' !== $key_base ) {
+								$hover_wrapper_styles .= 'margin-' . $direction . ':' . $this->args[ $spacing_key ] . ';';
 							}
 						}
 					}
 				}
+
+				if ( '' === $column_styles && '' === $column_wrapper_styles ) {
+					continue;
+				}
+
+				// Wrap CSS selectors.
+				if ( '' !== $column_styles ) {
+					$column_styles = '.fusion-body .' . $this->shortcode_classname . '-' . $this->args['column_counter'] . '{' . $column_styles . '}';
+				}
+				if ( '' !== $column_wrapper_styles ) {
+					$column_wrapper_styles = '.' . $this->shortcode_classname . '-' . $this->args['column_counter'] . ' > .fusion-column-wrapper {' . $column_wrapper_styles . '}';
+				}
+				if ( '' !== $hover_wrapper_styles ) {
+					$hover_wrapper_styles = '.fusion-flex-container .fusion-row .' . $this->shortcode_classname . '-' . $this->args['column_counter'] . ' > .fusion-column-inner-bg { ' . $hover_wrapper_styles . ' }';
+				}
+
+				// Large styles, no wrapping needed.
+				if ( 'large' === $size ) {
+					$this->styles .= $column_styles . $column_wrapper_styles . $hover_wrapper_styles;
+				} else {
+					// Medium and Small size screen styles.
+					$this->styles .= '@media only screen and (max-width:' . $fusion_settings->get( 'visibility_' . $size ) . 'px) {' . $column_styles . $column_wrapper_styles . $hover_wrapper_styles . '}';
+				}
 			}
-			return $this->get_custom_css_vars( $css_vars );
 		}
 
 		/**
@@ -1277,6 +955,153 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 */
 		public function is_flex_rendering() {
 			return ! empty( $this->args['flex'] ) && 'block' !== $this->args['content_layout'];
+		}
+
+		/**
+		 * Sets style for background color depending on image and alpha.
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return void
+		 */
+		public function set_background_color_style() {
+			$background_color_style = '';
+			if ( ! empty( $this->args['background_color'] ) && ( empty( $this->args['background_image'] ) || 0 !== $this->args['alpha_background_color'] ) ) {
+				$background_color_style = 'background-color:' . esc_attr( $this->args['background_color'] ) . ';';
+			}
+			$this->args['background_color_style'] = $background_color_style;
+		}
+
+		/**
+		 * Sets style for background image
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return void
+		 */
+		public function set_background_image() {
+			$background_image_style = '';
+			$bg_title               = '';
+			$background_data        = '';
+			if ( ! empty( $this->args['background_image'] ) ) {
+
+				$background_data         = fusion_library()->images->get_attachment_data_by_helper( $this->args['background_image_id'], $this->args['background_image'] );
+				$background_image_style .= $this->args['lazy_load'] ? '' : "background-image: url('" . esc_attr( $this->args['background_image'] ) . "');";
+				$bg_title                = $background_data['title'];
+			}
+
+			if ( $this->is_gradient_color() ) {
+				$background_image_style .= 'background-image: ' . Fusion_Builder_Gradient_Helper::get_gradient_string( $this->args, 'column' );
+			}
+
+			if ( ! empty( $this->args['background_position'] ) ) {
+				$background_image_style .= 'background-position:' . esc_attr( $this->args['background_position'] ) . ';';
+			}
+
+			if ( 'none' !== $this->args['background_blend_mode'] ) {
+				$background_image_style .= 'background-blend-mode: ' . esc_attr( $this->args['background_blend_mode'] ) . ';';
+			}
+
+			if ( ! empty( $this->args['background_repeat'] ) ) {
+				$background_image_style .= 'background-repeat:' . esc_attr( $this->args['background_repeat'] ) . ';';
+
+				if ( 'no-repeat' === $this->args['background_repeat'] ) {
+					$background_image_style .= '-webkit-background-size:cover;-moz-background-size:cover;-o-background-size:cover;background-size:cover;';
+				}
+			}
+
+			$this->args['bg_title']               = $bg_title;
+			$this->args['background_image_style'] = $background_image_style;
+			$this->args['background_data']        = $background_data;
+		}
+
+		/**
+		 * Sets style for border if set.
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return void
+		 */
+		public function set_border_style() {
+			$this->args['border_full_style'] = '';
+
+			if ( '' === $this->args['border_sizes_top'] && '' === $this->args['border_sizes_bottom'] && '' === $this->args['border_sizes_left'] && '' === $this->args['border_sizes_right'] ) {
+
+				// Backwards-compatibility.
+				if ( $this->args['border_color'] && $this->args['border_size'] && $this->args['border_style'] ) {
+					$this->args['border_full_style'] = 'border' . $this->args['border_position'] . ':' . $this->args['border_size'] . ' ' . $this->args['border_style'] . ' ' . $this->args['border_color'] . ';';
+				}
+			} else {
+				$border = [
+					'top'    => '0',
+					'bottom' => '0',
+					'left'   => '0',
+					'right'  => '0',
+				];
+
+				// Border-sizes.
+				if ( '' !== $this->args['border_sizes_top'] ) {
+					$border['top'] = esc_attr( $this->args['border_sizes_top'] );
+				}
+				if ( '' !== $this->args['border_sizes_bottom'] ) {
+					$border['bottom'] = esc_attr( $this->args['border_sizes_bottom'] );
+				}
+				if ( '' !== $this->args['border_sizes_left'] ) {
+					$border['left'] = esc_attr( $this->args['border_sizes_left'] );
+				}
+				if ( '' !== $this->args['border_sizes_right'] ) {
+					$border['right'] = esc_attr( $this->args['border_sizes_right'] );
+				}
+
+				// Border-styles.
+				if ( ! empty( $this->args['border_color'] ) ) {
+					$this->args['border_full_style'] .= "border-width: {$border['top']} {$border['right']} {$border['bottom']} {$border['left']};";
+					$this->args['border_full_style'] .= 'border-color:' . esc_attr( $this->args['border_color'] ) . ';';
+
+					// Border-style.
+					if ( ! empty( $this->args['border_style'] ) ) {
+						$this->args['border_full_style'] .= 'border-style:' . esc_attr( $this->args['border_style'] ) . ';';
+					}
+				}
+			}
+		}
+
+		/**
+		 * Sets style for border radius if set.
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return void
+		 */
+		public function set_border_radius_style() {
+			$this->args['border_radius_style'] = '';
+			if ( $this->args['border_radius'] ) {
+				$this->args['border_radius_style'] = 'border-radius:' . esc_attr( $this->args['border_radius'] ) . ';';
+			}
+		}
+
+		/**
+		 * Sets style for box shadow if set.
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return void
+		 */
+		public function set_box_shadow_style() {
+			$this->args['box_shadow_styles'] = '';
+			if ( 'yes' === $this->args['box_shadow'] ) {
+				$box_shadow_styles               = Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles(
+					[
+						'box_shadow_horizontal' => $this->args['box_shadow_horizontal'],
+						'box_shadow_vertical'   => $this->args['box_shadow_vertical'],
+						'box_shadow_blur'       => $this->args['box_shadow_blur'],
+						'box_shadow_spread'     => $this->args['box_shadow_spread'],
+						'box_shadow_color'      => $this->args['box_shadow_color'],
+						'box_shadow_style'      => $this->args['box_shadow_style'],
+					]
+				);
+				$this->args['box_shadow_styles'] = 'box-shadow:' . esc_attr( trim( $box_shadow_styles ) ) . ';';
+			}
 		}
 
 		/**
@@ -1292,22 +1117,9 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			$this->args['lazy_dims']  = [];
 
 			if ( $this->args['lazy_load'] ) {
-				$this->args['lazy_bg'] = [
+				$this->args['lazy_bg']    = [
 					'data-bg' => $this->args['background_image'],
 				];
-
-				if ( '' !== $this->args['background_image_medium'] || '' !== $this->args['background_image_small'] ) {
-					$this->args['lazy_bg']['data-fusion-responsive-bg'] = 1;
-				}
-
-				if ( '' !== $this->args['background_image_medium'] ) {
-					$this->args['lazy_bg']['data-bg-medium'] = $this->args['background_image_medium'];
-				}
-
-				if ( '' !== $this->args['background_image_small'] ) {
-					$this->args['lazy_bg']['data-bg-small'] = $this->args['background_image_small'];
-				}
-
 				$this->args['lazy_class'] = ' lazyload';
 
 				if ( isset( $this->args['background_data'] ) && is_array( $this->args['background_data'] ) ) {
@@ -1324,6 +1136,44 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		}
 
 		/**
+		 * Sets styles for wrapper background.
+		 *
+		 * @access public
+		 * @since 3.0
+		 * @return void
+		 */
+		public function set_wrapper_style_bg() {
+			global $is_IE, $is_edge;
+
+			$this->args['wrapper_style_bg'] = '';
+
+			// Background color.
+			if ( $this->args['hover_or_link'] ) {
+				$this->args['wrapper_style_bg'] .= $this->args['background_color_style'];
+			}
+
+			// Background image.
+			if ( ( ! $is_IE && ! $is_edge ) || $this->args['hover_or_link'] ) {
+				$this->args['wrapper_style_bg'] .= $this->args['background_image_style'];
+			}
+
+			// Border.
+			if ( 'liftup' === $this->args['hover_type'] && '' !== $this->args['border_full_style'] ) {
+				$this->args['wrapper_style_bg'] .= $this->args['border_full_style'];
+			}
+
+			// Border radius.
+			if ( '' !== $this->args['border_radius_style'] ) {
+				$this->args['wrapper_style_bg'] .= $this->args['border_radius_style'];
+			}
+
+			// Box shadow.
+			if ( 'liftup' === $this->args['hover_type'] && '' !== $this->args['box_shadow_styles'] ) {
+				$this->args['wrapper_style_bg'] .= $this->args['box_shadow_styles'];
+			}
+		}
+
+		/**
 		 * Sets the args from the attributes.
 		 *
 		 * @access public
@@ -1332,6 +1182,8 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return void
 		 */
 		public function set_args( $atts ) {
+			$fusion_settings = fusion_get_fusion_settings();
+
 			$this->atts = $atts;
 
 			$defaults = self::get_element_defaults();
@@ -1463,7 +1315,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return void
 		 */
 		public function validate_args() {
-			$fusion_settings = awb_get_fusion_settings();
+			global $fusion_settings;
 
 			// Alpha related checks.
 			$this->args['alpha_background_color']     = 1;
@@ -1480,8 +1332,8 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 				$this->args['background_blend_mode'] = 'overlay';
 			}
 
-			$this->args['margin_bottom'] = '' !== $this->args['margin_bottom'] ? fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] ) : '';
-			$this->args['margin_top']    = '' !== $this->args['margin_top'] ? fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] ) : '';
+			$this->args['margin_bottom'] = '' === $this->args['margin_bottom'] ? $fusion_settings->get( 'col_margin', 'bottom' ) : fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] );
+			$this->args['margin_top']    = '' === $this->args['margin_top'] ? $fusion_settings->get( 'col_margin', 'top' ) : fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] );
 
 			if ( $this->args['border_size'] ) {
 				$this->args['border_size'] = FusionBuilder::validate_shortcode_attr_value( $this->args['border_size'], 'px' );
@@ -1514,37 +1366,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			$this->args['border_radius']              = $this->args['border_radius_top_left'] . ' ' . $this->args['border_radius_top_right'] . ' ' . $this->args['border_radius_bottom_right'] . ' ' . $this->args['border_radius_bottom_left'];
 			$this->args['border_radius']              = ( '0px 0px 0px 0px' === $this->args['border_radius'] ) ? '' : $this->args['border_radius'];
 
-			$this->args['border_position'] = ( 'all' !== $this->args['border_position'] ) ? $this->args['border_position'] : '';
-
-			// Backwards-compatibility fix.
-			if ( '' === $this->args['border_sizes_top'] && '' === $this->args['border_sizes_bottom'] && '' === $this->args['border_sizes_left'] && '' === $this->args['border_sizes_right'] ) {
-				if ( $this->args['border_color'] && $this->args['border_size'] && $this->args['border_style'] ) {
-					if ( ! $this->args['border_position'] ) {
-						$this->args['border_sizes_top']    = $this->args['border_size'];
-						$this->args['border_sizes_right']  = $this->args['border_size'];
-						$this->args['border_sizes_bottom'] = $this->args['border_size'];
-						$this->args['border_sizes_left']   = $this->args['border_size'];
-					} else {
-						$this->args[ 'border_sizes_' . $this->args['border_position'] ] = $this->args['border_size'];
-					}
-				}
-			}
-
-			if ( ! empty( $this->args['background_image'] ) ) {
-				$this->args['background_data'] = fusion_library()->images->get_attachment_data_by_helper( $this->args['background_image_id'], $this->args['background_image'] );
-			}
-
-			if ( ! empty( $this->args['background_image_medium'] ) ) {
-				$this->args['background_data_medium'] = fusion_library()->images->get_attachment_data_by_helper( $this->args['background_image_id_medium'], $this->args['background_image_medium'] );
-			}
-
-			if ( ! empty( $this->args['background_image_small'] ) ) {
-				$this->args['background_data_small'] = fusion_library()->images->get_attachment_data_by_helper( $this->args['background_image_id_small'], $this->args['background_image_small'] );
-			}
-
-			if ( empty( $this->args['background_color_hover'] ) && ! empty( $this->args['background_color'] ) ) {
-				$this->args['background_color_hover'] = $this->args['background_color'];
-			}
+			$this->args['border_position'] = ( 'all' !== $this->args['border_position'] ) ? '-' . $this->args['border_position'] : '';
 		}
 
 		/**
@@ -1555,7 +1377,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return void
 		 */
 		public function set_extra_args() {
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 
 			$this->args['flex']             = false;
 			$this->args['column_map']       = [
@@ -1572,8 +1394,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 					if ( ! empty( fusion_builder_container()->column_map ) ) {
 						$this->args['column_map'] = fusion_builder_container()->column_map;
 					}
-				} elseif ( null === fusion_builder_container()->data && ( defined( 'STUDIO_VERSION' ) || FusionBuilder()->post_card_data['is_rendering'] ) ) {
-					$this->args['flex'] = true;
 				}
 			}
 
@@ -1597,7 +1417,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			}
 
 			// Whether lazy load should be used.
-			$this->args['lazy_load'] = ( 'avada' === $fusion_settings->get( 'lazy_load' ) && ! is_feed() && 'skip' !== $this->args['skip_lazy_load'] ) ? true : false;
+			$this->args['lazy_load'] = ( 'avada' === $fusion_settings->get( 'lazy_load' ) && ! is_feed() ) ? true : false;
 			if ( ! $this->args['background_image'] || '' === $this->args['background_image'] ) {
 				$this->args['lazy_load'] = false;
 			}
@@ -1719,21 +1539,16 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		public function validate_column_size( $column_size = '1_3' ) {
 
 			// Fractional value.
-
 			if ( false !== strpos( $column_size, '_' ) ) {
 				$fractions = explode( '_', $column_size );
 				return (float) $fractions[0] / (float) $fractions[1];
 			}
 
-			// Size in px or calc, return as it is.
-			if ( strpos( $column_size, 'px' ) || strpos( $column_size, 'calc' ) ) {
-				return $column_size;
-			}
-
-			// Greater than one, no px or calc, assume percentage and divide by 100.
-			if ( 1 < (float) $column_size && ! strpos( $column_size, 'px' ) && ! strpos( $column_size, 'calc' ) ) {
+			// Greater than one, assume percentage and divide by 100.
+			if ( 1 < (float) $column_size ) {
 				return (float) $column_size / 100;
 			}
+
 			return $column_size;
 		}
 
@@ -1818,11 +1633,10 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return string
 		 */
 		public function get_weighted_spacing( $value, $columns = false ) {
-
 			if ( ! isset( $this->args['column_size'] ) ) {
 				$this->set_column_size();
 			}
-			if ( strpos( $this->args['column_size'], 'px' ) || strpos( $this->args['column_size'], 'calc' ) ) {
+			if ( 0 === (float) $value ) {
 				return $value;
 			}
 			$unitless_spacing = (float) filter_var( $value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION );
@@ -1862,7 +1676,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 			if ( $this->args['flex'] ) {
 				$this->set_column_size();
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				// Medium default to TO or validate if set.
 				if ( empty( $this->args['type_medium'] ) ) {
@@ -1923,6 +1737,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 					} else {
 						$this->args[ $spacing_right_key ] = $empty_offset;
 					}
+
 					$fusion_col_type['margin'][ $width ] = [
 						'left'  => $this->args[ $spacing_left_key ],
 						'right' => $this->args[ $spacing_right_key ],
@@ -2073,13 +1888,21 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return array
 		 */
 		public function add_lazy_attributes( $attr, $element = '' ) {
+			global $is_IE, $is_edge;
 
 			// Check if we are using lazy load.
 			if ( $this->args['lazy_load'] ) {
 
-				// If its not wrapper and we call this it is always true.  If we have no hover then we also add to wrapper.
-				if ( 'wrapper' !== $element || ! $this->args['hover_or_link'] ) {
+				// If its not wrapper and we call this it is always true.  If we have no hover or IE then we also add to wrapper.
+				if ( 'wrapper' !== $element || ( ! $this->args['hover_or_link'] && ! $is_IE && ! $is_edge ) ) {
 					$attr['class'] .= ' lazyload';
+
+					// Yes and have background data for image, set dimensions.
+					if ( ! empty( $this->args['lazy_dims'] ) ) {
+						foreach ( $this->args['lazy_dims'] as $key => $value ) {
+							$attr[ $key ] = $value;
+						}
+					}
 
 					// Have background image, set its url.
 					if ( ! empty( $this->args['lazy_bg'] ) ) {
@@ -2102,11 +1925,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return string $value Formatted value.
 		 */
 		public function validate_percentage_margin( $value = '', $column_size = 1 ) {
-
-			// If custom column size, return actual value.
-			if ( strpos( $column_size, 'px' ) || strpos( $column_size, 'calc' ) ) {
-				return $value;
-			}
 
 			// If value is in percentage and not calc, make it relative to container.
 			if ( 0 < (float) $column_size && strpos( $value, '%' ) && ! strpos( $value, 'calc' ) ) {
@@ -2165,16 +1983,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 								'top'    => '0px',
 								'bottom' => '20px',
 							],
-							'css_vars'    => [
-								[
-									'name'   => '--col_margin-top',
-									'choice' => 'top',
-								],
-								[
-									'name'   => '--col_margin-bottom',
-									'choice' => 'bottom',
-								],
-							],
 						],
 						'col_spacing'      => [
 							'label'       => esc_html__( 'Column Spacing', 'fusion-builder' ),
@@ -2183,11 +1991,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 							'default'     => '4%',
 							'type'        => 'dimension',
 							'transport'   => 'postMessage',
-							'css_vars'    => [
-								[
-									'name' => '--col_spacing',
-								],
-							],
 						],
 						'col_width_medium' => [
 							'label'       => esc_html__( 'Column Width On Medium Screens', 'fusion-builder' ),
@@ -2200,10 +2003,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 								'inherit_from_large' => esc_html__( 'Inherit From Large', 'fusion-builder' ),
 								'1_1'                => esc_html__( 'Full Width ', 'fusion-builder' ),
 							],
-							[
-								'name'     => '--medium-col-default',
-								'callback' => [ 'column_width_inheritance', '' ],
-							],
 						],
 						'col_width_small'  => [
 							'label'       => esc_html__( 'Column Width On Small Screens', 'fusion-builder' ),
@@ -2215,10 +2014,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 							'choices'     => [
 								'inherit_from_large' => esc_html__( 'Inherit From Large', 'fusion-builder' ),
 								'1_1'                => esc_html__( 'Full Width ', 'fusion-builder' ),
-							],
-							[
-								'name'     => '--small-col-default',
-								'callback' => [ 'column_width_inheritance', '' ],
 							],
 						],
 					],
@@ -2235,56 +2030,31 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 */
 		public function add_scripts() {
 
-			$fusion_settings = awb_get_fusion_settings();
+			$fusion_settings = fusion_get_fusion_settings();
 
-			$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
-
-			if ( $is_builder ) {
-				Fusion_Dynamic_JS::localize_script(
-					'fusion-column-bg-image',
-					'fusionBgImageVars',
-					[
-						'content_break_point' => intval( $fusion_settings->get( 'content_break_point' ) ),
-					]
-				);
-				Fusion_Dynamic_JS::enqueue_script(
-					'fusion-column-bg-image',
-					FusionBuilder::$js_folder_url . '/general/fusion-column-bg-image.js',
-					FusionBuilder::$js_folder_path . '/general/fusion-column-bg-image.js',
-					[ 'jquery', 'modernizr', 'fusion-equal-heights' ],
-					FUSION_BUILDER_VERSION,
-					true
-				);
-			}
+			Fusion_Dynamic_JS::localize_script(
+				'fusion-column-bg-image',
+				'fusionBgImageVars',
+				[
+					'content_break_point' => intval( $fusion_settings->get( 'content_break_point' ) ),
+				]
+			);
+			Fusion_Dynamic_JS::register_script(
+				'fusion-column-bg-image',
+				FusionBuilder::$js_folder_url . '/general/fusion-column-bg-image.js',
+				FusionBuilder::$js_folder_path . '/general/fusion-column-bg-image.js',
+				[ 'jquery', 'modernizr' ],
+				'1',
+				true
+			);
 			Fusion_Dynamic_JS::enqueue_script(
 				'fusion-column',
 				FusionBuilder::$js_folder_url . '/general/fusion-column.js',
 				FusionBuilder::$js_folder_path . '/general/fusion-column.js',
-				[ 'jquery', 'fusion-animations' ],
-				FUSION_BUILDER_VERSION,
+				[ 'jquery', 'fusion-animations', 'fusion-equal-heights', 'fusion-column-bg-image' ],
+				'1',
 				true
 			);
-
-			// Legacy column script.
-			Fusion_Dynamic_JS::register_script(
-				'fusion-column-legacy',
-				FusionBuilder::$js_folder_url . '/general/fusion-column-legacy.js',
-				FusionBuilder::$js_folder_path . '/general/fusion-column-legacy.js',
-				[ 'jquery', 'fusion-animations', 'fusion-equal-heights' ],
-				FUSION_BUILDER_VERSION,
-				true
-			);
-		}
-
-		/**
-		 * Sets the legacy scripts.
-		 *
-		 * @access public
-		 * @since 3.4
-		 * @return void
-		 */
-		public function add_legacy_scripts() {
-			Fusion_Dynamic_JS::enqueue_script( 'fusion-column-legacy' );
 		}
 	}
 
@@ -2335,8 +2105,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 		 * @return array
 		 */
 		function fusion_get_column_params() {
-			$fusion_settings = awb_get_fusion_settings();
-
 			return [
 				[
 					'type'        => 'radio_button_set',
@@ -2554,24 +2322,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 					],
 				],
 				[
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Column HTML Tag', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose column HTML tag, default is div.', 'fusion-builder' ),
-					'param_name'  => 'column_tag',
-					'value'       => [
-						'div'     => 'Default',
-						'section' => 'Section',
-						'header'  => 'Header',
-						'footer'  => 'Footer',
-						'main'    => 'Main',
-						'article' => 'Article',
-						'aside'   => 'Aside',
-						'nav'     => 'Nav',
-					],
-					'default'     => 'div',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-				],
-				[
 					'type'         => 'link_selector',
 					'heading'      => esc_attr__( 'Link URL', 'fusion-builder' ),
 					'description'  => __( 'Add the URL the column will link to, ex: http://example.com. <strong>IMPORTANT:</strong> This will disable links on elements inside the column.', 'fusion-builder' ),
@@ -2589,28 +2339,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 						'_self'    => esc_attr__( '_self', 'fusion-builder' ),
 						'_blank'   => esc_attr__( '_blank', 'fusion-builder' ),
 						'lightbox' => esc_attr__( 'Lightbox', 'fusion-builder' ),
-					],
-					'dependency'  => [
-						[
-							'element'  => 'link',
-							'value'    => '',
-							'operator' => '!=',
-						],
-					],
-				],
-				[
-					'type'         => 'textfield',
-					'heading'      => esc_attr__( 'Link Description', 'fusion-builder' ),
-					'description'  => esc_attr__( 'Add descriptive text to the link to make it easier accessible.', 'fusion-builder' ),
-					'param_name'   => 'link_description',
-					'value'        => '',
-					'dynamic_data' => true,
-					'dependency'   => [
-						[
-							'element'  => 'link',
-							'value'    => '',
-							'operator' => '!=',
-						],
 					],
 				],
 				[
@@ -2676,7 +2404,7 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 				[
 					'type'        => 'column_width',
 					'heading'     => esc_attr__( 'Width', 'fusion-builder' ),
-					'description' => esc_attr__( 'Column width on respective display size. Enter values including any valid CSS unit, ex: 4%.', 'fusion-builder' ),
+					'description' => esc_attr__( 'Column width on respective display size.', 'fusion-builder' ),
 					'param_name'  => 'type',
 					'default'     => '0',
 					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
@@ -2691,44 +2419,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 							'value'    => 'flex',
 							'operator' => '==',
 						],
-					],
-				],
-				[
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Flex Grow', 'fusion-builder' ),
-					'description' => esc_attr__( 'Flex grow with in the container.', 'fusion-builder' ),
-					'param_name'  => 'flex_grow',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'dependency'  => [
-						[
-							'element'  => 'fusion_builder_container',
-							'param'    => 'type',
-							'value'    => 'flex',
-							'operator' => '==',
-						],
-					],
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-					],
-				],
-				[
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Flex Shrink', 'fusion-builder' ),
-					'description' => esc_attr__( 'Flex shrink with in the container.', 'fusion-builder' ),
-					'param_name'  => 'flex_shrink',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'dependency'  => [
-						[
-							'element'  => 'fusion_builder_container',
-							'param'    => 'type',
-							'value'    => 'flex',
-							'operator' => '==',
-						],
-					],
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
 					],
 				],
 				[
@@ -2884,16 +2574,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 							'operator' => '!=',
 						],
 					],
-					'states'      => [
-						'hover' => [
-							'label'   => __( 'Hover', 'fusion-builder' ),
-							'preview' => [
-								'selector' => '.fusion-column-wrapper, .fusion-column-inner-bg',
-								'type'     => 'class',
-								'toggle'   => 'hover',
-							],
-						],
-					],
 				],
 				[
 					'type'        => 'radio_button_set',
@@ -2947,39 +2627,11 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 				],
 				'fusion_box_shadow_placeholder'         => [
 					'callback' => [
-						'function' => 'fusion_update_box_shadow_vars',
+						'function' => 'fusion_update_box_shadow',
 						'args'     => [
 							'selector' => '.fusion-column-wrapper',
 						],
 					],
-				],
-				[
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Z Index', 'fusion-builder' ),
-					'description' => esc_attr__( 'Value for the z-index CSS property of the column, can be both positive or negative.', 'fusion-builder' ),
-					'param_name'  => 'z_index',
-					'value'       => '',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'states'      => [
-						'hover' => [
-							'label' => __( 'Hover', 'fusion-builder' ),
-						],
-					],
-				],
-				[
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Overflow', 'fusion-builder' ),
-					'description' => esc_attr__( 'Value for column\'s overflow CSS property.', 'fusion-builder' ),
-					'param_name'  => 'overflow',
-					'value'       => [
-						''        => esc_attr__( 'Default', 'fusion-builder' ),
-						'visible' => esc_attr__( 'Visible', 'fusion-builder' ),
-						'scroll'  => esc_attr__( 'Scroll', 'fusion-builder' ),
-						'hidden'  => esc_attr__( 'Hidden', 'fusion-builder' ),
-						'auto'    => esc_attr__( 'Auto', 'fusion-builder' ),
-					],
-					'default'     => '',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
 				],
 				[
 					'type'             => 'subgroup',
@@ -3015,20 +2667,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 						'name' => 'background_type',
 						'tab'  => 'single',
 					],
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-					],
-					'states'      => [
-						'hover' => [
-							'label'   => __( 'Hover', 'fusion-builder' ),
-							'preview' => [
-								'selector' => '.fusion-column-wrapper, .fusion-column-inner-bg',
-								'type'     => 'class',
-								'toggle'   => 'hover',
-							],
-						],
-					],
 				],
 				[
 					'type'         => 'upload',
@@ -3042,10 +2680,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 						'name' => 'background_type',
 						'tab'  => 'image',
 					],
-					'responsive'   => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-					],
 				],
 				[
 					'type'        => 'textfield',
@@ -3054,62 +2688,11 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 					'param_name'  => 'background_image_id',
 					'value'       => '',
 					'hidden'      => true,
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-					],
-				],
-				[
-					'type'             => 'select',
-					'heading'          => esc_attr__( 'Lazy Load', 'fusion-builder' ),
-					'description'      => esc_attr__( 'Lazy load which is being used.', 'fusion-builder' ),
-					'param_name'       => 'lazy_load',
-					'value'            => [
-						'avada'     => esc_attr__( 'Avada', 'fusion-builder' ),
-						'wordpress' => esc_attr__( 'WordPress', 'fusion-builder' ),
-						'none'      => esc_attr__( 'None', 'fusion-builder' ),
-					],
-					'default'          => $fusion_settings->get( 'lazy_load' ),
-					'hidden'           => true,
-					'remove_from_atts' => true,
-					'group'            => esc_attr__( 'Background', 'fusion-builder' ),
-					'subgroup'         => [
-						'name' => 'background_type',
-						'tab'  => 'image',
-					],
-				],
-				[
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Skip Lazy Loading', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select whether you want to skip lazy loading on this image or not.', 'fusion-builder' ),
-					'param_name'  => 'skip_lazy_load',
-					'default'     => '',
-					'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-					'subgroup'    => [
-						'name' => 'background_type',
-						'tab'  => 'image',
-					],
-					'value'       => [
-						'skip' => esc_attr__( 'Yes', 'fusion-builder' ),
-						''     => esc_attr__( 'No', 'fusion-builder' ),
-					],
-					'dependency'  => [
-						[
-							'element'  => 'lazy_load',
-							'value'    => 'avada',
-							'operator' => '==',
-						],
-						[
-							'element'  => 'background_image',
-							'value'    => '',
-							'operator' => '!=',
-						],
-					],
 				],
 				[
 					'type'        => 'select',
 					'heading'     => esc_attr__( 'Background Position', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the position of the background image.', 'fusion-builder' ),
+					'description' => esc_attr__( 'Choose the postion of the background image.', 'fusion-builder' ),
 					'param_name'  => 'background_position',
 					'default'     => 'left top',
 					'group'       => esc_attr__( 'Background', 'fusion-builder' ),
@@ -3125,7 +2708,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 						],
 					],
 					'value'       => [
-						''              => esc_attr__( 'Default', 'fusion-builder' ),
 						'left top'      => esc_attr__( 'Left Top', 'fusion-builder' ),
 						'left center'   => esc_attr__( 'Left Center', 'fusion-builder' ),
 						'left bottom'   => esc_attr__( 'Left Bottom', 'fusion-builder' ),
@@ -3135,14 +2717,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 						'center top'    => esc_attr__( 'Center Top', 'fusion-builder' ),
 						'center center' => esc_attr__( 'Center Center', 'fusion-builder' ),
 						'center bottom' => esc_attr__( 'Center Bottom', 'fusion-builder' ),
-					],
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-						'defaults'          => [
-							'small'  => '',
-							'medium' => '',
-						],
 					],
 				],
 				[
@@ -3164,127 +2738,10 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 						],
 					],
 					'value'       => [
-						''          => esc_attr__( 'Default', 'fusion-builder' ),
 						'no-repeat' => esc_attr__( 'No Repeat', 'fusion-builder' ),
 						'repeat'    => esc_attr__( 'Repeat Vertically and Horizontally', 'fusion-builder' ),
 						'repeat-x'  => esc_attr__( 'Repeat Horizontally', 'fusion-builder' ),
 						'repeat-y'  => esc_attr__( 'Repeat Vertically', 'fusion-builder' ),
-					],
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-						'defaults'          => [
-							'small'  => '',
-							'medium' => '',
-						],
-					],
-				],
-				[
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Background Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the size of the background image or set a custom size.', 'fusion-builder' ),
-					'param_name'  => 'background_size',
-					'value'       => [
-						''        => esc_attr__( 'Default', 'fusion-builder' ),
-						'cover'   => esc_attr__( 'Cover', 'fusion-builder' ),
-						'contain' => esc_attr__( 'Contain', 'fusion-builder' ),
-						'custom'  => esc_attr__( 'Custom', 'fusion-builder' ),
-					],
-					'default'     => '',
-					'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-					'subgroup'    => [
-						'name' => 'background_type',
-						'tab'  => 'image',
-					],
-					'dependency'  => [
-						[
-							'element'  => 'background_image',
-							'value'    => '',
-							'operator' => '!=',
-						],
-					],
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-						'defaults'          => [
-							'small'  => '',
-							'medium' => '',
-						],
-					],
-				],
-				[
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Background Custom Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set the custom size of the background image.', 'fusion-builder' ),
-					'param_name'  => 'background_custom_size',
-					'default'     => '',
-					'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-					'subgroup'    => [
-						'name' => 'background_type',
-						'tab'  => 'image',
-					],
-					'device'      => 'large',
-					'dependency'  => [
-						[
-							'element'  => 'background_image',
-							'value'    => '',
-							'operator' => '!=',
-						],
-						[
-							'element'  => 'background_size',
-							'value'    => 'custom',
-							'operator' => '==',
-						],
-					],
-				],
-				[
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Background Custom Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set the custom size of the background image.', 'fusion-builder' ),
-					'param_name'  => 'background_custom_size_medium',
-					'default'     => '',
-					'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-					'subgroup'    => [
-						'name' => 'background_type',
-						'tab'  => 'image',
-					],
-					'device'      => 'medium',
-					'dependency'  => [
-						[
-							'element'  => 'background_image',
-							'value'    => '',
-							'operator' => '!=',
-						],
-						[
-							'element'  => 'background_size_medium',
-							'value'    => 'custom',
-							'operator' => '==',
-						],
-					],
-				],
-				[
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Background Custom Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set the custom size of the background image.', 'fusion-builder' ),
-					'param_name'  => 'background_custom_size_small',
-					'default'     => '',
-					'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-					'subgroup'    => [
-						'name' => 'background_type',
-						'tab'  => 'image',
-					],
-					'device'      => 'small',
-					'dependency'  => [
-						[
-							'element'  => 'background_image',
-							'value'    => '',
-							'operator' => '!=',
-						],
-						[
-							'element'  => 'background_size_small',
-							'value'    => 'custom',
-							'operator' => '==',
-						],
 					],
 				],
 				[
@@ -3293,7 +2750,6 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 					'description' => esc_attr__( 'Choose how blending should work for each background layer.', 'fusion-builder' ),
 					'param_name'  => 'background_blend_mode',
 					'value'       => [
-						''            => esc_attr__( 'Default', 'fusion-builder' ),
 						'none'        => esc_attr__( 'Disabled', 'fusion-builder' ),
 						'multiply'    => esc_attr__( 'Multiply', 'fusion-builder' ),
 						'screen'      => esc_attr__( 'Screen', 'fusion-builder' ),
@@ -3324,133 +2780,12 @@ if ( ! class_exists( 'Fusion_Column_Element' ) ) {
 							'operator' => '!=',
 						],
 					],
-					'responsive'  => [
-						'state'             => 'large',
-						'additional_states' => [ 'medium', 'small' ],
-						'defaults'          => [
-							'small'  => '',
-							'medium' => '',
-						],
-					],
 				],
 				'fusion_conditional_render_placeholder' => [],
 				'fusion_get_column_params'              => [],
-				[
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Position Sticky', 'fusion-builder' ),
-					'description' => __( 'Turn on to have the column stick inside its parent container on scroll. <strong>NOTE:</strong> this feature uses the browser native sticky positioning.  Depending on the browser and specific setup the feature may not be available.', 'fusion-builder' ),
-					'param_name'  => 'sticky',
-					'default'     => 'off',
-					'group'       => esc_attr__( 'Extras', 'fusion-builder' ),
-					'value'       => [
-						'on'  => esc_html__( 'On', 'fusion-builder' ),
-						'off' => esc_html__( 'Off', 'fusion-builder' ),
-					],
-					'dependency'  => [
-						[
-							'element'  => 'absolute',
-							'value'    => 'on',
-							'operator' => '!=',
-						],
-					],
-				],
-				[
-					'type'        => 'checkbox_button_set',
-					'heading'     => esc_attr__( 'Responsive Position Sticky', 'fusion-builder' ),
-					'param_name'  => 'sticky_devices',
-					'value'       => fusion_builder_visibility_options( 'full' ),
-					'default'     => fusion_builder_default_visibility( 'array' ),
-					'group'       => esc_attr__( 'Extras', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose at which screen sizes the container should be sticky.', 'fusion-builder' ),
-					'dependency'  => [
-						[
-							'element'  => 'sticky',
-							'value'    => 'on',
-							'operator' => '==',
-						],
-						[
-							'element'  => 'absolute',
-							'value'    => 'on',
-							'operator' => '!=',
-						],
-					],
-				],
-				[
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Sticky Column Offset', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls how far the top of the column is offset from top of viewport when sticky. Use either a unit of measurement, or a CSS selector.', 'fusion-builder' ),
-					'param_name'  => 'sticky_offset',
-					'value'       => '',
-					'group'       => esc_attr__( 'Extras', 'fusion-builder' ),
-					'dependency'  => [
-						[
-							'element'  => 'sticky',
-							'value'    => 'on',
-							'operator' => '==',
-						],
-						[
-							'element'  => 'absolute',
-							'value'    => 'on',
-							'operator' => '!=',
-						],
-					],
-				],
-				[
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Position Absolute', 'fusion-builder' ),
-					'description' => __( 'Turn on to have the column in absolute position.', 'fusion-builder' ),
-					'param_name'  => 'absolute',
-					'default'     => 'off',
-					'group'       => esc_attr__( 'Extras', 'fusion-builder' ),
-					'value'       => [
-						'on'  => esc_html__( 'On', 'fusion-builder' ),
-						'off' => esc_html__( 'Off', 'fusion-builder' ),
-					],
-					'dependency'  => [
-						[
-							'element'  => 'sticky',
-							'value'    => 'on',
-							'operator' => '!=',
-						],
-					],
-				],
-				[
-					'type'             => 'dimension',
-					'remove_from_atts' => true,
-					'heading'          => esc_attr__( 'Absolute Offset', 'fusion-builder' ),
-					'description'      => esc_attr__( 'Enter values including any valid CSS unit, ex: 4%.', 'fusion-builder' ),
-					'param_name'       => 'absolute_props',
-					'group'            => esc_attr__( 'Extras', 'fusion-builder' ),
-					'value'            => [
-						'absolute_top'    => '',
-						'absolute_right'  => '',
-						'absolute_bottom' => '',
-						'absolute_left'   => '',
-					],
-					'dependency'       => [
-						[
-							'element'  => 'sticky',
-							'value'    => 'on',
-							'operator' => '!=',
-						],
-						[
-							'element'  => 'absolute',
-							'value'    => 'on',
-							'operator' => '==',
-						],
-					],
-				],
 				'fusion_filter_placeholder'             => [
 					'selector_base' => 'fusion-builder-column-live-',
-					'parent_hover'  => 'true',
 				],
-				'fusion_transform_placeholder'          => [
-					'selector_base' => 'fusion-builder-column-live-',
-				],
-				'fusion_transition_placeholder'         => [
-					'selector_base' => 'fusion-builder-column-live-',
-				],
-				'fusion_motion_effects_placeholder'     => [],
 				'fusion_animation_placeholder'          => [
 					'preview_selector' => '$el',
 				],

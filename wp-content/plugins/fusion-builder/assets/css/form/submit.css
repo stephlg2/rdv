@@ -9,7 +9,7 @@
 .fusion-form-form-wrapper .form-form-submit.fusion-form-working:hover span,
 .fusion-form-form-wrapper .form-form-submit.fusion-form-working:focus span,
 .fusion-form-form-wrapper .form-form-submit.fusion-form-working:active span {
-  color: transparent !important;
+  color: transparent;
 }
 .fusion-form-form-wrapper .form-form-submit.fusion-form-working::before {
   content: "•••" !important;

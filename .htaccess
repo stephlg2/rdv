@@ -1,3 +1,7 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+RewriteRule ^paiement/validation\.php$ /index.php?monetico_action=notify [L,QSA]
+</IfModule>
 # BEGIN WebP Rewrite
 <IfModule mod_rewrite.c>
   RewriteEngine On

@@ -35,9 +35,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Validate values.
 				this.validateValues( atts.values );
 
-				this.values = atts.values;
-
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.label       = window.fusionAllElements[ this.model.get( 'element_type' ) ].name;
 				attributes.icon        = window.fusionAllElements[ this.model.get( 'element_type' ) ].icon;
 
@@ -75,7 +74,29 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
-				attr.style += this.getStyleVariables( values );
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
+
+				if ( '' !== values.height && 'sticky' !== values.layout ) {
+					attr.style += 'min-height:' + values.height + ';';
+				}
+
+				if ( '' !== values.font_size ) {
+					attr.style += 'font-size:' + values.font_size + ';';
+				}
 
 				if ( 'sticky' !== values.layout ) {
 					attr[ 'class' ] += ' single-navigation clearfix ';
@@ -111,42 +132,114 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
+			 * @since  2.2
+			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var styles = '<style type="text/css">';
 
-				customVars.box_shadow = _.fusionGetBoxShadowStyle( values );
+				if ( '' !== values.border_size ) {
+					styles += '.fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky){border-width:' + values.border_size + ';}';
 
-				cssVarsOptions = [
-					'z_index',
-					'border_color',
-					'bg_color',
-					'text_color',
-					'text_hover_color',
-					'preview_text_color'
-				];
+					if ( 'preview' === values.layout ) {
+						styles += '.fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation.layout-preview .fusion-pagination-preview-wrapper{';
 
-				cssVarsOptions.margin_top            = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.font_size             = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.height                = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.preview_wrapper_width = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.preview_width         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.preview_height        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_size           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.preview_font_size     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.max_width             = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.max_width             = { 'callback': _.fusionGetValueWithUnit };
+						if ( 'top' === values.preview_position ) {
+							styles += 'margin-bottom: calc(' + values.border_size + ' + 1px);';
+						} else {
+							styles += 'margin-top: calc(' + values.border_size + ' + 1px);';
+						}
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+						styles += '}';
+					}
+				}
+
+				if ( '' !== values.border_color ) {
+					styles += '.fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky){border-color:' + values.border_color + ';}';
+				}
+
+				if ( '' !== values.text_color ) {
+					styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky) a,';
+					styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky) a::before,';
+					styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky) a::after {';
+					styles += 'color:' + values.text_color + ';';
+					styles += '}';
+				}
+
+				if ( '' !== values.text_hover_color ) {
+					styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky) a:hover,';
+					styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky) a:hover::before,';
+					styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.single-navigation:not(.layout-sticky) a:hover::after {';
+					styles += 'color:' + values.text_hover_color + ';';
+					styles += '}';
+				}
+
+				if ( '' !== values.bg_color && 'text' !== values.layout ) {
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky .fusion-control-navigation,';
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + ':not(.layout-sticky).layout-preview .fusion-pagination-preview-wrapper{';
+					styles += 'background:' + values.bg_color + ';}';
+				}
+
+				if ( 'yes' === values.box_shadow && 'text' !== values.layout ) {
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky.has-box-shadow .fusion-control-navigation:before,';
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + ':not(.layout-sticky).layout-preview.has-box-shadow .fusion-pagination-preview-wrapper{';
+					styles += 'box-shadow:' + _.fusionGetBoxShadowStyle( values ) + ' !important;}';
+				}
+
+				styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky .fusion-control-navigation a,';
+				styles += '.fusion-fullwidth .fusion-builder-row.fusion-row .fusion-pagination-tb-' + this.model.get( 'cid' ) + ':not(.layout-sticky).layout-preview .fusion-pagination-preview-wrapper .fusion-item-title {';
+
+				if ( '' !== values.preview_text_color && 'text' !== values.layout ) {
+					styles += 'color:' + values.preview_text_color + ';';
+				}
+
+				if ( '' !== values.preview_font_size && 'text' !== values.layout ) {
+					styles += 'font-size:' + values.preview_font_size + ';';
+				}
+
+				styles += '}';
+
+				if ( '' !== values.preview_height && 'sticky' === values.layout ) {
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky .fusion-control-navigation{';
+					styles += 'height:' + values.preview_height + ';';
+					styles += '}';
+				}
+
+				if ( '' !== values.preview_wrapper_width && 'sticky' === values.layout ) {
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky .fusion-control-navigation{';
+					styles += 'min-width:' + values.preview_wrapper_width + ';';
+					styles += '}';
+				}
+
+				if ( '' !== values.preview_width && 'sticky' === values.layout ) {
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky .fusion-control-navigation.next{';
+					if ( jQuery( 'body' ).hasClass( 'rtl' ) ) {
+						styles += 'transform:translate( calc( max( -' + values.preview_wrapper_width + ', -50vw ) + ' + values.preview_width + '), -50% ) !important;';
+					} else {
+						styles += 'transform:translate( calc( min( ' + values.preview_wrapper_width + ', 50vw ) - ' + values.preview_width + '), -50% );';
+					}
+					styles += '}';
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky .fusion-control-navigation.prev{';
+					if ( jQuery( 'body' ).hasClass( 'rtl' ) ) {
+						styles += 'transform:translate( calc( min( ' + values.preview_wrapper_width + ', 50vw ) - ' + values.preview_width + '), -50% ) !important;';
+					} else {
+						styles += 'transform:translate( calc( max( -' + values.preview_wrapper_width + ', -50vw ) + ' + values.preview_width + '), -50% );';
+					}
+					styles += '}';
+				}
+
+				if ( '' !== values.z_index && 'sticky' === values.layout ) {
+					styles += '.fusion-body .fusion-pagination-tb-' + this.model.get( 'cid' ) + '.layout-sticky{';
+					styles += 'z-index:' + parseInt( values.z_index ) + ';';
+					styles += '}';
+				}
+
+				styles += '</style>';
+
+				return styles;
 			},
 
 			/**
@@ -155,6 +248,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @since 2.0
 			 * @return {void}
 			 */
+
 			onSettingsOpen: function() {
 				var $pagination = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( this.$el.find( '.fusion-live-pagination-tb' ) );
 

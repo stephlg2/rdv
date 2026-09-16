@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_tb_woo_additional_info-shortcode">
+	{{{styles}}}
 	<div {{{ _.fusionGetAttributes( wrapperAttr ) }}}>
 		{{{output}}}
 	</div>

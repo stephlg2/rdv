@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Fusion-Library
  * @since      2.1
  */
@@ -18,15 +18,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Get & set setting values.
  */
 class Fusion_Searchform {
-
-	/**
-	 * The search counter.
-	 *
-	 * @access private
-	 * @since 7.5
-	 * @var int
-	 */
-	private static $counter = 0;
 
 	/**
 	 * Outputs search form.
@@ -47,7 +38,6 @@ class Fusion_Searchform {
 			'after_fields'  => '',
 			'before_fields' => '',
 			'placeholder'   => __( 'Search...', 'fusion-builder' ),
-			'counter'       => self::$counter,
 		];
 
 		$args = wp_parse_args( $args, $defaults );
@@ -76,7 +66,7 @@ class Fusion_Searchform {
 				<div class="fusion-search-field search-field">
 					<label><span class="screen-reader-text"><?php esc_html_e( 'Search for:', 'fusion-builder' ); ?></span>
 						<?php if ( $is_live_search ) : ?>
-							<input type="search" class="s fusion-live-search-input" name="s" id="fusion-live-search-input-<?php echo $args['counter']; // phpcs:ignore WordPress.Security.EscapeOutput ?>" autocomplete="off" placeholder="<?php echo esc_attr( $args['placeholder'] ); ?>" required aria-required="true" aria-label="<?php echo esc_attr( $args['placeholder'] ); ?>"/>
+							<input type="search" class="s fusion-live-search-input" name="s" id="fusion-live-search-input" autocomplete="off" placeholder="<?php echo esc_attr( $args['placeholder'] ); ?>" required aria-required="true" aria-label="<?php echo esc_attr( $args['placeholder'] ); ?>"/>
 						<?php else : ?>
 							<input type="search" value="<?php echo get_search_query(); ?>" name="s" class="s" placeholder="<?php echo esc_attr( $args['placeholder'] ); ?>" required aria-required="true" aria-label="<?php echo esc_attr( $args['placeholder'] ); ?>"/>
 						<?php endif; ?>
@@ -100,7 +90,6 @@ class Fusion_Searchform {
 
 		</form>
 		<?php
-		self::$counter++;
 	}
 
 }

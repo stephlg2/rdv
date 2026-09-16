@@ -6,12 +6,14 @@ if ( portfolio_posts ) {
 	if ( 'carousel' === layout ) { #>
 		<div {{{ _.fusionGetAttributes( portfolioShortcode ) }}}>
 			<div {{{ _.fusionGetAttributes( portfolioShortcodeCarousel ) }}}>
-				<div class="swiper-wrapper">{{{ portfolio_posts }}}</div>
+				<div class="fusion-carousel-positioner">
+					<ul class="fusion-carousel-holder">{{{ portfolio_posts }}}</ul>
 
-				<# if ( 'yes' === show_nav ) { #>
-					<div class="awb-swiper-button awb-swiper-button-prev"><i class="awb-icon-angle-left"></i></div>
-					<div class="awb-swiper-button awb-swiper-button-next"><i class="awb-icon-angle-right"></i></div>
-				<# } #>
+					<# if ( 'yes' === show_nav ) { #>
+						<div class="fusion-carousel-nav"><span class="fusion-nav-prev"></span><span class="fusion-nav-next"></span></div>
+					<# } #>
+
+				</div>
 			</div>
 		</div>
 	<# } else { #>

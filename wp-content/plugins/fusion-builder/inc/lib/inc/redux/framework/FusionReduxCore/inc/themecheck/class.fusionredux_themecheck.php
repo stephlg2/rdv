@@ -189,10 +189,9 @@
 			 * @since     1.0.1
 			 */
 			public function enqueue_admin_styles() {
-				global $fusion_library_latest_version;
 				$screen = get_current_screen();
 				if ( 'appearance_page_themecheck' == $screen->id ) {
-					wp_enqueue_style( $this->slug . '-admin-styles', FusionReduxFramework::$_url . 'inc/themecheck/css/admin.css', array(), $fusion_library_latest_version );
+					wp_enqueue_style( $this->slug . '-admin-styles', FusionReduxFramework::$_url . 'inc/themecheck/css/admin.css', array(), $this->version );
 				}
 			}
 
@@ -202,11 +201,11 @@
 			 * @since     1.0.1
 			 */
 			public function enqueue_admin_scripts() {
-				global $fusion_library_latest_version;
+
 				$screen = get_current_screen();
 
 				if ( 'appearance_page_themecheck' == $screen->id ) {
-					wp_enqueue_script( $this->slug . '-admin-script', FusionReduxFramework::$_url . 'inc/themecheck/js/admin.js', array( 'jquery' ), $fusion_library_latest_version );
+					wp_enqueue_script( $this->slug . '-admin-script', FusionReduxFramework::$_url . 'inc/themecheck/js/admin.js', array( 'jquery' ), $this->version );
 
 					if ( ! isset( $_POST['themename'] ) ) {
 

@@ -8,6 +8,7 @@
 
 ?>
 <script type="text/html" id="tmpl-fusion_tb_woo_upsells-shortcode">
+{{{styles}}}
 <section {{{ _.fusionGetAttributes( attr ) }}}>
 {{{ titleElement }}}
 
@@ -20,11 +21,13 @@ if ( 'undefined' !== typeof query_data && 'undefined' !== typeof query_data.fusi
 	} else if ( 'carousel' === layout ) {
 	#>
 	<div {{{ _.fusionGetAttributes( carouselAttrs ) }}}>
-		<div {{{ _.fusionGetAttributes( productsAttrs ) }}}>
-			{{{ output }}}
-		</div>
+		<div class="fusion-carousel-positioner">
+			<ul {{{ _.fusionGetAttributes( productsAttrs ) }}}>
+				{{{ output }}}
+			</ul>
 
-		{{{ carouselNav }}}
+			{{{ carouselNav }}}
+		</div>
 	</div>
 	<# } else { #>
 		<ul {{{ _.fusionGetAttributes( productsAttrs ) }}}>

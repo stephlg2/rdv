@@ -25,8 +25,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {void}
 			 */
 			afterPatch: function() {
-				var params = this.model.get( 'params' ),
-					svgAttr, svgCode;
+				var params = this.model.get( 'params' );
 
 				if ( params.flex_grow ) {
 					jQuery( this.$el ).closest( '.fusion-builder-live-element' ).css( 'flex-grow', params.flex_grow );
@@ -34,27 +33,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					jQuery( this.$el ).closest( '.fusion-builder-live-element' ).css( 'flex-grow', '' );
 				}
 
-				if ( 'wavy' === params.style_type ) {
-					svgAttr = {
-						'preserveAspectRatio': 'none',
-						'overflow': 'visible',
-						'height': '100%',
-						'viewBox': '0 0 24 24',
-						'fill': 'none',
-						'stroke': 'black',
-						'stroke-width': '1',
-						'stroke-linecap': 'square',
-						'stroke-miterlimit': '10'
-					};
-
-					if ( '' !== params.weight ) {
-						svgAttr[ 'stroke-width' ] = params.weight;
-					}
-					svgCode = '<svg xmlns="http://www.w3.org/2000/svg"' + _.fusionGetAttributes( svgAttr ) + '><path d="M0,6c6,0,0.9,11.1,6.9,11.1S18,6,24,6"/></svg>';
-					jQuery( this.$el ).find( '.fusion-separator-border' ).each( function() {
-						this.style.setProperty( '--awb-separator-pattern-url', `url("data:image/svg+xml;utf8,${encodeURIComponent( svgCode )}")` );
-					} );
-				}
 			},
 
 			/**
@@ -68,7 +46,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values );
-				this.values = atts.values;
 
 				attributes.values = atts.values;
 
@@ -190,7 +167,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildBorderPartsAttr: function( values ) {
 				var attr = {
 						class: 'fusion-separator-border',
-						style: this.getStyleVariables()
+						style: ''
 					},
 					styles,
 					shadow;
@@ -201,7 +178,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				styles = values.style_type.split( '|' );
 
-				if ( -1 === jQuery.inArray( 'none', styles ) && -1 === jQuery.inArray( 'single', styles ) && -1 === jQuery.inArray( 'double', styles ) && -1 === jQuery.inArray( 'shadow', styles ) && -1 === jQuery.inArray( 'wavy', styles ) ) {
+				if ( -1 === jQuery.inArray( 'none', styles ) && -1 === jQuery.inArray( 'single', styles ) && -1 === jQuery.inArray( 'double', styles ) && -1 === jQuery.inArray( 'shadow', styles ) ) {
 					styles.push( 'single' );
 				}
 				jQuery.each( styles, function( key, style ) {
@@ -212,12 +189,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					if ( 'shadow' === values.style_type ) {
 						shadow = 'background:radial-gradient(ellipse at 50% -50% , ' + values.sep_color + ' 0px, rgba(255, 255, 255, 0) 80%) repeat scroll 0 0 rgba(0, 0, 0, 0);';
 
-						attr.style += shadow;
+						attr.style  = shadow;
 						attr.style += shadow.replace( 'radial-gradient', '-webkit-radial-gradient' );
 						attr.style += shadow.replace( 'radial-gradient', '-moz-radial-gradient' );
 						attr.style += shadow.replace( 'radial-gradient', '-o-radial-gradient' );
 					} else if ( 'none' !== values.style_type ) {
-						attr.style += 'border-color:' + values.sep_color + ';';
+						attr.style = 'border-color:' + values.sep_color + ';';
 					}
 				}
 
@@ -292,21 +269,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return iconAttr;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @return {String}
-			 */
-			getStyleVariables: function() {
-				var cssVarsOptions = [ 'sep_color' ];
-
-				cssVarsOptions.height = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.amount = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions );
 			}
 		} );
 	} );

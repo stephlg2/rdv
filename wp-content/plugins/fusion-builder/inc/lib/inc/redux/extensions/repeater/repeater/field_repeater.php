@@ -143,7 +143,7 @@
 												if ( ! isset( $field['args'][ $key ] ) ) {
 													$field['args'][ $key ] = array();
 												}
-												$field['options'][ $key ] = $this->get_wordpress_data( $data, $field['args'][ $key ] ); // @phpstan-ignore-line
+												$field['options'][ $key ] = $this->get_wordpress_data( $data, $field['args'][ $key ] );
 											}
 										}
 										$default = $field['options'];
@@ -254,7 +254,6 @@
 
 			}
 
-
 			/**
 			 * Enqueue Function.
 			 * If this field requires any scripts, or css define this function and register/enqueue the scripts/css
@@ -327,7 +326,7 @@
 							if ( ! isset( $field['args'][ $key ] ) ) {
 								$field['args'][ $key ] = array();
 							}
-							$field['options'][ $key ] = $this->get_wordpress_data( $data, $field['args'][ $key ] ); // @phpstan-ignore-line
+							$field['options'][ $key ] = $this->get_wordpress_data( $data, $field['args'][ $key ] );
 						}
 					}
 					$default = $field['options'];

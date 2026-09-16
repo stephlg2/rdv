@@ -9,7 +9,7 @@
 <script type="text/template" id="fusion-builder-block-module-template">
 	<#
 	var cloning_disabled = '';
-	if ( 'undefined' !== typeof fusionAllElements[ element_type ].components_per_template && 1 === fusionAllElements[ element_type ].components_per_template ) {
+	if ( 'undefined' !== typeof fusionAllElements[ element_type ].components_per_template && 1 === fusionAllElements[ element_type ].components_per_template ) { 
 		cloning_disabled = ' cloning-disabled';
 	}
 	#>
@@ -17,9 +17,7 @@
 		<div class="fusion-builder-controls fusion-builder-module-controls">
 			<a href="#" class="fusion-builder-settings fusion-builder-module-control" title="{{ fusionBuilderText.element_settings }}"><span class="fusiona-pen"></span></a>
 			<a href="#" class="fusion-builder-clone fusion-builder-module-control fusion-builder-clone-module" title="{{ fusionBuilderText.clone_element }}"><span class="fusiona-file-add"></span></a>
-			<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) : ?>
-				<a href="#" class="fusion-builder-save fusion-builder-module-control fusion-builder-save-module-dialog" title="{{ fusionBuilderText.save_element }}"><span class="fusiona-drive"></span></a>
-			<?php endif; ?>
+			<a href="#" class="fusion-builder-save fusion-builder-module-control fusion-builder-save-module-dialog" title="{{ fusionBuilderText.save_element }}"><span class="fusiona-drive"></span></a>
 			<a href="#" class="fusion-builder-remove fusion-builder-module-control" title="{{ fusionBuilderText.delete_element }}"><span class="fusiona-trash-o"></span></a>
 		</div>
 	</div>

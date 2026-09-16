@@ -37,6 +37,15 @@
 			</li>
 
 			<li>
+				<label><?php esc_html_e( 'Toggle Wireframe', 'fusion-builder' ); ?></label>
+				<ul>
+					<li> <p>Shift</p> </li>
+					<li> + </li>
+					<li> <p>W</p> </li>
+				</ul>
+			</li>
+
+			<li>
 				<label><?php esc_html_e( 'Toggle Preview', 'fusion-builder' ); ?></label>
 				<ul>
 					<li> <p>Shift</p> </li>

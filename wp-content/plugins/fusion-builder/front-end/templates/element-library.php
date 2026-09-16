@@ -23,9 +23,6 @@
 			<li class=""><a href="#default-elements">{{ fusionBuilderText.builder_elements }}</a></li>
 			<li class=""><a href="#custom-elements">{{ fusionBuilderText.library_elements }}</a></li>
 			<li class=""><a href="#inner-columns">{{ fusionBuilderText.inner_columns }}</a></li>
-			<# if ( '1' === fusionAppConfig.studio_status ) { #>
-				<li class=""><a href="#fusion-builder-elements-studio"><i class="fusiona-avada-logo"></i> <?php esc_html_e( 'Studio', 'fusion-builder' ); ?></a></li>
-			<# } #>
 		</ul>
 	</div>
 
@@ -98,9 +95,7 @@
 							if ( 'fusion_form' === FusionApp.data.postDetails.post_type && 'fusion_form' === module.label ) {
 								return;
 							}
-							if ( 'mega_menus' === FusionApp.data.template_category && 'fusion_menu' === module.label ) {
-								return;
-							}
+
 							if ( 'post_cards' === FusionApp.data.template_category && 'fusion_post_cards' === module.label ) {
 								return;
 							}
@@ -149,24 +144,6 @@
 				<div id="inner-columns" class="fusion-tab-content">
 					<?php echo fusion_builder_inner_column_layouts(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</div>
-				<# if ( '1' === fusionAppConfig.studio_status ) { #>
-					<div id="fusion-builder-elements-studio" class="fusion-tab-content">
-						<?php if ( function_exists( 'Avada' ) && Avada()->registration->is_registered() ) : ?>
-							<div class="studio-wrapper">
-								<aside>
-									<ul></ul>
-								</aside>
-								<section>
-									<div class="fusion-builder-element-content fusion-loader"><span class="fusion-builder-loader"></span></div>
-									<ul class="studio-imports"></ul>
-								</section>
-								<?php AWB_Studio::studio_import_options_template(); ?>
-							</div>
-						<?php else : ?>
-							<h2 class="awb-studio-not-reg"><?php esc_html_e( 'The product needs to be registered to access the Avada Studio.', 'fusion-builder' ); ?></h2>
-						<?php endif; ?>
-					</div>
-				<# } #>
 
 				<div id="custom-elements" class="fusion-tab-content"></div>
 			</div>

@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 			private $modal_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -54,7 +63,8 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				return [
 					'class'        => '',
@@ -108,6 +118,8 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 			 */
 			public function render( $args, $content = '' ) {
 
+				global $fusion_settings;
+
 				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_modal' );
 				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_modal', $args );
 
@@ -115,7 +127,21 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 
 				$this->args = $defaults;
 
+				$color_obj = Fusion_Color::new_color( $background );
+				$style     = '<style type="text/css">';
+
+				if ( $border_color ) {
+					$style .= '.modal-' . $this->modal_counter . ' .modal-header, .modal-' . $this->modal_counter . ' .modal-footer{border-color:' . $border_color . ';}';
+				}
+
+				if ( 40 >= $color_obj->lightness ) {
+					$style .= '.modal-' . $this->modal_counter . ' .close{color:#ffffff; opacity:0.35}';
+				}
+
+				$style .= '</style>';
+
 				$html  = '<div ' . FusionBuilder::attributes( 'modal-shortcode' ) . '>';
+				$html .= $style;
 				$html .= '<div ' . FusionBuilder::attributes( 'modal-shortcode-dialog' ) . '>';
 				$html .= '<div ' . FusionBuilder::attributes( 'modal-shortcode-content' ) . '>';
 				$html .= '<div ' . FusionBuilder::attributes( 'modal-header' ) . '>';
@@ -158,7 +184,6 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 					'role'            => 'dialog',
 					'aria-labelledby' => 'modal-heading-' . $this->modal_counter,
 					'aria-hidden'     => 'true',
-					'style'           => '',
 				];
 
 				if ( $this->args['name'] ) {
@@ -173,40 +198,9 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 					$attr['id'] = $this->args['id'];
 				}
 
-				$color_obj = Fusion_Color::new_color( $this->args['background'] );
-
-				if ( 40 >= $color_obj->lightness ) {
-					$attr['class'] .= ' has-light-close';
-				}
-
-				$attr['style'] .= $this->get_style_variables();
-
 				return $attr;
 
 			}
-
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$css_vars_options = [
-					'border_color' => [
-						'callback' => [ 'Fusion_Sanitize', 'color' ],
-					],
-					'background'   => [
-						'callback' => [ 'Fusion_Sanitize', 'color' ],
-					],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options );
-
-				return $styles;
-			}
-
 
 			/**
 			 * Builds the dialog attributes array.
@@ -236,9 +230,17 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 			 * @return array
 			 */
 			public function content_attr() {
-				return [
+
+				$attr = [
 					'class' => 'modal-content fusion-modal-content',
 				];
+
+				if ( $this->args['background'] ) {
+					$attr['style'] = 'background-color:' . $this->args['background'];
+				}
+
+				return $attr;
+
 			}
 
 			/**
@@ -323,7 +325,7 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 								'label'       => esc_html__( 'Modal Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the background color of the modal popup box.', 'fusion-builder' ),
 								'id'          => 'modal_bg_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 							],
@@ -331,7 +333,7 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 								'label'       => esc_html__( 'Modal Border Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the border color of the modal popup box.', 'fusion-builder' ),
 								'id'          => 'modal_border_color',
-								'default'     => 'var(--awb-color3)',
+								'default'     => '#e2e2e2',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 							],
@@ -354,7 +356,7 @@ if ( fusion_is_element_enabled( 'fusion_modal' ) ) {
 					FusionBuilder::$js_folder_url . '/general/fusion-modal.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-modal.js',
 					[ 'bootstrap-modal' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 			}
@@ -417,11 +419,7 @@ if ( fusion_is_element_enabled( 'fusion_modal_text_link' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				return [
-					'name'  => '',
-					'class' => '',
-					'id'    => '',
-				];
+				return [];
 			}
 
 			/**
@@ -435,9 +433,13 @@ if ( fusion_is_element_enabled( 'fusion_modal_text_link' ) ) {
 			 */
 			public function render( $args, $content = '' ) {
 
-				$this->args = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_modal_text_link' );
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args );
 
-				return '<a ' . FusionBuilder::attributes( 'modal-text-link-shortcode' ) . '>' . do_shortcode( $content ) . '</a>';
+				$this->args = $args;
+
+				$html = '<a ' . FusionBuilder::attributes( 'modal-text-link-shortcode' ) . '>' . do_shortcode( $content ) . '</a>';
+
+				return $html;
 
 			}
 
@@ -485,7 +487,8 @@ if ( fusion_is_element_enabled( 'fusion_modal_text_link' ) ) {
  * @since 1.0
  */
 function fusion_element_modal() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -497,16 +500,15 @@ function fusion_element_modal() {
 				'preview'         => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-modal-preview.php',
 				'preview_id'      => 'fusion-builder-block-module-modal-preview-template',
 				'allow_generator' => true,
-				'help_url'        => 'https://avada.com/documentation/modal-element/',
+				'help_url'        => 'https://theme-fusion.com/documentation/fusion-builder/elements/modal-element/',
 				'inline_editor'   => true,
 				'params'          => [
 					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Name Of Modal', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Needs to be a unique identifier (lowercase), used for button or modal_text_link element to open the modal. ex: mymodal.', 'fusion-builder' ),
-						'param_name'   => 'name',
-						'value'        => '',
-						'dynamic_data' => true,
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Name Of Modal', 'fusion-builder' ),
+						'description' => esc_attr__( 'Needs to be a unique identifier (lowercase), used for button or modal_text_link element to open the modal. ex: mymodal.', 'fusion-builder' ),
+						'param_name'  => 'name',
+						'value'       => '',
 					],
 					[
 						'type'         => 'textfield',
@@ -556,13 +558,12 @@ function fusion_element_modal() {
 						'default'     => 'yes',
 					],
 					[
-						'type'         => 'tinymce',
-						'heading'      => esc_attr__( 'Contents of Modal', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Add your content to be displayed in modal.', 'fusion-builder' ),
-						'param_name'   => 'element_content',
-						'value'        => esc_attr__( 'Your Content Goes Here', 'fusion-builder' ),
-						'placeholder'  => true,
-						'dynamic_data' => true,
+						'type'        => 'tinymce',
+						'heading'     => esc_attr__( 'Contents of Modal', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add your content to be displayed in modal.', 'fusion-builder' ),
+						'param_name'  => 'element_content',
+						'value'       => esc_attr__( 'Your Content Goes Here', 'fusion-builder' ),
+						'placeholder' => true,
 					],
 					[
 						'type'        => 'textfield',
@@ -598,16 +599,15 @@ function fusion_element_modal_link() {
 				'name'          => esc_attr__( 'Modal Text / HTML Link', 'fusion-builder' ),
 				'shortcode'     => 'fusion_modal_text_link',
 				'icon'          => 'fusiona-external-link',
-				'help_url'      => 'https://avada.com/documentation/modal-text-html-link-element/',
+				'help_url'      => 'https://theme-fusion.com/documentation/avada/elements/modal-text-html-link-element/',
 				'inline_editor' => true,
 				'params'        => [
 					[
-						'type'         => 'textfield',
-						'heading'      => esc_attr__( 'Name Of Modal', 'fusion-builder' ),
-						'description'  => esc_attr__( 'Unique identifier of the modal to open on click.', 'fusion-builder' ),
-						'param_name'   => 'name',
-						'value'        => '',
-						'dynamic_data' => true,
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Name Of Modal', 'fusion-builder' ),
+						'description' => esc_attr__( 'Unique identifier of the modal to open on click.', 'fusion-builder' ),
+						'param_name'  => 'name',
+						'value'       => '',
 					],
 					[
 						'type'         => 'textarea',

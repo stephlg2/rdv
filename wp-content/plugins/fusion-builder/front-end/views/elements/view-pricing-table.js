@@ -84,27 +84,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object}
 			 */
 			filterTemplateAtts: function( atts ) {
-				// Validate values.
-				this.validateValues( atts.values );
-
 				return {
 					styles: this.computeStyles( atts.values ),
 					tableData: this.computeTableData( atts.values )
 				};
-			},
-
-			/**
-			 * Modifies values.
-			 *
-			 * @since 3.8
-			 * @param {Object} values - The values.
-			 * @return {void}
-			 */
-			validateValues: function( values ) {
-				values.margin_bottom = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_left   = _.fusionValidateAttrValue( values.margin_left, 'px' );
-				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
-				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -117,10 +100,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			computeTableData: function( values ) {
 				var type      = 'sep',
 					cid       = this.model.get( 'cid' ),
-					tableData = {
-						class: '',
-						style: ''
-					};
+					tableData = {};
 
 				if ( '1' == values.type ) {
 					type = 'full';
@@ -138,22 +118,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( 'undefined' !== typeof values[ 'class' ] && '' !== values[ 'class' ] ) {
 					tableData[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( '' !== values.margin_top ) {
-					tableData.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_right ) {
-					tableData.style += 'margin-right:' + values.margin_right + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					tableData.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
-
-				if ( '' !== values.margin_left ) {
-					tableData.style += 'margin-left:' + values.margin_left + ';';
 				}
 
 				if (  'undefined' !== typeof values.id && '' !== values.id ) {

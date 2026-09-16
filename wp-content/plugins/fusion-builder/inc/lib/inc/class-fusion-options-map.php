@@ -77,13 +77,11 @@ class Fusion_Options_Map {
 		'lightbox_gallery',
 		'lightbox_arrows',
 		'mobile_nav_submenu_slideout',
-		'defer_jquery',
 		'defer_styles',
 		'image_rollover',
 		'cats_image_rollover',
 		'title_image_rollover',
 		'enable_language_updates',
-		'custom_scrollbar',
 	];
 
 	/**

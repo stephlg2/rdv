@@ -26,7 +26,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
                 this.values = atts.values;
 
                 // Whether we should show warning instead.
-				attributes.showNotices  = 'undefined' !== this.formData._fusion || 'undefined' === typeof this.formData._fusion.form_confirmation_type || 'redirect' !== this.formData._fusion.form_confirmation_type;
+				attributes.showNotices  = 'undefined' === typeof this.formData._fusion.form_confirmation_type || 'redirect' !== this.formData._fusion.form_confirmation_type;
                 attributes.successAlert = '';
                 attributes.errorAlert   = '';
 				if ( ! attributes.showNotices ) {

@@ -74,10 +74,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				newView = new FusionPageBuilder.ElementView( viewSettings );
 			}
 
-			// This is before the content is being replaced
-			if ( 'function' === typeof newView.beforePatch ) {
-				newView.beforePatch();
-			}
 			newViewOutput = newView.getTemplate();
 
 			return newViewOutput;

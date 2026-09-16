@@ -20,10 +20,6 @@ class Fusion_Sanitize {
 	 */
 	public static function size( $value, $fallback_unit = false ) {
 
-		if ( false !== strpos( $value, '--awb' ) ) {
-			return $value;
-		}
-
 		// Trim the value.
 		$value = trim( $value );
 
@@ -59,10 +55,6 @@ class Fusion_Sanitize {
 	 */
 	public static function get_unit( $value ) {
 
-		if ( false !== strpos( $value, '--awb' ) && function_exists( 'AWB_Global_Typography' ) ) {
-			$value = AWB_Global_Typography()->get_real_value( $value );
-		}
-
 		$unit_used = '';
 
 		// Trim the value.
@@ -95,10 +87,6 @@ class Fusion_Sanitize {
 	 */
 	public static function get_value_with_unit( $value, $unit = 'px', $unit_handling = 'add' ) {
 
-		if ( false !== strpos( $value, '--awb' ) ) {
-			return $value;
-		}
-
 		$raw_values = [];
 
 		// Trim the value.
@@ -119,7 +107,7 @@ class Fusion_Sanitize {
 
 		if ( is_array( $values ) && ! empty( $values ) ) {
 			foreach ( $values as $value ) {
-				$raw_value = self::numeric_string( $value );
+				$raw_value = self::number( $value );
 
 				// Isn't a number, do not add unit.
 				if ( ! is_numeric( $raw_value ) ) {
@@ -139,7 +127,7 @@ class Fusion_Sanitize {
 			return implode( ' ', $raw_values );
 
 		}
-		$raw_value = self::numeric_string( $value );
+		$raw_value = self::number( $value );
 
 		if ( $value === $raw_value ) {
 			return $raw_value . $unit;
@@ -186,11 +174,6 @@ class Fusion_Sanitize {
 	 * @return string
 	 */
 	public static function color( $value ) {
-
-		// If its a variable, just return it.
-		if ( is_string( $value ) && ( '--' === substr( $value, 0, 2 ) || false !== strpos( $value, 'var' ) ) ) {
-			return $value;
-		}
 		$color_obj = Fusion_Color::new_color( $value );
 		$mode      = ( is_array( $value ) ) ? 'rgba' : $color_obj->mode;
 		return $color_obj->to_css( $mode );
@@ -282,22 +265,6 @@ class Fusion_Sanitize {
 	 * @return float|int
 	 */
 	public static function number( $value ) {
-		$number = filter_var( $value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION );
-
-		if ( is_numeric( $number ) ) {
-			return $number + 0; // Trick in PHP, convert to either int or float depending on number.
-		}
-
-		return 0;
-	}
-
-	/**
-	 * Sanitizes a number value into a numeric string. Can return empty string.
-	 *
-	 * @param string|int|float $value The value to sanitize.
-	 * @return string
-	 */
-	public static function numeric_string( $value ) {
 		return filter_var( $value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION );
 	}
 
@@ -381,7 +348,7 @@ class Fusion_Sanitize {
 			}
 
 			// Add numeric value to the array of numerics.
-			$numerics[] = self::numeric_string( $value );
+			$numerics[] = self::number( $value );
 		}
 
 		// Make sure there's 1 instance of each unit in the array.
@@ -446,10 +413,8 @@ class Fusion_Sanitize {
 	 * @param string|int $screen_size    In pixels.
 	 * @return string
 	 */
-	public static function units_to_px( $value, $body_font_size = 16, $screen_size = 1920 ) {
-		if ( false !== strpos( $value, '--awb' ) && function_exists( 'AWB_Global_Typography' ) ) {
-			$value = AWB_Global_Typography()->get_real_value( $value );
-		}
+	public static function units_to_px( $value, $body_font_size = 16, $screen_size = 1600 ) {
+
 		$number = self::number( $value );
 		$units  = self::get_unit( $value );
 
@@ -459,7 +424,7 @@ class Fusion_Sanitize {
 		}
 
 		// Calculate size if using percent (%).
-		if ( '%' === $units || 'vw' === $units ) {
+		if ( '%' === $units ) {
 			return intval( $number * $screen_size / 100 ) . 'px';
 		}
 
@@ -477,23 +442,16 @@ class Fusion_Sanitize {
 	 * @return string The changed font size.
 	 */
 	public static function convert_font_size_to_px( $font_size, $base_font_size ) {
-		if ( false !== strpos( $font_size, '--awb' ) && function_exists( 'AWB_Global_Typography' ) ) {
-			$font_size = AWB_Global_Typography()->get_real_value( $font_size );
-		}
 		$font_size_unit   = self::get_unit( $font_size );
-		$font_size_number = self::numeric_string( $font_size );
+		$font_size_number = self::number( $font_size );
 
 		if ( 'rem' === $font_size_unit ) {
 			$body_font_size = fusion_library()->get_option( 'body_typography', 'font-size' );
 			$base_font_size = $body_font_size ? $body_font_size : $base_font_size;
 		}
 
-		if ( false !== strpos( $base_font_size, '--awb' ) && function_exists( 'AWB_Global_Typography' ) ) {
-			$base_font_size = AWB_Global_Typography()->get_real_value( $base_font_size );
-		}
-
 		$base_font_size_unit   = self::get_unit( $base_font_size );
-		$base_font_size_number = self::numeric_string( $base_font_size );
+		$base_font_size_number = self::number( $base_font_size );
 
 		if ( ! $font_size_number ) {
 			return $font_size;

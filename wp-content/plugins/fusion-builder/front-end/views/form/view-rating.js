@@ -17,10 +17,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				this.values = atts.values;
-
 				// Create attribute objects;
-				attributes.html = this.generateFormFieldHtml( this.generateRatingField( atts.values ) );
+				attributes.styles = this.buildStyles( atts.values );
+				attributes.html   = this.generateFormFieldHtml( this.generateRatingField( atts.values ) );
 
 				return attributes;
 			},
@@ -30,7 +29,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					elementName,
 					elementHtml = '',
 					limit,
+					styles     = '',
 					options    = '',
+					hoverColor = '',
 					html       = '',
 					option;
 
@@ -39,14 +40,40 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				elementName = values.name;
 
 				while ( 0 < limit ) {
-					const checked = 2 >= limit ? 'checked' : '';
 					option = limit;
-					options += '<input id="' + option + '-' + this.model.get( 'cid' ) + '" type="radio" value="' + option + '" name="' + elementName + '"' + elementData[ 'class' ] + elementData.required + elementData.checked + elementData.holds_private_data + checked + '/>';
+					options += '<input id="' + option + '-' + this.model.get( 'cid' ) + '" type="radio" value="' + option + '" name="' + elementName + '"' + elementData[ 'class' ] + elementData.required + elementData.checked + elementData.holds_private_data + '/>';
 					options += '<label for="' + option + '-' + this.model.get( 'cid' ) + '" class="fusion-form-rating-icon">';
 					options += '<i class="' + values.icon + '"></i>';
 					options +=
 					'</label>';
 					limit--;
+				}
+
+				// CSS for .rating-icon
+				if ( values.icon_color || ( 'undefined' !== typeof values.icon_size && '' !== values.icon_size ) ) {
+					styles += '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' + this.model.get( 'cid' ) + '.fusion-form-rating-area .fusion-form-rating-icon { ';
+					if ( values.icon_color ) {
+						styles += 'color: ' + values.icon_color + ';';
+					}
+					if ( 'undefined' !== typeof values.icon_size && '' !== values.icon_size ) {
+						styles += 'font-size: ' + values.icon_size + ';';
+					}
+					styles += '}';
+				}
+
+				// CSS for .rating-icon:hover, .rating-icon:checked
+				if ( values.active_icon_color ) {
+					hoverColor = jQuery.Color( values.active_icon_color ).alpha( 0.5 ).toRgbaString();
+					styles += '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' + this.model.get( 'cid' ) + '.fusion-form-rating-area .fusion-form-input:checked~label i{ color: ' + values.active_icon_color + ';}';
+
+					styles += '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' + this.model.get( 'cid' ) + '.fusion-form-rating-area .fusion-form-input:checked:hover ~ label i,';
+					styles += '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' + this.model.get( 'cid' ) + '.fusion-form-rating-area .fusion-form-rating-icon:hover i,';
+					styles += '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' + this.model.get( 'cid' ) + '.fusion-form-rating-area .fusion-form-rating-icon:hover ~ label i,';
+					styles += '.fusion-form-form-wrapper .fusion-form-field .fusion-form-rating-area-' + this.model.get( 'cid' ) + '.fusion-form-rating-area .fusion-form-input:hover ~ label i{ color: ' + hoverColor + ';}';
+				}
+
+				if ( '' !== styles ) {
+					elementHtml += '<style type="text/css">' + styles + '</style>';
 				}
 
 				elementHtml += '<fieldset class="fusion-form-rating-area fusion-form-rating-area-' + this.model.get( 'cid' ) + ( FusionPageBuilderApp.$el.hasClass( 'rtl' ) ? ' rtl' : '' ) + '">';
@@ -60,32 +87,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				html = this.generateLabelHtml( html, elementHtml, elementData.label );
 
 				return html;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
-
-				if ( '' !== values.active_icon_color ) {
-					customVars[ 'hover-color' ] = jQuery.AWB_Color( values.active_icon_color ).alpha( 0.5 ).toVarOrRgbaString();
-				}
-
-
-				cssVarsOptions = [
-					'icon_color',
-					'active_icon_color'
-				];
-
-				cssVarsOptions.icon_size = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
 			}
 
 		} );

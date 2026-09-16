@@ -36,7 +36,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values );
-				this.values = atts.values;
 
 				// Create attribute objects.
 				attributes.attr         = this.buildAttr( atts.values );
@@ -105,7 +104,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						carouselItemCss = ' style="max-width: ' + carouselItemCss + 'px;"';
 					}
 
-					html += '<div class="swiper-slide"' + carouselItemCss + '>';
+					html += '<li class="fusion-carousel-item"' + carouselItemCss + '>';
 					html += '<div class="fusion-carousel-item-wrapper">';
 
 					html += item.featured_image;
@@ -129,7 +128,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 
 					html += '</div>';
-					html += '</div>';
+					html += '</li>';
 				} );
 
 				return html;
@@ -189,8 +188,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildCarouselNav: function() {
 				var output = '';
 
-				output += '<div class="awb-swiper-button awb-swiper-button-prev"><i class="awb-icon-angle-left"></i></div>';
-				output += '<div class="awb-swiper-button awb-swiper-button-next"><i class="awb-icon-angle-right"></i></div>';
+				output += '<div class="fusion-carousel-nav">';
+				output += '<span class="fusion-nav-prev"></span>';
+				output += '<span class="fusion-nav-next"></span>';
+				output += '</div>';
 
 				return output;
 			},
@@ -204,8 +205,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildCarouselAttrs: function( values ) {
 				var attr = {
-					class: 'awb-carousel awb-swiper awb-swiper-carousel',
-					style: this.getCarouselStyleVariables( values )
+					class: 'fusion-carousel'
 				};
 
 				if ( 'title_below_image' === values.related_posts_layout ) {
@@ -258,25 +258,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return sectionTitle;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @return {String}
-			 */
-			getCarouselStyleVariables: function( values ) {
-				var customVars = [];
-
-				if ( ! this.isDefault( 'related_posts_columns' ) ) {
-					customVars.columns = values.related_posts_columns;
-				}
-				if ( ! this.isDefault( 'related_posts_column_spacing' ) ) {
-					customVars.column_spacing = _.fusionGetValueWithUnit( values.related_posts_column_spacing );
-				}
-
-				return this.getCustomCssVars( customVars );
 			}
 
 		} );

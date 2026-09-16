@@ -34,10 +34,6 @@
 		 */
 		class FusionReduxFramework_button_set {
 
-			public $parent;
-			public $field;
-			public $value;
-
 			/**
 			 * Holds configuration settings for each field in a model.
 			 * Defining the field options

@@ -16,11 +16,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
 
-				this.values = atts.values;
 				this.validateValues( atts.values );
 
 				attributes.wrapperAttr = this.buildAttr( atts.values );
 				attributes.formAttr    = this.buildFormAttr( atts.values );
+				attributes.formStyles  = this.buildStyles( atts.values );
 
 				// Any extras that need passed on.
 				attributes.cid = this.model.get( 'cid' );
@@ -70,50 +70,115 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				return attr;
 			},
 
+			buildStyles: function( values ) {
+				var styles = '<style type="text/css">';
+
+				if ( '' !== values.input_height ) {
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-field input,';
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					styles += 'height: ' + values.input_height + ';';
+					styles += '}';
+
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					styles += 'line-height: ' + values.input_height + ';';
+					styles += '}';
+
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform.fusion-search-form-clean .fusion-search-form-content .fusion-search-field input {';
+					styles += 'padding-left: ' + values.input_height + ';';
+					styles += '}';
+
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					styles += 'width: ' + values.input_height + ';';
+					styles += '}';
+				}
+
+				if ( '' !== values.text_color ) {
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-field input,';
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-field input::placeholder,';
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform.fusion-search-form-clean .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					styles += 'color: ' + values.text_color + ';';
+					styles += '}';
+				}
+
+				if ( '' !== values.focus_border_color ) {
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-field input:focus {';
+					styles += 'border-color: ' + values.focus_border_color + ';';
+					styles += '}';
+				}
+
+				if ( '' !== values.text_size ) {
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-field input,';
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform.fusion-search-form-clean .fusion-search-form-content .fusion-search-button input[type=submit] {';
+					styles += 'font-size: ' + values.text_size + ';';
+					styles += '}';
+				}
+
+				styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform .fusion-search-form-content .fusion-search-field input {';
+
+				if ( '' !== values.bg_color ) {
+					styles += 'background-color: ' + values.bg_color + ';';
+				}
+
+				if ( '' !== values.border_size_top ) {
+					styles += 'border-top-width:' + _.fusionGetValueWithUnit( values.border_size_top ) + ';';
+				}
+				if ( '' !== values.border_size_right ) {
+					styles += 'border-right-width:' + _.fusionGetValueWithUnit( values.border_size_right ) + ';';
+				}
+				if ( '' !== values.border_size_bottom ) {
+					styles += 'border-bottom-width:' + _.fusionGetValueWithUnit( values.border_size_bottom ) + ';';
+				}
+				if ( '' !== values.border_size_left ) {
+					styles += 'border-left-width:' + _.fusionGetValueWithUnit( values.border_size_left ) + ';';
+				}
+
+				if ( '' !== values.border_color ) {
+					styles += 'border-color: ' + values.border_color + ';';
+				}
+
+				styles += '}';
+
+				if ( '' !== values.border_radius ) {
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .searchform.fusion-search-form-classic .fusion-search-form-content, .fusion-search-form-classic .searchform:not(.fusion-search-form-clean) .fusion-search-form-content {';
+					styles += 'border-radius: ' + values.border_radius + ';';
+					styles += 'overflow: hidden;';
+					styles += '}';
+					styles += '.fusion-search-element-' + this.model.get( 'cid' ) + ' .fusion-search-form-content input.s {';
+					styles += 'border-radius: ' + values.border_radius + ';';
+					styles += '}';
+				}
+
+				styles += '</style>';
+
+				return styles;
+			},
+
 			buildAttr: function( values ) {
-				var cssVars = [
-						'text_color',
-						'border_color',
-						'focus_border_color',
-						'text_size',
-						'bg_color',
-						'live_results_bg_color',
-						'live_results_link_color',
-						'live_results_meta_color',
-						'live_results_scrollbar_bg',
-						'live_results_scrollbar_handle',
-						'live_results_border_color'
-					],
-					attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'fusion-search-element fusion-search-element-' + this.model.get( 'cid' )
+				var attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
+						class: 'fusion-search-element fusion-search-element-' + this.model.get( 'cid' ),
+						style: ''
 					} );
-
-				cssVars.margin_top         = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_right       = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_bottom      = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.margin_left        = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.input_height       = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_radius      = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_size_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_size_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_size_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.border_size_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.live_results_height   = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.results_border_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.results_border_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.results_border_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVars.results_border_left   = { 'callback': _.fusionGetValueWithUnit };
-
-				attr.style = this.getCssVarsForOptions( cssVars );
 
 				attr[ 'class' ] += _.fusionGetStickyClass( values.sticky_display );
 
-				if ( values[ 'class' ] ) {
-					attr[ 'class' ] += ' ' + values[ 'class' ];
+				if ( values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
 				}
 
-				if ( 'string' === typeof values.design ) {
-					attr[ 'class' ] += ' fusion-search-form-' + values.design;
+				if ( values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
+
+				if ( values[ 'class' ] ) {
+					attr[ 'class' ] += ' ' + values[ 'class' ];
 				}
 
 				attr.id = values.id;

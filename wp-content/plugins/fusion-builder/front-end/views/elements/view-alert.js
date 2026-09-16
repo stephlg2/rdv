@@ -24,6 +24,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.attr           = this.buildAttr( atts.values );
 				attributes.buttonStyles   = this.buildButtonStyles( atts.values );
 				attributes.contentAttr    = this.buildContentAttr( atts.values );
+				attributes.contentStyles  = this.buildContentStyles( atts.values );
 
 				// Any extras that need passed on.
 				attributes.cid    = this.model.get( 'cid' );
@@ -47,37 +48,29 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				values.margin_right  = _.fusionValidateAttrValue( values.margin_right, 'px' );
 				values.margin_top    = _.fusionValidateAttrValue( values.margin_top, 'px' );
 
-				values.padding_bottom = _.fusionValidateAttrValue( values.padding_bottom, 'px' );
-				values.padding_left   = _.fusionValidateAttrValue( values.padding_left, 'px' );
-				values.padding_right  = _.fusionValidateAttrValue( values.padding_right, 'px' );
-				values.padding_top    = _.fusionValidateAttrValue( values.padding_top, 'px' );
-
-				values.border_size = parseFloat( values.border_size ) + 'px;';
-				values.dismissable = 'yes' === values.dismissable ? 'boxed' : values.dismissable;
-
 				switch ( values.type ) {
 				case 'general':
 					values.alert_class = 'info';
 					if ( ! values.icon || 'none' !== values.icon ) {
-						values.icon = 'awb-icon-info-circle';
+						values.icon = 'fa-info-circle';
 					}
 					break;
 				case 'error':
 					values.alert_class = 'danger';
 					if ( ! values.icon || 'none' !== values.icon ) {
-						values.icon = 'awb-icon-exclamation-triangle';
+						values.icon = 'fa-exclamation-triangle';
 					}
 					break;
 				case 'success':
 					values.alert_class = 'success';
 					if ( ! values.icon || 'none' !== values.icon ) {
-						values.icon = 'awb-icon-check-circle';
+						values.icon = 'fa-check-circle';
 					}
 					break;
 				case 'notice':
 					values.alert_class = 'warning';
 					if ( ! values.icon || 'none' !== values.icon ) {
-						values.icon = 'awb-icon-cog';
+						values.icon = 'fa-lg fa-cog';
 					}
 					break;
 				case 'blank':
@@ -105,8 +98,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			buildAttr: function( values ) {
 				var attr         = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-alert alert fusion-live-alert fusion-alert-cid' + this.model.get( 'cid' ),
-						style: this.getStyleVars( values ),
-						role: 'alert'
+						style: ''
 					} ),
 					alertClass   = values.alert_class;
 
@@ -116,10 +108,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					alertClass += ' fusion-alert-capitalize';
 				}
 
-				attr[ 'class' ] += 'yes' === values.link_color_inheritance ? ' awb-alert-inherit-link-color' : ' awb-alert-native-link-color';
-
-				if ( 'boxed' === values.dismissable || 'floated' === values.dismissable ) {
-					alertClass += ' alert-dismissable awb-alert-close-' + values.dismissable;
+				if ( 'yes' === values.dismissable ) {
+					alertClass += ' alert-dismissable';
 				}
 
 				attr[ 'class' ] += ' alert-' + alertClass;
@@ -138,44 +128,65 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr.id = values.id;
 				}
 
+				if ( '' !== values.margin_top ) {
+					attr.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					attr.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					attr.style += 'margin-left:' + values.margin_left + ';';
+				}
+
 				attr = _.fusionAnimations( values, attr );
 
 				return attr;
 			},
 
-			getStyleVars: function( values ) {
-				var customVars = [],
-					corners    = [
-						'top_left',
-						'top_right',
-						'bottom_right',
-						'bottom_left'
-					],
-					cssVars = [
-						'margin_top',
-						'margin_right',
-						'margin_bottom',
-						'margin_left',
-						'padding_top',
-						'padding_right',
-						'padding_bottom',
-						'padding_left'
-					];
-				this.values = values;
+			/**
+			 * Builds attributes.
+			 *
+			 * @since 2.0
+			 * @param {Object} values - The values object.
+			 * @return {Object}
+			 */
+			buildContentStyles: function( values ) {
+				var alertClass   = values.alert_class,
+					args         = {},
+					styles       = '',
+					cid          = this.model.get( 'cid' ),
+					backgroundColor,
+					accentColor;
 
-				if ( 'custom' === values.alert_class ) {
-					cssVars.push( 'background_color' );
-					cssVars.push( 'accent_color' );
-					cssVars.push( 'border_size' );
-
-					_.each( corners, function( corner ) {
-						if ( values[ 'border_radius_' + corner ] ) {
-							customVars[ 'border-' + corner.replace( '_', '-' ) + '-radius' ] = values[ 'border_radius_' + corner ];
-						}
-					} );
+				if ( 'custom' === alertClass ) {
+					values.border_size    = parseFloat( values.border_size ) + 'px';
+					args.background_color = values.background_color;
+					args.accent_color     = values.accent_color;
+					args.border_size      = values.border_size;
+				} else {
+					backgroundColor       = 'var(--' + alertClass + '_bg_color)';
+					accentColor           = 'var(--' + alertClass + '_accent_color)';
+					args.background_color = backgroundColor;
+					args.accent_color     = accentColor;
+					args.border_size      = parseFloat( window.fusionAllElements.fusion_alert.defaults.border_size ) + 'px';
 				}
 
-				return this.getCssVarsForOptions( cssVars )  + this.getCustomCssVars( customVars );
+				styles = '<style type="text/css">';
+				styles += '.fusion-alert.alert.fusion-alert-cid' + cid + '{';
+				styles += 'background-color:' + args.background_color + ';';
+				styles += 'color:' + args.accent_color + ';';
+				styles += 'border-color:' + args.accent_color + ';';
+				styles += 'border-width:' + args.border_size + ';';
+				styles += '}';
+				styles += '</style>';
+
+				return styles;
 			},
 
 			/**

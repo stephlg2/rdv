@@ -12,9 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 <?php get_header(); ?>
-
-<section id="content" style="<?php echo esc_attr( apply_filters( 'awb_content_tag_style', '' ) ); ?>">
-	<?php if ( have_posts() && ! is_search() && ! is_404() && ! is_archive() && ! ( ! is_front_page() && is_home() ) && ! awb_is_woo_order_received_page() ) : ?>
+<section id="content" <?php ( class_exists( 'Avada' ) ? Avada()->layout->add_style( 'content_style' ) : '' ); ?>>
+	<?php if ( have_posts() && ! is_search() && ! is_404() && ! is_archive() && ! ( ! is_front_page() && is_home() ) ) : ?>
 		<?php while ( have_posts() ) : ?>
 			<?php the_post(); ?>
 			<div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>

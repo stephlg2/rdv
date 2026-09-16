@@ -35,6 +35,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 			protected $params;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.3
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -55,12 +64,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 
 				// Ajax mechanism for live editor.
 				add_action( 'wp_ajax_get_fusion_tb_woo_checkout_payment', [ $this, 'ajax_render' ] );
-
-				if ( class_exists( 'WC_Stripe' ) ) {
-					$stripe_payment_class = WC_Stripe::get_instance()->payment_request_configuration;
-					add_action( 'woocommerce_review_order_before_submit', [ $stripe_payment_class, 'display_payment_request_button_html' ], 1 );
-					add_action( 'woocommerce_review_order_before_submit', [ $stripe_payment_class, 'display_payment_request_button_separator_html' ], 2 );
-				}
 			}
 
 
@@ -84,7 +87,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					// Margin.
 					'margin_bottom'                       => '',
@@ -112,21 +115,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 
 					// Misc.
 					'text_font_size'                      => $fusion_settings->get( 'body_typography', 'font-size' ),
-					'text_text_transform'                 => '',
-					'text_line_height'                    => '',
-					'text_letter_spacing'                 => '',
 					'fusion_font_family_text_typography'  => 'inherit',
 					'fusion_font_variant_text_typography' => '400',
 					'link_color'                          => $fusion_settings->get( 'link_color' ),
-					'link_hover_color'                    => $fusion_settings->get( 'link_hover_color' ),
+					'link_hover_color'                    => $fusion_settings->get( 'primary_color' ),
 					'button_style'                        => '',
 					'button_size'                         => '',
 					'button_stretch'                      => 'no',
 					'button_alignment'                    => '',
-					'button_border_top'                   => '',
-					'button_border_right'                 => '',
-					'button_border_bottom'                => '',
-					'button_border_left'                  => '',
+					'button_border_width'                 => '',
 					'button_color'                        => '',
 					'button_gradient_top'                 => $fusion_settings->get( 'button_gradient_top_color' ),
 					'button_gradient_bottom'              => $fusion_settings->get( 'button_gradient_bottom_color' ),
@@ -141,9 +138,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 					'animation_type'                      => '',
 					'animation_direction'                 => 'down',
 					'animation_speed'                     => '0.1',
-					'animation_delay'                     => '',
 					'animation_offset'                    => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                     => '',
 				];
 			}
 
@@ -190,15 +185,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 				$this->defaults = self::get_element_defaults();
 				$this->args     = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_tb_woo_checkout_payment' );
 
-				// Legacy single border width.
-				if ( isset( $args['button_border_width'] ) && ! isset( $args['button_border_top'] ) ) {
-					$this->args['button_border_top']    = $args['button_border_width'];
-					$this->args['button_border_right']  = $this->args['button_border_top'];
-					$this->args['button_border_bottom'] = $this->args['button_border_top'];
-					$this->args['button_border_left']   = $this->args['button_border_top'];
-				}
-
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_checkout_payment-shortcode' ) . '>' . $this->get_woo_checkout_payment_content() . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_checkout_payment-shortcode' ) . '>' . $this->get_woo_checkout_payment_content() . '</div>';
 
 				$this->counter++;
 
@@ -218,7 +206,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 			public function get_woo_checkout_payment_content() {
 				$content = '';
 
-				if ( ! is_object( WC()->cart ) || 0 === WC()->cart->get_cart_contents_count() ) {
+				if ( 0 === WC()->cart->get_cart_contents_count() ) {
 					return $content;
 				}
 
@@ -249,23 +237,10 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
-				}
-
-				if ( ! $this->is_default( 'button_style' ) ) {
-
-					$attr['class'] .= ' button-custom';
-
-					if ( ! $this->is_default( 'button_size' ) ) {
-						$attr['class'] .= ' button-' . $this->args['button_size'];
-					}
-
-					if ( ! $this->is_default( 'button_stretch' ) ) {
-						$attr['class'] .= ' button-stretch';
-					}
 				}
 
 				// Button alignment.
@@ -281,71 +256,193 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.3
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-checkout-payment-tb-' . $this->counter;
+				$this->dynamic_css   = [];
 
+				// Font family and weight.
 				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_typography', 'array' );
 				foreach ( $text_styles as $rule => $value ) {
-					$custom_vars[ 'text_' . $rule ] = $value;
+					$this->add_css_property( $this->base_selector, $rule, $value );
+				}
+
+				// Text font size.
+				if ( ! $this->is_default( 'text_font_size' ) ) {
+					$this->add_css_property( $this->base_selector, 'font-size', fusion_library()->sanitize->get_value_with_unit( $this->args['text_font_size'] ) );
+				}
+
+				// Link color.
+				if ( ! $this->is_default( 'link_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' a', 'color', $this->args['link_color'] );
+				}
+
+				// Link hover color.
+				if ( ! $this->is_default( 'link_hover_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' a:hover', 'color', $this->args['link_hover_color'] );
+				}
+
+				// Labels.
+				$selector = $this->base_selector . ' .woocommerce-checkout-payment ul.wc_payment_methods li label';
+
+				if ( ! $this->is_default( 'label_padding_top' ) ) {
+					$this->add_css_property( $selector, 'padding-top', $this->args['label_padding_top'] );
+				}
+
+				if ( ! $this->is_default( 'label_padding_bottom' ) ) {
+					$this->add_css_property( $selector, 'padding-bottom', $this->args['label_padding_bottom'] );
 				}
 
 				if ( ! $this->is_default( 'label_padding_left' ) ) {
-					$custom_vars['label_padding_left'] = 'max(55px,' . $this->args['label_padding_left'] . ')';
+					$this->add_css_property( $selector, 'padding-left', 'max(55px,' . $this->args['label_padding_left'] . ')' );
 				}
 
-				if ( ( isset( $this->params['button_gradient_top'] ) && '' !== $this->params['button_gradient_top'] ) || ( isset( $this->params['button_gradient_bottom'] ) && '' !== $this->params['button_gradient_bottom'] ) ) {
-					$custom_vars['button_gradient_top']     = $this->args['button_gradient_top'];
-					$custom_vars['button_background_image'] = 'linear-gradient( to top, ' . $this->args['button_gradient_bottom'] . ', ' . $this->args['button_gradient_top'] . ' )';
+				if ( ! $this->is_default( 'label_padding_right' ) ) {
+					$this->add_css_property( $selector, 'padding-right', $this->args['label_padding_right'] );
 				}
 
-				if ( ( isset( $this->params['button_gradient_top_hover'] ) && '' !== $this->params['button_gradient_top_hover'] ) || ( isset( $this->params['button_gradient_bottom_hover'] ) && '' !== $this->params['button_gradient_bottom_hover'] ) ) {
-					$custom_vars['button_gradient_top_hover']     = $this->args['button_gradient_top_hover'];
-					$custom_vars['button_background_image_hover'] = 'linear-gradient( to top, ' . $this->args['button_gradient_bottom_hover'] . ', ' . $this->args['button_gradient_top_hover'] . ' )';
+				if ( ! $this->is_default( 'label_bg_color' ) ) {
+					$this->add_css_property( $selector, 'background', $this->args['label_bg_color'] );
 				}
 
-				$css_vars_options = [
-					'link_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'link_hover_color'          => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'label_bg_color'            => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'label_color'               => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'label_hover_color'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_color'              => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_border_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'label_bg_hover_color'      => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'payment_box_bg'            => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'payment_color'             => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_color_hover'        => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_border_color_hover' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'margin_top'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_font_size'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_letter_spacing'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'label_padding_top'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'label_padding_bottom'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'label_padding_right'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'payment_padding_top'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'payment_padding_bottom'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'payment_padding_left'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'payment_padding_right'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_top'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_right'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_bottom'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_left'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_line_height',
-					'text_text_transform',
+				if ( ! $this->is_default( 'label_color' ) ) {
+					$this->add_css_property( $selector, 'color', $this->args['label_color'] );
+				}
+
+				if ( ! $this->is_default( 'label_hover_color' ) ) {
+					$this->add_css_property( $selector . ':hover', 'color', $this->args['label_hover_color'] );
+					$this->add_css_property( $this->base_selector . ' ul li input:checked+label', 'color', $this->args['label_hover_color'] );
+				}
+
+				$selector = $this->base_selector . ' .woocommerce-checkout-payment ul.wc_payment_methods li:hover label';
+
+				if ( ! $this->is_default( 'label_bg_hover_color' ) ) {
+					$this->add_css_property( $selector, 'background', $this->args['label_bg_hover_color'] );
+				}
+
+				// Payment box.
+				$selector = [
+					$this->base_selector . ' .woocommerce-checkout-payment ul.wc_payment_methods li .payment_box',
+					$this->base_selector . ' .woocommerce-checkout-payment ul.wc_payment_methods li.woocommerce-notice',
 				];
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				if ( ! $this->is_default( 'payment_padding_top' ) ) {
+					$this->add_css_property( $selector, 'padding-top', $this->args['payment_padding_top'] );
+				}
 
-				return $styles;
+				if ( ! $this->is_default( 'payment_padding_bottom' ) ) {
+					$this->add_css_property( $selector, 'padding-bottom', $this->args['payment_padding_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'payment_padding_left' ) ) {
+					$this->add_css_property( $selector, 'padding-left', $this->args['payment_padding_left'] );
+				}
+
+				if ( ! $this->is_default( 'payment_padding_right' ) ) {
+					$this->add_css_property( $selector, 'padding-right', $this->args['payment_padding_right'] );
+				}
+
+				if ( ! $this->is_default( 'payment_box_bg' ) ) {
+					$this->add_css_property( $selector, 'background', $this->args['payment_box_bg'] );
+				}
+
+				if ( ! $this->is_default( 'payment_color' ) ) {
+					$this->add_css_property( $selector, 'color', $this->args['payment_color'] );
+				}
+
+				// Custom place order button styling.
+				if ( ! $this->is_default( 'button_style' ) ) {
+
+					$button = '.fusion-body ' . $this->base_selector . ' #place_order';
+
+					// Button size.
+					if ( ! $this->is_default( 'button_size' ) ) {
+
+						$button_size_map = [
+							'small'  => [
+								'padding'     => '9px 20px',
+								'line_height' => '14px',
+								'font_size'   => '12px',
+							],
+							'medium' => [
+								'padding'     => '11px 23px',
+								'line_height' => '16px',
+								'font_size'   => '13px',
+							],
+							'large'  => [
+								'padding'     => '13px 29px',
+								'line_height' => '17px',
+								'font_size'   => '14px',
+							],
+							'xlarge' => [
+								'padding'     => '17px 40px',
+								'line_height' => '21px',
+								'font_size'   => '18px',
+							],
+						];
+
+						if ( isset( $button_size_map[ $this->args['button_size'] ] ) ) {
+							$button_dimensions = $button_size_map[ $this->args['button_size'] ];
+							$this->add_css_property( $button, 'padding', $button_dimensions['padding'] );
+							$this->add_css_property( $button, 'line-height', $button_dimensions['line_height'] );
+							$this->add_css_property( $button, 'font-size', $button_dimensions['font_size'] );
+						}
+					}
+
+					// Button stretch.
+					if ( ! $this->is_default( 'button_stretch' ) ) {
+						$this->add_css_property( $button, 'flex', '1' );
+						$this->add_css_property( $button, 'width', '100%' );
+					}
+
+					// Button border width.
+					if ( ! $this->is_default( 'button_border_width' ) ) {
+						$this->add_css_property( $button, 'border-width', fusion_library()->sanitize->get_value_with_unit( $this->args['button_border_width'] ) );
+					}
+
+					// Button text color.
+					if ( ! $this->is_default( 'button_color' ) ) {
+						$this->add_css_property( $button, 'color', $this->args['button_color'] );
+					}
+
+					// Button gradient.
+					if ( ( isset( $this->params['button_gradient_top'] ) && '' !== $this->params['button_gradient_top'] ) || ( isset( $this->params['button_gradient_bottom'] ) && '' !== $this->params['button_gradient_bottom'] ) ) {
+						$this->add_css_property( $button, 'background', $this->args['button_gradient_top'] );
+						$this->add_css_property( $button, 'background-image', 'linear-gradient( to top, ' . $this->args['button_gradient_bottom'] . ', ' . $this->args['button_gradient_top'] . ' )' );
+					}
+
+					// Button border color.
+					if ( ! $this->is_default( 'button_border_color' ) ) {
+						$this->add_css_property( $button, 'border-color', $this->args['button_border_color'] );
+					}
+
+					$button_hover = $button . ':hover';
+
+					// Button hover text color.
+					if ( ! $this->is_default( 'button_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'color', $this->args['button_color_hover'] );
+					}
+
+					// Button gradient.
+					if ( ( isset( $this->params['button_gradient_top_hover'] ) && '' !== $this->params['button_gradient_top_hover'] ) || ( isset( $this->params['button_gradient_bottom_hover'] ) && '' !== $this->params['button_gradient_bottom_hover'] ) ) {
+						$this->add_css_property( $button_hover, 'background', $this->args['button_gradient_top_hover'] );
+						$this->add_css_property( $button_hover, 'background-image', 'linear-gradient( to top, ' . $this->args['button_gradient_bottom_hover'] . ', ' . $this->args['button_gradient_top_hover'] . ' )' );
+					}
+
+					// Button border color.
+					if ( ! $this->is_default( 'button_border_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'border-color', $this->args['button_border_color_hover'] );
+					}
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -381,49 +478,42 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_checkout_payment' ) ) {
  * @since 3.3
  */
 function fusion_component_woo_checkout_payment() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Woo_Checkout_Payment',
 			[
-				'name'         => esc_attr__( 'Woo Checkout Payment', 'fusion-builder' ),
-				'shortcode'    => 'fusion_tb_woo_checkout_payment',
-				'icon'         => 'fusiona-checkout-payment',
-				'subparam_map' => [
-					'fusion_font_family_text_typography'  => 'main_typography',
-					'fusion_font_variant_text_typography' => 'main_typography',
-					'text_font_size'                      => 'main_typography',
-					'text_text_transform'                 => 'main_typography',
-					'text_line_height'                    => 'main_typography',
-					'text_letter_spacing'                 => 'main_typography',
-				],
-				'params'       => [
+				'name'      => esc_attr__( 'Woo Checkout Payment', 'fusion-builder' ),
+				'shortcode' => 'fusion_tb_woo_checkout_payment',
+				'icon'      => 'fusiona-checkout-payment',
+				'params'    => [
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the payments text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'main_typography',
-						'choices'          => [
-							'font-family'    => 'text_typography',
-							'font-size'      => 'text_font_size',
-							'text-transform' => 'text_text_transform',
-							'line-height'    => 'text_line_height',
-							'letter-spacing' => 'text_letter_spacing',
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Text Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the payments text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'text_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_attr__( 'Text Font Family', 'fusion-builder' ),
+						/* translators: URL for the link. */
+						'description'      => esc_html__( 'Controls the font family of the payments text.  Leave empty for the global font family.', 'fusion-builder' ),
+						'param_name'       => 'text_typography',
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'callback'         => [
 							'function' => 'fusion_style_block',
+						],
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '400',
 						],
 					],
 					[
@@ -457,53 +547,51 @@ function fusion_component_woo_checkout_payment() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Label Background Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the label background color of the payments.', 'fusion-builder' ),
-						'param_name'    => 'label_bg_color',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'testimonial_bg_color' ),
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'callback'      => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Label Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the label background color of the payments.', 'fusion-builder' ),
+						'param_name'  => 'label_bg_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'testimonial_bg_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'default'    => '#f0f0f0',
-								'param_name' => 'label_bg_hover_color',
-								'preview'    => [
-									'selector' => 'ul.wc_payment_methods li',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'label_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Label Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the label color of the payments.', 'fusion-builder' ),
-						'param_name'    => 'label_color',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'body_typography', 'color' ),
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'callback'      => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Label Hover Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the label hover background color of the payments label.', 'fusion-builder' ),
+						'param_name'  => 'label_bg_hover_color',
+						'value'       => '',
+						'default'     => '#f0f0f0',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'param_name' => 'label_hover_color',
-								'preview'    => [
-									'selector' => 'ul.wc_payment_methods li > label',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Label Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the label color of the payments.', 'fusion-builder' ),
+						'param_name'  => 'label_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'body_typography', 'color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
-						'connect-state' => [ 'label_bg_color' ],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Label Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the label hover color of the payments.', 'fusion-builder' ),
+						'param_name'  => 'label_hover_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
 					],
 					[
 						'type'             => 'dimension',
@@ -557,17 +645,17 @@ function fusion_component_woo_checkout_payment() {
 						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'default'    => $fusion_settings->get( 'link_hover_color' ),
-								'param_name' => 'link_hover_color',
-								'preview'    => [
-									'selector' => 'a',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Link Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the link hover color of the payments text.', 'fusion-builder' ),
+						'param_name'  => 'link_hover_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'primary_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
 					],
 					[
@@ -654,26 +742,24 @@ function fusion_component_woo_checkout_payment() {
 						],
 					],
 					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Button Border Size', 'fusion-builder' ),
-						'param_name'       => 'button_border_width',
-						'description'      => esc_attr__( 'Controls the border size. In pixels.', 'fusion-builder' ),
-						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'       => [
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Button Border Size', 'fusion-builder' ),
+						'param_name'  => 'button_border_width',
+						'description' => esc_attr__( 'Controls the border size. In pixels.', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'value'            => [
-							'button_border_top'    => '',
-							'button_border_right'  => '',
-							'button_border_bottom' => '',
-							'button_border_left'   => '',
-						],
-						'callback'         => [
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_border_width' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 							'args'     => [
 
@@ -915,7 +1001,7 @@ function fusion_component_woo_checkout_payment() {
 						'preview_selector' => '.fusion-woo-checkout-payment-tb',
 					],
 				],
-				'callback'     => [
+				'callback'  => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_woo_checkout_payment',
 					'ajax'     => true,

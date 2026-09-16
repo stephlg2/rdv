@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 		class FusionTB_Woo_Product_Images extends Fusion_Woo_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * An array of the unmerged shortcode arguments.
 			 *
 			 * @access protected
@@ -104,7 +113,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'display_sale_badge'       => 'yes',
 					'display_outofstock_badge' => 'no',
@@ -115,7 +124,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 					'product_images_layout'    => $fusion_settings->get( 'woocommerce_product_images_layout' ),
 					'product_images_width'     => $fusion_settings->get( 'woocommerce_single_gallery_size' ),
 					'product_images_zoom'      => $fusion_settings->get( 'woocommerce_product_images_zoom' ) ? 'yes' : 'no',
-					'skip_lazy_load'           => '',
 					'thumbnail_column_width'   => $fusion_settings->get( 'woocommerce_product_images_thumbnail_column_width' ),
 					'thumbnail_columns'        => $fusion_settings->get( 'woocommerce_gallery_thumbnail_columns' ),
 					'thumbnail_position'       => $fusion_settings->get( 'woocommerce_product_images_thumbnail_position' ),
@@ -125,23 +133,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 					'animation_type'           => '',
 					'animation_direction'      => 'down',
 					'animation_speed'          => '0.1',
-					'animation_delay'          => '',
 					'animation_offset'         => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'          => '',
-				];
-			}
-
-			/**
-			 * Maps settings to param variables.
-			 *
-			 * @static
-			 * @access public
-			 * @since 2.0.0
-			 * @return array
-			 */
-			public static function settings_to_params() {
-				return [
-					'lazy_load' => 'lazy_load',
 				];
 			}
 
@@ -175,6 +167,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 				} else {
 					$html      = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_product_images-shortcode' ) . '>';
 						$html .= $this->get_images();
+						$html .= $this->get_styles();
 					$html     .= '</div>';
 				}
 
@@ -202,14 +195,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 				add_filter( 'avada_woocommerce_product_images_layout', [ $this, 'product_images_layout' ], 20 );
 				add_filter( 'woocommerce_product_thumbnails_columns', [ $this, 'product_thumbnails_columns' ], 20 );
 
-				if ( 'skip' === $this->args['skip_lazy_load'] ) {
-					if ( $this->product->get_image_id() ) {
-						add_filter( 'woocommerce_gallery_image_html_attachment_image_params', [ $this, 'remove_lazy_loading' ], 20 );
-					} else {
-						add_filter( 'woocommerce_single_product_image_thumbnail_html', [ $this, 'remove_placeholder_lazy_loading' ], 20 );
-					}
-				}
-
 				if ( 'no' === $this->args['product_images_zoom'] ) {
 					// Script is auto enqueued through adding theme support in class-avada-init.php.
 					wp_dequeue_script( 'zoom' );
@@ -233,39 +218,9 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 			 * @return void
 			 */
 			public function remove_hooks() {
-				remove_filter( 'woocommerce_gallery_image_html_attachment_image_params', [ $this, 'remove_lazy_loading' ], 20 );
-				remove_filter( 'woocommerce_single_product_image_thumbnail_html', [ $this, 'remove_placeholder_lazy_loading' ], 20 );
 				remove_filter( 'avada_single_product_images_wrapper_classes', [ $this, 'add_single_product_images_wrapper_classes' ], 20 );
 				remove_filter( 'avada_woocommerce_product_images_layout', [ $this, 'product_images_layout' ], 20 );
 				remove_filter( 'woocommerce_product_thumbnails_columns', [ $this, 'product_thumbnails_columns' ], 20 );
-			}
-
-			/**
-			 * Adds the lazy loading disable class.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @param array $params The param array for the product images.
-			 * @return array
-			 */
-			public function remove_lazy_loading( $params ) {
-				$params['class'] = $params['class'] . ' disable-lazyload';
-
-				return $params;
-			}
-
-			/**
-			 * Adds the lazy loading disable class to the placeholder image..
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @param string $html The placeholder image string.
-			 * @return string
-			 */
-			public function remove_placeholder_lazy_loading( $html ) {
-				$html = str_replace( 'wp-post-image', 'wp-post-image disable-lazyload', $html );
-
-				return $html;
 			}
 
 			/**
@@ -413,8 +368,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
-
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
@@ -427,31 +380,38 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.0
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-body .fusion-woo-product-images-' . $this->counter;
+				$this->dynamic_css   = [];
+
+				$this->add_css_property( $this->base_selector . ' .woocommerce-product-gallery', 'max-width', fusion_library()->sanitize->get_value_with_unit( $this->args['product_images_width'] ) );
 
 				if ( ( 'right' === $this->args['thumbnail_position'] || 'left' === $this->args['thumbnail_position'] ) ) {
-					$custom_vars['thumbnail-width'] = fusion_library()->sanitize->get_value_with_unit( $this->args['thumbnail_column_width'], '%' );
+					$this->add_css_property( $this->base_selector . ' .avada-product-gallery .flex-control-thumbs', 'width', fusion_library()->sanitize->get_value_with_unit( $this->args['thumbnail_column_width'], '%' ) );
 				}
 
-				$css_vars_options = [
-					'product_images_width' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_top'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
+				if ( ! $this->is_default( 'margin_top' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-top', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_top'] ) );
+				}
+				if ( ! $this->is_default( 'margin_right' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-right', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_right'] ) );
+				}
+				if ( ! $this->is_default( 'margin_bottom' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-bottom', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_bottom'] ) );
+				}
+				if ( ! $this->is_default( 'margin_left' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-left', fusion_library()->sanitize->get_value_with_unit( $this->args['margin_left'] ) );
+				}
 
-				];
+				$css = $this->parse_css();
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -505,18 +465,20 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_product_images' ) ) {
  * @since 3.2
  */
 function fusion_component_woo_product_images() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Woo_Product_Images',
 			[
-				'name'      => esc_attr__( 'Woo Product Images', 'fusion-builder' ),
-				'shortcode' => 'fusion_tb_woo_product_images',
-				'icon'      => 'fusiona-woo-product-images',
-				'component' => true,
-				'templates' => [ 'content' ],
-				'params'    => [
+				'name'                    => esc_attr__( 'Woo Product Images', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_woo_product_images',
+				'icon'                    => 'fusiona-woo-product-images',
+				'component'               => true,
+				'templates'               => [ 'content' ],
+				'components_per_template' => 1,
+				'params'                  => [
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Product Images Layout', 'fusion-builder' ),
@@ -537,7 +499,7 @@ function fusion_component_woo_product_images() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Product Images Zoom', 'fusion-builder' ),
-						'description' => __( 'Turn on to enable the WooCommerce product images zoom feature. <strong>IMPORTANT NOTE:</strong> Every product image you use must be larger than the product images container for zoom to work correctly. <a href="https://avada.com/documentation/woocommerce-single-product-gallery/" target="_blank">See this post for more information.</a>', 'fusion-builder' ),
+						'description' => __( 'Turn on to enable the WooCommerce product images zoom feature. <strong>IMPORTANT NOTE:</strong> Every product image you use must be larger than the product images container for zoom to work correctly. <a href="https://theme-fusion.com/documentation/avada/woocommerce-single-product-gallery/" target="_blank">See this post for more information.</a>', 'fusion-builder' ),
 						'param_name'  => 'product_images_zoom',
 						'default'     => '',
 						'value'       => [
@@ -554,7 +516,7 @@ function fusion_component_woo_product_images() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Product Images Max Width', 'fusion-builder' ),
-						'description' => __( 'Controls the max width of the single product page image gallery. For the image gallery zoom feature to work, the images you upload must be larger than the gallery size you select for this option. <strong>IMPORTANT NOTE:</strong> When this option is changed, you may need to adjust the Single Product Image size setting in WooCommerce Settings to make sure that one is larger and also regenerate thumbnails. <a href="https://avada.com/documentation/woocommerce-single-product-gallery/" target="_blank">See this post for more information.</a><br/>', 'fusion-builder' ),
+						'description' => __( 'Controls the max width of the single product page image gallery. For the image gallery zoom feature to work, the images you upload must be larger than the gallery size you select for this option. <strong>IMPORTANT NOTE:</strong> When this option is changed, you may need to adjust the Single Product Image size setting in WooCommerce Settings to make sure that one is larger and also regenerate thumbnails. <a href="https://theme-fusion.com/documentation/avada/woocommerce-single-product-gallery/" target="_blank">See this post for more information.</a><br/>', 'fusion-builder' ),
 						'param_name'  => 'product_images_width',
 						'value'       => '',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
@@ -645,44 +607,12 @@ function fusion_component_woo_product_images() {
 						],
 					],
 					[
-						'type'             => 'select',
-						'heading'          => esc_attr__( 'Lazy Load', 'fusion-builder' ),
-						'description'      => esc_attr__( 'Select your preferred lazy loading method.', 'fusion-builder' ),
-						'param_name'       => 'lazy_load',
-						'value'            => [
-							'avada'     => esc_attr__( 'Avada', 'fusion-builder' ),
-							'wordpress' => esc_attr__( 'WordPress', 'fusion-builder' ),
-							'none'      => esc_attr__( 'None', 'fusion-builder' ),
-						],
-						'default'          => $fusion_settings->get( 'lazy_load' ),
-						'hidden'           => true,
-						'remove_from_atts' => true,
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Skip Lazy Loading', 'fusion-builder' ),
-						'description' => esc_attr__( 'Select whether you want to skip lazy loading on this image or not.', 'fusion-builder' ),
-						'param_name'  => 'skip_lazy_load',
-						'default'     => '',
-						'value'       => [
-							'skip' => esc_attr__( 'Yes', 'fusion-builder' ),
-							''     => esc_attr__( 'No', 'fusion-builder' ),
-						],
-						'dependency'  => [
-							[
-								'element'  => 'lazy_load',
-								'value'    => 'avada',
-								'operator' => '==',
-							],
-						],
-					],
-					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Display Out of Stock Badge', 'fusion-builder' ),
 						'description' => esc_attr__( 'Turn on to enable the WooCommerce out of stock badge.', 'fusion-builder' ),
 						'param_name'  => 'display_outofstock_badge',
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'default'     => 'no',
+						'default'     => 'yes',
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
@@ -750,7 +680,7 @@ function fusion_component_woo_product_images() {
 						'preview_selector' => '.fusion-woo-images',
 					],
 				],
-				'callback'  => [
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_woo_product_images',
 					'ajax'     => true,

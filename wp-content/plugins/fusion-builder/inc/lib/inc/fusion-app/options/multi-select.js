@@ -177,34 +177,7 @@ FusionPageBuilder.options.fusionMultiSelect = {
 				// Remove option from preview box.
 				$selectPreview.find( '.fusion-select-preview' ).on( 'click', '.fusion-option-remove', function( event ) {
 					event.preventDefault();
-
-					const el = $self.find( '.fusion-select-label[for="' + jQuery( this ).parent().data( 'value' ) + '"]' );
-
-					if ( el.length )  {
-						el.trigger( 'click' );
-					} else {
-
-						// Option label not found so recall same function in line 49 with minor change.
-
-						// Stop propagation to prevent toggle the select dropdown.
-						event.stopPropagation();
-
-						// Remove parent from preview box.
-						jQuery( this ).parent().remove();
-
-						// Show / hide placeholder text, ie: 'Select Categories or Leave Blank for All'
-						if ( 0 === $self.find( '.fusion-select-preview .fusion-preview-selected-value' ).length ) {
-							$selectPreview.addClass( 'fusion-select-show-placeholder' );
-						} else {
-							$selectPreview.removeClass( 'fusion-select-show-placeholder' );
-						}
-
-						// Click event triggered by user pressing 'Enter'.
-						if ( 'click' === event.type && 'undefined' !== typeof event.isTrigger && event.isTrigger ) {
-							$selectPreview.trigger( 'click' );
-						}
-
-					}
+					$self.find( '.fusion-select-label[for="' + jQuery( this ).parent().data( 'value' ) + '"]' ).trigger( 'click' );
 				} );
 
 				// Search field.

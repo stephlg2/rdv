@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 			private $recent_posts_counter = 1;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * An array of meta settings.
 			 *
 			 * @access private
@@ -66,56 +75,43 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 			 */
 			public static function get_element_defaults() {
 
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
-					'margin_top'                     => '',
-					'margin_right'                   => '',
-					'margin_bottom'                  => '',
-					'margin_left'                    => '',
-					'hide_on_mobile'                 => fusion_builder_default_visibility( 'string' ),
-					'class'                          => '',
-					'id'                             => '',
-					'pull_by'                        => '',
-					'cat_id'                         => '',
-					'cat_slug'                       => '',
-					'tag_slug'                       => '',
-					'exclude_tags'                   => '',
-					'columns'                        => 3,
-					'content_alignment'              => '',
-					'excerpt'                        => 'no',
-					'exclude_cats'                   => '',
-					'excerpt_length'                 => '',
-					'excerpt_words'                  => '15', // Deprecated.
-					'hover_type'                     => 'none',
-					'layout'                         => 'default',
-					'meta'                           => 'yes',
-					'meta_author'                    => 'no',
-					'meta_categories'                => 'no',
-					'meta_comments'                  => 'yes',
-					'meta_date'                      => 'yes',
-					'meta_tags'                      => 'no',
-					'number_posts'                   => '4',
-					'offset'                         => '',
-					'picture_size'                   => 'fixed',
-					'post_status'                    => '',
-					'scrolling'                      => 'no',
-					'strip_html'                     => 'yes',
-					'title'                          => 'yes',
-					'title_size'                     => '4',
-					'fusion_font_family_title_font'  => '',
-					'fusion_font_variant_title_font' => '',
-					'title_font_size'                => '',
-					'title_letter_spacing'           => '',
-					'title_line_height'              => '',
-					'title_text_transform'           => '',
-					'thumbnail'                      => 'yes',
-					'animation_direction'            => 'left',
-					'animation_speed'                => '',
-					'animation_type'                 => '',
-					'animation_delay'                => '',
-					'animation_offset'               => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'                => '',
+					'hide_on_mobile'      => fusion_builder_default_visibility( 'string' ),
+					'class'               => '',
+					'id'                  => '',
+					'pull_by'             => '',
+					'cat_id'              => '',
+					'cat_slug'            => '',
+					'tag_slug'            => '',
+					'exclude_tags'        => '',
+					'columns'             => 3,
+					'content_alignment'   => '',
+					'excerpt'             => 'no',
+					'exclude_cats'        => '',
+					'excerpt_length'      => '',
+					'excerpt_words'       => '15', // Deprecated.
+					'hover_type'          => 'none',
+					'layout'              => 'default',
+					'meta'                => 'yes',
+					'meta_author'         => 'no',
+					'meta_categories'     => 'no',
+					'meta_comments'       => 'yes',
+					'meta_date'           => 'yes',
+					'meta_tags'           => 'no',
+					'number_posts'        => '4',
+					'offset'              => '',
+					'picture_size'        => 'fixed',
+					'post_status'         => '',
+					'scrolling'           => 'no',
+					'strip_html'          => 'yes',
+					'title'               => 'yes',
+					'thumbnail'           => 'yes',
+					'animation_direction' => 'left',
+					'animation_speed'     => '',
+					'animation_type'      => '',
+					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
 				];
 			}
 
@@ -142,7 +138,7 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'disable_date_rich_snippet_pages'   => $fusion_settings->get( 'disable_date_rich_snippet_pages' ),
 					'pagination_range_global'           => apply_filters( 'fusion_pagination_size', $fusion_settings->get( 'pagination_range' ) ),
@@ -191,7 +187,7 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 			 * @return array|Object
 			 */
 			public function query( $defaults ) {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				$live_request = false;
 
@@ -463,7 +459,8 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				add_filter( 'fusion_dynamic_post_id', [ $this, 'post_dynamic_data' ] );
 
@@ -478,11 +475,6 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 				if ( $defaults['excerpt_length'] || '0' === $defaults['excerpt_length'] ) {
 					$defaults['excerpt_words'] = $defaults['excerpt_length'];
 				}
-
-				$defaults['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_top'], 'px' );
-				$defaults['margin_right']  = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_right'], 'px' );
-				$defaults['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_bottom'], 'px' );
-				$defaults['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_left'], 'px' );
 
 				extract( $defaults );
 
@@ -551,7 +543,7 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 								break;
 						}
 
-						$date_box = '<div ' . FusionBuilder::attributes( 'fusion-date-and-formats' ) . '><div ' . FusionBuilder::attributes( 'fusion-date-box updated' ) . '><span ' . FusionBuilder::attributes( 'fusion-date' ) . '>' . get_the_time( $fusion_settings->get( 'alternate_date_format_day' ) ) . '</span><span ' . FusionBuilder::attributes( 'fusion-month-year' ) . '>' . get_the_time( $fusion_settings->get( 'alternate_date_format_month_year' ) ) . '</span></div><div ' . FusionBuilder::attributes( 'fusion-format-box' ) . '><i ' . FusionBuilder::attributes( 'awb-icon-' . $format_class ) . ' aria-hidden="true"></i></div></div>';
+						$date_box = '<div ' . FusionBuilder::attributes( 'fusion-date-and-formats' ) . '><div ' . FusionBuilder::attributes( 'fusion-date-box updated' ) . '><span ' . FusionBuilder::attributes( 'fusion-date' ) . '>' . get_the_time( $fusion_settings->get( 'alternate_date_format_day' ) ) . '</span><span ' . FusionBuilder::attributes( 'fusion-month-year' ) . '>' . get_the_time( $fusion_settings->get( 'alternate_date_format_month_year' ) ) . '</span></div><div ' . FusionBuilder::attributes( 'fusion-format-box' ) . '><i ' . FusionBuilder::attributes( 'fusion-icon-' . $format_class ) . ' aria-hidden="true"></i></div></div>';
 					}
 
 					if ( 'yes' === $thumbnail && 'date-on-side' !== $layout && ! post_password_required( get_the_ID() ) ) {
@@ -648,8 +640,7 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 						if ( $fusion_settings->get( 'disable_date_rich_snippet_pages' ) && $fusion_settings->get( 'disable_rich_snippet_title' ) ) {
 							$entry_title = 'entry-title';
 						}
-						$title_tag = $this->get_title_tag();
-						$content  .= '<' . $title_tag . ' class="' . $entry_title . '"><a href="' . esc_url( $permalink ) . '">' . get_the_title() . '</a></' . $title_tag . '>';
+						$content .= '<h4 class="' . $entry_title . '"><a href="' . esc_url( $permalink ) . '">' . get_the_title() . '</a></h4>';
 					} else {
 						$content .= fusion_builder_render_rich_snippets_for_pages();
 					}
@@ -696,38 +687,6 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$title_typography = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'title_font', 'array' );
-
-				$font_var_args = [
-					'font-family'    => ( isset( $title_typography['font-family'] ) && $title_typography['font-family'] ? $title_typography['font-family'] : '' ),
-					'font-weight'    => ( isset( $title_typography['font-weight'] ) && $title_typography['font-weight'] ? $title_typography['font-weight'] : '' ),
-					'font-style'     => ( isset( $title_typography['font-style'] ) && $title_typography['font-style'] ? $title_typography['font-style'] : '' ),
-					'font-size'      => $this->args['title_font_size'],
-					'letter-spacing' => $this->args['title_letter_spacing'],
-					'line-height'    => $this->args['title_line_height'],
-					'text-transform' => $this->args['title_text_transform'],
-				];
-
-				$css_vars_options = [
-					'margin_top'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_heading_font_vars( $this->get_title_tag(), $font_var_args );
-
-				return $styles;
-			}
-
-			/**
 			 * Builds the attributes array.
 			 *
 			 * @access public
@@ -740,7 +699,6 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 					$this->args['hide_on_mobile'],
 					[
 						'class' => 'fusion-recent-posts fusion-recent-posts-' . $this->recent_posts_counter . ' avada-container layout-' . $this->args['layout'] . ' layout-columns-' . $this->args['columns'],
-						'style' => '',
 					]
 				);
 
@@ -756,8 +714,6 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 				if ( 'load_more_button' === $this->args['scrolling'] ) {
 					$attr['class'] .= ' fusion-recent-posts-load-more';
 				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -901,12 +857,14 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 			 */
 			public function on_first_render() {
 
+				global $fusion_settings;
+
 				Fusion_Dynamic_JS::enqueue_script(
 					'fusion-recent-posts',
 					FusionBuilder::$js_folder_url . '/general/fusion-recent-posts.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-recent-posts.js',
 					[ 'jquery', 'fusion-blog' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 
@@ -918,24 +876,6 @@ if ( fusion_is_element_enabled( 'fusion_recent_posts' ) ) {
 						'infinite_finished_msg' => '<em>' . __( 'All items displayed.', 'fusion-builder' ) . '</em>',
 					]
 				);
-			}
-
-			/**
-			 * Get the tag of the title.
-			 *
-			 * @return string
-			 */
-			public function get_title_tag() {
-				$tag_option = $this->args['title_size'];
-				if ( ! $tag_option ) {
-					return 'h4';
-				}
-
-				if ( is_numeric( $tag_option ) ) {
-					return 'h' . $tag_option;
-				}
-
-				return $tag_option;
 			}
 
 			/**
@@ -963,132 +903,6 @@ function fusion_element_recent_posts() {
 
 	$builder_status = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
 
-	$post_cat  = $builder_status ? fusion_builder_shortcodes_categories( 'category', false, false, 26 ) : [];
-	$post_tags = $builder_status ? fusion_builder_shortcodes_tags( 'post_tag', false, false, 26 ) : [];
-
-	$include_cat = [
-		'type'        => 'multiple_select',
-		'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
-		'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
-		'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
-		'param_name'  => 'cat_slug',
-		'value'       => $post_cat,
-		'default'     => '',
-		'dependency'  => [
-			[
-				'element'  => 'pull_by',
-				'value'    => 'tag',
-				'operator' => '!=',
-			],
-		],
-		'callback'    => [
-			'function' => 'fusion_ajax',
-			'action'   => 'get_fusion_recent_posts',
-			'ajax'     => true,
-		],
-	];
-	$exclude_cat = [
-		'type'        => 'multiple_select',
-		'heading'     => esc_attr__( 'Exclude Categories', 'fusion-builder' ),
-		'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
-		'description' => esc_attr__( 'Select a category to exclude.', 'fusion-builder' ),
-		'param_name'  => 'exclude_cats',
-		'value'       => $post_cat,
-		'default'     => '',
-		'dependency'  => [
-			[
-				'element'  => 'pull_by',
-				'value'    => 'tag',
-				'operator' => '!=',
-			],
-		],
-		'callback'    => [
-			'function' => 'fusion_ajax',
-			'action'   => 'get_fusion_recent_posts',
-			'ajax'     => true,
-		],
-	];
-
-	$include_tags = [
-		'type'        => 'multiple_select',
-		'heading'     => esc_attr__( 'Tags', 'fusion-builder' ),
-		'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
-		'description' => esc_attr__( 'Select a tag or leave blank for all.', 'fusion-builder' ),
-		'param_name'  => 'tag_slug',
-		'value'       => $post_tags,
-		'default'     => '',
-		'dependency'  => [
-			[
-				'element'  => 'pull_by',
-				'value'    => 'category',
-				'operator' => '!=',
-			],
-		],
-		'callback'    => [
-			'function' => 'fusion_ajax',
-			'action'   => 'get_fusion_recent_posts',
-			'ajax'     => true,
-		],
-	];
-
-	$exclude_tags = [
-		'type'        => 'multiple_select',
-		'heading'     => esc_attr__( 'Exclude Tags', 'fusion-builder' ),
-		'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
-		'description' => esc_attr__( 'Select a tag to exclude.', 'fusion-builder' ),
-		'param_name'  => 'exclude_tags',
-		'value'       => $post_tags,
-		'default'     => '',
-		'dependency'  => [
-			[
-				'element'  => 'pull_by',
-				'value'    => 'category',
-				'operator' => '!=',
-			],
-		],
-		'callback'    => [
-			'function' => 'fusion_ajax',
-			'action'   => 'get_fusion_recent_posts',
-			'ajax'     => true,
-		],
-	];
-
-	if ( count( $post_cat ) > 25 ) {
-		$include_cat['type']        = 'ajax_select';
-		$include_cat['ajax']        = 'fusion_search_query';
-		$include_cat['value']       = [];
-		$include_cat['ajax_params'] = [
-			'taxonomy'  => 'category',
-			'use_slugs' => true,
-		];
-
-		$exclude_cat['type']        = 'ajax_select';
-		$exclude_cat['ajax']        = 'fusion_search_query';
-		$exclude_cat['value']       = [];
-		$exclude_cat['ajax_params'] = [
-			'taxonomy'  => 'category',
-			'use_slugs' => true,
-		];
-	}
-
-	if ( count( $post_tags ) > 25 ) {
-		$include_tags['type']        = 'ajax_select';
-		$include_tags['ajax']        = 'fusion_search_query';
-		$include_tags['value']       = [];
-		$include_tags['ajax_params'] = [
-			'taxonomy'  => 'post_tag',
-			'use_slugs' => true,
-		];
-
-		$exclude_tags['type']        = 'ajax_select';
-		$exclude_tags['ajax']        = 'fusion_search_query';
-		$exclude_tags['value']       = [];
-		$exclude_tags['ajax_params'] = [
-			'taxonomy'  => 'post_tag',
-			'use_slugs' => true,
-		];
-	}
-
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionSC_RecentPosts',
@@ -1098,7 +912,7 @@ function fusion_element_recent_posts() {
 				'icon'       => 'fusiona-feather',
 				'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-recent-posts-preview.php',
 				'preview_id' => 'fusion-builder-block-module-recent-posts-preview-template',
-				'help_url'   => 'https://avada.com/documentation/recent-posts-element/',
+				'help_url'   => 'https://theme-fusion.com/documentation/fusion-builder/elements/recent-posts-element/',
 				'params'     => [
 					[
 						'type'        => 'radio_button_set',
@@ -1241,13 +1055,90 @@ function fusion_element_recent_posts() {
 							'ajax'     => true,
 						],
 					],
-
-					$include_cat,
-					$exclude_cat,
-
-					$include_tags,
-					$exclude_tags,
-
+					[
+						'type'        => 'multiple_select',
+						'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
+						'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
+						'param_name'  => 'cat_slug',
+						'value'       => $builder_status ? fusion_builder_shortcodes_categories( 'category' ) : [],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'pull_by',
+								'value'    => 'tag',
+								'operator' => '!=',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_ajax',
+							'action'   => 'get_fusion_recent_posts',
+							'ajax'     => true,
+						],
+					],
+					[
+						'type'        => 'multiple_select',
+						'heading'     => esc_attr__( 'Exclude Categories', 'fusion-builder' ),
+						'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select a category to exclude.', 'fusion-builder' ),
+						'param_name'  => 'exclude_cats',
+						'value'       => $builder_status ? fusion_builder_shortcodes_categories( 'category' ) : [],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'pull_by',
+								'value'    => 'tag',
+								'operator' => '!=',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_ajax',
+							'action'   => 'get_fusion_recent_posts',
+							'ajax'     => true,
+						],
+					],
+					[
+						'type'        => 'multiple_select',
+						'heading'     => esc_attr__( 'Tags', 'fusion-builder' ),
+						'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select a tag or leave blank for all.', 'fusion-builder' ),
+						'param_name'  => 'tag_slug',
+						'value'       => $builder_status ? fusion_builder_shortcodes_tags( 'post_tag' ) : [],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'pull_by',
+								'value'    => 'category',
+								'operator' => '!=',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_ajax',
+							'action'   => 'get_fusion_recent_posts',
+							'ajax'     => true,
+						],
+					],
+					[
+						'type'        => 'multiple_select',
+						'heading'     => esc_attr__( 'Exclude Tags', 'fusion-builder' ),
+						'placeholder' => esc_attr__( 'Tags', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select a tag to exclude.', 'fusion-builder' ),
+						'param_name'  => 'exclude_tags',
+						'value'       => $builder_status ? fusion_builder_shortcodes_tags( 'post_tag' ) : [],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'pull_by',
+								'value'    => 'category',
+								'operator' => '!=',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_ajax',
+							'action'   => 'get_fusion_recent_posts',
+							'ajax'     => true,
+						],
+					],
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Show Thumbnail', 'fusion-builder' ),
@@ -1276,52 +1167,6 @@ function fusion_element_recent_posts() {
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
 						],
 						'default'     => 'yes',
-					],
-					[
-						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Title Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the title heading, either div or the heading tag, h1-h6.', 'fusion-builder' ),
-						'param_name'  => 'title_size',
-						'value'       => [
-							'1'   => 'H1',
-							'2'   => 'H2',
-							'3'   => 'H3',
-							'4'   => 'H4',
-							'5'   => 'H5',
-							'6'   => 'H6',
-							'div' => 'DIV',
-						],
-						'default'     => '4',
-						'dependency'  => [
-							[
-								'element'  => 'title',
-								'value'    => 'no',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'             => 'typography',
-						'remove_from_atts' => true,
-						'global'           => true,
-						'heading'          => esc_attr__( 'Title Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the title typography', 'fusion-builder' ),
-						'param_name'       => 'title_typography',
-						'choices'          => [
-							'font-family'    => 'title_font',
-							'font-size'      => 'title_font_size',
-							'line-height'    => 'title_line_height',
-							'letter-spacing' => 'title_letter_spacing',
-							'text-transform' => 'title_text_transform',
-						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '',
-							'font-size'      => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'text-transform' => '',
-						],
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -1506,16 +1351,6 @@ function fusion_element_recent_posts() {
 					],
 					'fusion_animation_placeholder' => [
 						'preview_selector' => '.fusion-column',
-					],
-					'fusion_margin_placeholder'    => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_right'  => '',
-							'margin_bottom' => '',
-							'margin_left'   => '',
-						],
 					],
 					[
 						'type'        => 'checkbox_button_set',

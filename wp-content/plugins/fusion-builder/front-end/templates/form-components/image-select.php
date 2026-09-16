@@ -19,4 +19,5 @@
 		{{{ elementLabel }}}
 	<# } #>
 </div>
+{{{ styles }}}
 </script>

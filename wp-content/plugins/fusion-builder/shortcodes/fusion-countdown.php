@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 		class FusionSC_Countdown extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The countdown counter.
 			 *
 			 * @access private
@@ -34,7 +43,6 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 			public function __construct() {
 				parent::__construct();
 				add_filter( 'fusion_attr_countdown-shortcode', [ $this, 'attr' ] );
-				add_filter( 'fusion_attr_countdown-shortcode-countdown-wrapper', [ $this, 'countdown_wrapper_attr' ] );
 				add_filter( 'fusion_attr_countdown-shortcode-counter-wrapper', [ $this, 'counter_wrapper_attr' ] );
 				add_filter( 'fusion_attr_countdown-shortcode-link', [ $this, 'link_attr' ] );
 
@@ -51,7 +59,8 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				return [
 					'hide_on_mobile'         => fusion_builder_default_visibility( 'string' ),
@@ -63,15 +72,15 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 					'background_repeat'      => $fusion_settings->get( 'countdown_background_repeat' ),
 					'border_radius'          => '',
 					'counter_box_color'      => $fusion_settings->get( 'countdown_counter_box_color' ),
-					'counter_box_spacing'    => '',
-					'counter_border_color'   => '',
+					'counter_box_spacing'    => $fusion_settings->get( 'countdown_counter_box_spacing' ),
+					'counter_border_color'   => $fusion_settings->get( 'countdown_counter_border_color' ),
 					'counter_border_radius'  => $fusion_settings->get( 'countdown_counter_border_radius' ),
 					'counter_border_size'    => $fusion_settings->get( 'countdown_counter_border_size' ),
 					'counter_font_size'      => $fusion_settings->get( 'countdown_counter_font_size' ),
-					'counter_padding_bottom' => '',
-					'counter_padding_left'   => '',
-					'counter_padding_right'  => '',
-					'counter_padding_top'    => '',
+					'counter_padding_bottom' => $fusion_settings->get( 'countdown_counter_padding', 'bottom' ),
+					'counter_padding_left'   => $fusion_settings->get( 'countdown_counter_padding', 'left' ),
+					'counter_padding_right'  => $fusion_settings->get( 'countdown_counter_padding', 'right' ),
+					'counter_padding_top'    => $fusion_settings->get( 'countdown_counter_padding', 'top' ),
 					'counter_text_color'     => $fusion_settings->get( 'countdown_counter_text_color' ),
 					'countdown_end'          => '2000-01-01 00:00:00',
 					'dash_titles'            => 'short',
@@ -95,9 +104,7 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 					'animation_type'         => '',
 					'animation_direction'    => 'down',
 					'animation_speed'        => '',
-					'animation_delay'        => '',
 					'animation_offset'       => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'        => '',
 					'element_margin_top'     => '',
 					'element_margin_bottom'  => '',
 					'element_margin_left'    => '',
@@ -123,9 +130,11 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 					],
 					'countdown_background_position'     => 'background_position',
 					'countdown_background_repeat'       => 'background_repeat',
+					'countdown_counter_border_color'    => 'counter_border_color',
 					'countdown_counter_border_radius'   => 'counter_border_radius',
 					'countdown_counter_border_size'     => 'counter_border_size',
 					'countdown_counter_box_color'       => 'counter_box_color',
+					'countdown_counter_box_spacing'     => 'counter_box_spacing',
 					'countdown_counter_font_size'       => 'counter_font_size',
 					'countdown_counter_padding[bottom]' => 'counter_padding_bottom',
 					'countdown_counter_padding[left]'   => 'counter_padding_left',
@@ -179,40 +188,40 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
 
-				$this->defaults = self::get_element_defaults();
-				$this->args     = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_countdown' );
-				$content        = apply_filters( 'fusion_shortcode_content', $content, 'fusion_countdown', $args );
+				global $fusion_settings;
 
-				$this->args['border_radius']         = FusionBuilder::validate_shortcode_attr_value( $this->args['border_radius'], 'px' );
-				$this->args['counter_border_radius'] = FusionBuilder::validate_shortcode_attr_value( $this->args['counter_border_radius'], 'px' );
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_countdown' );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_countdown', $args );
+
+				$defaults['border_radius']         = FusionBuilder::validate_shortcode_attr_value( $defaults['border_radius'], 'px' );
+				$defaults['counter_border_size']   = FusionBuilder::validate_shortcode_attr_value( $defaults['counter_border_size'], 'px' );
+				$defaults['counter_border_radius'] = FusionBuilder::validate_shortcode_attr_value( $defaults['counter_border_radius'], 'px' );
 
 				if ( ! isset( $args['counter_border_radius'] ) ) {
-					$this->args['counter_border_radius'] = $this->args['border_radius'];
+					$defaults['counter_border_radius'] = $defaults['border_radius'];
 				}
 
 				if ( ! isset( $args['label_color'] ) ) {
-					$this->args['label_color'] = $this->args['counter_text_color'];
+					$defaults['label_color'] = $defaults['counter_text_color'];
 				}
 
-				if ( 'default' === $this->args['link_target'] ) {
-					$this->args['link_target'] = $fusion_settings->get( 'countdown_link_target' );
+				if ( 'default' === $defaults['link_target'] ) {
+					$defaults['link_target'] = $fusion_settings->get( 'countdown_link_target' );
 				}
+
+				$this->args = $defaults;
 
 				if ( 'hide' === $this->args['display_when_ended'] && $this->is_counter_ended() ) {
 					return '';
 				}
 
 				$html  = '<div ' . FusionBuilder::attributes( 'countdown-shortcode' ) . '>';
-				$html .= '<div ' . FusionBuilder::attributes( 'countdown-shortcode-countdown-wrapper' ) . '>';
-
-				if ( $this->args['subheading_text'] || $this->args['heading_text'] ) {
-					$html .= '<div ' . FusionBuilder::attributes( 'fusion-countdown-heading-wrapper' ) . '>';
-					$html .= '<div ' . FusionBuilder::attributes( 'fusion-countdown-subheading' ) . '>' . $this->args['subheading_text'] . '</div>';
-					$html .= '<div ' . FusionBuilder::attributes( 'fusion-countdown-heading' ) . '>' . $this->args['heading_text'] . '</div>';
-					$html .= '</div>';
-				}
+				$html .= $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion-countdown-heading-wrapper' ) . '>';
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion-countdown-subheading' ) . '>' . $this->args['subheading_text'] . '</div>';
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion-countdown-heading' ) . '>' . $this->args['heading_text'] . '</div>';
+				$html .= '</div>';
 
 				$html .= '<div ' . FusionBuilder::attributes( 'countdown-shortcode-counter-wrapper' ) . '>';
 
@@ -294,7 +303,6 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 
 				$html .= do_shortcode( $content );
 				$html .= '</div>';
-				$html .= '</div>';
 
 				$this->countdown_counter++;
 
@@ -315,10 +323,9 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 
 				$attr = [
 					'class' => 'fusion-countdown fusion-countdown-' . $this->countdown_counter . ' fusion-countdown-' . $this->args['layout'] . ' fusion-countdown-label-' . $this->args['label_position'],
-					'style' => $this->get_styles(),
 				];
 
-				if ( $this->args['heading_text'] || $this->args['subheading_text'] ) {
+				if ( $this->args['heading_text'] && $this->args['subheading_text'] ) {
 					$attr['class'] .= ' fusion-countdown-has-heading';
 				}
 
@@ -354,21 +361,6 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 			}
 
 			/**
-			 * Builds the countdown-wrapper attributes array.
-			 *
-			 * @access public
-			 * @since 1.0
-			 * @return array
-			 */
-			public function countdown_wrapper_attr() {
-				$attr = [
-					'class' => 'fusion-countdown-wrapper',
-				];
-
-				return $attr;
-			}
-
-			/**
 			 * Builds the counter-wrapper attributes array.
 			 *
 			 * @access public
@@ -381,10 +373,6 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 					'class' => 'fusion-countdown-counter-wrapper',
 					'id'    => 'fusion-countdown-' . $this->countdown_counter,
 				];
-
-				if ( ! $this->args['subheading_text'] && ! $this->args['heading_text'] && ! $this->args['link_url'] ) {
-					$attr['class'] .= ' awb-flex-grow';
-				}
 
 				if ( 'site_time' === $this->args['timezone'] ) {
 					$attr['data-gmt-offset'] = get_option( 'gmt_offset' );
@@ -414,13 +402,12 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 					return true;
 				}
 
-				if ( is_array( $this->args['countdown_end'] ) && ( ! isset( $this->args['countdown_end']['date'] ) || empty( $this->args['countdown_end']['date'] ) ) ) {
+				if ( ! isset( $this->args['countdown_end']['date'] ) || empty( $this->args['countdown_end']['date'] ) ) {
 					return true;
 				}
 
-				$end_date = is_array( $this->args['countdown_end'] ) ? strtotime( $this->args['countdown_end']['date'] ) : strtotime( $this->args['countdown_end'] );
+				$end_date = strtotime( $this->args['countdown_end']['date'] );
 				$now      = time();
-
 				if ( isset( $this->args['countdown_end']['args']['start_date'] ) && ! empty( $this->args['countdown_end']['args']['start_date'] ) ) {
 					if ( ! is_numeric( $this->args['countdown_end']['args']['start_date'] ) ) {
 						$this->args['countdown_end']['args']['start_date'] = strtotime( $this->args['countdown_end']['args']['start_date'] );
@@ -465,51 +452,105 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 			 * @return string
 			 */
 			public function get_styles() {
-				$custom_vars = [];
-				$css_vars    = [
-					'border_radius',
-					'counter_box_color',
-					'counter_padding_top'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'counter_padding_right'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'counter_padding_bottom' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'counter_padding_left'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'counter_border_color',
-					'counter_border_radius',
-					'counter_font_size',
-					'counter_text_color',
-					'label_font_size',
-					'label_color',
-					'heading_font_size',
-					'heading_text_color',
-					'subheading_font_size',
-					'subheading_text_color',
-					'link_text_color',
-					'element_margin_top',
-					'element_margin_right',
-					'element_margin_bottom',
-					'element_margin_left',
-				];
+				$this->base_selector = '.fusion-countdown-' . $this->countdown_counter . ' ';
 
-				if ( '' !== $this->args['background_image'] && ! $this->is_default( 'background_image' ) ) {
-					$custom_vars['background'] = 'url(' . $this->args['background_image'] . ') ' . $this->args['background_position'] . ' ' . $this->args['background_repeat'] . ' ' . $this->args['background_color'];
+				if ( $this->args['background_image'] && ! $this->is_default( 'background_image' ) ) {
+					$this->add_css_property( $this->base_selector, 'background', 'url(' . $this->args['background_image'] . ') ' . $this->args['background_position'] . ' ' . $this->args['background_repeat'] . ' ' . $this->args['background_color'] );
 					if ( 'no-repeat' === $this->args['background_repeat'] ) {
-						$custom_vars['background-size'] = 'cover';
+						$this->add_css_property( $this->base_selector, '-webkit-background-size', 'cover' );
+						$this->add_css_property( $this->base_selector, '-moz-background-size', 'cover' );
+						$this->add_css_property( $this->base_selector, '-o-background-size', 'cover' );
+						$this->add_css_property( $this->base_selector, 'background-size', 'cover' );
 					}
-				} elseif ( '' !== $this->args['background_color'] && ! $this->is_default( 'background_color' ) ) {
-					$custom_vars['background'] = $this->args['background_color'];
+				} elseif ( ! $this->is_default( 'background_color' ) ) {
+					$this->add_css_property( $this->base_selector, 'background-color', $this->args['background_color'] );
 				}
 
-				if ( '' !== $this->args['counter_box_spacing'] ) {
-					$spacing_value                      = fusion_library()->sanitize->number( $this->args['counter_box_spacing'] ) / 2;
-					$spacing_unit                       = fusion_library()->sanitize->get_unit( $this->args['counter_box_spacing'] );
-					$custom_vars['counter-box-spacing'] = $spacing_value . $spacing_unit;
+				if ( $this->args['border_radius'] && ! $this->is_default( 'border_radius' ) ) {
+					$this->add_css_property( $this->base_selector, 'border-radius', $this->args['border_radius'] );
 				}
 
-				if ( '' !== $this->args['counter_border_size'] ) {
-					$custom_vars['counter-border-size'] = (float) $this->args['counter_border_size'];
+				if ( ! $this->is_default( 'counter_box_spacing' ) ) {
+					$spacing_value = fusion_library()->sanitize->number( $this->args['counter_box_spacing'] ) / 2;
+					$spacing_unit  = fusion_library()->sanitize->get_unit( $this->args['counter_box_spacing'] );
+					$this->add_css_property( $this->base_selector . '.fusion-dash-wrapper', 'padding', $spacing_value . $spacing_unit );
 				}
 
-				return $this->get_css_vars_for_options( $css_vars ) . $this->get_custom_css_vars( $custom_vars );
+				$selector = $this->base_selector . '.fusion-dash';
+
+				if ( ! $this->is_default( 'counter_box_color' ) ) {
+					$this->add_css_property( $selector, 'background-color', $this->args['counter_box_color'] );
+				}
+
+				$padding_top    = $this->args['counter_padding_top'] ? fusion_library()->sanitize->get_value_with_unit( $this->args['counter_padding_top'] ) : '0';
+				$padding_right  = $this->args['counter_padding_right'] ? fusion_library()->sanitize->get_value_with_unit( $this->args['counter_padding_right'] ) : '0';
+				$padding_bottom = $this->args['counter_padding_bottom'] ? fusion_library()->sanitize->get_value_with_unit( $this->args['counter_padding_bottom'] ) : '0';
+				$padding_left   = $this->args['counter_padding_left'] ? fusion_library()->sanitize->get_value_with_unit( $this->args['counter_padding_left'] ) : '0';
+
+				$this->add_css_property( $selector, 'padding', $padding_top . ' ' . $padding_right . ' ' . $padding_bottom . ' ' . $padding_left );
+
+				if ( '0' !== $this->args['counter_border_size'] && 0 !== $this->args['counter_border_size'] ) {
+					$this->add_css_property( $selector . '.fusion-dash', 'border', $this->args['counter_border_size'] . ' solid ' . $this->args['counter_border_color'] );
+				}
+
+				if ( ! $this->is_default( 'counter_border_radius' ) ) {
+					$this->add_css_property( $selector, 'border-radius', $this->args['counter_border_radius'] );
+				}
+
+				if ( ! $this->is_default( 'counter_font_size' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-countdown-counter-wrapper', 'font-size', $this->args['counter_font_size'] );
+				}
+
+				if ( ! $this->is_default( 'counter_text_color' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-countdown-counter-wrapper', 'color', $this->args['counter_text_color'] );
+				}
+
+				if ( ! $this->is_default( 'label_font_size' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-dash-title', 'font-size', $this->args['label_font_size'] );
+				}
+
+				if ( ! $this->is_default( 'label_color' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-dash-title', 'color', $this->args['label_color'] );
+				}
+
+				if ( ! $this->is_default( 'heading_font_size' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-countdown-heading', 'font-size', $this->args['heading_font_size'] );
+				}
+
+				if ( ! $this->is_default( 'heading_text_color' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-countdown-heading', 'color', $this->args['heading_text_color'] );
+				}
+
+				if ( ! $this->is_default( 'subheading_font_size' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-countdown-subheading', 'font-size', $this->args['subheading_font_size'] );
+				}
+
+				if ( ! $this->is_default( 'subheading_text_color' ) ) {
+					$this->add_css_property( $this->base_selector . '.fusion-countdown-subheading', 'color', $this->args['subheading_text_color'] );
+				}
+
+				if ( ! $this->is_default( 'link_text_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .fusion-countdown-link', 'color', $this->args['link_text_color'] );
+				}
+
+				if ( ! $this->is_default( 'element_margin_top' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-top', $this->args['element_margin_top'] );
+				}
+
+				if ( ! $this->is_default( 'element_margin_bottom' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-bottom', $this->args['element_margin_bottom'] );
+				}
+
+				if ( ! $this->is_default( 'element_margin_left' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-left', $this->args['element_margin_left'] );
+				}
+
+				if ( ! $this->is_default( 'element_margin_right' ) ) {
+					$this->add_css_property( $this->base_selector, 'margin-right', $this->args['element_margin_right'] );
+				}
+
+				$css = $this->parse_css();
+				return $css ? '<style type="text/css">' . $css . '</style>' : '';
 			}
 
 			/**
@@ -525,7 +566,7 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 				$main_elements = apply_filters( 'fusion_builder_element_classes', [ '.fusion-countdown' ], '.fusion-countdown.fusion-countdown-floated' );
 
 				$elements = array_merge(
-					[ '.fusion-countdown .fusion-countdown-wrapper' ],
+					[ '.fusion-countdown' ],
 					$dynamic_css_helpers->map_selector( $main_elements, ' .fusion-countdown-heading-wrapper' ),
 					$dynamic_css_helpers->map_selector( $main_elements, ' .fusion-countdown-link-wrapper' )
 				);
@@ -614,7 +655,7 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								'label'       => esc_html__( 'Countdown Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the background color for the countdown box.', 'fusion-builder' ),
 								'id'          => 'countdown_background_color',
-								'default'     => 'var(--awb-color5)',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -673,23 +714,17 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								'default'     => '10px',
 								'type'        => 'dimension',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name' => '--countdown_counter_box_spacing',
-									],
-								],
 							],
 							'countdown_counter_box_color'  => [
 								'label'       => esc_html__( 'Countdown Counter Box Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the background color for the counter boxes.', 'fusion-builder' ),
 								'id'          => 'countdown_counter_box_color',
-								'default'     => 'var(--awb-color7)',
+								'default'     => '#212934',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
 									[
-										'name'     => '--countdown_counter_box_color',
-										'callback' => [ 'sanitize_color' ],
+										'name' => '--countdown_counter_box_color',
 									],
 								],
 							],
@@ -711,28 +746,6 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								],
 								'type'        => 'spacing',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'   => '--countdown_counter_padding-top',
-										'choice' => 'top',
-										'po'     => false,
-									],
-									[
-										'name'   => '--countdown_counter_padding-right',
-										'choice' => 'right',
-										'po'     => false,
-									],
-									[
-										'name'   => '--countdown_counter_padding-bottom',
-										'choice' => 'bottom',
-										'po'     => false,
-									],
-									[
-										'name'   => '--countdown_counter_padding-left',
-										'choice' => 'left',
-										'po'     => false,
-									],
-								],
 							],
 							'countdown_counter_border_size' => [
 								'label'       => esc_html__( 'Countdown Counter Border Size', 'fusion-builder' ),
@@ -746,26 +759,15 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 									'max'  => '50',
 									'step' => '1',
 								],
-								'css_vars'    => [
-									[
-										'name' => '--countdown_counter_border_size',
-									],
-								],
 							],
 							'countdown_counter_border_color' => [
 								'label'           => esc_html__( 'Countdown Counter Border Color', 'fusion-builder' ),
 								'description'     => esc_html__( 'Controls the border color of the counter boxes.', 'fusion-builder' ),
 								'id'              => 'countdown_counter_border_color',
-								'default'         => 'var(--awb-color7)',
+								'default'         => '#1d242d',
 								'type'            => 'color-alpha',
 								'transport'       => 'postMessage',
 								'soft_dependency' => true,
-								'css_vars'        => [
-									[
-										'name'     => '--countdown_counter_border_color',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'countdown_counter_border_radius' => [
 								'label'       => esc_html__( 'Countdown Counter Border Radius', 'fusion-builder' ),
@@ -775,11 +777,6 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								'type'        => 'dimension',
 								'choices'     => [ 'px', '%' ],
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name' => '--countdown_counter_border_radius',
-									],
-								],
 							],
 							'countdown_counter_font_size'  => [
 								'label'       => esc_html__( 'Countdown Counter Font Size', 'fusion-builder' ),
@@ -788,17 +785,12 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								'default'     => '18px',
 								'type'        => 'dimension',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name' => '--countdown_counter_font_size',
-									],
-								],
 							],
 							'countdown_counter_text_color' => [
 								'label'       => esc_html__( 'Countdown Counter Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color for the countdown timer text.', 'fusion-builder' ),
 								'id'          => 'countdown_counter_text_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -815,17 +807,12 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								'default'     => '18px',
 								'type'        => 'dimension',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name' => '--countdown_label_font_size',
-									],
-								],
 							],
 							'countdown_label_color'        => [
 								'label'       => esc_html__( 'Countdown Counter Label Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color for the countdown timer labels.', 'fusion-builder' ),
 								'id'          => 'countdown_label_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -842,17 +829,12 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								'default'     => '18px',
 								'type'        => 'dimension',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name' => '--countdown_heading_font_size',
-									],
-								],
 							],
 							'countdown_heading_text_color' => [
 								'label'       => esc_html__( 'Countdown Heading Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color for the countdown headings.', 'fusion-builder' ),
 								'id'          => 'countdown_heading_text_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -869,39 +851,22 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 								'default'     => '14px',
 								'type'        => 'dimension',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name' => '--countdown_subheading_font_size',
-									],
-								],
 							],
 							'countdown_subheading_text_color' => [
 								'label'       => esc_html__( 'Countdown Subheading Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color for the countdown subheadings.', 'fusion-builder' ),
 								'id'          => 'countdown_subheading_text_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--countdown_subheading_text_color',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'countdown_link_text_color'    => [
 								'label'       => esc_html__( 'Countdown Link Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color for the countdown link text.', 'fusion-builder' ),
 								'id'          => 'countdown_link_text_color',
-								'default'     => 'var(--awb-color1)',
+								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
-								'css_vars'    => [
-									[
-										'name'     => '--countdown_link_text_color',
-										'callback' => [ 'sanitize_color' ],
-									],
-								],
 							],
 							'countdown_link_target'        => [
 								'label'       => esc_html__( 'Countdown Link Target', 'fusion-builder' ),
@@ -934,7 +899,7 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
 					FusionBuilder::$js_folder_url . '/general/fusion-countdown.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-countdown.js',
 					[ 'jquery', 'fusion-animations', 'jquery-count-down' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 			}
@@ -962,7 +927,8 @@ if ( fusion_is_element_enabled( 'fusion_countdown' ) ) {
  * @since 1.0
  */
 function fusion_element_countdown() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -973,7 +939,7 @@ function fusion_element_countdown() {
 				'icon'          => 'fusiona-calendar-check-o',
 				'preview'       => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-countdown-preview.php',
 				'preview_id'    => 'fusion-builder-block-module-countdown-preview-template',
-				'help_url'      => 'https://avada.com/documentation/countdown-element/',
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/countdown-element/',
 				'inline_editor' => true,
 				'params'        => [
 					[
@@ -1032,6 +998,72 @@ function fusion_element_countdown() {
 							'bottom'    => esc_attr__( 'Bottom', 'fusion-builder' ),
 						],
 						'default'     => '',
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose a background color for the countdown wrapping box.', 'fusion-builder' ),
+						'param_name'  => 'background_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'countdown_background_color' ),
+						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'upload',
+						'heading'     => esc_attr__( 'Background Image', 'fusion-builder' ),
+						'description' => esc_attr__( 'Upload an image to display in the background.', 'fusion-builder' ),
+						'param_name'  => 'background_image',
+						'value'       => '',
+						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Background Position', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the position of the background image.', 'fusion-builder' ),
+						'param_name'  => 'background_position',
+						'value'       => [
+							''              => esc_attr__( 'Default', 'fusion-builder' ),
+							'left top'      => esc_attr__( 'Left Top', 'fusion-builder' ),
+							'left center'   => esc_attr__( 'Left Center', 'fusion-builder' ),
+							'left bottom'   => esc_attr__( 'Left Bottom', 'fusion-builder' ),
+							'right top'     => esc_attr__( 'Right Top', 'fusion-builder' ),
+							'right center'  => esc_attr__( 'Right Center', 'fusion-builder' ),
+							'right bottom'  => esc_attr__( 'Right Bottom', 'fusion-builder' ),
+							'center top'    => esc_attr__( 'Center Top', 'fusion-builder' ),
+							'center center' => esc_attr__( 'Center Center', 'fusion-builder' ),
+							'center bottom' => esc_attr__( 'Center Bottom', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'background_image',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Background Repeat', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose how the background image repeats.' ),
+						'param_name'  => 'background_repeat',
+						'value'       => [
+							''          => esc_attr__( 'Default', 'fusion-builder' ),
+							'no-repeat' => esc_attr__( 'No Repeat', 'fusion-builder' ),
+							'repeat'    => esc_attr__( 'Repeat Vertically and Horizontally', 'fusion-builder' ),
+							'repeat-x'  => esc_attr__( 'Repeat Horizontally', 'fusion-builder' ),
+							'repeat-y'  => esc_attr__( 'Repeat Vertically', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'background_image',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
 					],
 					[
 						'type'        => 'radio_button_set',
@@ -1222,12 +1254,16 @@ function fusion_element_countdown() {
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-						'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
+						'description' => esc_attr__(
+							'_self = open in same window
+	 				                                      _blank = open in new window',
+							'fusion-builder'
+						),
 						'param_name'  => 'link_target',
 						'value'       => [
 							'default' => esc_attr__( 'Default', 'fusion-builder' ),
-							'_self'   => esc_html__( 'Same Window/Tab', 'fusion-builder' ),
-							'_blank'  => esc_html__( 'New Window/Tab', 'fusion-builder' ),
+							'_self'   => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank'  => esc_attr__( '_blank', 'fusion-builder' ),
 						],
 						'default'     => 'default',
 						'dependency'  => [
@@ -1275,72 +1311,6 @@ function fusion_element_countdown() {
 						'value'       => '',
 					],
 					[
-						'type'        => 'colorpickeralpha',
-						'heading'     => esc_attr__( 'Background Color', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose a background color for the countdown wrapping box.', 'fusion-builder' ),
-						'param_name'  => 'background_color',
-						'value'       => '',
-						'default'     => $fusion_settings->get( 'countdown_background_color' ),
-						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-					],
-					[
-						'type'        => 'upload',
-						'heading'     => esc_attr__( 'Background Image', 'fusion-builder' ),
-						'description' => esc_attr__( 'Upload an image to display in the background.', 'fusion-builder' ),
-						'param_name'  => 'background_image',
-						'value'       => '',
-						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-					],
-					[
-						'type'        => 'select',
-						'heading'     => esc_attr__( 'Background Position', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose the position of the background image.', 'fusion-builder' ),
-						'param_name'  => 'background_position',
-						'value'       => [
-							''              => esc_attr__( 'Default', 'fusion-builder' ),
-							'left top'      => esc_attr__( 'Left Top', 'fusion-builder' ),
-							'left center'   => esc_attr__( 'Left Center', 'fusion-builder' ),
-							'left bottom'   => esc_attr__( 'Left Bottom', 'fusion-builder' ),
-							'right top'     => esc_attr__( 'Right Top', 'fusion-builder' ),
-							'right center'  => esc_attr__( 'Right Center', 'fusion-builder' ),
-							'right bottom'  => esc_attr__( 'Right Bottom', 'fusion-builder' ),
-							'center top'    => esc_attr__( 'Center Top', 'fusion-builder' ),
-							'center center' => esc_attr__( 'Center Center', 'fusion-builder' ),
-							'center bottom' => esc_attr__( 'Center Bottom', 'fusion-builder' ),
-						],
-						'default'     => '',
-						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'background_image',
-								'value'    => '',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'select',
-						'heading'     => esc_attr__( 'Background Repeat', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose how the background image repeats.' ),
-						'param_name'  => 'background_repeat',
-						'value'       => [
-							''          => esc_attr__( 'Default', 'fusion-builder' ),
-							'no-repeat' => esc_attr__( 'No Repeat', 'fusion-builder' ),
-							'repeat'    => esc_attr__( 'Repeat Vertically and Horizontally', 'fusion-builder' ),
-							'repeat-x'  => esc_attr__( 'Repeat Horizontally', 'fusion-builder' ),
-							'repeat-y'  => esc_attr__( 'Repeat Vertically', 'fusion-builder' ),
-						],
-						'default'     => '',
-						'group'       => esc_attr__( 'Background', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'background_image',
-								'value'    => '',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
 						'type'        => 'checkbox_button_set',
 						'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
 						'param_name'  => 'hide_on_mobile',
@@ -1363,7 +1333,7 @@ function fusion_element_countdown() {
 						'value'       => '',
 					],
 					'fusion_animation_placeholder' => [
-						'preview_selector' => '.fusion-countdown',
+						'preview_selector' => '.fusion-meta-tb',
 					],
 				],
 			]

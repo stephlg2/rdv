@@ -32,8 +32,6 @@
         class FusionReduxFramework_Extension_vendorsupport {
 
             static $version = "1.0.0";
-            public $extension_url = '';
-            public $extension_dir = '';
 
             /**
              * Class Constructor. Defines the args for the extions class

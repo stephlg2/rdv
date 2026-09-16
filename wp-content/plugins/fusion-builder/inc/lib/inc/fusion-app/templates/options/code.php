@@ -15,8 +15,8 @@ if ( function_exists( 'wp_enqueue_code_editor' ) ) {
 ?>
 <#
 fieldId = 'undefined' === typeof param.param_name ? param.id : param.param_name;
-mode    = 'undefined' !== typeof param.choices && 'undefined' !== param.choices.language ? param.choices.language : 'default';
-mode    = 'default' === mode && 'undefined' !== typeof param.language ? param.language : mode;
+mode    = 'undefined' !== typeof param.choices && 'undefined' !== param.choices.language ? param.choices.language : false;
+mode    = ! mode && 'undefined' !== typeof param.language ? param.language : 'default';
 #>
 <textarea
 	name="{{ fieldId }}"

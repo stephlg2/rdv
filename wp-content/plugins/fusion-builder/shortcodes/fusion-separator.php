@@ -27,6 +27,15 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 			private static $instance;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -38,7 +47,6 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 				add_filter( 'fusion_attr_separator-shortcode-border-part', [ $this, 'border_part_attr' ] );
 				add_filter( 'fusion_attr_separator-shortcode-icon-wrapper', [ $this, 'icon_wrapper_attr' ] );
 				add_filter( 'fusion_attr_separator-shortcode-icon', [ $this, 'icon_attr' ] );
-				add_filter( 'fusion_attr_separator-shortcode-svg', [ $this, 'svg_attr' ] );
 
 				add_shortcode( 'fusion_separator', [ $this, 'render' ] );
 			}
@@ -68,7 +76,8 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+
+				global $fusion_settings;
 
 				return [
 					'hide_on_mobile'    => fusion_builder_default_visibility( 'string' ),
@@ -78,8 +87,6 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 					'alignment'         => 'center',
 					'bottom_margin'     => '',
 					'border_size'       => $fusion_settings->get( 'separator_border_size' ),
-					'weight'            => $fusion_settings->get( 'separator_border_size' ),
-					'amount'            => '20',
 					'flex_grow'         => '',
 					'icon'              => '',
 					'icon_size'         => $fusion_settings->get( 'separator_icon_size' ),
@@ -90,7 +97,6 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 					'style_type'        => $fusion_settings->get( 'separator_style_type' ),
 					'top_margin'        => '',
 					'width'             => '',
-					'height'            => '20',
 					'bottom'            => '', // Deprecated.
 					'color'             => '', // Deprecated.
 					'style'             => '', // Deprecated.
@@ -129,15 +135,13 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
 
-				$this->defaults = self::get_element_defaults();
-				$defaults       = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_separator' );
+				global $fusion_settings;
+
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_separator' );
 
 				$defaults['border_size']   = FusionBuilder::validate_shortcode_attr_value( $defaults['border_size'], 'px' );
-				$defaults['amount']        = FusionBuilder::validate_shortcode_attr_value( $defaults['amount'], 'px' );
 				$defaults['width']         = FusionBuilder::validate_shortcode_attr_value( $defaults['width'], 'px' );
-				$defaults['height']        = FusionBuilder::validate_shortcode_attr_value( $defaults['height'], 'px' );
 				$defaults['top_margin']    = FusionBuilder::validate_shortcode_attr_value( $defaults['top_margin'], 'px' );
 				$defaults['bottom_margin'] = FusionBuilder::validate_shortcode_attr_value( $defaults['bottom_margin'], 'px' );
 
@@ -154,6 +158,8 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 				} elseif ( 'default' === $defaults['style_type'] ) {
 					$defaults['style_type'] = $fusion_settings->get( 'separator_style_type' );
 				}
+
+				extract( $defaults );
 
 				$this->args = $defaults;
 
@@ -295,13 +301,13 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 			public function border_part_attr() {
 				$attr = [
 					'class' => 'fusion-separator-border',
-					'style' => $this->get_style_variables(),
+					'style' => '',
 				];
 
 				$styles = explode( '|', $this->args['style_type'] );
 
-				if ( ! in_array( 'none', $styles, true ) && ! in_array( 'single', $styles, true ) && ! in_array( 'double', $styles, true ) && ! in_array( 'shadow', $styles, true ) && ! in_array( 'wavy', $styles, true ) ) {
-					$styles[] = 'single';
+				if ( ! in_array( 'none', $styles, true ) && ! in_array( 'single', $styles, true ) && ! in_array( 'double', $styles, true ) && ! in_array( 'shadow', $styles, true ) ) {
+					$styles[] .= 'single';
 				}
 
 				foreach ( $styles as $style ) {
@@ -313,13 +319,13 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 
 						$shadow = 'background:radial-gradient(ellipse at 50% -50% , ' . $this->args['sep_color'] . ' 0px, rgba(255, 255, 255, 0) 80%) repeat scroll 0 0 rgba(0, 0, 0, 0);';
 
-						$attr['style'] .= $shadow;
+						$attr['style']  = $shadow;
 						$attr['style'] .= str_replace( 'radial-gradient', '-webkit-radial-gradient', $shadow );
 						$attr['style'] .= str_replace( 'radial-gradient', '-moz-radial-gradient', $shadow );
 						$attr['style'] .= str_replace( 'radial-gradient', '-o-radial-gradient', $shadow );
 					} elseif ( 'none' !== $this->args['style_type'] ) {
 
-						$attr['style'] .= 'border-color:' . $this->args['sep_color'] . ';';
+						$attr['style'] = 'border-color:' . $this->args['sep_color'] . ';';
 					}
 				}
 
@@ -397,56 +403,6 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 				}
 
 				return $attr;
-			}
-
-			/**
-			 * Builds the svg attributes array.
-			 *
-			 * @access public
-			 * @since 3.9.2
-			 * @return array
-			 */
-			public function svg_attr() {
-				$attr = [
-					'preserveAspectRatio' => 'none',
-					'overflow'            => 'visible',
-					'height'              => '100%',
-					'viewBox'             => '0 0 24 24',
-					'fill'                => 'none',
-					'stroke'              => 'black',
-					'stroke-width'        => '1',
-					'stroke-linecap'      => 'square',
-					'stroke-miterlimit'   => '10',
-				];
-
-				if ( ! empty( $this->args['weight'] ) ) {
-					$attr['stroke-width'] = $this->args['weight'];
-				}
-
-				return $attr;
-			}
-
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$css_vars_options = [
-					'height'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'amount'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'sep_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-				];
-				$custom_vars      = [];
-
-				if ( 'wavy' === $this->args['style_type'] ) {
-					$svg_code                             = '<svg xmlns="http://www.w3.org/2000/svg" ' . FusionBuilder::attributes( 'separator-shortcode-svg' ) . '><path d="M0,6c6,0,0.9,11.1,6.9,11.1S18,6,24,6"/></svg>';
-					$custom_vars['separator-pattern-url'] = 'url("data:image/svg+xml;utf8,' . rawurlencode( $svg_code ) . '")';
-				}
-
-				return $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
 			}
 
 			/**
@@ -549,14 +505,13 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 									'single|dotted' => esc_attr__( 'Single Border Dotted', 'fusion-builder' ),
 									'double|dotted' => esc_attr__( 'Double Border Dotted', 'fusion-builder' ),
 									'shadow'        => esc_attr__( 'Shadow', 'fusion-builder' ),
-									'wavy'          => esc_attr__( 'Wavy', 'fusion-builder' ),
 								],
 							],
 							'sep_color'                 => [
 								'label'       => esc_html__( 'Separator Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of all separators, divider lines and borders for meta, previous & next, filters, archive pages, boxes around number pagination, sidebar widgets, accordion divider lines, counter boxes and more.', 'fusion-builder' ),
 								'id'          => 'sep_color',
-								'default'     => 'var(--awb-color3)',
+								'default'     => '#e2e2e2',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 								'css_vars'    => [
@@ -596,7 +551,7 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
 								'label'       => esc_html__( 'Icon Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the Icon', 'fusion-builder' ),
 								'id'          => 'separator_icon_color',
-								'default'     => 'var(--awb-color3)',
+								'default'     => '#e2e2e2',
 								'type'        => 'color-alpha',
 								'transport'   => 'postMessage',
 							],
@@ -649,7 +604,8 @@ if ( fusion_is_element_enabled( 'fusion_separator' ) ) {
  * @since 1.0
  */
 function fusion_element_separator() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
@@ -660,7 +616,7 @@ function fusion_element_separator() {
 				'icon'       => 'fusiona-minus',
 				'preview'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-separator-preview.php',
 				'preview_id' => 'fusion-builder-block-module-separator-preview-template',
-				'help_url'   => 'https://avada.com/documentation/separator-element/',
+				'help_url'   => 'https://theme-fusion.com/documentation/fusion-builder/elements/separator-element/',
 				'params'     => [
 					[
 						'type'        => 'select',
@@ -677,7 +633,6 @@ function fusion_element_separator() {
 							'single|dotted' => esc_attr__( 'Single Border Dotted', 'fusion-builder' ),
 							'double|dotted' => esc_attr__( 'Double Border Dotted', 'fusion-builder' ),
 							'shadow'        => esc_attr__( 'Shadow', 'fusion-builder' ),
-							'wavy'          => esc_attr__( 'Wavy', 'fusion-builder' ),
 						],
 						'default'     => 'default',
 					],
@@ -721,21 +676,6 @@ function fusion_element_separator() {
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 					],
 					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Separator Height', 'fusion-builder' ),
-						'param_name'  => 'height',
-						'value'       => '20',
-						'description' => esc_attr__( 'In pixels (px or %), ex: 1px, ex: 50%.', 'fusion-builder' ),
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'style_type',
-								'value'    => 'wavy',
-								'operator' => '==',
-							],
-						],
-					],
-					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Alignment', 'fusion-builder' ),
 						'description' => esc_attr__( 'Select the separator alignment; only works when a width is specified.', 'fusion-builder' ),
@@ -759,51 +699,6 @@ function fusion_element_separator() {
 						'default'     => $fusion_settings->get( 'separator_border_size' ),
 						'description' => esc_attr__( 'In pixels. ', 'fusion-builder' ),
 						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'style_type',
-								'value'    => 'wavy',
-								'operator' => '!=',
-							],
-						],
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Separator Weight', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the thickness of the wavy separator. In pixels. ', 'fusion-builder' ),
-						'param_name'  => 'weight',
-						'value'       => '',
-						'min'         => '0',
-						'max'         => '10',
-						'step'        => '1',
-						'default'     => $fusion_settings->get( 'separator_border_size' ),
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'style_type',
-								'value'    => 'wavy',
-								'operator' => '==',
-							],
-						],
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Separator Wave Size', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the width of a single wave iteration. In pixels.', 'fusion-builder' ),
-						'param_name'  => 'amount',
-						'value'       => '',
-						'min'         => '0',
-						'max'         => '100',
-						'step'        => '1',
-						'default'     => '20',
-						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'  => [
-							[
-								'element'  => 'style_type',
-								'value'    => 'wavy',
-								'operator' => '==',
-							],
-						],
 					],
 					[
 						'type'        => 'colorpickeralpha',

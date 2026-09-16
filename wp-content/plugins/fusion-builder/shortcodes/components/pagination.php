@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 		class FusionTB_Pagination extends Fusion_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -57,17 +66,16 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'layout'                => 'text',
 					'preview_position'      => 'bottom',
 					'same_term'             => 'no',
 					'taxonomy'              => 'category',
-					'inverse_post_order'    => 'no',
 					'alignment'             => '',
 					'font_size'             => $fusion_settings->get( 'body_typography', 'font-size' ),
 					'text_color'            => $fusion_settings->get( 'link_color' ),
-					'text_hover_color'      => $fusion_settings->get( 'link_hover_color' ),
+					'text_hover_color'      => $fusion_settings->get( 'primary_color' ),
 					'border_size'           => 1,
 					'border_color'          => $fusion_settings->get( 'sep_color' ),
 					'height'                => '36',
@@ -94,9 +102,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 					'animation_type'        => '',
 					'animation_direction'   => 'down',
 					'animation_speed'       => '0.1',
-					'animation_delay'       => '',
 					'animation_offset'      => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'       => '',
 				];
 			}
 
@@ -109,10 +115,11 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 			 * @return array
 			 */
 			public static function settings_to_params() {
-				// Todo: 'link_color' should also change 'text_color', and 'body_typography[font-size]' => 'font_size'.
 				return [
 					'sep_color'                  => 'border_color',
-					'link_hover_color'           => 'text_hover_color',
+					'link_color'                 => 'text_color',
+					'primary_color'              => 'text_hover_color',
+					'body_typography[font-size]' => 'font_size',
 					'body_typography[font-size]' => 'preview_font_size',
 					'link_color'                 => 'preview_text_color',
 				];
@@ -128,7 +135,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_tb_pagination' );
+				$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
+				$defaults   = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_tb_pagination' );
 
 				$defaults['border_size']           = FusionBuilder::validate_shortcode_attr_value( $defaults['border_size'], 'px' );
 				$defaults['height']                = FusionBuilder::validate_shortcode_attr_value( $defaults['height'], 'px' );
@@ -140,7 +148,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 
 				$this->emulate_post();
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_pagination-shortcode' ) . '>' . $this->get_pagination_content() . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_pagination-shortcode' ) . '>' . $this->get_pagination_content() . '</div>';
 
 				$this->restore_post();
 
@@ -163,38 +172,20 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 				$content   = '';
 				$same_term = ( isset( $this->args['same_term'] ) && 'no' !== $this->args['same_term'] ) ? true : false;
 				$term      = ( isset( $this->args['same_term'] ) && '' !== $this->args['taxonomy'] ) ? $this->args['taxonomy'] : 'category';
-
-				// If the user wants to reverse the logic of the post order, then swap posts.
-				if ( 'yes' === $this->args['inverse_post_order'] ) {
-					$prev_post = get_adjacent_post( $same_term, '', false, $term );
-					$next_post = get_adjacent_post( $same_term, '', true, $term );
-
-					add_filter( 'previous_post_link', [ $this, 'swap_rel_attr_in_prev_post_link' ] );
-					add_filter( 'next_post_link', [ $this, 'swap_rel_attr_in_next_post_link' ] );
-					$prev_post_link = get_next_post_link( '%link', esc_attr__( 'Previous', 'fusion-builder' ), $same_term, '', $term );
-					$next_post_link = get_previous_post_link( '%link', esc_attr__( 'Next', 'fusion-builder' ), $same_term, '', $term );
-					remove_filter( 'previous_post_link', [ $this, 'swap_rel_attr_in_prev_post_link' ] );
-					remove_filter( 'next_post_link', [ $this, 'swap_rel_attr_in_next_post_link' ] );
-				} else {
-					$prev_post = get_adjacent_post( $same_term, '', true, $term );
-					$next_post = get_adjacent_post( $same_term, '', false, $term );
-
-					$prev_post_link = get_previous_post_link( '%link', esc_attr__( 'Previous', 'fusion-builder' ), $same_term, '', $term );
-					$next_post_link = get_next_post_link( '%link', esc_attr__( 'Next', 'fusion-builder' ), $same_term, '', $term );
-				}
-
+				$prev_post = get_adjacent_post( $same_term, '', true, $term );
+				$next_post = get_adjacent_post( $same_term, '', false, $term );
 				if ( 'sticky' !== $this->args['layout'] ) {
-					$content .= '<div class="fusion-tb-previous">' . $prev_post_link;
+					$content .= '<div class="fusion-tb-previous">' . get_previous_post_link( '%link', esc_attr__( 'Previous', 'fusion-builder' ), $same_term, '', $term );
 					$content .= $this->get_text_preview( $prev_post );
 					$content .= '</div>';
-					$content .= '<div class="fusion-tb-next">' . $next_post_link;
+					$content .= '<div class="fusion-tb-next">' . get_next_post_link( '%link', esc_attr__( 'Next', 'fusion-builder' ), $same_term, '', $term );
 					$content .= $this->get_text_preview( $next_post );
 					$content .= '</div>';
 				} elseif ( 'sticky' === $this->args['layout'] ) {
 					if ( is_object( $prev_post ) ) {
 						$content .= '<div class="fusion-control-navigation prev">';
 						$content .= '<a href="' . get_permalink( $prev_post ) . '" rel="prev">';
-						$content .= '<span class="fusion-item-title"><i class="awb-icon-angle-left" aria-hidden="true"></i>';
+						$content .= '<span class="fusion-item-title"><i class="fusion-icon-angle-left" aria-hidden="true"></i>';
 						$content .= '<p>' . $prev_post->post_title . '</p></span>';
 						$content .= '<span class="fusion-item-media">' . $this->get_thumbnail( $prev_post, $this->args['preview_height'] ) . '</span></a></div>';
 					}
@@ -203,7 +194,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 						$content .= '<div class="fusion-control-navigation next">';
 						$content .= '<a href="' . get_permalink( $next_post ) . '" rel="next">';
 						$content .= '<span class="fusion-item-media">' . $this->get_thumbnail( $next_post, $this->args['preview_height'] ) . '</span>';
-						$content .= '<span class="fusion-item-title"><p>' . $next_post->post_title . '</p><i class="awb-icon-angle-right" aria-hidden="true"></i>';
+						$content .= '<span class="fusion-item-title"><p>' . $next_post->post_title . '</p><i class="fusion-icon-angle-right" aria-hidden="true"></i>';
 						$content .= '</span></a></div>';
 					}
 				}
@@ -263,6 +254,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 					$width        = intval( $wrapper_height ) / $aspect_ratio;
 					$height       = intval( $wrapper_height );
 					$hwstring     = image_hwstring( $width, $height );
+					$attachment   = get_post( $attachment_id );
 
 					$attr = [
 						'src'   => $src,
@@ -313,6 +305,137 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 			}
 
 			/**
+			 * Get the styles.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @return string
+			 */
+			protected function get_styles() {
+				$this->base_selector = '.fusion-pagination-tb.fusion-pagination-tb-' . $this->counter;
+				$this->dynamic_css   = [];
+
+				$selectors = [
+					$this->base_selector . '.single-navigation:not(.layout-sticky)',
+				];
+
+				if ( ! $this->is_default( 'border_color' ) ) {
+					$this->add_css_property( $selectors, 'border-color', $this->args['border_color'] );
+				}
+
+				if ( ! $this->is_default( 'border_size' ) ) {
+					$this->add_css_property( $selectors, 'border-width', $this->args['border_size'] );
+
+					if ( 'preview' === $this->args['layout'] ) {
+						$selectors = [
+							$this->base_selector . '.single-navigation.layout-preview .fusion-pagination-preview-wrapper',
+						];
+
+						if ( 'top' === $this->args['preview_position'] ) {
+							$this->add_css_property( $selectors, 'margin-bottom', 'calc(' . $this->args['border_size'] . ' + 1px )' );
+						} else {
+							$this->add_css_property( $selectors, 'margin-top', 'calc(' . $this->args['border_size'] . ' + 1px )' );
+						}
+					}
+				}
+
+				$selectors = [
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . '.single-navigation:not(.layout-sticky) a',
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . '.single-navigation:not(.layout-sticky) a:before',
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . '.single-navigation:not(.layout-sticky) a:after',
+				];
+
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['text_color'] );
+				}
+
+				$selectors = [
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . '.single-navigation:not(.layout-sticky) a:hover',
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . '.single-navigation:not(.layout-sticky) a:hover::before',
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . '.single-navigation:not(.layout-sticky) a:hover::after',
+				];
+
+				if ( ! $this->is_default( 'text_hover_color' ) ) {
+					$this->add_css_property( $selectors, 'color', $this->args['text_hover_color'] );
+				}
+
+				$selectors = [
+					'.fusion-body ' . $this->base_selector . '.layout-sticky .fusion-control-navigation',
+					'.fusion-body ' . $this->base_selector . ':not(.layout-sticky).layout-preview .fusion-pagination-preview-wrapper',
+				];
+
+				if ( ! $this->is_default( 'bg_color' ) && 'text' !== $this->args['layout'] ) {
+					$this->add_css_property( $selectors, 'background', $this->args['bg_color'] );
+				}
+
+				$selectors = [
+					'.fusion-body ' . $this->base_selector . '.layout-sticky.has-box-shadow .fusion-control-navigation:before',
+					'.fusion-body ' . $this->base_selector . ':not(.layout-sticky).layout-preview.has-box-shadow .fusion-pagination-preview-wrapper',
+				];
+
+				if ( 'yes' === $this->args['box_shadow'] && '' !== $this->args['box_shadow_color'] && 'text' !== $this->args['layout'] ) {
+					$this->add_css_property( $selectors, 'box-shadow', Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles( $this->args ) );
+				}
+
+				$selectors = [
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . '.layout-sticky .fusion-control-navigation a',
+					'.fusion-fullwidth .fusion-builder-row.fusion-row ' . $this->base_selector . ':not(.layout-sticky).layout-preview .fusion-pagination-preview-wrapper .fusion-item-title',
+				];
+
+				if ( ! $this->is_default( 'preview_text_color' ) && 'text' !== $this->args['layout'] ) {
+					$this->add_css_property( $selectors, 'color', $this->args['preview_text_color'] );
+				}
+
+				if ( ! $this->is_default( 'preview_font_size' ) && 'text' !== $this->args['layout'] ) {
+					$this->add_css_property( $selectors, 'font-size', $this->args['preview_font_size'] );
+				}
+
+				$selectors = [
+					'.fusion-body ' . $this->base_selector . '.layout-sticky .fusion-control-navigation',
+				];
+
+				if ( ! $this->is_default( 'preview_height' ) && 'sticky' === $this->args['layout'] ) {
+					$this->add_css_property( $selectors, 'height', $this->args['preview_height'] );
+				}
+
+				if ( ! $this->is_default( 'preview_wrapper_width' ) && 'sticky' === $this->args['layout'] ) {
+					$this->add_css_property( $selectors, 'min-width', $this->args['preview_wrapper_width'] );
+				}
+
+				if ( ! $this->is_default( 'preview_width' ) && 'sticky' === $this->args['layout'] ) {
+					$selectors = [
+						'.fusion-body ' . $this->base_selector . '.layout-sticky .fusion-control-navigation.next',
+					];
+					if ( is_rtl() ) {
+						$this->add_css_property( $selectors, 'transform', 'translate( calc( max( -' . $this->args['preview_wrapper_width'] . ', -50vw ) + ' . $this->args['preview_width'] . '), -50% )', true );
+					} else {
+						$this->add_css_property( $selectors, 'transform', 'translate( calc( min( ' . $this->args['preview_wrapper_width'] . ', 50vw ) - ' . $this->args['preview_width'] . '), -50% )' );
+					}
+
+					$selectors = [
+						'.fusion-body ' . $this->base_selector . '.layout-sticky .fusion-control-navigation.prev',
+					];
+					if ( is_rtl() ) {
+						$this->add_css_property( $selectors, 'transform', 'translate( calc( min( ' . $this->args['preview_wrapper_width'] . ', 50vw ) - ' . $this->args['preview_width'] . '), -50% )', true );
+					} else {
+						$this->add_css_property( $selectors, 'transform', 'translate( calc( max( -' . $this->args['preview_wrapper_width'] . ', -50vw ) + ' . $this->args['preview_width'] . '), -50% )' );
+					}
+				}
+
+				$selectors = [
+					'.fusion-body ' . $this->base_selector . '.layout-sticky',
+				];
+
+				if ( '' !== $this->args['z_index'] && 'sticky' === $this->args['layout'] ) {
+					$this->add_css_property( $selectors, 'z-index', intval( $this->args['z_index'] ) );
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
+			}
+
+			/**
 			 * Builds the attributes array.
 			 *
 			 * @access public
@@ -330,6 +453,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 				if ( $this->args['animation_type'] ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
+
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['alignment'] && 'sticky' !== $this->args['layout'] ) {
 					$attr['class'] .= ' align-' . $this->args['alignment'];
@@ -351,7 +476,13 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 					$attr['class'] .= ' has-box-shadow';
 				}
 
-				$attr['style'] .= $this->get_style_variables();
+				if ( $this->args['height'] && 'sticky' !== $this->args['layout'] ) {
+					$attr['style'] .= 'min-height:' . $this->args['height'] . ';';
+				}
+
+				if ( $this->args['font_size'] ) {
+					$attr['style'] .= 'font-size:' . $this->args['font_size'] . ';';
+				}
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -362,83 +493,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
 				}
 
 				return $attr;
-			}
-
-			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
-
-				$custom_vars['box_shadow'] = Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles( $this->args );
-
-				$css_vars_options = [
-					'margin_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'font_size'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'height'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'preview_wrapper_width' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'preview_width'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'preview_height'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_size'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'preview_font_size'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_color'          => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'bg_color'              => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_color'            => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_hover_color'      => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'preview_text_color'    => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'z_index',
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
-			}
-
-			/**
-			 * Replace the "next" rel attribute, with "prev". This function is a
-			 * filter.
-			 *
-			 * @access public
-			 * @since 3.5
-			 * @param string $html The Html of the adjacent link.
-			 * @return string
-			 */
-			public function swap_rel_attr_in_next_post_link( $html ) {
-				$regex_match_next = '/(<a.*?rel=["\'])(next)(["\'].*?>)/';
-				$new_html         = preg_replace( $regex_match_next, '$1prev$3', $html );
-
-				if ( empty( $new_html ) ) {
-					return $html;
-				}
-
-				return $new_html;
-			}
-
-			/**
-			 * Replace the "prev" rel attribute, with "next". This function is a
-			 * filter.
-			 *
-			 * @access public
-			 * @since 3.5
-			 * @param string $html The Html of the adjacent link.
-			 * @return string
-			 */
-			public function swap_rel_attr_in_prev_post_link( $html ) {
-				$regex_match_prev = '/(<a.*?rel=["\'])(prev)(["\'].*?>)/';
-				$new_html         = preg_replace( $regex_match_prev, '$1next$3', $html );
-
-				if ( empty( $new_html ) ) {
-					return $html;
-				}
-
-				return $new_html;
 			}
 
 			/**
@@ -474,8 +528,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_pagination' ) ) {
  * @since 2.2
  */
 function fusion_component_pagination() {
-	$fusion_settings = awb_get_fusion_settings();
-
+	global $fusion_settings;
 	$allowed_taxonomies = [
 		'category'    => __( 'Post Categories', 'fusion-builder' ),
 		'post_tag'    => __( 'Post Tags', 'fusion-builder' ),
@@ -502,12 +555,13 @@ function fusion_component_pagination() {
 		fusion_builder_frontend_data(
 			'FusionTB_Pagination',
 			[
-				'name'      => esc_attr__( 'Pagination', 'fusion-builder' ),
-				'shortcode' => 'fusion_tb_pagination',
-				'icon'      => 'fusiona-pagination',
-				'component' => true,
-				'templates' => [ 'content', 'page_title_bar' ],
-				'params'    => [
+				'name'                    => esc_attr__( 'Pagination', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_pagination',
+				'icon'                    => 'fusiona-pagination',
+				'component'               => true,
+				'templates'               => [ 'content', 'page_title_bar' ],
+				'components_per_template' => 2,
+				'params'                  => [
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Layout', 'fusion-builder' ),
@@ -584,17 +638,6 @@ function fusion_component_pagination() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'Swap Post Order', 'fusion-builder' ),
-						'description' => esc_attr__( 'Whether or not next/previous buttons should invert the post order logic.', 'fusion-builder' ),
-						'param_name'  => 'inverse_post_order',
-						'default'     => 'no',
-						'value'       => [
-							'yes' => esc_html__( 'Yes', 'fusion-builder' ),
-							'no'  => esc_html__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Text Alignment', 'fusion-builder' ),
 						'description' => esc_attr__( 'Make a selection for pagination text alignment.', 'fusion-builder' ),
 						'param_name'  => 'alignment',
@@ -643,16 +686,20 @@ function fusion_component_pagination() {
 								'operator' => '!=',
 							],
 						],
-						'states'      => [
-							'hover' => [
-								'label'      => __( 'Hover', 'fusion-builder' ),
-								'default'    => $fusion_settings->get( 'link_hover_color' ),
-								'param_name' => 'text_hover_color',
-								'preview'    => [
-									'selector' => '.fusion-pagination-tb.single-navigation a',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Text Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text hover color of the pagination section text.', 'fusion-builder' ),
+						'param_name'  => 'text_hover_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'primary_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'layout',
+								'value'    => 'sticky',
+								'operator' => '!=',
 							],
 						],
 					],
@@ -868,4 +915,4 @@ function fusion_component_pagination() {
 		)
 	);
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_component_pagination' );
+add_action( 'wp_loaded', 'fusion_component_pagination' );

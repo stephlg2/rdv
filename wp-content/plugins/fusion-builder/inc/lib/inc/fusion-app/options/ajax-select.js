@@ -11,7 +11,6 @@ function FASElement( el, parentScope ) {
 	this.fieldId        = this.$el.data( 'field-id' );
 	this.ajaxCall       = this.$el.data( 'ajax' );
 	this.maxInput       = this.$el.data( 'max-input' );
-	this.notArrayFormat = ( 'true' === this.$el.data( 'save-not-array' ) || true === this.$el.data( 'save-not-array' ) ? true : false );
 	this.prefix         = this.repeaterId + this.fieldId,
 	this.initialValues  = [];
 	this.values         = {};
@@ -341,8 +340,7 @@ FASElement.prototype.renderOptions = function() {
 	_.each( this.options, function( option ) {
 		var theID =  self.prefix + '-' + option.id;
 		var checked = option.checked ? 'checked' : '';
-		var arrayOption = ( self.notArrayFormat ? '' : '[]' );
-		var $option = jQuery( '<input type="checkbox" id="' + theID + '" name="' + self.fieldId + arrayOption + '" value="' + option.id + '" data-label="' + option.text + '" class="fusion-select-option" ' + checked + '><label for="' + theID + '" class="fusion-select-label">' + option.text + '</label>' );
+		var $option = jQuery( '<input type="checkbox" id="' + theID + '" name="' + self.fieldId + '[]" value="' + option.id + '" data-label="' + option.text + '" class="fusion-select-option" ' + checked + '><label for="' + theID + '" class="fusion-select-label">' + option.text + '</label>' );
 		// Add option
 		$newOptions.append( $option );
 		if ( checked ) {
@@ -374,13 +372,9 @@ FASElement.prototype.init = function() {
 
 	self.$el.addClass( 'fusion-select-inited' );
 	// Get corresponding labels for initial values.
-	if ( this.notArrayFormat && 0 < parseInt( this.initialValues ) ) {
-		this.initialValues = [ this.initialValues ];
-	}
-
 	if ( this.initialValues.length ) {
 		this.toggleLoading();
-		this.getLabels().done( function( data ) {
+		this.getLabels().success( function( data ) {
 			data = JSON.parse( data );
 
 			self.options = data.labels || [];

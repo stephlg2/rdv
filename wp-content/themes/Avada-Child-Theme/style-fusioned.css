@@ -1219,6 +1219,37 @@ a.fusion-button:hover {
    BLOG
    ========================================================================== */
 
+   /* Barre filtres articles - style sommaire horizontal */
+.rdv-filters-nav-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.rdv-filters-nav-inner .rdv-filter {
+    display: inline-block;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.rdv-filters-nav-inner .rdv-filter.is-active {
+    background: #cecac1 !important;
+    color: #fff !important;
+}
+
+@media screen and (max-width: 768px) {
+    .rdv-filters-nav-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rdv-filters-nav-inner .rdv-filter {
+        text-align: center;
+    }
+}
+
 .titre-article-menu {
     color: black;
     font-family: inherit;

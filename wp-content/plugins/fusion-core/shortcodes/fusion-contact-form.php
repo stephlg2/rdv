@@ -48,7 +48,7 @@ class FusionSC_Contact_Form {
 	 * @return void|string     HTML output.
 	 */
 	public function render( $args, $content = '' ) {
-		$fusion_settings = class_exists( 'Fusion_Settings' ) ? awb_get_fusion_settings() : false;
+		$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 
 		$args = shortcode_atts(
 			[

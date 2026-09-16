@@ -13,7 +13,7 @@ if ( ! class_exists( 'Avada' ) ) {
 	exit( 'This feature requires the Avada theme.' );
 }
 
-$fusion_settings = awb_get_fusion_settings();
+$fusion_settings = FusionCore_Plugin::get_fusion_settings();
 $video           = fusion_get_option( 'video' );
 
 if ( ! post_password_required( get_the_ID() ) && function_exists( 'fusion_library' ) ) : ?>

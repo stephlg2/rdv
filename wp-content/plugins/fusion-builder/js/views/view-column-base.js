@@ -60,9 +60,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} else if ( 'auto' === size ) {
 					label = 'auto';
 					this.$el.css( { 'width': '97%'  } );
-				} else if ( size.includes( 'calc' ) || size.includes( 'px' ) ) {
-					this.$el.css( { 'width': size } );
-					label = '<span class="fusiona-column"></span>';
 				} else {
 					label = ( this.validateColumnSize( size ) * 100 ).toFixed( 2 );
 					// Update Style.
@@ -70,7 +67,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					label += '%';
 				}
 				this.$el.find( this.isNested ? '.fusion-builder-resize-inner-column' : '.fusion-builder-resize-column' )
-					.html( label );
+					.text( label );
 			},
 
             sortableElements: function() {
@@ -230,7 +227,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var shortcode    = '',
 					columnCID    = $thisColumn.data( 'cid' ),
 					module       = FusionPageBuilderElements.findWhere( { cid: columnCID } ),
-					colType		   = module.get( 'type' ),
+					colType		 = module.get( 'type' ),
 					selector     = colType.includes( 'inner' ) ? '.fusion_module_block' : '.fusion_builder_column_element:not(.fusion-builder-column-inner .fusion_builder_column_element)',
 					columnParams = {},
 					ColumnAttributesCheck;
@@ -277,8 +274,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				} );
 
-				FusionPageBuilderApp.beforeGenerateShortcode( columnCID );
-
 				// Build column shortcode
 				shortcode += '[' + colType + ' type="' + module.get( 'layout' ) + '"';
 
@@ -287,9 +282,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Loops params and add.
 				_.each( columnParams, function( value, name ) {
-					if ( ( 'on' === fusionBuilderConfig.removeEmptyAttributes && '' !== value ) || 'off' === fusionBuilderConfig.removeEmptyAttributes ) {
-						shortcode += ' ' + name + '="' + value + '"';
-					}
+					shortcode += ' ' + name + '="' + value + '"';
 				} );
 
 				shortcode += ']';
@@ -322,8 +315,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 								module            = FusionPageBuilderElements.findWhere( { cid: columnInnerCID } ),
 								innerColumnParams = {},
 								innerColumnAttributesCheck;
-
-							FusionPageBuilderApp.beforeGenerateShortcode( columnInnerCID );
 
 							_.each( module.get( 'params' ), function( value, name ) {
 
@@ -359,9 +350,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							delete innerColumnParams.type;
 
 							_.each( innerColumnParams, function( value, name ) {
-								if ( ( 'on' === fusionBuilderConfig.removeEmptyAttributes && '' !== value ) || 'off' === fusionBuilderConfig.removeEmptyAttributes ) {
-									shortcode += ' ' + name + '="' + value + '"';
-								}
+
+								shortcode += ' ' + name + '="' + value + '"';
+
 							} );
 
 							shortcode += ']';
@@ -634,15 +625,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					return parseFloat( fractions[ 0 ] ) / parseFloat( fractions[ 1 ] );
 				}
 
-				// Size in px or calc, return as it is.
-				if ( -1 !== columnSize.indexOf( 'px' ) || -1 !== columnSize.indexOf( 'calc' ) ) {
-					return columnSize;
-				}
-
-				// Greater than one, no px or calc, assume percentage and divide by 100.
-				if ( 1 < parseFloat( columnSize ) && -1 === columnSize.indexOf( 'px' ) && -1 === columnSize.indexOf( 'calc' )  ) {
+				// Greater than one, assume percentage and divide by 100.
+				if ( 1 < parseFloat( columnSize ) ) {
 					return parseFloat( columnSize ) / 100;
 				}
+
 				return columnSize;
 			}
         } );

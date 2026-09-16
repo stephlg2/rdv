@@ -3,7 +3,7 @@
  * Modifications for WooCommerce.
  *
  * @author     ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package Fusion-Library
  * @subpackage Core
  * @since 3.2
@@ -22,13 +22,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Fusion_WooCommerce {
 
 	/**
-	 * Used to check if we're on a checkout page using a layout.
+	 * Used to check if we're on new type checkout page.
 	 *
 	 * @since 3.3.0
 	 * @access protected
 	 * @var bool
 	 */
-	protected $is_checkout_layout = false;
+	protected $is_new_checkout = false;
 
 	/**
 	 * Stores cart products IDs.
@@ -76,19 +76,19 @@ class Fusion_WooCommerce {
 		}
 
 		if ( class_exists( 'WooCommerce' ) && isset( $post->post_content ) ) {
-			$this->is_checkout_layout = false === strpos( $post->post_content, '[woocommerce_checkout]' ) && false !== strpos( $post->post_content, 'fusion_tb_woo_checkout_' ) ? true : false;
+			$this->is_new_checkout = false === strpos( $post->post_content, '[woocommerce_checkout]' ) && false !== strpos( $post->post_content, 'fusion_tb_woo_checkout_' ) ? true : false;
 		}
 	}
 
 	/**
-	 * Get is_checkout_layout flag.
+	 * Get is_new_checkout flag.
 	 *
 	 * @access public
 	 * @since 3.3
 	 * @return bool
 	 */
-	public function is_checkout_layout() {
-		return $this->is_checkout_layout;
+	public function is_new_checkout() {
+		return $this->is_new_checkout;
 	}
 
 	/**
@@ -146,8 +146,8 @@ class Fusion_WooCommerce {
 			return $html;
 		}
 
-		// Early exit if attachment is missing or we don't have a product.
-		if ( ! $attachment_id || ! is_object( $product ) ) {
+		// Early exit if attachment is missing.
+		if ( ! $attachment_id ) {
 			return $html;
 		}
 
@@ -160,7 +160,7 @@ class Fusion_WooCommerce {
 			$gallery = '[product-gallery]';
 		}
 
-		$html = str_replace( '</div>', '<a class="avada-product-gallery-lightbox-trigger" href="' . esc_url( $full_size_image[0] ) . '" data-rel="iLightbox' . $gallery . '" alt="' . $attachment_data['alt'] . '" data-title="' . $attachment_data['title_attribute'] . '" title="' . $attachment_data['title_attribute'] . '" data-caption="' . $attachment_data['caption_attribute'] . '"></a></div>', $html );
+		$html = str_replace( '</div>', '<a class="avada-product-gallery-lightbox-trigger" href="' . esc_url( $full_size_image[0] ) . '" data-rel="iLightbox' . $gallery . '" alt="' . $attachment_data['alt'] . '" data-title="' . $attachment_data['title_attribute'] . '" data-caption="' . $attachment_data['caption_attribute'] . '"></a></div>', $html );
 
 		return $html;
 	}
@@ -264,7 +264,7 @@ class Fusion_WooCommerce {
 
 		if ( null === $this->cart_products_ids ) {
 			$this->cart_products_ids = [];
-			$wc_cart_items           = is_object( WC()->cart ) ? WC()->cart->get_cart() : [];
+			$wc_cart_items           = method_exists( WC()->cart, 'get_cart' ) ? WC()->cart->get_cart() : [];
 
 			if ( ! empty( $wc_cart_items ) ) {
 				foreach ( $wc_cart_items as $cart ) {
@@ -298,30 +298,5 @@ class Fusion_WooCommerce {
 		}
 
 		return in_array( $product_id, $this->cart_products_ids ); // phpcs:ignore WordPress.PHP.StrictInArray
-	}
-
-	/**
-	 * Removes ordering post clauses.
-	 *
-	 * @since 3.5
-	 * @param string $orderby The order by method.
-	 * @param string $order The order method.
-	 * @return void
-	 */
-	public function remove_post_clauses( $orderby, $order ) {
-		if ( function_exists( 'WC' ) ) {
-			switch ( $orderby ) {
-				case 'price':
-					$callback = 'DESC' === $order ? 'order_by_price_desc_post_clauses' : 'order_by_price_asc_post_clauses';
-					remove_filter( 'posts_clauses', [ WC()->query, $callback ] );
-					break;
-				case 'popularity':
-					remove_filter( 'posts_clauses', [ WC()->query, 'order_by_popularity_post_clauses' ] );
-					break;
-				case 'rating':
-					remove_filter( 'posts_clauses', [ WC()->query, 'order_by_rating_post_clauses' ] );
-					break;
-			}
-		}
 	}
 }

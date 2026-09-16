@@ -18,7 +18,7 @@ var fieldId     = 'undefined' === typeof param.param_name ? param.id : param.par
 	<a href="#" class="ui-button buttonset-item ui-state-active" data-value="copy" aria-label="<?php esc_attr_e( 'Code', 'fusion-builder' ); ?>"><?php esc_attr_e( 'Code', 'fusion-builder' ); ?></a>
 	<a href="#" class="ui-button buttonset-item" data-value="download" aria-label="<?php esc_attr_e( 'File', 'fusion-builder' ); ?>"><?php esc_attr_e( 'File', 'fusion-builder' ); ?></a>
 
-	<# if ( ! shouldRenderDemos && true === FusionApp.data.singular && 'undefined' !== typeof FusionApp.data.savedPageOptions ) { #>
+	<# if ( ! hasDemos && true === FusionApp.data.singular && 'undefined' !== typeof FusionApp.data.savedPageOptions ) { #>
 		<a href="#" class="ui-button buttonset-item" data-value="database" aria-label="<?php esc_attr_e( 'Database', 'fusion-builder' ); ?>"><?php esc_attr_e( 'Database', 'fusion-builder' ); ?></a>
 	<# } #>
 </div>
@@ -31,11 +31,11 @@ var fieldId     = 'undefined' === typeof param.param_name ? param.id : param.par
 	</div>
 
 	<div data-id="download" class="fusion-export">
-		<p style="color:var(--gray);"><?php esc_html_e( 'Click the export button to export your current set of options as a json file.', 'fusion-builder' ); ?></p>
+		<p><?php esc_attr_e( 'Click the export button to export your current set of options as a json file.', 'fusion-builder' ); ?></p>
 		<input type='button' id="fusion-export-file" class='button fusion-builder-export-button' value='<?php esc_attr_e( 'Export', 'fusion-builder' ); ?>' data-context="{{ context }}" />
 	</div>
 
-	<# if ( ! shouldRenderDemos && true === FusionApp.data.singular && 'undefined' !== typeof FusionApp.data.savedPageOptions ) { #>
+	<# if ( ! hasDemos && true === FusionApp.data.singular && 'undefined' !== typeof FusionApp.data.savedPageOptions ) { #>
 		<div data-id="database" class="fusion-page-options-save">
 			<input type="text" id="fusion-new-page-options-name" value="" placeholder="<?php esc_attr_e( 'Enter a name', 'fusion-builder' ); ?>" class="fusion-dont-update">
 			<a href="#" id="fusion-page-options-save" class="button fusion-builder-save-button" data-post_id="{{ FusionApp.data.postDetails.post_id }}" data-post_type="{{ FusionApp.data.postDetails.post_type }}">

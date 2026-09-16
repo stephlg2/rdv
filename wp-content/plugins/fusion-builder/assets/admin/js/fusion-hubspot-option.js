@@ -18,11 +18,11 @@ window.hubspotOption = {
 		}
 
 		// Set reusable vars.
-		this.properties  = window.fusionHubspot.properties;
-		this.$el         = jQuery( '.fusion-hubspot-option .hubspot-map-holder .fusion-mapping' );
-		this.options     = false;
-		this.$input      = jQuery( '#pyre_hubspot_map' );
-		this.values      = {};
+		this.properties = window.fusionHubspot.properties;
+		this.$el        = jQuery( '.hubspot-map-holder .fusion-mapping' );
+		this.options    = false;
+		this.$input     = jQuery( '#pyre_hubspot_map' );
+		this.values     = {};
 
 		try {
 			self.values = JSON.parse( self.$input.val() );
@@ -86,7 +86,7 @@ window.hubspotOption = {
 
 		// Filter map to only get form elements.
 		formElements = _.filter( FusionPageBuilderApp.simplifiedMap, function( element ) {
-			return element.type.includes( 'fusion_form' ) && 'fusion_form_consent' !== element.type && 'fusion_form_submit' !== element.type && ( 'string' === typeof element.params.label || 'string' === typeof element.params.name );
+			return element.type.includes( 'fusion_form' ) && 'fusion_form_submit' !== element.type && 'string' === typeof element.params.label && 'string' === typeof element.params.name;
 		} );
 
 		// Add entries.
@@ -150,7 +150,6 @@ window.hubspotOption = {
 			options += otherOptions;
 			options += '</optgroup>';
 		}
-
 		this.options = options;
 
 		return this.options;

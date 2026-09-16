@@ -8,10 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'FusionReduxFramework_text' ) ) {
 	class FusionReduxFramework_text {
 
-		public $parent;
-		public $field;
-		public $value;
-
 		/**
 		 * Field Constructor.
 		 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function

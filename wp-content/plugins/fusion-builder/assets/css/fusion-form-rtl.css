@@ -14,23 +14,6 @@
   padding-right: 2.5em !important;
   padding-left: 1em !important;
 }
-.rtl .fusion-form-form-wrapper .fusion-form-field .fusion-form-input-with-icon > .awb-form-icon {
-  right: calc(1em + var(--awb-form-border-width-right)) !important;
-}
-.rtl .fusion-form-form-wrapper .fusion-form-field .fusion-form-input-with-icon > .awb-form-pw-reveal-icon {
-  left: calc(1em + var(--awb-form-border-width-right)) !important;
-}
-.rtl .fusion-form-form-wrapper .fusion-form-field .awb-form-pw-reveal > .awb-form-pw-reveal-icon {
-  left: 1em;
-  right: auto;
-}
-.rtl .fusion-form-form-wrapper .fusion-form-field .awb-form-pw-reveal:not(.awb-form-both-icons) .fusion-form-input {
-  padding-right: 1em !important;
-}
-.rtl .fusion-form-form-wrapper .fusion-form-field .awb-form-pw-reveal .fusion-form-input {
-  padding-right: 2.5em !important;
-  padding-left: 2.5em !important;
-}
 .rtl .fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox label,
 .rtl .fusion-form-form-wrapper .fusion-form-field .fusion-form-radio label {
   padding: 0 20px 0 0;

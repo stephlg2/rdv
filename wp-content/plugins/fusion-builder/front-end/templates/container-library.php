@@ -13,25 +13,11 @@
 			<label for="fusion-modal-search" class="fusiona-search"><span><?php esc_html_e( 'Search', 'fusion-builder' ); ?></span></label>
 			<input type="text" id="fusion-modal-search" class="fusion-elements-filter" placeholder="{{ fusionBuilderText.search_containers }}" />
 		</div>
-		<# 
-		var content_post_type = '';
-		if ( FusionApp && FusionApp.data && FusionApp.data.postDetails && FusionApp.data.postDetails.post_type ) { 
-			content_post_type = FusionApp.data.postDetails.post_type;
-		}
-		var layoutDesc = '';
-		if ( 'fusion_form' === content_post_type ) { 
-			layoutDesc = fusionBuilderText.form_step_description;
-		} else {
-			layoutDesc = fusionBuilderText.next_page_description + '<br>' + fusionBuilderText.checkout_form_description;
-		} 
-		#>
+
 		<ul class="fusion-tabs-menu">
 			<li><a href="#default-columns">{{ fusionBuilderText.builder_sections }}</a></li>
 			<li><a href="#custom-sections">{{ fusionBuilderText.library_sections }}</a></li>
-			<li><a href="#misc" class="misc-tab-{{ content_post_type }}">{{ fusionBuilderText.library_misc }}</a></li>
-			<# if ( '1' === fusionAppConfig.studio_status ) { #>
-				<li><a href="#fusion-builder-sections-studio"><i class="fusiona-avada-logo"></i> <?php esc_html_e( 'Studio', 'fusion-builder' ); ?></a></li>
-			<# } #>
+			<li><a href="#misc">{{ fusionBuilderText.library_misc }}</a></li>
 		</ul>
 	</div>
 
@@ -45,47 +31,22 @@
 				<div id="custom-sections" class="fusion-tab-content">
 					<div id="fusion-loader"><span class="fusion-builder-loader"></span></div>
 				</div>
-				<# if ( '1' === fusionAppConfig.studio_status ) { #>
-					<div id="fusion-builder-sections-studio" class="fusion-tab-content">
-						<?php if ( function_exists( 'Avada' ) && Avada()->registration->is_registered() ) : ?>
-							<div class="studio-wrapper">
-								<aside>
-									<ul></ul>
-								</aside>
-								<section>
-									<div class="fusion-builder-element-content fusion-loader"><span class="fusion-builder-loader"></span></div>
-									<ul class="studio-imports"></ul>
-								</section>
-								<?php AWB_Studio::studio_import_options_template(); ?>
-							</div>
-						<?php else : ?>
-							<h2 class="awb-studio-not-reg"><?php esc_html_e( 'The product needs to be registered to access the Avada Studio.', 'fusion-builder' ); ?></h2>
-						<?php endif; ?>
-					</div>
-				<# } #>
 				<div id="misc" class="fusion-tab-content">
 					<div class="fusion-builder-layouts-header">
 						<div class="fusion-builder-layouts-header-info">
 							<h2>{{ fusionBuilderText.special_title }}</h2>
-							<span class="fusion-builder-layout-info">{{{ layoutDesc }}}</span>
+							<span class="fusion-builder-layout-info">{{ fusionBuilderText.next_page_description }} <br> {{ fusionBuilderText.checkout_form_description }}</span>
 						</div>
 					</div>
 					<ul class="fusion-builder-all-modules fusion-builder-special-list">
-						<# if ( 'fusion_form' === content_post_type ) { #>
-							<li class="fusion-special-item fusion-builder-section-form-step" data-type="fusion_builder_form_step">
-								<h4 class="fusion_module_title">{{ fusionBuilderText.form_step }}</h4>
-							</li>
-						<# } else { #>
-							<li class="fusion-special-item fusion-builder-section-next-page" data-type="fusion_builder_next_page">
-								<h4 class="fusion_module_title">{{ fusionBuilderText.nextpage }}</h4>
-							</li>
-							<?php if ( class_exists( 'WooCommerce' ) ) { ?>
-									<li class="fusion-special-item fusion-builder-section-checkout-form" data-type="fusion_woo_checkout_form">
-										<h4 class="fusion_module_title">{{ fusionBuilderText.checkout_form }}</h4>
-									</li>
-							<?php } ?>
-						<# } #>
-
+						<li class="fusion-special-item fusion-builder-section-next-page" data-type="fusion_builder_next_page">
+							<h4 class="fusion_module_title">{{ fusionBuilderText.nextpage }}</h4>
+						</li>
+						<?php if ( class_exists( 'WooCommerce' ) ) { ?>
+						<li class="fusion-special-item fusion-builder-section-checkout-form" data-type="fusion_woo_checkout_form">
+							<h4 class="fusion_module_title">{{ fusionBuilderText.checkout_form }}</h4>
+						</li>
+					<?php } ?>
 						<# for ( var i = 0; i < 16; i++ ) { #>
 							<li class="spacer fusion-builder-element"></li>
 						<# } #>

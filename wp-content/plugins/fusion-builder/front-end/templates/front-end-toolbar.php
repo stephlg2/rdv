@@ -49,7 +49,7 @@
 					<ul class="fusion-builder-new-list submenu-trigger-target" aria-expanded="false">
 						<?php foreach ( $allowed_post_types as $allowed_post_type ) : ?>
 							<?php
-							if ( 'fusion_template' === $allowed_post_type || 'fusion_element' === $allowed_post_type || ! apply_filters( 'awb_dashboard_menu_cpt', true, $allowed_post_type ) || ! apply_filters( 'awb_live_editor_cpt', true, $allowed_post_type ) ) {
+							if ( 'fusion_template' === $allowed_post_type || 'fusion_element' === $allowed_post_type ) {
 								continue;
 							}
 
@@ -103,6 +103,14 @@
 				<li>
 					<a href="#" class="hidden fusion-builder-save-template has-tooltip" data-focus="#new_template_name" data-target="#fusion-builder-layouts-templates" aria-label="<?php esc_attr_e( 'Save as Template', 'fusion-builder' ); ?>" style="display:none !important;">
 						<?php esc_attr_e( 'Save as Template', 'fusion-builder' ); ?>
+					</a>
+				</li>
+
+				<li class="fusion-wireframe-holder">
+					<a href="#" class="fusion-builder-wireframe-toggle has-tooltip" aria-label="<?php esc_attr_e( 'Toggle Wireframe', 'fusion-builder' ); ?>">
+						<span>
+							<i class="fusiona-wireframe" aria-hidden="true"></i>
+						</span>
 					</a>
 				</li>
 			</ul>

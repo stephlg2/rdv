@@ -32,9 +32,7 @@
 		<div class="fusion-builder-controls fusion-builder-inner-row-controls">
 			<a href="#" class="fusion-builder-inner-row-overlay fusion-builder-module-control" title="{{ fusionBuilderText.column_settings }}"><span class="fusiona-pen"></span></a>
 			<a href="#" class="fusion-builder-clone fusion-builder-module-control fusion-builder-clone-inner-row" title="{{ fusionBuilderText.clone_inner_columns }}"><span class="fusiona-file-add"></span></a>
-			<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_element', 'create_posts' ) && apply_filters( 'awb_dashboard_menu_cpt', true, 'avada_library' ) ) : ?>
-				<a href="#" class="fusion-builder-save-inner-row-dialog-button fusion-builder-module-control" title="{{ fusionBuilderText.save_inner_columns }}"><span class="fusiona-drive"></span></a>
-			<?php endif; ?>
+			<a href="#" class="fusion-builder-save-inner-row-dialog-button fusion-builder-module-control" title="{{ fusionBuilderText.save_inner_columns }}"><span class="fusiona-drive"></span></a>
 			<a href="#" class="fusion-builder-remove-inner-row fusion-builder-module-control" title="{{ fusionBuilderText.delete_inner_columns }}"><span class="fusiona-trash-o"></span></a>
 		</div>
 	</div>

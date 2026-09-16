@@ -23,7 +23,7 @@
   left: 0;
   top: 50%;
   min-width: 13px;
-  border: 1px solid var(--awb-form-border-color);
+  border: 1px solid var(--form_border_color);
   border-radius: 4px;
   transform: translateY(-50%);
   transition: all 0.2s ease;
@@ -41,23 +41,17 @@
   width: 7px;
   height: 7px;
   left: 4px;
-  background: var(--awb-form-focus-border-color);
+  background: var(--form_focus_border_color);
   border-radius: 2px;
   top: 50%;
   transform: translateY(-50%);
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:checked + label:before {
-  border: 1px solid var(--awb-form-focus-border-color);
-}
-.fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:hover + label:before {
-  border-color: var(--awb-form-focus-border-color);
+  border: 1px solid var(--form_focus_border_color);
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:hover:not(:checked) + label:before {
-  border-color: var(--awb-form-focus-border-hover-color);
+  border-color: var(--form_focus_border_color-5a);
 }
 .fusion-form-form-wrapper .fusion-form-field .fusion-form-checkbox input:focus + label:before {
-  border-color: var(--awb-form-focus-border-color);
-}
-.fusion-form-consent-field p:last-of-type {
-  margin-bottom: 0;
+  border-color: var(--form_focus_border_color);
 }

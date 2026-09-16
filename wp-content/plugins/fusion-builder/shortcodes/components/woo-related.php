@@ -125,6 +125,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_related' ) ) {
  */
 function fusion_component_woo_related() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Woo_Related',

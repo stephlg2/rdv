@@ -8,10 +8,6 @@
 	if ( ! class_exists( 'FusionReduxFramework_sorter' ) ) {
 		class FusionReduxFramework_sorter {
 
-			public $parent;
-			public $field;
-			public $value;
-
 			/**
 			 * Field Constructor.
 			 * Required - must call the parent constructor, then assign field and value to vars, and obviously call the render field function
@@ -94,7 +90,7 @@
 				}
 
 				$sortlists = $this->value;
-				if ( ! empty( $sortlists ) && is_array( $sortlists ) ) {
+				if ( ! empty( $sortlists ) ) {
 					foreach ( $sortlists as $section => $arr ) {
 						$sortlists[ $section ] = $this->replace_id_with_slug( $arr );
 					}

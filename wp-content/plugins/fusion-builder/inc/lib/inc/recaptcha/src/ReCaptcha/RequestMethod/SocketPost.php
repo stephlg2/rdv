@@ -52,13 +52,6 @@ class SocketPost implements RequestMethod
     private $socket;
 
     /**
-     * The site url to verify.
-     * 
-     * @var string|null
-     */
-    public $siteVerifyUrl = null;
-
-    /**
      * Only needed if you want to override the defaults
      *
      * @param \ReCaptcha\RequestMethod\Socket $socket optional socket, injectable for testing

@@ -71,22 +71,17 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			checkActiveTab: function() {
 				var self = this,
-					children = window.FusionPageBuilderViewManager.getChildViews( this.model.get( 'cid' ) ),
-					activeTab = this.model.get( 'activeTab' ) || self.$el.find( '.nav-tabs li.active' ).data( 'cid' );
+					children = window.FusionPageBuilderViewManager.getChildViews( this.model.get( 'cid' ) );
 
-				if ( 'undefined' !== activeTab ) {
+				if ( 'undefined' !== typeof this.model.get( 'activeTab' ) ) {
 					_.each( children, function( child ) {
-						child.checkActive( activeTab );
+						child.checkActive();
 					} );
-					self.$el.find( '.fusion-extra-' + activeTab ).addClass( 'active in' );
+					self.$el.find( '.fusion-extra-' + this.model.get( 'activeTab' ) ).addClass( 'active in' );
 				} else {
 					_.each( children, function( child ) {
 						if ( child.isFirstChild() ) {
-							const tabPane = self.$el.find( '.fusion-extra-' + child.model.get( 'cid' ) );
-							const tabLi = self.$el.find( 'a[href="#' + tabPane.attr( 'id' ) + '"]' ).parent( 'li' );
-							tabPane.addClass( 'active in' );
-							tabLi.addClass( 'active' );
-
+							self.$el.find( '.fusion-extra-' + child.model.get( 'cid' ) ).addClass( 'active in' );
 						}
 					} );
 				}
@@ -100,14 +95,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @return {Object} - Returns the attributes.
 			 */
 			filterTemplateAtts: function( atts ) {
-				this.values = atts.values;
 
 				// Create attribute objects.
 				atts.tabsShortcode   = this.buildTabsShortcodeAttrs( atts.values );
+				atts.styleTag        = this.buildStyleTag( atts.values );
 				atts.justifiedClass  = this.setJustifiedClass( atts.values );
 
 				this.model.set( 'first', true );
-
 
 				atts.cid             = this.model.get( 'cid' );
 				return atts;
@@ -124,16 +118,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// TabsShortcode  Attributes.
 				var tabsShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'fusion-tabs fusion-tabs-cid' + this.model.get( 'cid' ) + ' ' + values.design,
-					style: ''
+					class: 'fusion-tabs fusion-tabs-cid' + this.model.get( 'cid' ) + ' ' + values.design
 				} );
 
 				if ( 'yes' !== values.justified && 'vertical' !== values.layout ) {
 					tabsShortcode[ 'class' ] += ' nav-not-justified';
-				}
-
-				if ( 'yes' === values.justified && 'vertical' !== values.layout ) {
-					tabsShortcode[ 'class' ] += ' nav-is-justified';
 				}
 
 				if ( '' !== values.icon_position ) {
@@ -142,14 +131,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( '' !== values[ 'class' ] ) {
 					tabsShortcode[ 'class' ] += ' ' + values[ 'class' ];
-				}
-
-				if ( '' !== values.mobile_mode ) {
-					tabsShortcode[ 'class' ] += ' mobile-mode-' + values.mobile_mode;
-				}
-
-				if ( 'carousel' === values.mobile_mode && 'yes' === values.mobile_sticky_tabs ) {
-					tabsShortcode[ 'class' ] += ' mobile-sticky-tabs';
 				}
 
 				tabsShortcode[ 'class' ] += ( 'vertical' === values.layout ) ? ' vertical-tabs' : ' horizontal-tabs';
@@ -162,17 +143,34 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					tabsShortcode.id = values.id;
 				}
 
-				// Icon color.
-				tabsShortcode.style += '' !== values.icon_color ? '--icon-color:' + values.icon_color + ';' : '';
-
-				// Active icon color.
-				tabsShortcode.style += '' !== values.active_icon_color ? '--icon-active-color:' + values.active_icon_color + ';' : '';
-
-				tabsShortcode.style += this.getStyleVariables( values );
-
 				return tabsShortcode;
 			},
 
+			/**
+			 * Builds styles.
+			 *
+			 * @since 2.0
+			 * @param {Object} values - The values.
+			 * @return {string} - Returns styles as a string.
+			 */
+			buildStyleTag: function( values ) {
+				var cid    = this.model.get( 'cid' ),
+					styles = '.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li a.tab-link{border-top-color:' + values.inactivecolor + ';background-color:' + values.inactivecolor + ';}';
+
+				if ( 'clean' !== values.design ) {
+					styles += '.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs{background-color:' + values.backgroundcolor + ';}';
+					styles += '.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li.active a.tab-link,.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li.active a.tab-link:hover,.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li.active a.tab-link:focus{border-right-color:' + values.backgroundcolor + ';}';
+				} else {
+					styles = '#wrapper .fusion-tabs.fusion-tabs-cid' + cid + '.clean .nav-tabs li a.tab-link{border-color:' + values.bordercolor + ';}.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li a.tab-link{background-color:' + values.inactivecolor + ';}';
+				}
+				styles += '.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li.active a.tab-link,.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li.active a.tab-link:hover,.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li.active a.tab-link:focus{background-color:' + values.backgroundcolor + ';}';
+				styles += '.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs li a.tab-link:hover{background-color:' + values.backgroundcolor + ';border-top-color:' + values.backgroundcolor + ';}';
+				styles += '.fusion-tabs.fusion-tabs-cid' + cid + ' .tab-pane{background-color:' + values.backgroundcolor + ';}';
+				styles += '.fusion-tabs.fusion-tabs-cid' + cid + ' .nav,.fusion-tabs.fusion-tabs-cid' + cid + ' .nav-tabs,.fusion-tabs.fusion-tabs-cid' + cid + ' .tab-content .tab-pane{border-color:' + values.bordercolor + ';}';
+				styles = '<style type="text/css">' + styles + '</style>';
+
+				return styles;
+			},
 
 			/**
 			 * Set class.
@@ -189,116 +187,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return justifiedClass;
-			},
-
-			onInit: function() {
-				var params = this.model.get( 'params' );
-
-				// Check for newer margin params.  If unset but regular is, copy from there.
-				if ( 'object' === typeof params ) {
-
-					// Split border width into 4.
-					if ( 'undefined' === typeof params.alignment && 'clean' === params.design ) {
-						params.alignment = 'center';
-					}
-
-					this.model.set( 'params', params );
-				}
-
-				this.listenTo( window.FusionEvents, 'fusion-preview-viewport-update', this.onChangeDevice );
-
-			},
-			onChangeDevice() {
-				const device = jQuery( '.viewport-indicator span.active' ).data( 'indicate-viewport' );
-				const values = this.model.get( 'params' );
-				// Hide active toggle content panels from desktop.
-				if ( 'toggle' === values.mobile_mode && 'desktop' === device ) {
-					const activeId = this.$el.find( '.nav li.active' ).data( 'cid' );
-
-					this.$el.find( '.tab-pane' ).removeClass( 'active in' );
-					this.$el.find( '.tab-pane#tabcid' + activeId ).addClass( 'active in' );
-
-					this.$el.find( '.fusion-mobile-tab-nav li' ).removeClass( 'active' );
-					this.$el.find( '.fusion-mobile-tab-nav li a[href="#tabcid' + activeId + '"]' ).parent().addClass( 'active' );
-				}
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				const cssVarsOptions = [
-					'alignment',
-					'title_text_transform',
-					'title_line_height'
-				];
-
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top_medium    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right_medium  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom_medium = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top_small    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right_small  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom_small = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_border_radius_top_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_border_radius_top_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_border_radius_bottom_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_border_radius_bottom_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_top   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_bottom   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_top_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_right_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_bottom_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_left_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_top_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_right_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_bottom_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_left_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_top   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_right   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_bottom   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_top_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_right_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_bottom_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_left_medium   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_top_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_right_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_bottom_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_padding_left_small   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_font_size   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_letter_spacing   = { 'callback': _.fusionGetValueWithUnit };
-
-				const customVars = [];
-
-				if ( values.inactivecolor ) {
-					customVars.inactive_color = values.inactivecolor;
-				}
-				if ( values.title_text_color ) {
-					customVars.title_text_color = values.title_text_color;
-				}
-				if ( values.title_active_text_color ) {
-					customVars.title_active_text_color = values.title_active_text_color;
-				}
-
-				customVars.background_color = values.backgroundcolor;
-				customVars.border_color = values.bordercolor;
-				customVars.active_border_color = values.active_border_color;
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars ) + this.getFontStylingVars( 'title_font', values );
 			}
-
 		} );
 	} );
 }( jQuery ) );

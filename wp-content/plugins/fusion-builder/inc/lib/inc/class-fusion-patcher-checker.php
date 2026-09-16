@@ -114,18 +114,16 @@ class Fusion_Patcher_Checker {
 			$fusion_library_latest_version,
 			true
 		);
-
-		$args = [
-			'patches'                   => $this->get_cache(),
-			'display_counter'           => apply_filters( 'fusion_patches_counter', 'both' ), // Allowed values are both|top_level|sub_level|none.
-			'args'                      => [],
-			'patch_applied_text'        => __( 'Patch Applied', 'fusion-builder' ),
-			'patch_dismiss_notice_text' => __( 'Dismiss Notice', 'fusion-builder' ),
-			'admin_url'                 => esc_url( admin_url() ),
+		$patcher_instances = $this->patcher->get_instance();
+		$args              = [
+			'patches'         => $this->get_cache(),
+			'display_counter' => apply_filters( 'fusion_patches_counter', 'both' ), // Allowed values are both|top_level|sub_level|none.
+			'args'            => [],
 		];
-
-		$args['args'][] = $this->patcher->get_args();
-
+		foreach ( $patcher_instances as $instance ) {
+			$instance_args  = $instance->get_args();
+			$args['args'][] = $instance_args;
+		}
 		wp_localize_script( 'fusion-patcher-checker', 'patcherVars', $args );
 
 	}
@@ -167,6 +165,21 @@ class Fusion_Patcher_Checker {
 		$contexts[] = $this->patcher->get_args( 'context' );
 
 		$this->patches = Fusion_Patcher_Client::get_patches( $args );
+		foreach ( $bundles as $bundle ) {
+			$instance = $this->patcher->get_instance( $bundle );
+			if ( is_object( $instance ) ) {
+				$args = $instance->get_args();
+				if ( isset( $args['classname'] ) && ! class_exists( $args['classname'] ) ) {
+					continue;
+				}
+				$instance_patches = Fusion_Patcher_Client::get_patches( $args );
+				foreach ( $instance_patches as $id => $patch ) {
+					if ( ! isset( $this->patches[ $id ] ) ) {
+						$this->patches[ $id ] = $patch;
+					}
+				}
+			}
+		}
 
 		// Get an array of the already applied patches.
 		$this->applied_patches = get_site_option( 'fusion_applied_patches', [] );

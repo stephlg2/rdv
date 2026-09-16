@@ -15,6 +15,12 @@ add_filter('rocket_exclude_js', 'trustindex_exclude_js');
 add_filter('rocket_delay_js_exclusions', 'trustindex_exclude_js');
 add_filter('litespeed_optimize_js_excludes', 'trustindex_exclude_js');
 add_filter('sgo_javascript_combine_excluded_external_paths', 'trustindex_exclude_js');
+add_filter('rocket_exclude_css', function($list) {
+$list []= 'trustindex.io';
+$list []= 'https://cdn.trustindex.io/';
+$list []= 'trustindex-(.*).css';
+return $list;
+});
 add_filter('sgo_css_combine_exclude', function($list) {
 foreach (array (
  0 => 'facebook',
@@ -40,16 +46,17 @@ foreach (array (
  20 => 'ebay',
 ) as $platform) {
 $list []= 'ti-widget-css-'. $platform;
+$list []= 'trustindex-'. $platform .'-widget';
 }
 foreach (array (
- 0 => 'instagram',
- 1 => 'facebook',
- 2 => 'youtube',
- 3 => 'google',
- 4 => 'twitter',
- 5 => 'tiktok',
- 6 => 'pinterest',
- 7 => 'vimeo',
+ 0 => 'facebook',
+ 1 => 'google',
+ 2 => 'instagram',
+ 3 => 'pinterest',
+ 4 => 'tiktok',
+ 5 => 'twitter',
+ 6 => 'vimeo',
+ 7 => 'youtube',
 ) as $platform) {
 $list []= 'trustindex-feed-widget-css-'. $platform;
 }
@@ -58,6 +65,10 @@ return $list;
 add_filter('rocket_rucss_safelist', function($list) {
 $list []= 'trustindex-(.*).css';
 $list []= '.ti-widget';
+return $list;
+});
+add_filter('rocket_rucss_inline_atts_exclusions', function($list) {
+$list []= 'trustindex-';
 return $list;
 });
 add_filter('script_loader_tag', function($tag) {
@@ -89,6 +100,17 @@ $tag = str_replace([
 ], $tag);
 }
 return $tag;
+}, 9999999);
+add_filter('script_loader_tag', function($tag) {
+if (!function_exists('borlabsCookieApi')) {
+return $tag;
+}
+$isLoaderScript = strpos($tag, 'trustindex') !== false && strpos($tag, '/loader') !== false;
+$isAlreadyIgnored = strpos($tag, 'data-borlabs-cookie-script-blocker-ignore') !== false;
+if (!$isLoaderScript || $isAlreadyIgnored) {
+return $tag;
+}
+return preg_replace('/<script(?=[\s>])/', '<script data-borlabs-cookie-script-blocker-ignore', $tag, 1);
 }, 9999999);
 $localizationFiles = get_option('litespeed.conf.optm-localize_domains');
 $isJson = false;

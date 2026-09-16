@@ -46,15 +46,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			filterTemplateAtts: function( atts ) {
 				var attributes       = {},
 					values           = atts.params,
-					tableElementAtts,
+					tableElementAtts = this.buildAttr( values ),
 					tableDOM,
 					tr,
 					rowsOld,
 					tdOld,
 					thTdOld,
 					columnsOld;
-
-				tableElementAtts = this.buildAttr( values );
 
 				if ( 'undefined' !== typeof values.fusion_table_type && '' !== values.fusion_table_type ) {
 					values.element_content = values.element_content.replace( /<div .*?">/g, '<div ' + _.fusionGetAttributes( tableElementAtts ) + '>' );
@@ -122,12 +120,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 
 					attr = _.fusionVisibilityAtts( values.hide_on_mobile, {
-						class: 'table-' + values.fusion_table_type,
-						style: this.getStyleVars( values )
+						class: 'table-' + values.fusion_table_type
 					} );
 
 					attr = _.fusionAnimations( values, attr );
-
 
 					if ( '' !== values.class ) {
 						attr.class += ' ' + values.class;
@@ -139,38 +135,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return attr;
-			},
-
-			/**
-			 * Get the css style vars.
-			 *
-			 * @since 3.9
-			 * @param {Object} values
-			 * @return string
-			 */
-			getStyleVars: function( values ) {
-				var cssCustomVars = [];
-				this.values = values;
-
-				// For some reason, margin_top is not available in defaults
-				// params, triggering an error when LE loads..
-				if ( values.margin_top ) {
-					cssCustomVars[ 'margin_top' ] = values.margin_top;
-				}
-
-				if ( values.margin_right ) {
-					cssCustomVars[ 'margin_right' ] = values.margin_right;
-				}
-
-				if ( values.margin_bottom ) {
-					cssCustomVars[ 'margin_bottom' ] = values.margin_bottom;
-				}
-
-				if ( values.margin_left ) {
-					cssCustomVars[ 'margin_left' ] = values.margin_left;
-				}
-
-				return this.getCustomCssVars( cssCustomVars );
 			},
 
 			/**

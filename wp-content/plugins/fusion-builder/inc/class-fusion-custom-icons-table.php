@@ -31,14 +31,6 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 	public $columns = [];
 
 	/**
-	 * Number of total table items.
-	 *
-	 * @since 3.6
-	 * @var int
-	 */
-	public $total_items = -1;
-
-	/**
 	 * Class constructor.
 	 *
 	 * @since 1.0
@@ -83,9 +75,11 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 		$hidden       = $this->get_hidden_columns();
 		$sortable     = $this->get_sortable_columns();
 
+		$total_items = count( $this->table_data() );
+
 		$this->set_pagination_args(
 			[
-				'total_items' => -1 !== $this->total_items ? $this->total_items : count( $this->table_data() ),
+				'total_items' => $total_items,
 				'per_page'    => $per_page,
 			]
 		);
@@ -195,9 +189,6 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 
 		// Check if there are items available.
 		if ( $library_query->have_posts() ) {
-
-			$this->total_items = $library_query->found_posts;
-
 			// The loop.
 			while ( $library_query->have_posts() ) :
 				$library_query->the_post();
@@ -249,32 +240,21 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 	 */
 	public function column_title( $item ) {
 		$wpnonce = wp_create_nonce( 'fusion-template-builder' );
-		$actions = [];
 
 		if ( isset( $_GET['status'] ) && 'trash' === $_GET['status'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$actions['restore'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Restore', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_restore_element', esc_attr( $item['id'] ) );
 			$actions['delete']  = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Delete Permanently', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_delete_element', esc_attr( $item['id'] ) );
 		} else {
-
-			if ( current_user_can( 'edit_others_posts' ) ) {
-				$actions['edit'] = sprintf( '<a href="post.php?post=%s&action=%s">' . esc_html__( 'Edit', 'fusion-builder' ) . '</a>', esc_attr( $item['id'] ), 'edit' );
-			}
-
-			if ( current_user_can( 'delete_post', $item['id'] ) ) {
-				$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
-			}
+			$actions['edit']  = sprintf( '<a href="post.php?post=%s&action=%s">' . esc_html__( 'Edit', 'fusion-builder' ) . '</a>', esc_attr( $item['id'] ), 'edit' );
+			$actions['trash'] = sprintf( '<a href="?_wpnonce=%s&action=%s&post=%s">' . esc_html__( 'Trash', 'fusion-builder' ) . '</a>', esc_attr( $wpnonce ), 'fusion_trash_element', esc_attr( $item['id'] ) );
 		}
 
 		$status = '';
-		if ( 'draft' === $item['status'] || 'pending' === $item['status'] ) {
+		if ( 'draft' === $item['status'] ) {
 			$status = ' &mdash; <span class="post-state">' . ucwords( $item['status'] ) . '</span>';
 		}
 
-		if ( current_user_can( 'edit_post', $item['id'] ) ) {
-			$title = '<strong><a href="post.php?post=' . esc_attr( $item['id'] ) . '&action=edit">' . esc_html( $item['title'] ) . '</a>' . $status . '</strong>';
-		} else {
-			$title = esc_html( $item['title'] ) . $status;
-		}
+		$title = '<strong><a href="post.php?post=' . esc_attr( $item['id'] ) . '&action=edit">' . esc_html( $item['title'] ) . '</a>' . $status . '</strong>';
 
 		return $title . ' ' . $this->row_actions( $actions );
 	}
@@ -292,8 +272,6 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 		if ( ! empty( $icon_set['css_prefix'] ) ) {
 			return '<pre>' . esc_html( '.' . $icon_set['css_prefix'] ) . '</pre>';
 		}
-
-		return '';
 	}
 
 	/**
@@ -306,12 +284,12 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 	public function get_bulk_actions() {
 		if ( isset( $_GET['status'] ) && 'trash' === $_GET['status'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$actions = [
-				'fusion_bulk_restore_element' => esc_html__( 'Restore', 'fusion-builder' ),
-				'fusion_bulk_delete_element'  => esc_html__( 'Delete Permanently', 'fusion-builder' ),
+				'fusion_restore_element' => esc_html__( 'Restore', 'fusion-builder' ),
+				'fusion_delete_element'  => esc_html__( 'Delete Permanently', 'fusion-builder' ),
 			];
 		} else {
 			$actions = [
-				'fusion_bulk_trash_element' => esc_html__( 'Move to Trash', 'fusion-builder' ),
+				'fusion_trash_element' => esc_html__( 'Move to Trash', 'fusion-builder' ),
 			];
 		}
 
@@ -327,11 +305,7 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_cb( $item ) {
-		if ( current_user_can( 'delete_post', $item['id'] ) || current_user_can( 'edit_post', $item['id'] ) ) {
-			return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
-		}
-
-		return '';
+		return "<input type='checkbox' name='post[]' value='{$item['id']}' />";
 	}
 
 	/**
@@ -370,10 +344,6 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 			$post_status['trash'] = $count_posts['trash'];
 		}
 
-		if ( isset( $count_posts['pending'] ) && $count_posts['pending'] ) {
-			$post_status['pending'] = $count_posts['pending'];
-		}
-
 		$status_html = '<ul class="subsubsub">';
 
 		foreach ( $post_status as $status => $count ) {
@@ -386,12 +356,12 @@ class Fusion_Custom_Icons_Table extends WP_List_Table {
 			$current = ( $status === $current_type ) ? ' class="current" ' : '';
 
 			$status_attr = ( 'all' !== $status ) ? '&type=' . $status : '';
-			if ( 'trash' === $status || 'pending' === $status ) {
+			if ( 'trash' === $status ) {
 				$status_attr = '&status=' . $status;
 			}
 
 			$status_title = $status;
-			if ( 'trash' !== $status && 'all' !== $status && 'pending' !== $status ) {
+			if ( 'trash' !== $status && 'all' !== $status ) {
 				$status_title = $this->get_term_name( $status );
 			}
 

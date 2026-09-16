@@ -66,7 +66,7 @@ class Devis_Pro_Email {
     <div style="max-width:600px;margin:0 auto;padding:20px;">
         <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
             <div style="background:#fff;padding:25px;text-align:center;border-bottom:1px solid #de5b09;">
-                <img src="https://www.rdvasie.com/wp-content/uploads/2018/11/rdv-asie.png" alt="RDV Asie" style="max-width:180px;height:auto;">
+                <img src="https://www.rdvasie.com/wp-content/uploads/2025/07/voyage-rendez-vous-avec-l-asie-logo.webp" alt="RDV Asie" style="max-width:180px;height:auto;">
             </div>
             <div style="padding:30px;">
                 ' . $content . '

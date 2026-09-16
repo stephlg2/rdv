@@ -12,5 +12,6 @@
 		{{{ buttonMarkup }}}
 		{{{ flyoutButtonMarkup }}}
 		{{{ menuMarkup }}}
+		{{{ inlineStyles }}}
 	</nav>
 </script>

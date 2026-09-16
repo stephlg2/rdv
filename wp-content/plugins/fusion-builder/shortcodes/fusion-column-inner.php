@@ -27,29 +27,13 @@ if ( ! class_exists( 'FusionSC_ColumnInner' ) ) {
 			$content_filter    = 'fusion_element_column_inner_content';
 			parent::__construct( $shortcode, $shortcode_attr_id, $classname, $content_filter );
 		}
-
-		/**
-		 * Creates or returns an instance of this class.
-		 *
-		 * @since 2.2
-		 * @return array An array of classes, one for parent columns, one for child columns.
-		 */
-		final public static function get_instance() {
-			$called_class = get_called_class();
-
-			if ( ! isset( self::$instances[ $called_class ] ) ) {
-				self::$instances[ $called_class ] = new $called_class();
-			}
-
-			return self::$instances[ $called_class ];
-		}
 	}
 }
 
 /**
  * Instantiates the column class.
  *
- * @return FusionSC_ColumnInner
+ * @return object FusionSC_ColumnInner
  */
 function fusion_builder_column_inner() { // phpcs:ignore WordPress.NamingConventions
 	return FusionSC_ColumnInner::get_instance();
@@ -77,4 +61,4 @@ function fusion_element_column_inner() {
 		)
 	);
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_column_inner' );
+add_action( 'fusion_builder_before_init', 'fusion_element_column_inner' );

@@ -8,35 +8,11 @@ Table of Contents
 /* Blog Layout Styles
 ================================================================================================= */
 /* General blog elements, only used in blog */
-.fusion-blog-shortcode {
-  --awb-title-font-family: var(--post_title_typography-font-family);
-  --awb-title-font-style: var(--post_title_typography-font-style, normal);
-  --awb-title-font-weight: var(--post_title_typography-font-weight);
-  --awb-title-font-size: var(--post_title_typography-font-size);
-  --awb-title-line-height: var(--post_title_typography-line-height);
-  --awb-title-letter-spacing: var(--post_title_typography-letter-spacing);
-  --awb-title-text-transform: var(--post_title_typography-text-transform);
-  --awb-timeline-title-font-family: var(--body_typography-font-family);
-  --awb-timeline-title-font-style: var(--body_typography-font-style, normal);
-  --awb-timeline-title-font-weight: var(--body_typography-font-weight);
-  --awb-timeline-title-font-size: var(--body_typography-font-size);
-  --awb-timeline-title-line-height: 1.35em;
-  --awb-timeline-title-letter-spacing: inherit;
-  --awb-timeline-title-text-transform: inherit;
-}
 .fusion-blog-shortcode a {
   text-decoration: none;
   box-shadow: none !important;
 }
-.fusion-blog-shortcode .entry-title,
-#wrapper #main .fusion-blog-shortcode .entry-title {
-  font-family: var(--awb-title-font-family);
-  font-weight: var(--awb-title-font-weight);
-  font-style: var(--awb-title-font-style);
-  font-size: var(--awb-title-font-size);
-  line-height: var(--awb-title-line-height);
-  letter-spacing: var(--awb-title-letter-spacing);
-  text-transform: var(--awb-title-text-transform);
+.fusion-blog-shortcode .entry-title {
   clear: right;
 }
 .fusion-blog-shortcode .fusion-read-more {
@@ -50,7 +26,7 @@ Table of Contents
   right: -10px;
   padding-left: 5px;
   font-size: 14px;
-  font-family: "awb-icons";
+  font-family: icomoon;
   position: absolute;
   transform: translateY(-50%);
 }
@@ -163,7 +139,7 @@ Table of Contents
   color: #e9eaee;
 }
 .fusion-timeline-arrow:before {
-  font-family: "awb-icons";
+  font-family: "icomoon";
   font-size: 28px;
   position: absolute;
   top: 0;
@@ -368,6 +344,10 @@ Table of Contents
   display: flex;
   flex-direction: column;
 }
+.ua-ie-10 .fusion-blog-layout-grid.fusion-blog-equal-heights .fusion-post-wrapper .fusion-post-slideshow,
+.ua-ie-11 .fusion-blog-layout-grid.fusion-blog-equal-heights .fusion-post-wrapper .fusion-post-slideshow {
+  overflow: hidden;
+}
 .fusion-blog-layout-grid.fusion-blog-equal-heights .fusion-post-wrapper .fusion-post-content-wrapper {
   display: flex;
   flex-grow: 1;
@@ -413,16 +393,10 @@ Table of Contents
   padding: 0.35em 0.45em;
   width: auto;
   max-width: 8em;
+  line-height: 1.35em;
   background: #efeeee;
   text-align: center;
   cursor: pointer;
-  font-family: var(--awb-timeline-title-font-family);
-  font-weight: var(--awb-timeline-title-font-weight);
-  font-style: var(--awb-timeline-title-font-style);
-  font-size: var(--awb-timeline-title-font-size);
-  line-height: var(--awb-timeline-title-line-height);
-  letter-spacing: var(--awb-timeline-title-letter-spacing);
-  text-transform: var(--awb-timeline-title-text-transform);
 }
 .fusion-blog-layout-timeline .fusion-left-column .fusion-timeline-arrow {
   left: 40%;
@@ -491,7 +465,7 @@ Table of Contents
   position: relative;
 }
 .fusion-blog-pagination .pagination .pagination-prev:before {
-  font-family: "awb-icons";
+  font-family: "icomoon";
   content: "\f104";
 }
 .fusion-blog-pagination .pagination .pagination-next {
@@ -499,7 +473,7 @@ Table of Contents
   position: relative;
 }
 .fusion-blog-pagination .pagination .pagination-next:after {
-  font-family: "awb-icons";
+  font-family: "icomoon";
   content: "\f105";
 }
 /* Infinite scroll load more button */

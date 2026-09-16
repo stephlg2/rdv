@@ -86,8 +86,7 @@ FusionPageBuilder.fusionActiveStates = {
 			selectors,
 			$targetEl = this.$targetEl && this.$targetEl.length ? this.$targetEl : jQuery( '#fb-preview' ).contents().find( '.fusion-builder-live' ),
 			$target,
-			animationDuration,
-			animationDelay;
+			animationDuration;
 
 		if ( 'string' === typeof data.selector && -1 !== data.selector.indexOf( '$el' ) ) {
 			$target = $targetEl;
@@ -97,10 +96,6 @@ FusionPageBuilder.fusionActiveStates = {
 			$target = $targetEl.find( '.fusion-builder-element-content ' + data.selector );
 		} else if ( $targetEl.hasClass( 'fusion-builder-live-child-element' ) ) {
 			$target = $targetEl.find( '.fusion-builder-child-element-content ' + data.selector );
-		}
-
-		if ( 'PO' === this.model.get( 'type' ) ) {
-			$target = $targetEl.find( data.selector );
 		}
 
 		if ( 'undefined' === typeof $target || ! $target.length ) {
@@ -123,14 +118,11 @@ FusionPageBuilder.fusionActiveStates = {
 
 				data.toggle       = $singleTarget.attr( 'data-animationtype' );
 				animationDuration = $singleTarget.attr( 'data-animationduration' );
-				animationDelay    = $singleTarget.attr( 'data-animationdelay' );
-
 				$singleTarget.css( '-moz-animation-duration', animationDuration + 's' );
 				$singleTarget.css( '-webkit-animation-duration', animationDuration + 's' );
+				$singleTarget.css( '-ms-animation-duration', animationDuration + 's' );
 				$singleTarget.css( '-o-animation-duration', animationDuration + 's' );
 				$singleTarget.css( 'animation-duration', animationDuration + 's' );
-
-				$singleTarget.css( 'animation-delay', animationDelay + 's' );
 
 				$singleTarget.removeClass( _.fusionGetAnimationTypes().join( ' ' ) );
 
@@ -182,10 +174,6 @@ FusionPageBuilder.fusionActiveStates = {
 			$target = $targetEl.find( '.fusion-builder-element-content ' + data.selector );
 		} else if ( $targetEl.hasClass( 'fusion-builder-live-child-element' ) ) {
 			$target = $targetEl.find( '.fusion-builder-child-element-content ' + data.selector );
-		}
-
-		if ( 'PO' === this.model.get( 'type' ) ) {
-			$target = $targetEl.find( data.selector );
 		}
 
 		if ( 'undefined' === typeof $target || ! $target.length ) {
@@ -292,6 +280,7 @@ FusionPageBuilder.fusionActiveStates = {
 				if ( $animationDuration ) {
 					$target.css( '-moz-animation-duration', $animationDuration + 's' );
 					$target.css( '-webkit-animation-duration', $animationDuration + 's' );
+					$target.css( '-ms-animation-duration', $animationDuration + 's' );
 					$target.css( '-o-animation-duration', $animationDuration + 's' );
 					$target.css( 'animation-duration', $animationDuration + 's' );
 				}
@@ -326,6 +315,7 @@ FusionPageBuilder.fusionActiveStates = {
 				if ( animationDuration ) {
 					$target.css( '-moz-animation-duration', animationDuration + 's' );
 					$target.css( '-webkit-animation-duration', animationDuration + 's' );
+					$target.css( '-ms-animation-duration', animationDuration + 's' );
 					$target.css( '-o-animation-duration', animationDuration + 's' );
 					$target.css( 'animation-duration', animationDuration + 's' );
 				}

@@ -14,8 +14,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			events: {
 				'click .fusion-builder-delete-next-page': 'removeNextPage',
 				'click .fusion-builder-next-page-toggle': 'toggleNextPagePreview',
-				'click .fusion-builder-next-page-link': 'changePageTrigger',
-				'click .fusion-builder-special-item-drag': 'dragClick'
+				'click .fusion-builder-next-page-link': 'changePageTrigger'
 			},
 
 			initialize: function() {
@@ -30,6 +29,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( params.last ) {
 					this.$el.addClass( 'fusion-builder-next-page-last' );
 				}
+
+				this.listenTo( FusionEvents, 'fusion-wireframe-toggle', this.wireFrameToggled );
 			},
 
 			render: function() {
@@ -48,14 +49,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Adds drop zones for continers and makes container draggable.
-			 *
-			 * @since 2.0.0
-			 * @return {void}
-			 */
+						 * Adds drop zones for continers and makes container draggable.
+						 *
+						 * @since 2.0.0
+						 * @return {void}
+						 */
 			droppableContainer: function() {
+
 				var $el   = this.$el,
-					self  = this,
 					cid   = this.model.get( 'cid' ),
 					$body = jQuery( '#fb-preview' )[ 0 ].contentWindow.jQuery( 'body' );
 
@@ -102,24 +103,79 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					hoverClass: 'ui-droppable-active',
 					accept: '.fusion-builder-container, .fusion-builder-next-page',
 					drop: function( event, ui ) {
-						self.handleDropContainer( ui.draggable, $el, jQuery( event.target ) );
+
+						// Move the actual html.
+						if ( jQuery( event.target ).hasClass( 'target-after' ) ) {
+							$el.after( ui.draggable );
+						} else {
+							$el.before( ui.draggable );
+						}
+
+						FusionEvents.trigger( 'fusion-content-changed' );
+
+						FusionPageBuilderApp.scrollingContainers();
+
+						FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.nextpage + ' Element order changed' );
 					}
 				} );
+
+				// If we are in wireframe mode, then disable.
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableContainer();
+				}
 			},
 
-			handleDropContainer( $column, $targetEl, $dropTarget ) {
-				// Move the actual html.
-				if ( jQuery( $dropTarget ).hasClass( 'target-after' ) ) {
-					$targetEl.after( $column );
+			/**
+						 * Enable the droppable and draggable.
+						 *
+						 * @since 2.0.0
+						 * @return {void}
+						 */
+			enableDroppableContainer: function() {
+				var $el = this.$el;
+
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) && 'undefined' !== typeof $el.find( '.fusion-container-target' ).droppable( 'instance' ) ) {
+					$el.draggable( 'enable' );
+					$el.find( '.fusion-container-target' ).droppable( 'enable' );
 				} else {
-					$targetEl.before( $column );
+
+					// No sign of init, then need to call it.
+					this.droppableContainer();
+				}
+			},
+
+			/**
+						 * Destroy or disable the droppable and draggable.
+						 *
+						 * @since 2.0.0
+						 * @return {void}
+						 */
+			disableDroppableContainer: function() {
+				var $el = this.$el;
+
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.draggable( 'instance' ) ) {
+					$el.draggable( 'disable' );
 				}
 
-				FusionEvents.trigger( 'fusion-content-changed' );
+				// If its been init, just disable.
+				if ( 'undefined' !== typeof $el.find( '.fusion-container-target' ).droppable( 'instance' ) ) {
+					$el.find( '.fusion-container-target' ).droppable( 'disable' );
+				}
+			},
 
-				FusionPageBuilderApp.scrollingContainers();
-
-				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.nextpage + ' Order Changed' );
+			/**
+						 * Fired when wireframe mode is toggled.
+						 *
+						 * @since 2.0.0
+						 * @return {void}
+						 */
+			wireFrameToggled: function() {
+				if ( FusionPageBuilderApp.wireframeActive ) {
+					this.disableDroppableContainer();
+				} else {
+					this.enableDroppableContainer();
+				}
 			},
 
 			/**
@@ -203,7 +259,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				FusionEvents.trigger( 'fusion-content-changed' );
-				FusionEvents.trigger( 'fusion-rerender-form-steps' );
+
 				FusionEvents.trigger( 'fusion-history-save-step', fusionBuilderText.deleted_nextpage );
 			},
 
@@ -256,12 +312,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} else {
 					newNextPageElement.prevAll( '.fusion-builder-container' ).show();
 					ancestorNextPageElement.prevAll( '.fusion-builder-container' ).hide();
-				}
-			},
-
-			dragClick: function( event ) {
-				if ( event ) {
-					event.preventDefault(); // Prevent going to page up in the iframe.
 				}
 			},
 

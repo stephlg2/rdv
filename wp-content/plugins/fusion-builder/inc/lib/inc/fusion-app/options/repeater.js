@@ -15,18 +15,9 @@ FusionPageBuilder.options.fusionRepeaterField = {
 
 		if ( $repeater.length ) {
 			$repeater.each( function() {
-				self.initRepeater( jQuery( this ) );
+				self.initRepeater( jQuery( this ), context );
 			} );
 		}
-
-		jQuery( document ).on( 'fusion-init-repeater-in-toggle', function ( e, obj ) { // eslint-disable-line no-unused-vars
-			$repeater = jQuery( obj.$toggle ).find( '.fusion-builder-option.repeater' );
-			if ( $repeater.length ) {
-				$repeater.each( function() {
-					self.initRepeater( jQuery( this ), obj.option );
-				} );
-			}
-		} );
 	},
 
 	/**
@@ -36,7 +27,7 @@ FusionPageBuilder.options.fusionRepeaterField = {
 	 * @param {Object} $repeater - jQuery object of the DOM element.
 	 * @return {void}
 	 */
-	initRepeater: function( $repeater, options ) {
+	initRepeater: function( $repeater ) {
 		var self       = this,
 			param      = $repeater.data( 'option-id' ),
 			$target    = $repeater.find( '.repeater-rows' ),
@@ -49,22 +40,12 @@ FusionPageBuilder.options.fusionRepeaterField = {
 			values,
 			rowTitle;
 
-		if ( $repeater.hasClass( 'initialized' ) ) {
-			return;
-		}
-
-		// When doing a search we need to set the context correctly.
-		if ( 'search' === this.context ) {
-			this.context = jQuery( '.fusion-sidebar-section[data-context]' ).data( 'context' );
-		}
-
 		switch ( this.context ) {
 
 		case 'TO':
 		case 'FBE':
 
-			options = options || this.options;
-			option   = options[ param ];
+			option   = this.options[ param ];
 			fields   = option.fields;
 			values   = FusionApp.settings[ param ];
 
@@ -77,8 +58,7 @@ FusionPageBuilder.options.fusionRepeaterField = {
 
 		case 'PO':
 
-			options = options || this.options;
-			option   = options[ param ];
+			option   = this.options[ param ];
 			fields   = option.fields;
 			values   = FusionApp.data.postMeta._fusion[ param ];
 
@@ -96,8 +76,8 @@ FusionPageBuilder.options.fusionRepeaterField = {
 			break;
 
 		default:
-			options = options || fusionAllElements[ this.model.get( 'element_type' ) ].params;
-			option     = options[ param ];
+
+			option     = fusionAllElements[ this.model.get( 'element_type' ) ].params[ param ];
 			fields     = 'undefined' !== typeof option ? option.fields : {};
 			attributes = jQuery.extend( true, {}, this.model.attributes );
 
@@ -122,28 +102,15 @@ FusionPageBuilder.options.fusionRepeaterField = {
 				rowTitle = 'undefined' !== typeof values[ index ][ option.bind_title ] && values[ index ][ option.bind_title ] ? values[ index ][ option.bind_title ] : '';
 
 				// If select field use label of value.
-				const titleField = 'undefined' !== typeof option.fields[ option.bind_title ] ? option.fields[ option.bind_title ] : false;
-
-				if ( '' !== rowTitle && 'object' === typeof titleField && 'select' === titleField.type && ( 'object' === typeof titleField.choices || 'object' === typeof titleField.value ) ) {
-					switch ( this.context ) {
-					case 'TO':
-					case 'FBE':
-					case 'PO':
-						rowTitle = titleField.choices ? titleField.choices[ rowTitle ] : rowTitle;
-						break;
-
-					default:
-						rowTitle = titleField.value ? titleField.value[ rowTitle ] : rowTitle;
-						break;
-					}
+				if ( '' !== rowTitle && 'object' === typeof option.fields[ option.bind_title ] && 'select' === option.fields[ option.bind_title ].type && 'object' === typeof option.fields[ option.bind_title ].choices ) {
+					rowTitle = option.fields[ option.bind_title ].choices[ rowTitle ];
 				}
 				if ( '' === rowTitle && 'undefined' !== typeof option.row_title ) {
 					rowTitle = option.row_title;
 				}
-
 				self.createRepeaterRow( fields, values[ index ], $target, rowTitle );
 			} );
-		} else if ( ! option.skip_empty_row ) {
+		} else {
 			rowTitle = 'object' === typeof values && 'undefined' !== typeof values[ option.bind_title ] && values[ option.bind_title ] ? values[ option.bind_title ] : '';
 			if ( '' === rowTitle && 'undefined' !== typeof option.row_title ) {
 				rowTitle = option.row_title;
@@ -201,8 +168,6 @@ FusionPageBuilder.options.fusionRepeaterField = {
 				self.orderRepeaterData( $option, oldIndex, newIndex );
 			}
 		} );
-
-		$repeater.addClass( 'initialized' );
 
 	},
 
@@ -285,11 +250,6 @@ FusionPageBuilder.options.fusionRepeaterField = {
 
 		values = 'undefined' === typeof values ? $option.val() : values;
 
-		// When doing a search we need to set the context correctly.
-		if ( 'search' === this.context ) {
-			this.context = jQuery( '.fusion-sidebar-section[data-context]' ).data( 'context' );
-		}
-
 		if ( 'string' === typeof values && '' !== values ) {
 			switch ( this.context ) {
 
@@ -351,11 +311,6 @@ FusionPageBuilder.options.fusionRepeaterField = {
 			rowValues = {},
 			defaultVal,
 			paramId;
-
-		// When doing a search we need to set the context correctly.
-		if ( 'search' === this.context ) {
-			this.context = jQuery( '.fusion-sidebar-section[data-context]' ).data( 'context' );
-		}
 
 		if ( 'builder' !== this.context && 'PO' !== this.context ) {
 			rowValues.fusionredux_repeater_data = {
@@ -441,11 +396,6 @@ FusionPageBuilder.options.fusionRepeaterField = {
 	 * @return {void}
 	 */
 	updateRepeaterValues: function( $option, values ) {
-
-		// When doing a search we need to set the context correctly.
-		if ( 'search' === this.context ) {
-			this.context = jQuery( '.fusion-sidebar-section[data-context]' ).data( 'context' );
-		}
 
 		if ( '' !== values && ! _.isEmpty( values ) ) {
 			switch ( this.context ) {

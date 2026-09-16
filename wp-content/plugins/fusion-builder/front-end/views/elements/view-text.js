@@ -93,13 +93,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				var self           = this,
 					textAttributes = _.fusionVisibilityAtts( values.hide_on_mobile, {
 						class: 'fusion-text fusion-text-' + this.model.get( 'cid' ),
-						style: this.getStyleVars( values )
-					} );
+						style: ''
+					} ),
+					browserPrefixes = [ '-webkit-', '-moz-', '' ];
 
 				textAttributes[ 'class' ] += _.fusionGetStickyClass( values.sticky_display );
 
 				if ( 'default' === values.rule_style ) {
 					values.rule_style = fusionAllElements.fusion_text.defaults.rule_style;
+				}
+
+				textAttributes.style += _.fusionGetFontStyle( 'text_font', values );
+
+				// Alignment.
+				if ( values.content_alignment ) {
+					textAttributes.style += 'text-align:' + values.content_alignment + ';';
 				}
 
 				if ( this.flexDisplay() ) {
@@ -115,11 +123,61 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Only add styling if more than one column is used.
 				if ( 1 < values.columns ) {
-					textAttributes[ 'class' ] += ' awb-text-cols fusion-text-columns-' + values.columns;
+					textAttributes[ 'class' ] += ' fusion-text-split-columns fusion-text-columns-' + values.columns;
+
+					_.each( browserPrefixes, function( prefix ) {
+
+						textAttributes.style += ' ' + prefix + 'column-count:' + values.columns + ';';
+
+						if ( 'none' !== values.column_spacing && values.column_spacing ) {
+							textAttributes.style += ' ' + prefix + 'column-gap:' + _.fusionValidateAttrValue( values.column_spacing, 'px' ) + ';';
+						}
+
+						if ( 'none' !== values.column_min_width && values.column_min_width ) {
+							textAttributes.style += ' ' + prefix + 'column-width:' + _.fusionValidateAttrValue( values.column_min_width, 'px' ) + ';';
+						}
+
+						if ( 'none' !== values.rule_style ) {
+							textAttributes.style += ' ' + prefix + 'column-rule:' + values.rule_size + 'px ' + values.rule_style + ' ' + values.rule_color + ';';
+						}
+
+					} );
+				}
+
+				if ( 'undefined' !== typeof values.font_size && '' !== values.font_size ) {
+					textAttributes.style += 'font-size:' + values.font_size + ';';
+				}
+
+				if ( 'undefined' !== typeof values.line_height && '' !== values.line_height ) {
+					textAttributes.style += 'line-height:' + values.line_height + ';';
+				}
+
+				if ( 'undefined' !== typeof values.letter_spacing && '' !== values.letter_spacing ) {
+					textAttributes.style += 'letter-spacing:' + values.letter_spacing + ';';
+				}
+
+				if ( 'undefined' !== typeof values.text_color && '' !== values.text_color ) {
+					textAttributes.style += 'color:' + values.text_color + ';';
 				}
 
 				if ( 'undefined' !== typeof values[ 'class' ] && '' !== values[ 'class' ] ) {
 					textAttributes[ 'class' ] += ' ' + values[ 'class' ];
+				}
+
+				if ( '' !== values.margin_top ) {
+					textAttributes.style += 'margin-top:' + values.margin_top + ';';
+				}
+
+				if ( '' !== values.margin_right ) {
+					textAttributes.style += 'margin-right:' + values.margin_right + ';';
+				}
+
+				if ( '' !== values.margin_bottom ) {
+					textAttributes.style += 'margin-bottom:' + values.margin_bottom + ';';
+				}
+
+				if ( '' !== values.margin_left ) {
+					textAttributes.style += 'margin-left:' + values.margin_left + ';';
 				}
 
 				if ( 'undefined' !== typeof values.id && '' !== values.id ) {
@@ -137,46 +195,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				textAttributes = _.fusionAnimations( values, textAttributes );
 
 				return textAttributes;
-			},
-
-			getStyleVars: function( values ) {
-				var cssVars = [
-						'content_alignment',
-						'font_size',
-						'line_height',
-						'letter_spacing',
-						'text_transform',
-						'text_color',
-
-						'margin_top',
-						'margin_right',
-						'margin_bottom',
-						'margin_left'
-					],
-					customCSSVars = {},
-					fontVars;
-				this.values = values;
-
-				// Only add styling if more than one column is used.
-				if ( 1 < values.columns ) {
-					cssVars.push( 'columns' );
-
-					if ( values.column_spacing ) {
-						customCSSVars.column_spacing = _.fusionValidateAttrValue( values.column_spacing, 'px' );
-					}
-
-					if ( values.column_min_width ) {
-						customCSSVars.column_min_width = _.fusionValidateAttrValue( values.column_min_width, 'px' );
-					}
-
-					if ( 'none' !== values.rule_style ) {
-						customCSSVars.rule_style = values.rule_size + 'px ' + values.rule_style + ' ' + values.rule_color;
-					}
-				}
-
-				fontVars = this.getFontStylingVars( 'text_font', values );
-
-				return this.getCssVarsForOptions( cssVars ) + this.getCustomCssVars( customCSSVars ) + fontVars;
 			}
 		} );
 	} );

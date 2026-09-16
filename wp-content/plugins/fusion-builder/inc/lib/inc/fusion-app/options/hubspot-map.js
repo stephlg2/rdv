@@ -11,11 +11,11 @@ function fusionHubSpotMapOption( $element ) {
 	}
 
 	// Set reusable vars.
-	this.properties  = FusionApp.data.hubspot.properties;
-	this.$el         = $element.find( '.hubspot_map .fusion-mapping' );
-	this.options     = false;
-	this.$input      = $element.find( 'input#hubspot_map' );
-	this.values      = {};
+	this.properties = FusionApp.data.hubspot.properties;
+	this.$el        = $element.find( '.fusion-mapping' );
+	this.options    = false;
+	this.$input     = $element.find( '#hubspot_map' );
+	this.values     = {};
 
 	try {
 		self.values = JSON.parse( self.$input.val() );
@@ -44,11 +44,7 @@ fusionHubSpotMapOption.prototype.updateValues  = function() {
 	} );
 
 	this.values = values;
-
-	this.$input.val( JSON.stringify( values ) );
-	setTimeout( () => {
-		this.$input.trigger( 'change' );
-	}, 10 );
+	this.$input.val( JSON.stringify( values ) ).change();
 };
 
 fusionHubSpotMapOption.prototype.updateMap  = function() {
@@ -70,7 +66,7 @@ fusionHubSpotMapOption.prototype.updateMap  = function() {
 		if ( 'object' !== typeof params ) {
 			return false;
 		}
-		return element.get( 'element_type' ).includes( 'fusion_form' ) && 'fusion_form_consent' !== element.get( 'element_type' ) && 'fusion_form_submit' !== element.get( 'element_type' ) && ( 'string' === typeof params.label || 'string' === typeof params.name );
+		return element.get( 'element_type' ).includes( 'fusion_form' ) && 'fusion_form_submit' !== element.get( 'element_type' ) && 'string' === typeof params.label && 'string' === typeof params.name;
 	} );
 
 	// Add entries.

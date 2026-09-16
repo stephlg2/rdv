@@ -16,13 +16,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			filterTemplateAtts: function( atts ) {
 				var attributes = {};
-				this.values = atts.values;
 
 				this.validateValues( atts.values );
 
 				// Create attribute objects.
 				attributes.toggleShortcode           = this.buildToggleAttr( atts.values );
 				attributes.toggleShortcodePanelGroup = this.buildPanelGroupAttr( atts.values );
+				attributes.styles                    = this.buildStyles( atts.values );
 
 				return attributes;
 			},
@@ -38,8 +38,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				values.icon_size       = _.fusionValidateAttrValue( values.icon_size, 'px' );
 				values.border_size     = _.fusionValidateAttrValue( values.border_size, 'px' );
 				values.title_font_size = _.fusionValidateAttrValue( values.title_font_size, 'px' );
-				values.margin_bottom   = _.fusionValidateAttrValue( values.margin_bottom, 'px' );
-				values.margin_top      = _.fusionValidateAttrValue( values.margin_top, 'px' );
 			},
 
 			/**
@@ -51,17 +49,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildToggleAttr: function( values ) {
 				var toggleShortcode = _.fusionVisibilityAtts( values.hide_on_mobile, {
-					class: 'accordian fusion-accordian',
-					style: ''
+					class: 'accordian fusion-accordian'
 				} );
-
-				if ( '' !== values.margin_top ) {
-					toggleShortcode.style += 'margin-top:' + values.margin_top + ';';
-				}
-
-				if ( '' !== values.margin_bottom ) {
-					toggleShortcode.style += 'margin-bottom:' + values.margin_bottom + ';';
-				}
 
 				if ( ' ' !== values[ 'class' ] ) {
 					toggleShortcode[ 'class' ] += ' ' + values[ 'class' ];
@@ -70,8 +59,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				if ( '' !== values.id ) {
 					toggleShortcode.id = values.id;
 				}
-
-				toggleShortcode.style += this.getStyleVariables( values );
 
 				return toggleShortcode;
 			},
@@ -103,102 +90,74 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds the stylesheet.
 			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
+			 * @since 2.0
+			 * @param {Object} values - The values object.
+			 * @return {string}
 			 */
-			getStyleVariables: function( values ) {
-				const cssVarsOptions = [
-					'content_text_transform',
-					'content_line_height',
-					'icon_alignment'
-				];
+			buildStyles: function( values ) {
+				var styles = '',
+					cid = this.model.get( 'cid' );
 
-				cssVarsOptions.margin_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_right    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.padding_left = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.icon_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_font_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-
-				const customVars = [];
-
-				if ( values.hover_color ) {
-					customVars.hover_color = values.hover_color;
-				}
-				if ( values.border_color ) {
-					customVars.border_color = values.border_color;
-				}
-				if ( values.background_color ) {
-					customVars.background_color = values.background_color;
-				}
-				if ( values.divider_color ) {
-					customVars.divider_color = values.divider_color;
-				}
-				if ( values.divider_hover_color ) {
-					customVars.divider_hover_color = values.divider_hover_color;
-				}
-				if ( values.icon_color ) {
-					customVars.icon_color = values.icon_color;
-				}
-				if ( values.title_color ) {
-					customVars.title_color = values.title_color;
-				}
-				if ( values.content_color ) {
-					customVars.content_color = values.content_color;
-				}
-				if ( values.icon_box_color ) {
-					customVars.icon_box_color = values.icon_box_color;
-				}
-				if ( values.toggle_hover_accent_color ) {
-					customVars.toggle_hover_accent_color = values.toggle_hover_accent_color;
-				}
-				if ( values.toggle_active_accent_color ) {
-					customVars.toggle_active_accent_color = values.toggle_active_accent_color;
+				if ( '' !== values.title_font_size ) {
+					styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title a{ font-size: ' + values.title_font_size + ';}';
 				}
 
-				const title_typography = _.fusionGetFontStyle( 'title_font', values, 'object' );
-
-
-				if ( title_typography[ 'font-family' ] ) {
-					customVars.title_font_family = title_typography[ 'font-family' ];
+				if ( '' !== values.icon_size ) {
+					styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title a .fa-fusion-box:before{ font-size: ' + values.icon_size + '; width: ' + values.icon_size + ';}';
 				}
 
-				if ( title_typography[ 'font-weight' ] ) {
-					customVars.title_font_weight = title_typography[ 'font-weight' ];
+				if ( '' !== values.icon_color ) {
+					styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title a .fa-fusion-box{ color: ' + values.icon_color + ';}';
 				}
 
-				if ( title_typography[ 'font-style' ] ) {
-					customVars.title_font_style = title_typography[ 'font-style' ];
+				if ( 'right' === values.icon_alignment ) {
+					styles += '.fusion-accordian  #accordion-cid' + cid + '.fusion-toggle-icon-right .fusion-toggle-heading{ margin-right: ' + ( parseInt( values.icon_size, 10 ) + 18 ) + 'px;}';
 				}
 
-				if ( values.title_font_size ) {
-					customVars.title_font_size = _.fusionGetValueWithUnit( values.title_font_size );
+				if ( ( '1' === values.icon_boxed_mode || 'yes' === values.icon_boxed_mode ) && ! _.isEmpty( values.icon_box_color ) ) {
+					styles += '.fusion-accordian  #accordion-cid' + cid + ' .fa-fusion-box { background-color: ' + values.icon_box_color + ';border-color: ' + values.icon_box_color + ';}';
 				}
 
-				if ( values.title_letter_spacing ) {
-					customVars.title_letter_spacing = _.fusionGetValueWithUnit( values.title_letter_spacing );
+				if ( ! _.isEmpty( values.toggle_hover_accent_color ) ) {
+					styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title a:hover, #accordion-cid' + cid + ' .fusion-toggle-boxed-mode:hover .panel-title a { color: ' + values.toggle_hover_accent_color + ';}';
+					styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title a.hover, #accordion-cid' + cid + ' .fusion-toggle-boxed-mode.hover .panel-title a { color: ' + values.toggle_hover_accent_color + ';}';
+
+					if ( '1' === values.icon_boxed_mode || 'yes' === values.icon_boxed_mode ) {
+						styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title .active .fa-fusion-box,';
+						styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title a:hover .fa-fusion-box { background-color: ' + values.toggle_hover_accent_color + '!important;border-color: ' + values.toggle_hover_accent_color + '!important;}';
+						styles += '.fusion-accordian  #accordion-cid' + cid + ' .panel-title a.hover .fa-fusion-box { background-color: ' + values.toggle_hover_accent_color + '!important;border-color: ' + values.toggle_hover_accent_color + '!important;}';
+					} else {
+						styles += '.fusion-accordian  #accordion-cid' + cid + ' .fusion-toggle-boxed-mode:hover .panel-title a .fa-fusion-box{ color: ' + values.toggle_hover_accent_color + ';}';
+						styles += '.fusion-accordian  #accordion-cid' + cid + '.fusion-toggle-icon-unboxed .fusion-panel .panel-title a:hover .fa-fusion-box{ color: ' + values.toggle_hover_accent_color + ' !important;}';
+						styles += '.fusion-accordian  #accordion-cid' + cid + ' .fusion-toggle-boxed-mode.hover .panel-title a .fa-fusion-box{ color: ' + values.toggle_hover_accent_color + ';}';
+						styles += '.fusion-accordian  #accordion-cid' + cid + '.fusion-toggle-icon-unboxed .fusion-panel .panel-title a.hover .fa-fusion-box{ color: ' + values.toggle_hover_accent_color + ' !important;}';
+					}
 				}
 
-				if ( values.title_line_height ) {
-					customVars.title_line_height = values.title_line_height;
+				if ( '1' == values.boxed_mode || 'yes' === values.boxed_mode ) {
+
+					if ( '' !== values.hover_color ) {
+						styles += '#accordion-cid' + cid + ' .fusion-panel:hover, #accordion-cid' + cid + ' .fusion-panel.hover{ background-color: ' + values.hover_color + ' }';
+					}
+
+					styles += '#accordion-cid' + cid + ' .fusion-panel {';
+					if ( '' !== values.border_color ) {
+						styles += ' border-color:' + values.border_color + ';';
+					}
+
+					if ( '' !== values.border_size ) {
+						styles += ' border-width:' + values.border_size + ';';
+					}
+
+					if ( '' !== values.background_color ) {
+						styles += ' background-color:' + values.background_color + ';';
+					}
+					styles += ' }';
 				}
 
-				if ( values.title_text_transform ) {
-					customVars.title_text_transform = values.title_text_transform;
-				}
-
-				if ( values.title_color ) {
-					customVars.title_color = values.title_color;
-				}
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars ) + this.getFontStylingVars( 'content_font', values );
+				return styles;
 			}
 		} );
 	} );

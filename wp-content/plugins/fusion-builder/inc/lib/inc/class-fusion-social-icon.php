@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       https://avada.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      4.0.0
@@ -33,7 +33,7 @@ class Fusion_Social_Icon {
 	 * @access public
 	 * @var string
 	 */
-	public static $iconfont_prefix = 'awb-icon-';
+	public static $iconfont_prefix = 'fusion-icon-';
 
 	/**
 	 * Creates the markup for a single icon.
@@ -67,27 +67,18 @@ class Fusion_Social_Icon {
 		}
 		$icon_options['last'] = ( isset( $args['last'] ) ) ? $args['last'] : false;
 
-		$custom                         = '';
-		$is_custom_icon                 = ( isset( $args['custom_source'] ) && isset( $args['custom_title'] ) ) ? true : false;
+		$custom         = '';
+		$is_custom_icon = ( isset( $args['custom_source'] ) && isset( $args['custom_title'] ) ) ? true : false;
+		// This is a custom icon.
+		if ( $is_custom_icon ) {
+			$custom = '<img src="' . $args['custom_source'] . '" style="width:auto;" alt="' . $args['custom_title'] . '" />';
+		}
+
 		$icon_options['social_network'] = ( 'email' === $icon_options['social_network'] ) ? 'mail' : $icon_options['social_network'];
 
 		if ( 'custom' === substr( $icon_options['social_network'], 0, 7 ) ) {
-			// This is a custom icon.
-			if ( ! $args['custom_icon'] ) {
-				if ( ! $is_custom_icon ) {
-					return;
-				}
-
-				$custom = '<img src="' . $args['custom_source'] . '" style="width:auto;" alt="' . $args['custom_title'] . '" />';
-			}
-
-			if ( $args['custom_icon'] ) {
-				$icon_options['class'] .= 'awb-custom-icon ';
-			} else {
-				$icon_options['class'] .= 'awb-custom-image custom ';
-			}
-
-			$tooltip = $args['custom_title'];
+			$icon_options['class'] .= 'custom ';
+			$tooltip                = $args['custom_title'];
 		} else {
 			$tooltip = $icon_options['social_network'];
 		}
@@ -102,11 +93,7 @@ class Fusion_Social_Icon {
 
 		$icon_options['title'] = $tooltip;
 
-		if ( ! empty( $args['custom_icon'] ) ) {
-			$icon_options['class'] .= 'fusion-social-network-icon fusion-tooltip ' . fusion_font_awesome_name_handler( $args['custom_icon'] );
-		} else {
-			$icon_options['class'] .= 'fusion-social-network-icon fusion-tooltip fusion-' . $icon_options['social_network'] . ' ' . self::$iconfont_prefix . $icon_options['social_network'];
-		}
+		$icon_options['class'] .= 'fusion-social-network-icon fusion-tooltip fusion-' . $icon_options['social_network'] . ' ' . self::$iconfont_prefix . $icon_options['social_network'];
 		$icon_options['class'] .= ( $args['last'] ) ? ' fusion-last-social-icon' : '';
 
 		$icon_options['href'] = $icon_options['social_link'];
@@ -114,8 +101,8 @@ class Fusion_Social_Icon {
 		if ( self::$args['linktarget'] ) {
 			$icon_options['target'] = '_blank';
 
-			if ( isset( $icon_options['social_network'] ) || isset( $args['icon'] ) ) {
-				$icon_options['rel'] = ( 'facebook' !== $icon_options['social_network'] ? 'noopener ' : '' ) . 'noreferrer';
+			if ( 'facebook' !== $icon_options['social_network'] || isset( $args['icon'] ) ) {
+				$icon_options['rel'] = 'noopener noreferrer';
 			}
 		}
 
@@ -145,7 +132,7 @@ class Fusion_Social_Icon {
 		}
 
 		if ( fusion_library()->get_option( 'nofollow_social_links' ) ) {
-			$icon_options['rel'] = ( isset( $icon_options['rel'] ) ) ? $icon_options['rel'] . ' nofollow' : 'nofollow';
+			$icon_options['rel'] = 'nofollow';
 		}
 
 		if ( isset( $args['icon_color'] ) && $args['icon_color'] ) {

@@ -12,7 +12,7 @@
 		$display_notification = '' === get_user_meta( get_current_user_id(), 'fusion-template-builder-layouts', true ) ? true : false;
 		$wrapper_class        = true === $display_notification ? 'fusion-has-notification' : '';
 	?>
-<?php if ( AWB_Access_Control::wp_user_can_for_post( 'fusion_tb_layout', 'create_posts' ) ) : ?>
+
 	<div class="fusion-builder-important-notice-wrapper <?php echo esc_attr( $wrapper_class ); ?>">
 
 		<div class="fusion-builder-important-notice fusion-builder-template-notification avada-db-card" data-dismissible="true" data-dismiss-type="user_meta" data-dismiss-option="fusion-template-builder-layouts" data-nonce="<?php echo esc_attr( wp_create_nonce( 'fusion_admin_notice' ) ); ?>">
@@ -59,7 +59,7 @@
 						printf(
 							/* translators: %s: "Avada Layouts Documentation Link". */
 							esc_html__( 'Please see the %s.', 'fusion-builder' ),
-							'<a href="https://avada.com/documentation/category/layouts/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Layouts Documentation', 'fusion-builder' ) . '</a>'
+							'<a href="https://theme-fusion.com/documentation/avada/layouts/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Avada Layouts Documentation', 'fusion-builder' ) . '</a>'
 						);
 						?>
 					</p>
@@ -84,40 +84,11 @@
 			</button>
 		</div>
 	</div>
-<?php endif; ?>
+
 	<div class="fusion-layouts avada-db-card avada-db-card-transparent">
-		<?php
-		$options      = get_option( 'fusion_builder_settings', [] );
-		$builder_type = isset( $options['enable_builder_ui_by_default'] ) ? $options['enable_builder_ui_by_default'] : 'backend';
-		$layout_order = Fusion_Template_Builder()->get_layout_order();
-		$layouts      = Fusion_Template_Builder()->get_registered_layouts();
-
-		// If there is a specific order, we need to prefix the array keys to avoid the JSON being auto sorted according to ascending indices.
-		if ( '' !== $layout_order ) {
-			$layouts = array_combine(
-				array_map(
-					function( $key ) {
-						return '@' . $key;
-					},
-					array_keys( $layouts )
-				),
-				$layouts
-			);
-		}
-		?>
 		<script>
-			fusionLayouts   = <?php echo wp_json_encode( $layouts, JSON_FORCE_OBJECT ); ?>;
+			fusionLayouts = <?php echo wp_json_encode( Fusion_Template_Builder()->get_registered_layouts(), JSON_FORCE_OBJECT ); ?>;
 			fusionTemplates = <?php echo wp_json_encode( Fusion_Template_Builder()->get_templates_by_term(), JSON_FORCE_OBJECT ); ?>;
-			builderType     = '<?php echo esc_attr( $builder_type ); ?>';
 		</script>
-	</div>
-
-	<div class="awb-layout-order-wrapper avada-db-card avada-db-card-transparent">
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" class="awb-layout-order" name="awb_layout_order" value="<?php echo esc_attr( $layout_order ); ?>">
-			<input type="hidden" name="action" value="awb_save_layout_order">
-			<?php wp_nonce_field( 'awb_save_layout_order', 'awb_save_layout_order' ); ?>
-			<input type="submit" class="button button-primary awb-save-layout-order" value="<?php esc_attr_e( 'Save Layout Order', 'fusion-builder' ); ?>" />
-		</form>
 	</div>
 <?php Fusion_Builder_Admin::footer(); ?>

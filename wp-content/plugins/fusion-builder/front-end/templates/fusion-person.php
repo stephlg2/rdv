@@ -59,6 +59,6 @@ if ( '' !== values.name || '' !== values.title || '' !== values.content ) {
 
 #>
 <div {{{ _.fusionGetAttributes( attr ) }}}>
-	{{{ picture }}} {{{ inner_content }}}
+	{{{ styles }}} {{{ picture }}} {{{ inner_content }}}
 </div>
 </script>

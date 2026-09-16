@@ -21,34 +21,6 @@ function fusion_library() {
 }
 
 /**
- * Get the $fusion_settings global.
- *
- * @since 2.0
- * @return Fusion_Settings
- */
-function awb_get_fusion_settings() {
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
-	return $fusion_settings;
-}
-
-/**
- * Keep Backwards-compatibility.
- */
-if ( ! function_exists( 'fusion_get_fusion_settings' ) && ( ! defined( 'FUSION_BUILDER_VERSION' ) || version_compare( FUSION_BUILDER_VERSION, '3.4', '>=' ) ) ) {
-	/**
-	 * Get global $fusion_settings object.
-	 *
-	 * @return object
-	 */
-	function fusion_get_fusion_settings() {
-		return awb_get_fusion_settings();
-	}
-}
-
-/**
  * Returns an instance of the Fusion_Data_Framework class.
  *
  * @since 2.2.0
@@ -72,7 +44,7 @@ if ( ! function_exists( 'fusion_get_option' ) ) {
 		$value       = '';
 		$value_found = false;
 		$id          = Fusion::get_instance()->get_page_id();
-		$is_archive  = false === $post_id ? ( false !== strpos( $id, 'archive' ) || false === $id ) : false !== strpos( $post_id, 'archive' );
+		$is_archive  = ( false !== strpos( $id, 'archive' ) || false === $id );
 		$map         = Fusion_Options_Map::get_option_map();
 		$edit_post   = false;
 
@@ -120,7 +92,7 @@ if ( ! function_exists( 'fusion_get_option' ) ) {
 
 		$post_id = apply_filters( 'fusion_get_option_post_id', ( $post_id ) ? $post_id : $id );
 
-		// If $post_id is not set that means there is a call for a TO and it is still too early for post ID to be set.
+		// If $post_id is not set that means there is a call for a TO and it is still to early for post ID to be set.
 		if ( false === $post_id ) {
 			$skip = true;
 		} else {
@@ -139,7 +111,7 @@ if ( ! function_exists( 'fusion_get_option' ) ) {
 		 * Get page options.
 		 * Overrides theme-option.
 		 */
-		$get_page_option = apply_filters( 'fusion_should_get_page_option', ( is_singular() || fusion_is_shop( $post_id ) || ( is_home() && ! is_front_page() ) || $edit_post || ( false !== $post_id && ! $is_archive ) ) );
+		$get_page_option = apply_filters( 'fusion_should_get_page_option', ( is_singular() || fusion_is_shop( $post_id ) || ( is_home() && ! is_front_page() ) || $edit_post ) );
 
 		if ( ! $value_found && ! $skip && $get_page_option ) {
 
@@ -453,6 +425,75 @@ if ( ! function_exists( 'fusion_render_post_metadata' ) ) {
 	}
 }
 
+if ( ! function_exists( 'fusion_calc_color_brightness' ) ) {
+	/**
+	 * Convert Calculate the brightness of a color.
+	 *
+	 * @param  string $color Color (Hex) Code.
+	 * @return integer brightness level.
+	 */
+	function fusion_calc_color_brightness( $color ) {
+
+		$brightness_level = 150;
+		if ( ! is_string( $color ) ) {
+			return $brightness_level;
+		}
+
+		if ( in_array( strtolower( $color ), [ 'black', 'navy', 'purple', 'maroon', 'indigo', 'darkslategray', 'darkslateblue', 'darkolivegreen', 'darkgreen', 'darkblue' ], true ) ) {
+
+			$brightness_level = 0;
+
+		} elseif ( 0 === strpos( $color, '#' ) || 0 === strpos( $color, 'rgb' ) || ctype_xdigit( $color ) ) {
+
+			$color            = fusion_hex2rgb( $color );
+			$brightness_level = sqrt( pow( $color[0], 2 ) * 0.299 + pow( $color[1], 2 ) * 0.587 + pow( $color[2], 2 ) * 0.114 );
+
+		}
+
+		return (int) round( $brightness_level );
+	}
+}
+
+if ( ! function_exists( 'fusion_hex2rgb' ) ) {
+	/**
+	 * Convert Hex Code to RGB.
+	 *
+	 * @param  string $hex Color Hex Code.
+	 * @return array       RGB values.
+	 */
+	function fusion_hex2rgb( $hex ) {
+		if ( false !== strpos( $hex, 'rgb' ) ) {
+
+			$rgb_part = strstr( $hex, '(' );
+			$rgb_part = trim( $rgb_part, '(' );
+			$rgb_part = rtrim( $rgb_part, ')' );
+			$rgb_part = explode( ',', $rgb_part );
+
+			$rgb = [ $rgb_part[0], $rgb_part[1], $rgb_part[2], $rgb_part[3] ];
+
+		} elseif ( 'transparent' === $hex ) {
+			$rgb = [ '255', '255', '255', '0' ];
+		} else {
+
+			$hex = str_replace( '#', '', $hex );
+
+			if ( 3 === strlen( $hex ) ) {
+				$r = hexdec( substr( $hex, 0, 1 ) . substr( $hex, 0, 1 ) );
+				$g = hexdec( substr( $hex, 1, 1 ) . substr( $hex, 1, 1 ) );
+				$b = hexdec( substr( $hex, 2, 1 ) . substr( $hex, 2, 1 ) );
+			} else {
+				$r = hexdec( substr( $hex, 0, 2 ) );
+				$g = hexdec( substr( $hex, 2, 2 ) );
+				$b = hexdec( substr( $hex, 4, 2 ) );
+			}
+			$rgb = [ $r, $g, $b ];
+		}
+
+		return $rgb; // Returns an array with the rgb values.
+	}
+}
+
+
 if ( ! function_exists( 'avada_first_featured_image_markup' ) ) {
 	/**
 	 * Render the full markup of the first featured image, incl. image wrapper and rollover.
@@ -478,7 +519,6 @@ if ( ! function_exists( 'avada_first_featured_image_markup' ) ) {
 			'display_woo_outofstock'    => false,
 			'image_link'                => true,
 			'attributes'                => [],
-			'aspect_ratio'              => '',
 		];
 
 		$args = wp_parse_args( $args, $defaults );
@@ -511,11 +551,10 @@ if ( ! function_exists( 'fusion_render_first_featured_image_markup' ) ) {
 	 * @param  string  $gallery_id                ID of a special gallery the rollover "zoom" link should be connected to for lightbox.
 	 * @param  string  $display_rollover          yes|no|force_yes: no disables rollover; force_yes will force rollover even if the Global Option is set to no.
 	 * @param  bool    $display_woo_rating        Whether we want to display ratings or not.
-	 * @param  array   $attributes                Arry with attributes that will be added to the wrapper.
-	 * @param  string  $aspect_ratio              The image aspect ratio.
+	 * @param  aray    $attributes                Arry with attributes that will be added to the wrapper.
 	 * @return string Full HTML markup of the first featured image.
 	 */
-	function fusion_render_first_featured_image_markup( $post_id, $post_featured_image_size = '', $post_permalink = '', $display_placeholder_image = false, $display_woo_price = false, $display_woo_buttons = false, $display_post_categories = 'default', $display_post_title = 'default', $type = '', $gallery_id = '', $display_rollover = 'yes', $display_woo_rating = false, $attributes = [], $aspect_ratio = '' ) {
+	function fusion_render_first_featured_image_markup( $post_id, $post_featured_image_size = '', $post_permalink = '', $display_placeholder_image = false, $display_woo_price = false, $display_woo_buttons = false, $display_post_categories = 'default', $display_post_title = 'default', $type = '', $gallery_id = '', $display_rollover = 'yes', $display_woo_rating = false, $attributes = [] ) {
 
 		// Add a class for fixed image size, to restrict the image rollovers to the image width.
 		$image_size_class       = ( 'full' !== $post_featured_image_size ) ? ' fusion-image-size-fixed' : '';
@@ -525,6 +564,10 @@ if ( ! function_exists( 'fusion_render_first_featured_image_markup' ) ) {
 		$image_link             = true;
 
 		ob_start();
+		/**
+		 * WIP
+		include locate_template( 'templates/featured-image-first.php' );
+		*/
 		include FUSION_LIBRARY_PATH . '/inc/templates/featured-image-first.php';
 		return ob_get_clean();
 	}
@@ -539,7 +582,10 @@ if ( ! function_exists( 'avada_featured_images_lightbox' ) ) {
 	 */
 	function avada_featured_images_lightbox( $post_id ) {
 
-		$fusion_settings = awb_get_fusion_settings();
+		global $fusion_settings;
+		if ( ! $fusion_settings ) {
+			$fusion_settings = Fusion_Settings::get_instance();
+		}
 
 		$html            = '';
 		$video           = '';
@@ -548,7 +594,7 @@ if ( ! function_exists( 'avada_featured_images_lightbox' ) ) {
 		$video_url = fusion_data()->post_meta( $post_id )->get( 'video_url', true );
 
 		if ( $video_url ) {
-			$video = '<a href="' . $video_url . '" class="iLightbox[gallery' . $post_id . ']" data-link-type="video"></a>';
+			$video = '<a href="' . $video_url . '" class="iLightbox[gallery' . $post_id . ']"></a>';
 		}
 
 		$i = 2;
@@ -960,6 +1006,20 @@ if ( ! function_exists( 'fusion_cached_query' ) ) {
 	}
 }
 
+if ( ! function_exists( 'fusion_flush_object_cache' ) ) {
+	/**
+	 * Deletes WP object cache.
+	 *
+	 * @since 1.2
+	 * @return void
+	 */
+	function fusion_flush_object_cache() {
+		wp_cache_flush();
+	}
+}
+add_action( 'save_post', 'fusion_flush_object_cache' );
+add_action( 'delete_post', 'fusion_flush_object_cache' );
+
 if ( ! function_exists( 'fusion_cached_get_posts' ) ) {
 	/**
 	 * Returns a cached query.
@@ -1045,7 +1105,6 @@ if ( ! function_exists( 'fusion_pagination' ) ) {
 		}
 		$max_pages    = intval( $max_pages );
 		$current_page = intval( $current_page );
-		$range        = intval( $range );
 		$output       = '';
 
 		if ( 1 !== $max_pages ) {
@@ -1141,7 +1200,28 @@ if ( ! function_exists( 'fusion_get_referer' ) ) {
 	 * @return string|false
 	 */
 	function fusion_get_referer() {
-		return wp_get_referer();
+		$referer = wp_get_referer();
+		if ( ! $referer ) {
+			$referer = wp_get_raw_referer();
+		}
+		return $referer;
+	}
+}
+
+if ( ! function_exists( 'fusion_is_color_transparent' ) ) {
+	/**
+	 * Figure out if a color is transparent or not.
+	 *
+	 * @since 2.0
+	 * @param string $color The color we want to check.
+	 * @return bool
+	 */
+	function fusion_is_color_transparent( $color ) {
+		$color = trim( $color );
+		if ( 'transparent' === $color ) {
+			return true;
+		}
+		return ( 0 === Fusion_Color::new_color( $color )->alpha );
 	}
 }
 
@@ -1353,7 +1433,7 @@ if ( ! function_exists( 'fusion_should_defer_styles_loading' ) ) {
 	 */
 	function fusion_should_defer_styles_loading() {
 		$is_builder = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
-		return apply_filters( 'awb_defer_styles', ( $is_builder ? false : (bool) fusion_get_option( 'defer_styles' ) ) );
+		return $is_builder ? false : (bool) fusion_get_option( 'defer_styles' );
 	}
 }
 
@@ -1415,11 +1495,11 @@ if ( ! function_exists( 'fusion_element_attributes' ) ) {
 		$attrs = [];
 		$args  = apply_filters( 'fusion_element_attributes_args', $args, $el );
 		foreach ( $args as $prop => $val ) {
-			$attrs[] = esc_attr( $prop ) . '="' . esc_attr( $val ) . '"';
+			$attrs[] = esc_attr( $prop ) . '"' . esc_attr( $val ) . '"';
 		}
 
 		if ( ! $return ) {
-			echo implode( ' ', $attrs ); // phpcs:ignore WordPress.Security
+			echo esc_html( implode( ' ', $attrs ) );
 		}
 		return implode( ' ', $attrs );
 	}
@@ -1494,9 +1574,9 @@ if ( ! function_exists( 'avada_menu_element_woo_cart' ) ) {
 				$product_link = apply_filters( 'woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink( $cart_item ) : '', $cart_item, $cart_item_key );
 				$thumbnail_id = ( $cart_item['variation_id'] && has_post_thumbnail( $cart_item['variation_id'] ) ) ? $cart_item['variation_id'] : $cart_item['product_id'];
 
-				if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_widget_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
-					$output .= '<li class="menu-item fusion-menu-cart-item awb-menu__sub-li">';
-					$output .= '<a href="' . $product_link . '" class="awb-menu__sub-a">';
+				if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+					$output .= '<li class="menu-item fusion-menu-cart-item">';
+					$output .= '<a href="' . $product_link . '">';
 					$output .= get_the_post_thumbnail( $thumbnail_id, 'recent-works-thumbnail' );
 
 					$output .= '<div class="fusion-menu-cart-item-details">';
@@ -1513,12 +1593,12 @@ if ( ! function_exists( 'avada_menu_element_woo_cart' ) ) {
 				}
 			}
 			$output .= '<li class="fusion-menu-cart-checkout">';
-			$output .= '<div class="awb-menu__woo-wrap fusion-menu-cart-link"><a href="' . $woo_cart_page_link . '"><span>' . esc_html__( 'View Cart', 'fusion-builder' ) . '</span></a></div>';
-			$output .= '<div class="awb-menu__woo-wrap fusion-menu-cart-checkout-link"><a href="' . $checkout_link . '"><span>' . esc_html__( 'Checkout', 'fusion-builder' ) . '</span></a></div>';
+			$output .= '<div class="fusion-menu-cart-link"><a href="' . $woo_cart_page_link . '"><span>' . esc_html__( 'View Cart', 'fusion-builder' ) . '</span></a></div>';
+			$output .= '<div class="fusion-menu-cart-checkout-link"><a href="' . $checkout_link . '"><span>' . esc_html__( 'Checkout', 'fusion-builder' ) . '</span></a></div>';
 			$output .= '</li>';
 		}
 
-		return '<ul class="awb-menu__sub-ul awb-menu__sub-ul_main sub-menu avada-custom-menu-item-contents fusion-menu-cart-items ' . esc_attr( $dropdown_class ) . '">' . $output . '</ul>';
+		return '<ul class="sub-menu avada-custom-menu-item-contents fusion-menu-cart-items ' . esc_attr( $dropdown_class ) . '">' . $output . '</ul>';
 	}
 }
 
@@ -1545,10 +1625,6 @@ if ( ! function_exists( 'fusion_menu_element_add_woo_cart_to_widget_html' ) ) {
 		);
 
 		if ( class_exists( 'WooCommerce' ) && ( ! is_admin() || fusion_doing_ajax() ) ) {
-			if ( is_null( WC()->cart ) || ! WC()->cart instanceof WC_Cart ) {
-				wc_load_cart();
-			}
-
 			$cart_contents_count = WC()->cart->get_cart_contents_count();
 
 			$output .= '<a href="' . get_permalink( get_option( 'woocommerce_cart_page_id' ) ) . '" class="' . esc_attr( $args['link_classes'] ) . '">';
@@ -1597,12 +1673,12 @@ if ( ! function_exists( 'avada_menu_element_add_login_box_to_nav' ) ) {
 						$output .= '<p class="fusion-menu-login-box-error">' . esc_html__( 'Login failed, please try again.', 'fusion-builder' ) . '</p>';
 					}
 					$output .= '<form action="' . esc_attr( site_url( 'wp-login.php', 'login_post' ) ) . '" name="loginform" method="post">';
-					$output .= '<p><label class="screen-reader-text hidden" for="username">' . esc_html__( 'Username:', 'fusion-builder' ) . '</label><input type="text" class="input-text" name="log" id="username-' . esc_attr( $args['menu_id'] ) . '" value="" placeholder="' . esc_html__( 'Username', 'fusion-builder' ) . '" /></p>';
-					$output .= '<p><label class="screen-reader-text hidden" for="password">' . esc_html__( 'Password:', 'fusion-builder' ) . '</label><input type="password" class="input-text" name="pwd" id="password-' . esc_attr( $args['menu_id'] ) . '" value="" placeholder="' . esc_html__( 'Password', 'fusion-builder' ) . '" /></p>';
-					$output .= '<p class="fusion-remember-checkbox"><label for="fusion-menu-login-box-rememberme"><input name="rememberme" type="checkbox" id="fusion-menu-login-box-rememberme-' . esc_attr( $args['menu_id'] ) . '" value="forever"> ' . esc_html__( 'Remember Me', 'fusion-builder' ) . '</label></p>';
+					$output .= '<p><label class="screen-reader-text hidden" for="username">' . esc_html__( 'Username:', 'fusion-builder' ) . '</label><input type="text" class="input-text" name="log" id="username" value="" placeholder="' . esc_html__( 'Username', 'fusion-builder' ) . '" /></p>';
+					$output .= '<p><label class="screen-reader-text hidden" for="password">' . esc_html__( 'Password:', 'fusion-builder' ) . '</label><input type="password" class="input-text" name="pwd" id="password" value="" placeholder="' . esc_html__( 'Password', 'fusion-builder' ) . '" /></p>';
+					$output .= '<p class="fusion-remember-checkbox"><label for="fusion-menu-login-box-rememberme"><input name="rememberme" type="checkbox" id="fusion-menu-login-box-rememberme" value="forever"> ' . esc_html__( 'Remember Me', 'fusion-builder' ) . '</label></p>';
 					$output .= '<input type="hidden" name="fusion_woo_login_box" value="true" />';
 					$output .= '<p class="fusion-login-box-submit">';
-					$output .= '<input type="submit" name="wp-submit" id="wp-submit-' . esc_attr( $args['menu_id'] ) . '" class="button button-small default comment-submit" value="' . esc_html__( 'Log In', 'fusion-builder' ) . '">';
+					$output .= '<input type="submit" name="wp-submit" id="wp-submit" class="button button-small default comment-submit" value="' . esc_html__( 'Log In', 'fusion-builder' ) . '">';
 					$output .= '<input type="hidden" name="redirect" value="' . esc_url( $referer ) . '">';
 					$output .= '</p>';
 					$output .= '</form>';
@@ -1640,7 +1716,7 @@ if ( ! function_exists( 'fusion_get_term_image' ) ) {
 	 * @return mixed
 	 */
 	function fusion_get_term_image( $type = 'url' ) {
-		if ( is_tax() || is_category() || is_tag() ) {
+		if ( is_tax() ) {
 			$featured_image = fusion_data()->term_meta( get_queried_object()->term_id )->get( 'featured_image' );
 			if ( ! empty( $featured_image ) ) {
 				if ( 'url' === $type && isset( $featured_image['url'] ) ) {
@@ -1677,35 +1753,13 @@ if ( ! function_exists( 'fusion_is_post_card' ) ) {
 	}
 }
 
-if ( ! function_exists( 'fusion_is_mega_menu' ) ) {
-	/**
-	 * Check if we are on a post card.
-	 *
-	 * @access public
-	 * @since 3.3
-	 * @param mixed $id Post ID.
-	 * @return boolean
-	 */
-	function fusion_is_mega_menu( $id = false ) {
-		$id       = ! $id ? fusion_library()->get_page_id() : $id;
-		$posttype = get_post_type( $id );
-		if ( 'fusion_element' === $posttype ) {
-			$terms = get_the_terms( $id, 'element_category' );
-			if ( $terms && 'mega_menus' === $terms[0]->name ) {
-				return true;
-			}
-		}
-		return false;
-	}
-}
-
 if ( ! function_exists( 'fusion_get_file_contents' ) ) {
 	/**
 	 * Wrapper method to get file contents.
 	 *
 	 * @access public
 	 * @since 3.3
-	 * @param string $url The URL or file path.
+	 * @param string $url The URL.
 	 * @return boolean
 	 */
 	function fusion_file_get_contents( $url ) {
@@ -1717,18 +1771,8 @@ if ( ! function_exists( 'fusion_get_file_contents' ) ) {
 		// Get the contents of file.
 		$file_content = $wp_filesystem->get_contents( $url );
 
-		// file_exists won't work for URL (only for path).
-		if ( ! $file_content && ( function_exists( 'ini_get' ) && ini_get( 'allow_url_fopen' ) ) && file_exists( $url ) ) {
+		if ( ! $file_content && ( function_exists( 'ini_get' ) && ini_get( 'allow_url_fopen' ) ) ) {
 			$file_content = file_get_contents( $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions
-		}
-
-		// So we try alternative in case URL was passed.
-		if ( ! $file_content && false !== filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			$response = wp_remote_get( $url );
-
-			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-				$file_content = wp_remote_retrieve_body( $response );
-			}
 		}
 
 		return $file_content;
@@ -1765,277 +1809,5 @@ if ( ! function_exists( 'fusion_add_url_parameter' ) ) {
 
 		$url_data['query'] = http_build_query( $params );
 		return fusion_build_url( $url_data );
-	}
-}
-
-if ( ! function_exists( 'fusion_build_url' ) ) {
-	/**
-	 * Build final URL form $url_data returned from fusion_add_url_paramtere.
-	 *
-	 * @param  array $url_data  url data with custom params.
-	 * @return string           fully formed url with custom params.
-	 */
-	function fusion_build_url( $url_data ) {
-		$url = '';
-		if ( isset( $url_data['host'] ) ) {
-			$url .= $url_data['scheme'] . '://';
-			if ( isset( $url_data['user'] ) ) {
-				$url .= $url_data['user'];
-				if ( isset( $url_data['pass'] ) ) {
-					$url .= ':' . $url_data['pass'];
-				}
-				$url .= '@';
-			}
-			$url .= $url_data['host'];
-			if ( isset( $url_data['port'] ) ) {
-				$url .= ':' . $url_data['port'];
-			}
-		}
-
-		if ( isset( $url_data['path'] ) ) {
-			$url .= $url_data['path'];
-		}
-
-		if ( isset( $url_data['query'] ) ) {
-			$url .= '?' . $url_data['query'];
-		}
-
-		if ( isset( $url_data['fragment'] ) ) {
-			$url .= '#' . $url_data['fragment'];
-		}
-
-		return $url;
-	}
-}
-
-if ( ! function_exists( 'awb_get_responsive_type_data' ) ) {
-	/**
-	 * Calculate the responsive typography data.
-	 *
-	 * @param  string $heading_size Size of the heading tag.
-	 * @param  string $font_size    Element heading font-size.
-	 * @param  string $line_height  Element heading line-height.
-	 * @return array                The data array.
-	 */
-	function awb_get_responsive_type_data( $heading_size = 'div', $font_size = '', $line_height = '' ) {
-		$data = [
-			'class' => 'fusion-responsive-typography-calculated',
-		];
-
-		$setting           = 'div' === $heading_size || 'p' === $heading_size ? 'body' : 'h' . $heading_size;
-		$body_font_size    = fusion_library()->get_option( 'body_typography', 'font-size' );
-		$body_font_size_px = Fusion_Sanitize::convert_font_size_to_px( $body_font_size, $body_font_size );
-		$typography_factor = fusion_library()->get_option( 'typography_factor' );
-
-		if ( $font_size ) {
-			$font_size = fusion_library()->sanitize->get_value_with_unit( $font_size );
-		} else {
-			$font_size = fusion_library()->sanitize->get_value_with_unit( fusion_library()->get_option( $setting . '_typography', 'font-size' ) );
-		}
-		$responsive_font_size  = Fusion_Sanitize::convert_font_size_to_px( $font_size, $body_font_size );
-		$data['font_size']     = '--fontSize:' . $responsive_font_size . ';';
-		$data['min_font_size'] = (float) $responsive_font_size < (float) $body_font_size_px * (float) $typography_factor ? '--minFontSize:' . (float) $responsive_font_size . ';' : '';
-
-		if ( $line_height ) {
-			$line_height = fusion_library()->sanitize->size( $line_height );
-		} else {
-			$line_height = fusion_library()->get_option( $setting . '_typography', 'line-height' );
-		}
-		$line_height_unit = Fusion_Sanitize::get_unit( $line_height );
-
-		if ( '' !== $line_height_unit ) {
-			$base_font = $body_font_size;
-			if ( in_array( $line_height_unit, [ 'em', '%' ] ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
-				$base_font = $font_size;
-			}
-			$line_height = Fusion_Sanitize::convert_font_size_to_px( $line_height, $base_font );
-			$line_height = round( ( $line_height / $responsive_font_size ) * 100 ) / 100;
-		}
-		$data['line_height'] = 'line-height:' . $line_height . ';';
-
-		return $data;
-	}
-}
-
-if ( ! function_exists( 'fusion_get_vimeo_id' ) ) {
-	/**
-	 * Extracts video id from embed code.
-	 *
-	 * @since 3.4
-	 * @param string $url Video embed code.
-	 * @return string
-	 */
-	function fusion_get_vimeo_id( $url ) {
-		// phpcs:disable WPThemeReview.ThouShallNotUse.ForbiddenIframe.Found
-		$regex = '~
-			# Match Vimeo link and embed code
-			(?:<iframe [^>]*src=")?              # If iframe match up to first quote of src
-			(?:                                  # Group vimeo url
-					https?:\/\/                  # Either http or https
-					(?:[\w]+\.)*                 # Optional subdomains
-					vimeo\.com                   # Match vimeo.com
-					(?:[\/\w:]*(?:\/videos)?)?   # Optional video sub directory this handles groups links also
-					\/                           # Slash before Id
-					([0-9]+)                     # $1: VIDEO_ID is numeric
-					[^\s]*                       # Not a space
-			)                                    # End group
-			"?                                   # Match end quote if part of src
-			(?:[^>]*></iframe>)?                 # Match the end of the iframe
-			(?:<p>.*</p>)?                       # Match any title information stuff
-			~ix';
-
-		// phpcs:enable WPThemeReview.ThouShallNotUse.ForbiddenIframe.Found
-
-		preg_match( $regex, $url, $matches );
-
-		return isset( $matches[1] ) ? $matches[1] : false;
-	}
-}
-
-if ( ! function_exists( 'fusion_get_youtube_id' ) ) {
-	/**
-	 * Extracts video id from embed code.
-	 *
-	 * @since 3.4
-	 * @param string $url Video embed code.
-	 * @return string
-	 */
-	function fusion_get_youtube_id( $url ) {
-		preg_match( '%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $matches );
-
-		return isset( $matches[1] ) ? $matches[1] : false;
-	}
-}
-
-if ( ! function_exists( 'awb_get_carousel_nav' ) ) {
-	/**
-	 * Returns the carousel navigation.
-	 *
-	 * @since 3.4
-	 * @param string $prev_class Additional CSS class for the prev button.
-	 * @param string $next_class Additional CSS class for the next button.
-	 * @return string The navigation.
-	 */
-	function awb_get_carousel_nav( $prev_class = 'awb-icon-angle-left', $next_class = 'awb-icon-angle-right' ) {
-		$prev_class = '<i class="' . esc_attr( $prev_class ) . '" aria-hidden="true"></i>';
-		$next_class = '<i class="' . esc_attr( $next_class ) . '" aria-hidden="true"></i>';
-
-		$html  = '<div class="awb-swiper-button awb-swiper-button-prev">' . $prev_class . '</div>';
-		$html .= '<div class="awb-swiper-button awb-swiper-button-next">' . $next_class . '</div>';
-
-		return $html;
-	}
-}
-
-if ( ! function_exists( 'awb_get_approx_nr_of_headings' ) ) {
-
-	/**
-	 * Get the approximate number of headings from shortcodes.
-	 *
-	 * @since 3.9
-	 * @param WP_Post|int|string $post The post.
-	 * @return int
-	 */
-	function awb_get_approx_nr_of_headings( $post ) {
-		global $shortcode_tags;
-
-		$post = get_post( $post );
-		if ( ! ( $post instanceof WP_Post ) ) {
-			return 0;
-		}
-
-		$content = $post->post_content;
-		if ( false === strpos( $content, '[' ) ) {
-			return intval( preg_match_all( '/<h(1|2|3|4|5|6).*?>/is', $content ) );
-		}
-		if ( empty( $shortcode_tags ) || ! is_array( $shortcode_tags ) ) {
-			return intval( preg_match_all( '/<h(1|2|3|4|5|6).*?>/is', $content ) );
-		}
-
-		// Count titles that should be generated by shortcodes.
-		$GLOBALS['awb_current_number_of_titles'] = 0; // Partially hold the titles count into a global variable.
-
-		$pattern = get_shortcode_regex();
-		$content = preg_replace_callback( "/$pattern/s", 'awb_count_headings_and_return_shortcode_content', $content );
-
-		$nr_titles = $GLOBALS['awb_current_number_of_titles'];
-
-		// Make sure to unset all the globals.
-		unset( $GLOBALS['awb_current_number_of_titles'] );
-		unset( $GLOBALS['awb_content_boxes_have_headings'] );
-		unset( $GLOBALS['awb_flip_boxes_front_is_heading'] );
-		unset( $GLOBALS['awb_flip_boxes_back_is_heading'] );
-
-		// Count titles in content without shortcodes.
-		$nr_titles += intval( preg_match_all( '/<h(1|2|3|4|5|6).*?>/is', $content ) );
-
-		return apply_filters( 'awb_nr_of_headings', $nr_titles, $post );
-	}
-
-	/**
-	 * Increase the title counter if needed, and return the content, without shortcodes.
-	 *
-	 * @since 3.9
-	 * @param array $shortcode_preg_matches Matches array returned from preg match.
-	 * @return string
-	 */
-	function awb_count_headings_and_return_shortcode_content( $shortcode_preg_matches ) {
-		global $awb_current_number_of_titles;
-		$pattern = get_shortcode_regex();
-
-		// Title.
-		if ( 'fusion_title' === $shortcode_preg_matches[2] ) {
-			// Make sure that heading html tag is used.
-			$title_size_matched = preg_match( '/\ssize="(\d|\D)/', $shortcode_preg_matches[3], $matches );
-			if ( 0 === $title_size_matched || ( $title_size_matched && intval( $matches[1] ) > 0 && intval( $matches[1] ) < 7 ) ) {
-				$awb_current_number_of_titles++;
-			}
-		}
-
-		// Content Boxes.
-		if ( 'fusion_content_boxes' === $shortcode_preg_matches[2] ) {
-			// Make sure that heading html tag is used.
-			$title_size_matched = preg_match( '/\sheading_size="(\d|\D)/', $shortcode_preg_matches[3], $matches );
-			if ( 0 === $title_size_matched || ( $title_size_matched && intval( $matches[1] ) > 0 && intval( $matches[1] ) < 7 ) ) {
-				$GLOBALS['awb_content_boxes_have_headings'] = 1;
-			} else {
-				$GLOBALS['awb_content_boxes_have_headings'] = 0;
-			}
-		} elseif ( 'fusion_content_box' === $shortcode_preg_matches[2] ) {
-			if ( isset( $GLOBALS['awb_content_boxes_have_headings'] ) && $GLOBALS['awb_content_boxes_have_headings'] ) {
-				$awb_current_number_of_titles++;
-			}
-		}
-
-		// Tagline.
-		if ( 'fusion_tagline_box' === $shortcode_preg_matches[2] ) {
-			$awb_current_number_of_titles++;
-		}
-
-		// Flip Boxes.
-		if ( 'fusion_flip_boxes' === $shortcode_preg_matches[2] ) {
-			$title_size_matched = preg_match( '/\sfront_title_size="(\d|\D)/', $shortcode_preg_matches[3], $matches );
-			if ( 0 === $title_size_matched || ( $title_size_matched && intval( $matches[1] ) > 0 && intval( $matches[1] ) < 7 ) ) {
-				$GLOBALS['awb_flip_boxes_front_is_heading'] = 1;
-			} else {
-				$GLOBALS['awb_flip_boxes_front_is_heading'] = 0;
-			}
-
-			$title_size_matched = preg_match( '/\sback_title_size="(\d|\D)/', $shortcode_preg_matches[3], $matches );
-			if ( 0 === $title_size_matched || ( $title_size_matched && intval( $matches[1] ) > 0 && intval( $matches[1] ) < 7 ) ) {
-				$GLOBALS['awb_flip_boxes_back_is_heading'] = 1;
-			} else {
-				$GLOBALS['awb_flip_boxes_back_is_heading'] = 0;
-			}
-		} elseif ( 'fusion_flip_box' === $shortcode_preg_matches[2] ) {
-			if ( isset( $GLOBALS['awb_flip_boxes_front_is_heading'] ) && $GLOBALS['awb_flip_boxes_front_is_heading'] ) {
-				$awb_current_number_of_titles++;
-			}
-			if ( isset( $GLOBALS['awb_flip_boxes_back_is_heading'] ) && $GLOBALS['awb_flip_boxes_back_is_heading'] ) {
-				$awb_current_number_of_titles++;
-			}
-		}
-
-		return preg_replace_callback( "/$pattern/s", 'awb_count_headings_and_return_shortcode_content', $shortcode_preg_matches[5] ); // 5 means shortcode content.
 	}
 }

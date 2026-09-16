@@ -13,6 +13,6 @@
 			<i class="{{ icon }}" aria-hidden="true"></i> {{ label }}
 		</div>
 	<# } else { #>
-		<span {{{ _.fusionGetAttributes( attr ) }}} data-html-content="{{ popover }}">{{{ FusionPageBuilderApp.renderContent( content, cid, false ) }}}</span>
+		<span {{{ _.fusionGetAttributes( attr ) }}} data-html-content="{{ popover }}">{{{ styles }}}{{{ FusionPageBuilderApp.renderContent( content, cid, false ) }}}</span>
 	<# } #>
 </script>

@@ -7,7 +7,7 @@
  */
 
 ?>
-<a href="#" class="fusion-builder-add-sortable-child"><span class="fusiona-plus"></span><span class="add-sortable-child-text">{{{ param.add_label }}}</span></a>
+<a href="#" class="fusion-builder-add-sortable-child"><span class="fusiona-plus"></span> {{{ param.add_label }}}</a>
 <ul class="fusion-sortable-text-options" id="{{ param.param_name }}">
 	<#
 		var values = 'undefined' !== typeof option_value && '' !== option_value ? option_value : param.default;

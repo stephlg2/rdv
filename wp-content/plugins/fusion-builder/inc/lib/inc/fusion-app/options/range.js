@@ -34,7 +34,7 @@ FusionPageBuilder.options.fusionRangeField = {
 				$min          = jQuery( this ).data( 'min' ),
 				$max          = jQuery( this ).data( 'max' ),
 				$step         = jQuery( this ).data( 'step' ),
-				$direction    = 'ltr',
+				$direction    = jQuery( this ).data( 'direction' ),
 				$value        = $rangeInput.val(),
 				$decimals     = $step.countDecimals(),
 				$rangeCheck   = 1 === jQuery( this ).closest( '.fusion-builder-option' ).find( '.fusion-with-default' ).length,
@@ -63,28 +63,22 @@ FusionPageBuilder.options.fusionRangeField = {
 
 	createSlider: function( $targetId, $rangeInput, $min, $max, $step, $value, $decimals, $rangeCheck, $rangeDefault, $hiddenValue, $defaultValue, $direction ) {
 
-		if ( jQuery( this.$rangeSlider[ $targetId ] ).hasClass( 'initialized' ) ) {
-			return;
-		}
-
 		// Create slider with values passed on in data attributes.
-		const self    = this;
-		const options = {
-			start: [ $value ],
-			step: $step,
-			direction: $direction,
-			range: {
-				min: $min,
-				max: $max
-			},
-			format: wNumb( {
-				decimals: $decimals
+		var self    = this,
+			$slider = noUiSlider.create( self.$rangeSlider[ $targetId ], {
+				start: [ $value ],
+				step: $step,
+				direction: $direction,
+				range: {
+					min: $min,
+					max: $max
+				},
+				format: wNumb( {
+					decimals: $decimals
+				} ),
+				default: $defaultValue
 			} ),
-			default: $defaultValue
-		};
-
-		const 	$slider = noUiSlider.create( self.$rangeSlider[ $targetId ], options );
-		let		$notFirst = false;
+			$notFirst = false;
 
 		$rangeInput.closest( '.fusion-builder-option' ).attr( 'data-index', $targetId );
 
@@ -127,12 +121,12 @@ FusionPageBuilder.options.fusionRangeField = {
 
 		// On manual input change, update slider position
 		$rangeInput.on( 'blur', function() {
+
 			if ( this.value !== self.$rangeSlider[ $targetId ].noUiSlider.get() ) {
+
 				// This triggers 'update' event.
 				self.$rangeSlider[ $targetId ].noUiSlider.set( this.value );
 			}
 		} );
-
-		jQuery( this.$rangeSlider[ $targetId ] ).addClass( 'initialized' );
 	}
 };

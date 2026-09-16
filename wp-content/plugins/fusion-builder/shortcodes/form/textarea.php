@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_textarea' ) ) {
 		class FusionForm_Textarea extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -35,17 +53,15 @@ if ( fusion_is_element_enabled( 'fusion_form_textarea' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'label'            => '',
 					'name'             => '',
 					'disabled'         => '',
 					'required'         => '',
-					'empty_notice'     => '',
 					'placeholder'      => '',
 					'input_field_icon' => '',
 					'rows'             => '4',
-					'maxlength'        => '0',
-					'minlength'        => '0',
 					'tab_index'        => '',
 					'class'            => '',
 					'id'               => '',
@@ -66,9 +82,7 @@ if ( fusion_is_element_enabled( 'fusion_form_textarea' ) ) {
 
 				$element_data = $this->create_element_data( $this->args );
 
-				$html       = '';
-				$min_lenght = '';
-				$max_length = '';
+				$html = '';
 
 				if ( '' !== $this->args['tooltip'] ) {
 					$element_data['label'] .= $this->get_field_tooltip( $this->args );
@@ -76,20 +90,11 @@ if ( fusion_is_element_enabled( 'fusion_form_textarea' ) ) {
 
 				$content = $content ? $content : ( isset( $element_data['value'] ) ? $element_data['value'] : '' );
 
-				if ( isset( $this->args['minlength'] ) && is_numeric( $this->args['minlength'] ) ) {
-					$min_lenght = ' minlength="' . $this->args['minlength'] . '"';
-				}
-				if ( isset( $this->args['maxlength'] ) && ! empty( $this->args['maxlength'] ) ) {
-					$max_length = ' maxlength="' . $this->args['maxlength'] . '"';
-				}
-
-				$element_html  = '<textarea cols="40" ';
-				$element_html .= '' !== $element_data['empty_notice'] ? 'data-empty-notice="' . $element_data['empty_notice'] . '" ' : '';
-				$element_html .= $min_lenght . ' ' . $max_length . ' rows="' . $this->args['rows'] . '" tabindex="' . $this->args['tab_index'] . '" id="' . $this->args['name'] . '" name="' . $this->args['name'] . '"' . $element_data['class'] . $element_data['required'] . $element_data['disabled'] . $element_data['placeholder'] . $element_data['style'] . $element_data['holds_private_data'] . '>' . $content . '</textarea>';
+				$element_html = '<textarea cols="40" rows="' . $this->args['rows'] . '" tabindex="' . $this->args['tab_index'] . '" id="' . $this->args['name'] . '" name="' . $this->args['name'] . '"' . $element_data['class'] . $element_data['required'] . $element_data['disabled'] . $element_data['placeholder'] . $element_data['style'] . $element_data['holds_private_data'] . '>' . $content . '</textarea>';
 
 				if ( isset( $this->args['input_field_icon'] ) && '' !== $this->args['input_field_icon'] ) {
 					$icon_html     = '<div class="fusion-form-input-with-icon">';
-					$icon_html    .= '<i class=" ' . fusion_font_awesome_name_handler( $this->args['input_field_icon'] ) . '"></i>';
+					$icon_html    .= '<i class=" ' . $this->args['input_field_icon'] . '"></i>';
 					$element_html  = $icon_html . $element_html;
 					$element_html .= '</div>';
 				}
@@ -115,6 +120,8 @@ if ( fusion_is_element_enabled( 'fusion_form_textarea' ) ) {
  */
 function fusion_form_textarea() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_Textarea',
@@ -137,7 +144,7 @@ function fusion_form_textarea() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,
@@ -151,20 +158,6 @@ function fusion_form_textarea() {
 						'value'       => [
 							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
 							'no'  => esc_attr__( 'No', 'fusion-builder' ),
-						],
-					],
-					[
-						'type'        => 'textfield',
-						'heading'     => esc_attr__( 'Empty Input Notice', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter text validation notice that should display if data input is empty.', 'fusion-builder' ),
-						'param_name'  => 'empty_notice',
-						'value'       => '',
-						'dependency'  => [
-							[
-								'element'  => 'required',
-								'value'    => 'yes',
-								'operator' => '==',
-							],
 						],
 					],
 					[
@@ -208,26 +201,6 @@ function fusion_form_textarea() {
 						'max'         => '20',
 						'step'        => '1',
 						'description' => esc_html__( 'Choose number of rows you want to have for this textarea field.', 'fusion-builder' ),
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Minimum Required Characters', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the minimum number of characters that will be required for this input field. Leave at 0 to have no minimum.', 'fusion-builder' ),
-						'param_name'  => 'minlength',
-						'value'       => '0',
-						'min'         => '0',
-						'max'         => '300',
-						'step'        => '5',
-					],
-					[
-						'type'        => 'range',
-						'heading'     => esc_attr__( 'Maximum Allowed Characters', 'fusion-builder' ),
-						'description' => esc_attr__( 'Controls the maximum number of characters that will be allowed for this input field. Leave at 0 to have no maximum.', 'fusion-builder' ),
-						'param_name'  => 'maxlength',
-						'value'       => '0',
-						'min'         => '0',
-						'max'         => '1000',
-						'step'        => '5',
 					],
 					[
 						'type'        => 'textfield',

@@ -53,8 +53,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					} ),
 					parentValues    = jQuery.extend( true, {}, fusionAllElements.fusion_accordion.defaults, _.fusionCleanParameters( parentModel.get( 'params' ) ) );
 
-				this.values = atts.values;
-
 				// Validate values.
 				this.validateValues( atts.values );
 
@@ -65,9 +63,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.contentAttr               = this.buildContentAttr( atts.values );
 				attributes.title                     = atts.values.title;
 				attributes.elementContent            = atts.values.element_content;
-				attributes.activeIcon                = '' !== parentValues.active_icon ? _.fusionFontAwesome( parentValues.active_icon ) : 'awb-icon-minus';
-				attributes.inActiveIcon              = '' !== parentValues.inactive_icon ? _.fusionFontAwesome( parentValues.inactive_icon ) : 'awb-icon-plus';
-				attributes.titleTag                  = '' !== parentValues.title_tag ? parentValues.title_tag : 'h4';
 
 				// Set selectors.
 				this.buildPanelAttr( atts.values, parentValues );
@@ -76,7 +71,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.cid    = this.model.get( 'cid' );
 				attributes.parent = this.model.get( 'parent' );
 
-				attributes.usingDynamicParent = this.isParentHasDynamicContent( parentValues );
 				return attributes;
 			},
 
@@ -118,8 +112,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 */
 			buildPanelAttr: function( values, parentValues ) {
 				var toggleShortcodePanel = {
-					class: 'fusion-panel panel-default',
-					style: ''
+					class: 'fusion-panel panel-default'
 				};
 
 				if ( ' ' !== values[ 'class' ] ) {
@@ -130,22 +123,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					toggleShortcodePanel.id = values.id;
 				}
 
-				toggleShortcodePanel[ 'class' ] += ' panel-' + this.model.get( 'cid' );
-
 				if ( '1' == parentValues.boxed_mode || 'yes' === parentValues.boxed_mode ) {
 					toggleShortcodePanel[ 'class' ] += ' fusion-toggle-no-divider fusion-toggle-boxed-mode';
-				} else {
-					// eslint-disable-next-line no-lonely-if
-					if ( '0' === parentValues.divider_line || 'no' === parentValues.divider_line ) {
-						toggleShortcodePanel[ 'class' ] += ' fusion-toggle-no-divider';
-					} else {
-						toggleShortcodePanel[ 'class' ] += ' fusion-toggle-has-divider';
-					}
+				} else if ( '0' == parentValues.divider_line || 'no' === parentValues.divider_line ) {
+					toggleShortcodePanel[ 'class' ] += ' fusion-toggle-no-divider';
 				}
 
-				toggleShortcodePanel.style += this.getStyleVariables( values );
-
 				this.model.set( 'selectors', toggleShortcodePanel );
+
 				return toggleShortcodePanel;
 			},
 
@@ -221,63 +206,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}, contentAttr );
 
 				return contentAttr;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				const cssVarsOptions = [
-					'content_text_transform',
-					'content_line_height'
-				];
-
-				cssVarsOptions.content_font_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_letter_spacing = { 'callback': _.fusionGetValueWithUnit };
-
-				const customVars = [];
-				const title_typography = _.fusionGetFontStyle( 'title_font', values, 'object' );
-
-
-				if ( title_typography[ 'font-family' ] ) {
-					customVars.title_font_family = title_typography[ 'font-family' ];
-				}
-
-				if ( title_typography[ 'font-weight' ] ) {
-					customVars.title_font_weight = title_typography[ 'font-weight' ];
-				}
-
-				if ( title_typography[ 'font-style' ] ) {
-					customVars.title_font_style = title_typography[ 'font-style' ];
-				}
-
-				if ( values.title_font_size ) {
-					customVars.title_font_size = _.fusionGetValueWithUnit( values.title_font_size );
-				}
-
-				if ( values.title_letter_spacing ) {
-					customVars.title_letter_spacing = _.fusionGetValueWithUnit( values.title_letter_spacing );
-				}
-
-				if ( values.title_line_height ) {
-					customVars.title_line_height = values.title_line_height;
-				}
-
-				if ( values.title_text_transform ) {
-					customVars.title_text_transform = values.title_text_transform;
-				}
-
-				if ( values.title_color ) {
-					customVars.title_color = values.title_color;
-				}
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars ) + this.getFontStylingVars( 'content_font', values );
 			}
-
 		} );
 	} );
 }( jQuery ) );

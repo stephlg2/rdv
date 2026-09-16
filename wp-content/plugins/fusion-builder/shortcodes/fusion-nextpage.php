@@ -17,7 +17,7 @@ function fusion_builder_element_next_page() {
 			'name'              => esc_attr__( 'Next Page', 'fusion-builder' ),
 			'shortcode'         => 'fusion_builder_next_page',
 			'hide_from_builder' => true,
-			'help_url'          => 'https://avada.com/documentation/next-page-element/',
+			'help_url'          => 'https://theme-fusion.com/documentation/fusion-builder/elements/next-page-pagination-element/',
 			'params'            => [
 				[
 					'type'        => 'textfield',

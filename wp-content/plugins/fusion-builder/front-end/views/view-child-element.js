@@ -69,8 +69,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.$el.removeClass( 'fusion-global-child-element' ).addClass( 'fusion-global-child-element' );
 				}
 
-				this.model.set( 'show_ui', 'undefined' === typeof fusionAllElements[ this.model.get( 'element_type' ) ].show_ui ? true : fusionAllElements[ this.model.get( 'element_type' ) ].show_ui );
-
 				if ( ! parentModel.get( 'sortable' ) ) {
 					this.$el.attr( 'data-fusion-no-dragging', true );
 				}
@@ -191,19 +189,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Find and remove extra content.
 				if ( 'undefined' !== typeof this.model.attributes.extraAppend && 'undefined' !== typeof this.model.attributes.extraAppend.existing ) {
-					$existing = Array.isArray( this.model.attributes.extraAppend.existing ) ? $parentEl.find( this.model.attributes.extraAppend.existing.join( ', ' ) ) : $parentEl.find( this.model.attributes.extraAppend.existing );
-					const $existingTabContent = Array.isArray( this.model.attributes.extraAppend.existing ) ? $parentEl.find( this.model.attributes.extraAppend.existing[ 1 ] ) : $parentEl.find( this.model.attributes.extraAppend.existing );
+					$existing = $parentEl.find( this.model.attributes.extraAppend.existing );
 
 					// If tabs element and this tab is active, make another tab active.
 					if ( $existing.hasClass( 'active' ) && 'fusion_tab' === this.model.get( 'element_type' ) ) {
-						$sibling = $existingTabContent.siblings( '.tab-pane' ).first();
-
+						$sibling = $existing.siblings().first();
 						if ( $sibling.length ) {
 							$sibling.addClass( 'active in' );
 							targetId = $sibling.attr( 'id' );
 							$parentEl.find( '[href="#' + targetId + '"]' ).closest( '.fusion-builder-live-child-element' ).addClass( 'active' );
 						}
 					}
+
 					$existing.remove();
 
 				}
@@ -379,7 +376,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( event ) {
-					parentView.childViewRemoved();
+					parentView.childViewCloned();
 				}
 			},
 

@@ -17,6 +17,24 @@ if ( fusion_is_element_enabled( 'fusion_form_range' ) ) {
 		class FusionForm_Range extends Fusion_Form_Component {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.1
+			 * @var array
+			 */
+			protected $args;
+
+			/**
+			 * The internal container counter.
+			 *
+			 * @access private
+			 * @since 3.1
+			 * @var int
+			 */
+			public $counter = 0;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -67,6 +85,7 @@ if ( fusion_is_element_enabled( 'fusion_form_range' ) ) {
 				$element_data = $this->create_element_data( $this->args );
 				$unique       = uniqid();
 				$class_name   = 'fusion-form-range-field-container fusion-form-range-field-container-' . $unique;
+				$styles       = '';
 
 				if ( '' !== $this->args['tooltip'] ) {
 					$element_data['label'] .= $this->get_field_tooltip( $this->args );
@@ -91,6 +110,10 @@ if ( fusion_is_element_enabled( 'fusion_form_range' ) ) {
 					$html .= $element_data['label'] . $element_html;
 				} else {
 					$html .= $element_html . $element_data['label'];
+				}
+
+				if ( '' !== $styles ) {
+					$html .= '<style type="text/css">' . $styles . '</style>';
 				}
 
 				return $html;
@@ -119,6 +142,8 @@ if ( fusion_is_element_enabled( 'fusion_form_range' ) ) {
  */
 function fusion_form_range() {
 
+	global $fusion_settings;
+
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionForm_Range',
@@ -141,7 +166,7 @@ function fusion_form_range() {
 					[
 						'type'        => 'textfield',
 						'heading'     => esc_attr__( 'Field Name', 'fusion-builder' ),
-						'description' => esc_attr__( 'Enter the field name. Please use only lowercase alphanumeric characters, dashes, and underscores.', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter the field name. Should be single word without spaces. Underscores and dashes are allowed.', 'fusion-builder' ),
 						'param_name'  => 'name',
 						'value'       => '',
 						'placeholder' => true,

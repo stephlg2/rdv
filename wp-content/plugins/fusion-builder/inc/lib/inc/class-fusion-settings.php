@@ -185,28 +185,14 @@ class Fusion_Settings {
 	}
 
 	/**
-	 * Reset cache of one option.
-	 *
-	 * @access public
-	 * @since 3.4
-	 * @param string $option_name Option key.
-	 * @return void
-	 */
-	public function reset_option( $option_name = '' ) {
-		if ( isset( self::$cached_options[ $option_name ] ) ) {
-			unset( self::$cached_options[ $option_name ] );
-		}
-	}
-
-	/**
 	 * Gets the value of a single setting.
-	 * This is a proxy method for _get to avoid re-processing
+	 * This is a proxy methof for _get to avoid re-processing
 	 * already retrieved options.
 	 *
 	 * @param null|string  $setting The setting.
 	 * @param false|string $subset  If the result is an array, return the value of the defined key.
 	 * @param mixed        $default A forced default value.
-	 * @return string|array
+	 * @return  string|array
 	 */
 	public function get( $setting = null, $subset = false, $default = null ) {
 
@@ -431,8 +417,7 @@ class Fusion_Settings {
 			}
 		}
 		if ( 'menu' !== $type ) {
-			$setting_value = ( is_array( $param ) && is_string( $setting_value ) && isset( $param['value'] ) && isset( $param['value'][ $setting_value ] ) ) ? $param['value'][ $setting_value ] : $setting_value;      
-			
+			$setting_value = ( is_array( $param ) && is_string( $setting_value ) && isset( $param['value'] ) && isset( $param['value'][ $setting_value ] ) ) ? $param['value'][ $setting_value ] : $setting_value;
 			if ( false !== strpos( $this->get_setting_link( $setting, $subset ), 'header_bg_color' ) && ! is_string( $setting_value ) ) {
 				$setting_value = '#ffffff';
 			}
@@ -444,30 +429,9 @@ class Fusion_Settings {
 				if ( isset( $setting_value['all'] ) ) {
 					$setting_value = $setting_value['all'];
 				} else {
-					$setting_value = ! empty( array_filter( $setting_value ) ) ? implode( '|', $setting_value ) : '';
+					$setting_value = implode( '|', $setting_value );
 				}
 			}
-
-			// If we have a typography variable.
-			if ( false !== strpos( $setting, '_typography' ) && function_exists( 'AWB_Global_Typography' ) ) {
-				$global_typography_class = AWB_Global_Typography();
-				$setting_value           = $global_typography_class->get_real_value( $setting_value );
-			} elseif ( function_exists( 'AWB_Global_Colors' ) ) {
-
-				// If we have a color global variable.
-				$global_color_class = AWB_Global_Colors();
-				$color_slug         = is_string( $setting_value ) ? $global_color_class->get_color_slug_from_css_var( $setting_value ) : false;
-	
-				if ( $color_slug ) {
-					$color_object = $global_color_class->get_color_by_slug( $color_slug );
-					if ( ! $color_object ) {
-						$color_object = $global_color_class->get_fallback_error_color();
-					}
-
-					$setting_value = $color_object['label'];
-				}
-			}
-
 			$setting_link = '<a href="' . $this->get_setting_link( $setting, $subset ) . '" target="_blank" rel="noopener noreferrer">' . $setting_value . '</a>';
 
 			if ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() ) {
@@ -511,19 +475,6 @@ class Fusion_Settings {
 
 			case 'yesno':
 				$setting_value = ( 1 == $setting_value ) ? esc_html__( 'Yes', 'fusion-builder' ) : esc_html__( 'No', 'fusion-builder' ); // phpcs:ignore WordPress.PHP.StrictComparisons
-				$setting_link  = '<a href="' . $this->get_setting_link( $setting, $subset ) . '" target="_blank" rel="noopener noreferrer">' . $setting_value . '</a>';
-
-				if ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() ) {
-					$setting_link = '<span class="fusion-panel-shortcut" data-fusion-option="' . $setting . '">' . $setting_value . '</span>';
-				}
-
-				/* translators: The value. */
-				$setting_description = 'status_lightbox' === $setting ? sprintf( esc_html__( '  Current value set to %s.', 'fusion-builder' ), $setting_link ) : sprintf( esc_html__( '  Default currently set to %s.', 'fusion-builder' ), $setting_link );
-
-				break;
-
-			case 'onoff':
-				$setting_value = ( 1 == $setting_value ) ? esc_html__( 'On', 'fusion-builder' ) : esc_html__( 'Off', 'fusion-builder' ); // phpcs:ignore WordPress.PHP.StrictComparisons
 				$setting_link  = '<a href="' . $this->get_setting_link( $setting, $subset ) . '" target="_blank" rel="noopener noreferrer">' . $setting_value . '</a>';
 
 				if ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() ) {

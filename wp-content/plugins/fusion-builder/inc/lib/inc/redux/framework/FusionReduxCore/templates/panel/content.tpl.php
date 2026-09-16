@@ -80,14 +80,14 @@
 	 *
 	 * @deprecated
 	 *
-	 * @param FusionReduxFramework $object
+	 * @param object $this FusionReduxFramework
 	 */
 	do_action( "fusionredux/page-after-sections-{$this->parent->args['opt_name']}", $this ); // REMOVE LATER
 
 	/**
 	 * action 'fusionredux/page/{opt_name}/sections/after'
 	 *
-	 * @param FusionReduxFramework $object
+	 * @param object $this FusionReduxFramework
 	 */
 	do_action( "fusionredux/page/{$this->parent->args['opt_name']}/sections/after", $this );
 ?>

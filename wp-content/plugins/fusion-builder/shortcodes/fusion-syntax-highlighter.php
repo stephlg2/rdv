@@ -18,6 +18,15 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 		class FusionSC_Syntax_Highlighter extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.5
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The element counter.
 			 *
 			 * @access private
@@ -51,7 +60,7 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 
 				return [
 					'border_style'                 => $fusion_settings->get( 'syntax_highlighter_border_style' ),
@@ -116,7 +125,7 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'syntax_highlighter_background_color' => $fusion_settings->get( 'syntax_highlighter_background_color' ),
 					'wp_enqueue_code_editor'              => function_exists( 'wp_enqueue_code_editor' ),
@@ -148,6 +157,7 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 			 * @return string          Highlighted code.
 			 */
 			public function render( $args, $content = '' ) {
+				global $fusion_settings;
 
 				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_syntax_highlighter' );
 				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_syntax_highlighter', $args );
@@ -198,7 +208,6 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 						$settings['mode'] = $type . '/' . $this->args['language'];
 					}
 
-					$html .= '<label for="fusion_syntax_highlighter_' . $this->counter . '" class="screen-reader-text">' . esc_html__( 'Syntax Highlighter', 'fusion-builder' ) . '</label>';
 					$html .= '<textarea ' . FusionBuilder::attributes( 'syntax-highlighter-textarea', $settings ) . '>' . $content . '</textarea>';
 				} else {
 					// Compatibility for WP < 4.9.
@@ -340,7 +349,7 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 					FusionBuilder::$js_folder_url . '/general/fusion-syntax-highlighter.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-syntax-highlighter.js',
 					[ 'jquery' ],
-					FUSION_BUILDER_VERSION,
+					'1',
 					true
 				);
 			}
@@ -364,7 +373,7 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 			 * @return array $sections Syntax highlighter settings.
 			 */
 			public function add_options() {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				$code_mirror_themes = apply_filters(
 					'fusion_syntax_highlighter_themes',
@@ -411,7 +420,8 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 								'label'       => esc_attr__( 'Line Numbers Background Color', 'fusion-builder' ),
 								'description' => esc_attr__( 'Controls the background color for the line numbers. If left empty, color from selected theme will be used.', 'fusion-builder' ),
 								'id'          => 'syntax_highlighter_line_number_background_color',
-								'default'     => 'var(--awb-color2)',
+								'value'       => '',
+								'default'     => '',
 								'transport'   => 'postMessage',
 								'required'    => [
 									[
@@ -426,7 +436,8 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 								'label'       => esc_attr__( 'Line Numbers Text Color', 'fusion-builder' ),
 								'description' => esc_attr__( 'Controls the color for line number text. If left empty, color from selected theme will be used.', 'fusion-builder' ),
 								'id'          => 'syntax_highlighter_line_number_text_color',
-								'default'     => 'var(--awb-color8)',
+								'value'       => '',
+								'default'     => '',
 								'transport'   => 'postMessage',
 								'required'    => [
 									[
@@ -494,7 +505,8 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 								'description' => esc_attr__( 'Controls the background color for code highlight area.', 'fusion-builder' ),
 								'id'          => 'syntax_highlighter_background_color',
 								'transport'   => 'postMessage',
-								'default'     => 'var(--awb-color1)',
+								'value'       => '',
+								'default'     => '',
 							],
 							'syntax_highlighter_border_size' => [
 								'type'        => 'slider',
@@ -514,7 +526,7 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
 								'label'       => esc_attr__( 'Border Color', 'fusion-builder' ),
 								'description' => esc_attr__( 'Controls the border color.', 'fusion-builder' ),
 								'id'          => 'syntax_highlighter_border_color',
-								'default'     => 'var(--awb-color3)',
+								'default'     => $fusion_settings->get( 'sep_color' ),
 								'transport'   => 'postMessage',
 								'required'    => [
 									[
@@ -580,7 +592,7 @@ if ( fusion_is_element_enabled( 'fusion_syntax_highlighter' ) ) {
  * @since 1.5
  */
 function fusion_element_syntax_highlighter() {
-	$fusion_settings = awb_get_fusion_settings();
+	global $fusion_settings;
 
 	$code_mirror_themes = apply_filters(
 		'fusion_syntax_highlighter_themes',
@@ -601,7 +613,7 @@ function fusion_element_syntax_highlighter() {
 				'shortcode'   => 'fusion_syntax_highlighter',
 				'icon'        => 'fusiona-code',
 				'escape_html' => true,
-				'help_url'    => 'https://avada.com/documentation/syntax-highlighter-element/',
+				'help_url'    => 'https://theme-fusion.com/documentation/fusion-builder/elements/syntax-highlighter-element/',
 				'params'      => [
 					[
 						'type'        => 'code',

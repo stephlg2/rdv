@@ -21,26 +21,10 @@ class Fusion_Panel_Callbacks {
 	 * @return string
 	 */
 	public static function sanitize_color( $color ) {
-		if ( false !== strpos( $color, 'var(' ) ) {
-			return $color;
-		}
 		$obj = Fusion_Color::new_color( $color );
 		return $obj->to_css( $obj->mode );
 	}
 
-	/**
-	 * Returns value as float.
-	 *
-	 * @static
-	 * @access public
-	 * @since 2.0
-	 * @param string $value The value.
-	 * @return string
-	 */
-	public static function number( $value ) {
-		return (float) $value;
-	}
-	
 	/**
 	 * Takes any valid CSS unit and converts to pixels.
 	 *
@@ -65,26 +49,7 @@ class Fusion_Panel_Callbacks {
 	 * @return string
 	 */
 	public static function color_alpha_set( $color, $alpha = 1 ) {
-		return Fusion_Color::new_color( $color )->get_new( 'alpha', $alpha )->to_css_var_or_rgba();
-	}
-
-	/**
-	 * Replace specific chars.
-	 *
-	 * @static
-	 * @access public
-	 * @since 7.11.2
-	 * @param string $value The value.
-	 * @param array  $args  Arguments containing the conditions we want to check.
-	 * @return string
-	 */
-	public static function replace_chars( $value, $args ) {
-		foreach ( $args['replacements'] as $char => $replacement ) {
-			$value = str_replace( $char, $replacement, $value );
-		}
-
-		return $value;
-
+		return Fusion_Color::new_color( $color )->get_new( 'alpha', $alpha )->to_css( 'rgba' );
 	}
 
 	/**
@@ -111,10 +76,6 @@ class Fusion_Panel_Callbacks {
 				if ( isset( $parts[1] ) ) {
 					$saved = isset( $saved[ str_replace( ']', '', $parts[1] ) ] ) ? $saved[ str_replace( ']', '', $parts[1] ) ] : '';
 				}
-			}
-
-			if ( class_exists( 'AWB_Global_Typography' ) && AWB_Global_Typography::get_instance()->is_typography_css_var( $saved ) ) {
-				$saved = AWB_Global_Typography::get_instance()->get_real_value( $saved );
 			}
 
 			switch ( $arg[1] ) {
@@ -178,7 +139,7 @@ class Fusion_Panel_Callbacks {
 		}
 
 		$color = Fusion_Color::new_color( $value );
-
+	
 		if ( 1 > $color->alpha ) {
 			return $args['transparent'];
 		}
@@ -200,11 +161,40 @@ class Fusion_Panel_Callbacks {
 			return ( '$' === $args['transparent'] ) ? $value : $args['transparent'];
 		}
 		$color = Fusion_Color::new_color( $value );
-
+	
 		if ( 0 === $color->alpha ) {
 			return ( '$' === $args['transparent'] ) ? $value : $args['transparent'];
 		}
 		return ( '$' === $args['opaque'] ) ? $value : $args['opaque'];
+	}
+
+	/**
+	 * Gets a readable color based on threshold.
+	 *
+	 * @static
+	 * @access public
+	 * @since 2.0
+	 * @param string $value The color we'll be basing our calculations on.
+	 * @param string $args  The arguments ['threshold'=>0.5,'dark'=>'#fff','light'=>'#333'].
+	 * @return string
+	 */
+	public static function get_readable_color( $value, $args = [] ) {
+		if ( ! is_array( $args ) ) {
+			$args = [];
+		}
+		if ( ! isset( $args['threshold'] ) ) {
+			$args['threshold'] = .547;
+		}
+		if ( ! isset( $args['light'] ) ) {
+			$args['light'] = '#333';
+		}
+		if ( ! isset( $args['dark'] ) ) {
+			$args['dark'] = '#fff';
+		}
+		if ( 1 > $args['threshold'] ) {
+			$args['threshold'] = $args['threshold'] * 256;
+		}
+		return $args['threshold'] < fusion_calc_color_brightness( $value ) ? $args['light'] : $args['dark'];
 	}
 
 	/**
@@ -224,7 +214,7 @@ class Fusion_Panel_Callbacks {
 		if ( 1 >= abs( $adjustment ) ) {
 			$adjustment *= 100;
 		}
-		return Fusion_Color::new_color( Fusion_Sanitize::color( $value ) )->adjust_brightness( $adjustment );
+		return fusion_adjust_brightness( Fusion_Sanitize::color( $value ), $adjustment );
 	}
 
 	/**
@@ -252,11 +242,10 @@ class Fusion_Panel_Callbacks {
 	 */
 	public static function get_non_transparent_color( $value ) {
 		$color = Fusion_Color::new_color( $value );
-		if ( 0 === $color->alpha || 0.0 === $color->alpha ) {
-			$color = $color->get_new( 'alpha', '1' );
-			return $color->to_css_var_or_rgba();
+		if ( 0 === $color->alpha ) {
+			return $color->to_css( 'hex' );
 		}
-		return $color->to_css_var_or_rgba();
+		return $color->to_css( $color->mode );
 	}
 
 	/**
@@ -275,22 +264,6 @@ class Fusion_Panel_Callbacks {
 			return $value;
 		}
 		return $fallback;
-	}
-
-	/**
-	 * Column width, inherit from large or not.
-	 *
-	 * @static
-	 * @access public
-	 * @since 3.9
-	 * @param string $value    The value.
-	 * @return string
-	 */
-	public static function column_width_inheritance( $value = '' ) {
-		if ( 'inherit_from_large' === $value ) {
-			return 'var(--awb-width-large, 33.3333% )';
-		}
-		return '100%';
 	}
 
 	/**

@@ -13,7 +13,7 @@
 	<label for="term_meta[slider_width]"><?php esc_html_e( 'Slider Size', 'fusion-core' ); ?></label>
 	<div class="fusion-double-fields">
 		<div class="fusion-field avada-db-input-indicator">
-			<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>
+			<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>		
 			<input type="text" name="term_meta[slider_width]" id="term_meta[slider_width]" value="100%">
 		</div>
 		<div class="fusion-field avada-db-input-indicator">
@@ -78,7 +78,7 @@
 	<label for="term_meta[nav_box_width]"><?php esc_html_e( 'Navigation Box Size', 'fusion-core' ); ?></label>
 	<div class="fusion-double-fields">
 		<div class="fusion-field avada-db-input-indicator">
-			<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>
+			<span class="avada-db-indicator"><i class="fusiona-expand avada-db-rotate-45" aria-hidden="true"></i></span>		
 			<input type="text" name="term_meta[nav_box_width]" id="term_meta[nav_box_width]" value="63px">
 		</div>
 		<div class="fusion-field avada-db-input-indicator">
@@ -135,7 +135,9 @@
 		<option value="slide"><?php esc_html_e( 'Slide', 'fusion-core' ); ?></option>
 	</select>
 	<p class="description">
-		<?php esc_html_e( 'The type of animation when slides rotate.', 'fusion-core' ); ?>		
+		<?php esc_html_e( 'The type of animation when slides rotate.', 'fusion-core' ); ?>
+		<br/>
+		<?php esc_html_e( 'Please Note: Fade effect does not work in IE.', 'fusion-core' ); ?>		
 	</p>
 </div>
 <div class="form-field">

@@ -24,7 +24,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					elementData = this.elementData( atts.values );
 
 				this.elementDataValues = elementData;
-				this.values            = atts.values;
 
 				if ( '' !== atts.values.tooltip ) {
 					elementData.label      += this.getFieldTooltip( atts.values );
@@ -33,6 +32,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				attributes.outerWrapper  = this.outerWrapper( atts.values );
 				attributes.labelPosition = 'undefined' !== typeof this.formData._fusion.label_position ? this.formData._fusion.label_position : 'above';
 				attributes.elementLabel  = elementData.label;
+				attributes.styles        = this.buildStyles( atts.values );
 
 				return attributes;
 			},
@@ -42,7 +42,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( '' !== values.tooltip ) {
 					html = '<div class="fusion-form-tooltip">';
-					html += '<i class="awb-icon-question-circle"></i>';
+					html += '<i class="fusion-icon-question-circle"></i>';
 					html += '<span class="fusion-form-tooltip-content">' + values.tooltip + '</span>';
 					html += '</div>';
 				}
@@ -81,8 +81,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Close class quotes.
 				html += '"';
-
-				html += ' style="' + this.getStyleVariables( values ) + '"';
 
 				html += ' data-form-id="' + FusionApp.data.postDetails.post_id + '">';
 
@@ -150,44 +148,72 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
+			 * @since 3.1
+			 * @param {Object} values - The values object.
+			 * @return {Object}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyles: function( values ) {
+				var	styles = '',
+					paddingStyles = '',
+					base_selector = '.fusion-form-form-wrapper.fusion-form .fusion-form-field.fusion-form-field-fusion-form-image-select' + this.model.get( 'cid' );
 
+				if ( '' !== values.width ) {
+					styles += base_selector + ' .fusion-form-image-select label .fusion-form-image-wrapper{width:' + _.fusionGetValueWithUnit( values.width ) + ';}';
+				}
+
+				if ( '' !== values.height ) {
+					styles += base_selector + ' .fusion-form-image-select label .fusion-form-image-wrapper{height:' + _.fusionGetValueWithUnit( values.height ) + ';}';
+				}
+
+				if ( '' !== values.border_size_top ) {
+					styles += base_selector + ' .fusion-form-image-select label{border-top-width:' + _.fusionGetValueWithUnit( values.border_size_top ) + ';}';
+				}
+				if ( '' !== values.border_size_right ) {
+					styles += base_selector + ' .fusion-form-image-select label{border-right-width:' + _.fusionGetValueWithUnit( values.border_size_right ) + ';}';
+				}
+				if ( '' !== values.border_size_bottom ) {
+					styles += base_selector + ' .fusion-form-image-select label{border-bottom-width:' + _.fusionGetValueWithUnit( values.border_size_bottom ) + ';}';
+				}
+				if ( '' !== values.border_size_left ) {
+					styles += base_selector + ' .fusion-form-image-select label{border-left-width:' + _.fusionGetValueWithUnit( values.border_size_left ) + ';}';
+				}
+
+				if ( '' !== values.border_radius ) {
+					styles += base_selector + ' .fusion-form-image-select label{border-radius:' + _.fusionGetValueWithUnit( values.border_radius ) + ';}';
+				}
+
+				if ( '' !== values.inactive_color ) {
+					styles += base_selector + ' .fusion-form-image-select label{border-color:' + _.fusionGetValueWithUnit( values.inactive_color ) + ';}';
+				}
+
+				if ( '' !== values.active_color ) {
+					styles += base_selector + ' .fusion-form-image-select .fusion-form-input:checked + label{border-color:' + values.active_color + ';}';
+					styles += base_selector + ' .fusion-form-image-select .fusion-form-input:hover:not(:checked) + label{border-color:' + jQuery.Color( values.active_color ).alpha( 0.5 ).toRgbaString() + ';}';
+				}
+
+				// Padding.
 				jQuery.each( [ 'top', 'right', 'bottom', 'left' ], function( index, padding ) {
 					var paddingName = 'padding_' + padding;
 
 					if ( '' !== values[ paddingName ] ) {
-						customVars[ 'padding-' + padding ] = _.fusionGetValueWithUnit( values[ paddingName ] );
+						paddingStyles += 'padding-' + padding + ':' + _.fusionGetValueWithUnit( values[ paddingName ] ) + ';';
 					}
 				} );
 
-				if ( '' !== values.active_color ) {
-					customVars[ 'hover-color' ] = jQuery.AWB_Color( values.active_color ).alpha( 0.5 ).toVarOrRgbaString();
+				if ( '' !== paddingStyles ) {
+					styles += base_selector + ' label{' + paddingStyles + ';}';
 				}
 
 
-				cssVarsOptions = [
-					'inactive_color',
-					'active_color'
-				];
+				if ( '' !== styles ) {
+					styles = '<style type="text/css">' + styles + '</style>';
+				}
 
-				cssVarsOptions.width              = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.height             = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_size_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_size_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_size_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_size_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.border_radius      = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				return styles;
 			}
+
 		} );
 	} );
 }( jQuery ) );

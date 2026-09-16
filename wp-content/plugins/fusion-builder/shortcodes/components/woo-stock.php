@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The internal container counter.
 			 *
 			 * @access private
@@ -69,7 +78,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'stock_font_size'     => '',
 					'stock_color'         => $fusion_settings->get( 'body_typography', 'color' ),
@@ -83,9 +92,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
 					'animation_type'      => '',
 					'animation_direction' => 'down',
 					'animation_speed'     => '0.1',
-					'animation_delay'     => '',
 					'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'     => '',
 				];
 			}
 
@@ -147,7 +154,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
 					return;
 				}
 
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_stock-shortcode' ) . '>' . $this->get_woo_stock_content() . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_stock-shortcode' ) . '>' . $this->get_woo_stock_content() . '</div>';
 
 				$this->restore_product();
 
@@ -178,25 +186,27 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.2
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$css_vars_options = [
-					'margin_top'      => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'     => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'stock_font_size' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'stock_color'     => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-				];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-stock-tb.fusion-woo-stock-tb-' . $this->counter;
+				$this->dynamic_css   = [];
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options );
+				if ( ! $this->is_default( 'stock_font_size' ) ) {
+					$this->add_css_property( $this->base_selector . ' p.stock', 'font-size', $this->args['stock_font_size'] );
+				}
 
-				return $styles;
+				if ( ! $this->is_default( 'stock_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' p.stock', 'color', $this->args['stock_color'] );
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -218,7 +228,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
 					$attr = Fusion_Builder_Animation_Helper::add_animation_attributes( $this->args, $attr );
 				}
 
-				$attr['style'] .= $this->get_style_variables();
+				$attr['style'] .= Fusion_Builder_Margin_Helper::get_margins_style( $this->args );
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -229,17 +239,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
 				}
 
 				return $attr;
-			}
-
-			/**
-			 * Load base CSS.
-			 *
-			 * @access public
-			 * @since 3.9
-			 * @return void
-			 */
-			public function add_css_files() {
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/woo-stock.min.css' );
 			}
 		}
 	}
@@ -253,7 +252,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_stock' ) ) {
  * @since 3.2
  */
 function fusion_component_woo_stock() {
-	$fusion_settings = awb_get_fusion_settings();
+
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(

@@ -56,7 +56,7 @@ if ( ! function_exists( 'fusion_redux_validate_dimension' ) ) {
 		// Remove spaces from the value.
 		$value = trim( str_replace( ' ', '', $value ) );
 		// Get the numeric value.
-		$value_numeric = Fusion_Sanitize::numeric_string( $value );
+		$value_numeric = Fusion_Sanitize::number( $value );
 		if ( empty( $value_numeric ) ) {
 			$value_numeric = '0';
 		}
@@ -144,7 +144,7 @@ if ( ! function_exists( 'fusion_redux_validate_font_size' ) ) {
 		// Remove spaces from the value.
 		$value = trim( str_replace( ' ', '', $value ) );
 		// Get the numeric value.
-		$value_numeric = Fusion_Sanitize::numeric_string( $value );
+		$value_numeric = Fusion_Sanitize::number( $value );
 		if ( empty( $value_numeric ) ) {
 			$value_numeric = '0';
 		}
@@ -201,6 +201,163 @@ if ( ! function_exists( 'fusion_redux_validate_font_size' ) ) {
 	}
 }
 
+if ( ! function_exists( 'fusion_redux_validate_typography' ) ) {
+	/**
+	 * Validates & sanitizes values for typography controls.
+	 *
+	 * @since 4.0.0
+	 * @param array $field          The field with all its arguments.
+	 * @param array $value          The field value.
+	 * @param array $existing_value The previous value of the control.
+	 * @return array
+	 */
+	function fusion_redux_validate_typography( $field, $value, $existing_value ) {
+
+		$return = [];
+
+		$limit_units_fields = [
+			'font-size',
+			'line-height',
+			'letter-spacing',
+		];
+		if ( is_array( $value ) ) {
+			// An array of valid CSS units.
+			$valid_units = [ 'px', 'rem', 'em' ];
+			$warning     = [];
+			$message     = [];
+
+			$imploded_valid_units = implode( ', ', $valid_units );
+
+			foreach ( $value as $key => $subvalue ) {
+				$replaced_units_message = '';
+				$units_message          = '';
+				$subvalue_numeric       = '';
+				$subvalue_unit          = '';
+				$warning[ $key ]        = false;
+				if ( in_array( $key, $limit_units_fields, true ) ) {
+					if ( '' === $existing_value[ $key ] || null === $existing_value[ $key ] || false === $existing_value[ $key ] && class_exists( 'Avada' ) ) {
+						$existing_value[ $key ] = fusion_get_theme_option( $field['id'], $key );
+					}
+					if ( '' === $subvalue || null === $subvalue || false === $subvalue ) {
+						$subvalue = $existing_value[ $key ];
+					}
+					// Remove spaces from the value.
+					$subvalue = trim( str_replace( ' ', '', $subvalue ) );
+					// Get the numeric value.
+					$subvalue_numeric = Fusion_Sanitize::number( $subvalue );
+					if ( empty( $subvalue_numeric ) ) {
+						$subvalue_numeric = '0';
+					}
+					// Get the units.
+					$subvalue_unit = str_replace( $subvalue_numeric, '', $subvalue );
+					$subvalue_unit = strtolower( $subvalue_unit );
+					if ( empty( $subvalue_unit ) ) {
+						if ( '0' === $subvalue_numeric ) {
+							if ( 'font-size' === $key ) {
+								$warning[ $key ] = true;
+							}
+						} elseif ( 'line-height' !== $key ) {
+							$warning[ $key ] = true;
+						}
+					}
+
+					// If we can't find a valid CSS unit in the value,
+					// show a warning message and fallback to using pixels.
+					if ( ! in_array( $subvalue_unit, $valid_units, true ) ) {
+						if ( ! ( 'line-height' === $key && empty( $subvalue_unit ) ) && ! ( '0' === $subvalue && 'font-size' !== $key ) ) {
+							$warning[ $key ] = true;
+						}
+					}
+
+					if ( true === $warning[ $key ] ) {
+						if ( ! isset( $field['msg'] ) ) {
+							$field['msg'] = '';
+						}
+						/* translators: %1$s: The value. %2$s: Fallback value. %3$s: A list of valid units. %4$s: Saved value. %5$s: User-entered value. */
+						$replaced_units_message = esc_html__( 'We could not find a valid unit for %1$s, falling back to "%2$s". Valid units are %3$s. Saved value "%4$s" and not "%5$s.".', 'fusion-builder' );
+						/* translators: %1$s: The value. %2$s: Fallback value. %3$s: A list of valid units. %4$s: Saved value. %5$s: User-entered value. */
+						$units_message = esc_html__( 'No units were entered for %1$s, falling back to using pixels. Saved value "%4$s" and not "%5$s".', 'fusion-builder' );
+						if ( empty( $subvalue_unit ) ) {
+							$message[]     = sprintf( $units_message, $key, $subvalue_unit, $imploded_valid_units, $subvalue_numeric . $subvalue_unit, $subvalue );
+							$subvalue_unit = 'px';
+							$unit_found    = true;
+						} else {
+							$unit_found = false;
+							foreach ( $valid_units as $valid_unit ) {
+								if ( $unit_found ) {
+									continue;
+								}
+								if ( false !== strrpos( $subvalue_unit, $valid_unit ) ) {
+									$subvalue_unit = $valid_unit;
+									$unit_found    = true;
+								}
+							}
+							if ( ! $unit_found ) {
+								$subvalue_unit = 'px';
+							}
+							$message[] = sprintf( $replaced_units_message, $key, $subvalue_unit, $imploded_valid_units, $subvalue_numeric . $subvalue_unit, $subvalue );
+						}
+						if ( ! $unit_found ) {
+							$subvalue_unit = 'px';
+						}
+					}
+					$value[ $key ] = $subvalue_numeric . $subvalue_unit;
+				}
+			}
+
+			// Take care of font-weight sanitization.
+			if ( ! class_exists( 'Fusion_Redux_Get_GoogleFonts' ) ) {
+				include_once wp_normalize_path( Fusion::$template_dir_path . '/includes/fusionredux/custom-fields/typography/googlefonts.php' );
+			}
+			$googlefonts = Fusion_Redux_Get_GoogleFonts::get_instance();
+			$font_family = $value['font-family'];
+			if ( isset( $googlefonts->fonts[ $font_family ] ) ) {
+				$variants       = $googlefonts->fonts[ $font_family ]['variants'];
+				$valid_variants = [];
+				foreach ( $variants as $variant ) {
+					if ( isset( $variant['id'] ) ) {
+						$valid_variants[] = $variant['id'];
+					}
+				}
+				$forced_font_weight = false;
+				if ( ! isset( $value['font-weight'] ) || empty( $value['font-weight'] ) ) {
+					$forced_font_weight = true;
+				}
+				if ( ! in_array( $value['font-weight'], $valid_variants, true ) ) {
+					$forced_font_weight = true;
+				}
+				if ( $forced_font_weight ) {
+					if ( in_array( '400', $valid_variants, true ) ) {
+						$value['font-weight'] = '400';
+					} elseif ( in_array( '300', $valid_variants, true ) ) {
+						$value['font-weight'] = '300';
+					} elseif ( in_array( '500', $valid_variants, true ) ) {
+						$value['font-weight'] = '500';
+					} else {
+						$value['font-weight'] = $valid_variants[0];
+					}
+				}
+
+				$value['font-weight'] = ( 'regular' === $value['font-weight'] ) ? '400' : $value['font-weight'];
+			}
+
+			if ( isset( $value['letter-spacing'] ) && is_numeric( $value['letter-spacing'] ) ) {
+				$value['letter-spacing'] = (string) $value['letter-spacing'];
+				$value['letter-spacing'] = trim( $value['letter-spacing'] ) . 'px';
+			}
+		}
+		if ( ! empty( $message ) ) {
+			$field['msg']      = implode( ' ', $message );
+			$return['warning'] = $field;
+		}
+
+		$return['value'] = $value;
+
+		return $return;
+
+	}
+}
+
 if ( ! function_exists( 'fusion_redux_validate_dimensions' ) ) {
 	/**
 	 * Validates & sanitizes values for dimentions controls.
@@ -246,7 +403,7 @@ if ( ! function_exists( 'fusion_redux_validate_dimensions' ) ) {
 			// Remove spaces from the value.
 			$subvalue = trim( str_replace( ' ', '', $subvalue ) );
 			// Get the numeric value.
-			$subvalue_numeric = Fusion_Sanitize::numeric_string( $subvalue );
+			$subvalue_numeric = Fusion_Sanitize::number( $subvalue );
 			if ( empty( $subvalue_numeric ) ) {
 				$subvalue_numeric = '0';
 			}

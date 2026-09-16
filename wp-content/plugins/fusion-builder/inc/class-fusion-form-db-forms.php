@@ -31,30 +31,23 @@ class Fusion_Form_DB_Forms extends Fusion_Form_DB_Items {
 	 * @return integer|boolean The last insert id or false if query failed.
 	 */
 	public function insert( $args ) {
+		global $wpdb;
+		$db = new Fusion_Form_DB();
+
 		// Make sure $args['form_id'] is a number.
 		$sanitized_form_id = $args['form_id'] ? absint( $args['form_id'] ) : false;
 
 		if ( $args['form_id'] ) {
 			// Check if the form id already exists.
-			$is_id = $this->get_form_table_id( $sanitized_form_id );
+			$is_id = $db->get_var(
+				$wpdb->prepare(
+					"SELECT `id` FROM `{$wpdb->prefix}{$this->table_name}` WHERE form_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$sanitized_form_id
+				)
+			);
 		}
 
 		return ( $is_id ) ? $is_id : parent::insert( $args );
-	}
-
-	/**
-	 * Get the table id of the form id.
-	 *
-	 * @param int $form_id The form _id.
-	 * @return int|false False if no table id could be found, id otherwise.
-	 */
-	public function get_form_table_id( $form_id ) {
-		global $wpdb;
-		$db = new Fusion_Form_DB();
-
-		$table_id = (int) $db->get_var( $wpdb->prepare( "SELECT `id` FROM `{$wpdb->prefix}{$this->table_name}` WHERE form_id = %d", $form_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
-		return $table_id ? $table_id : false;
 	}
 
 	/**
@@ -64,21 +57,15 @@ class Fusion_Form_DB_Forms extends Fusion_Form_DB_Items {
 	 * @return array      An array of forms.
 	 */
 	public function get_formatted( $args = [] ) {
-		global $wpdb;
-
 		$results = $this->get( $args );
 
 		// Format the results.
 		$forms = [];
 		foreach ( $results as $form_object ) {
-
-			// Deleted form's data is not removed from form tables, so we filter out deleted form posts here.
-			if ( ! empty( $wpdb->get_results( "SELECT ID from $wpdb->posts WHERE ID = $form_object->form_id AND post_type = 'fusion_form'" ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL
-				$forms[ $form_object->id ] = [
-					'form_id' => $form_object->form_id,
-					'views'   => $form_object->views,
-				];
-			}
+			$forms[ $form_object->id ] = [
+				'form_id' => $form_object->form_id,
+				'views'   => $form_object->views,
+			];
 		}
 		return $forms;
 	}
@@ -143,13 +130,16 @@ class Fusion_Form_DB_Forms extends Fusion_Form_DB_Items {
 	 *
 	 * @since 3.1
 	 * @access public
-	 * @param int $form_id Form ID to get fields for.
+	 * @param string $form_id Form ID to get fields for.
 	 * @return array
 	 */
 	public function get_form_fields( $form_id ) {
 		$fields = new Fusion_Form_DB_Fields();
-
-		return $fields->get_form_fields( $form_id );
+		return $fields->get(
+			[
+				'where' => [ 'form_id' => absint( $form_id ) ],
+			]
+		);
 	}
 
 	/**

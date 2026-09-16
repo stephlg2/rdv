@@ -26,6 +26,15 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 			protected $defaults;
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 3.2
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * An array of the unmerged shortcode arguments.
 			 *
 			 * @access protected
@@ -78,7 +87,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 			 * @return array
 			 */
 			public static function get_element_defaults() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					// Element margin.
 					'margin_top'                    => '',
@@ -99,9 +108,6 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 					'fusion_font_family_text_font'  => '',
 					'fusion_font_variant_text_font' => '',
 					'text_font_size'                => '',
-					'text_text_transform'           => '',
-					'text_line_height'              => '',
-					'text_letter_spacing'           => '',
 
 					'stars_color'                   => '',
 					'rating_box_bg_color'           => '',
@@ -111,10 +117,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 					'button_style'                  => '',
 					'button_size'                   => '',
 					'button_stretch'                => 'no',
-					'button_border_top'             => '',
-					'button_border_right'           => '',
-					'button_border_bottom'          => '',
-					'button_border_left'            => '',
+					'button_border_width'           => '',
 					'button_color'                  => '',
 					'button_gradient_top'           => $fusion_settings->get( 'button_gradient_top_color' ),
 					'button_gradient_bottom'        => $fusion_settings->get( 'button_gradient_bottom_color' ),
@@ -130,9 +133,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 					'animation_type'                => '',
 					'animation_direction'           => 'down',
 					'animation_speed'               => '0.1',
-					'animation_delay'               => '',
 					'animation_offset'              => $fusion_settings->get( 'animation_offset' ),
-					'animation_color'               => '',
 				];
 			}
 
@@ -170,16 +171,16 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 
 					$this->emulate_product();
 
-					if ( ! $this->is_product() ) {
-						echo wp_json_encode( $return_data );
-						wp_die();
-					}
-
 					// Needed in order to bypass early exit in comments_template function.
 					$withcomments = true;
 
 					// We need to set global $post because Woo template expects it.
 					$post = get_post( $product->get_id() );
+
+					if ( ! $this->is_product() ) {
+						echo wp_json_encode( $return_data );
+						wp_die();
+					}
 
 					$return_data['woo_reviews'] = $this->get_woo_reviews_content( $defaults, $post_id );
 					$this->restore_product();
@@ -212,15 +213,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 					return;
 				}
 
-				// Legacy single border width.
-				if ( isset( $args['button_border_width'] ) && ! isset( $args['button_border_top'] ) ) {
-					$this->args['button_border_top']    = $args['button_border_width'];
-					$this->args['button_border_right']  = $this->args['button_border_top'];
-					$this->args['button_border_bottom'] = $this->args['button_border_top'];
-					$this->args['button_border_left']   = $this->args['button_border_top'];
-				}
-
-				$html = '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_reviews-shortcode' ) . '>' . $this->get_woo_reviews_content( $this->args ) . '</div>';
+				$html  = $this->get_styles();
+				$html .= '<div ' . FusionBuilder::attributes( 'fusion_tb_woo_reviews-shortcode' ) . '>' . $this->get_woo_reviews_content( $this->args ) . '</div>';
 
 				$this->restore_product();
 
@@ -246,7 +240,7 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 			 * @return string
 			 */
 			public function get_woo_reviews_content( $args ) {
-				global $woocommerce, $product;
+				global $product;
 
 				$content = '';
 				if ( is_object( $product ) ) {
@@ -266,67 +260,157 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the styles.
 			 *
 			 * @access protected
-			 * @since 3.9
+			 * @since 3.2
 			 * @return string
 			 */
-			protected function get_style_variables() {
-				$custom_vars = [];
+			protected function get_styles() {
+				$this->base_selector = '.fusion-woo-reviews-tb.fusion-woo-reviews-tb-' . $this->counter;
+				$this->dynamic_css   = [];
 
-				// Content typography.
-				$content_typography = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font', 'array' );
+				$sides = [ 'top', 'right', 'bottom', 'left' ];
 
-				foreach ( $content_typography as $rule => $value ) {
-					$custom_vars[ 'text-' . $rule ] = $value;
+				foreach ( $sides as $side ) {
+
+					// Element margin.
+					$margin_name = 'margin_' . $side;
+
+					if ( '' !== $this->args[ $margin_name ] ) {
+						$this->add_css_property( $this->base_selector, 'margin-' . $side, fusion_library()->sanitize->get_value_with_unit( $this->args[ $margin_name ] ) );
+					}
 				}
 
-				// Button gradient.
-				if ( ( isset( $this->params['button_gradient_top'] ) && '' !== $this->params['button_gradient_top'] ) || ( isset( $this->params['button_gradient_bottom'] ) && '' !== $this->params['button_gradient_bottom'] ) ) {
-					$custom_vars['button_gradient_top']     = $this->args['button_gradient_top'];
-					$custom_vars['button_background_image'] = 'linear-gradient( to top, ' . $this->args['button_gradient_bottom'] . ', ' . $this->args['button_gradient_top'] . ' )';
+				// Text styles.
+				if ( ! $this->is_default( 'text_color' ) ) {
+					$this->add_css_property( $this->base_selector, 'color', $this->args['text_color'] );
+					$this->add_css_property( '#wrapper ' . $this->base_selector . ' .meta', 'color', $this->args['text_color'] );
+					$this->add_css_property( [ $this->base_selector . ' .stars a', $this->base_selector . ' .stars a:after' ], 'color', $this->args['text_color'] );
 				}
 
-				// Button gradient hover.
-				if ( ( isset( $this->params['button_gradient_top_hover'] ) && '' !== $this->params['button_gradient_top_hover'] ) || ( isset( $this->params['button_gradient_bottom_hover'] ) && '' !== $this->params['button_gradient_bottom_hover'] ) ) {
-					$custom_vars['button_gradient_top_hover']     = $this->args['button_gradient_top_hover'];
-					$custom_vars['button_background_image_hover'] = 'linear-gradient( to top, ' . $this->args['button_gradient_bottom_hover'] . ', ' . $this->args['button_gradient_top_hover'] . ' )';
+				if ( ! $this->is_default( 'text_font_size' ) ) {
+					$this->add_css_property( $this->base_selector, 'font-size', fusion_library()->sanitize->get_value_with_unit( $this->args['text_font_size'] ) );
 				}
 
-				if ( isset( $this->params['text_color'] ) && '' !== $this->params['text_color'] ) {
-					$custom_vars['stars_default_color'] = Fusion_Sanitize::color( $this->params['text_color'] );
+				// Text typography styles.
+				$text_styles = Fusion_Builder_Element_Helper::get_font_styling( $this->args, 'text_font', 'array' );
+				foreach ( $text_styles as $rule => $value ) {
+					$this->add_css_property( $this->base_selector, $rule, $value );
 				}
 
-				$css_vars_options = [
-					'margin_top'                 => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'               => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'              => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_font_size'             => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_letter_spacing'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'border_size'                => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_top'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_right'        => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_bottom'       => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'button_border_left'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'text_color'                 => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'border_color'               => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'stars_color'                => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'rating_box_bg_color'        => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'rating_box_active_bg_color' => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_color'               => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_border_color'        => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_color_hover'         => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'button_border_color_hover'  => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'text_line_height',
-					'text_text_transform',
+				// Border.
+				if ( ! $this->is_default( 'border_size' ) ) {
+					$this->add_css_property( $this->base_selector . ' #reviews li .comment-text', 'border-width', $this->args['border_size'] . 'px' );
+				}
 
-				];
+				if ( ! $this->is_default( 'border_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' #reviews li .comment-text', 'border-color', $this->args['border_color'] );
+				}
 
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
+				if ( ! $this->is_default( 'stars_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .comment-text .star-rating:before', 'color', $this->args['stars_color'] );
+					$this->add_css_property( $this->base_selector . ' .comment-text .star-rating span:before', 'color', $this->args['stars_color'] );
+				}
 
-				return $styles;
+				if ( ! $this->is_default( 'rating_box_bg_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .stars > span > a', 'background-color', $this->args['rating_box_bg_color'] );
+				}
+
+				if ( ! $this->is_default( 'rating_box_active_bg_color' ) ) {
+					$this->add_css_property( $this->base_selector . ' .stars > span > a:hover', 'background-color', $this->args['rating_box_active_bg_color'] );
+					$this->add_css_property( $this->base_selector . ' .stars > span > a.active', 'background-color', $this->args['rating_box_active_bg_color'] );
+				}
+
+				// Custom add to cart button styling.
+				if ( ! $this->is_default( 'button_style' ) ) {
+
+					$button = '.fusion-body ' . $this->base_selector . ' #reviews input#submit.submit';
+
+					// Button size.
+					if ( ! $this->is_default( 'button_size' ) ) {
+
+						$button_size_map = [
+							'small'  => [
+								'padding'     => '9px 20px',
+								'line_height' => '14px',
+								'font_size'   => '12px',
+							],
+							'medium' => [
+								'padding'     => '11px 23px',
+								'line_height' => '16px',
+								'font_size'   => '13px',
+							],
+							'large'  => [
+								'padding'     => '13px 29px',
+								'line_height' => '17px',
+								'font_size'   => '14px',
+							],
+							'xlarge' => [
+								'padding'     => '17px 40px',
+								'line_height' => '21px',
+								'font_size'   => '18px',
+							],
+						];
+
+						if ( isset( $button_size_map[ $this->args['button_size'] ] ) ) {
+							$button_dimensions = $button_size_map[ $this->args['button_size'] ];
+							$this->add_css_property( $button, 'padding', $button_dimensions['padding'] );
+							$this->add_css_property( $button, 'line-height', $button_dimensions['line_height'] );
+							$this->add_css_property( $button, 'font-size', $button_dimensions['font_size'] );
+						}
+					}
+
+					// Button stretch.
+					if ( ! $this->is_default( 'button_stretch' ) ) {
+						$this->add_css_property( $button, 'flex', '1' );
+						$this->add_css_property( $button, 'width', '100%' );
+					}
+
+					// Button border width.
+					if ( ! $this->is_default( 'button_border_width' ) ) {
+						$this->add_css_property( $button, 'border-width', fusion_library()->sanitize->get_value_with_unit( $this->args['button_border_width'] ) );
+						$this->add_css_property( $button, 'border-style', 'solid' );
+					}
+
+					// Button text color.
+					if ( ! $this->is_default( 'button_color' ) ) {
+						$this->add_css_property( $button, 'color', $this->args['button_color'] );
+					}
+
+					// Button gradient.
+					if ( ( isset( $this->params['button_gradient_top'] ) && '' !== $this->params['button_gradient_top'] ) || ( isset( $this->params['button_gradient_bottom'] ) && '' !== $this->params['button_gradient_bottom'] ) ) {
+						$this->add_css_property( $button, 'background', $this->args['button_gradient_top'] );
+						$this->add_css_property( $button, 'background-image', 'linear-gradient( to top, ' . $this->args['button_gradient_bottom'] . ', ' . $this->args['button_gradient_top'] . ' )' );
+					}
+
+					// Button border color.
+					if ( ! $this->is_default( 'button_border_color' ) ) {
+						$this->add_css_property( $button, 'border-color', $this->args['button_border_color'] );
+					}
+
+					$button_hover = $button . ':hover';
+
+					// Button hover text color.
+					if ( ! $this->is_default( 'button_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'color', $this->args['button_color_hover'] );
+					}
+
+					// Button gradient.
+					if ( ( isset( $this->params['button_gradient_top_hover'] ) && '' !== $this->params['button_gradient_top_hover'] ) || ( isset( $this->params['button_gradient_bottom_hover'] ) && '' !== $this->params['button_gradient_bottom_hover'] ) ) {
+						$this->add_css_property( $button_hover, 'background', $this->args['button_gradient_top_hover'] );
+						$this->add_css_property( $button_hover, 'background-image', 'linear-gradient( to top, ' . $this->args['button_gradient_bottom_hover'] . ', ' . $this->args['button_gradient_top_hover'] . ' )' );
+					}
+
+					// Button border color.
+					if ( ! $this->is_default( 'button_border_color_hover' ) ) {
+						$this->add_css_property( $button_hover, 'border-color', $this->args['button_border_color_hover'] );
+					}
+				}
+
+				$css = $this->parse_css();
+
+				return $css ? '<style>' . $css . '</style>' : '';
 			}
 
 			/**
@@ -352,19 +436,9 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
 
-				if ( ! $this->is_default( 'button_size' ) ) {
-					$attr['class'] .= ' button-size-' . $this->args['button_size'];
-				}
-
-				if ( ! $this->is_default( 'button_stretch' ) ) {
-					$attr['class'] .= ' button-stretch';
-				}
-
 				if ( 'no' === $this->args['show_tab_title'] ) {
 					$attr['class'] .= ' woo-reviews-hide-heading';
 				}
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['id'] ) {
 					$attr['id'] = $this->args['id'];
@@ -382,20 +456,8 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
 			 */
 			public function add_css_files() {
 				if ( class_exists( 'Avada' ) ) {
-					$version = Avada::get_theme_version();
-
-					Fusion_Media_Query_Scripts::$media_query_assets[] = [
-						'avada-woo-reviews-sm',
-						FUSION_BUILDER_PLUGIN_DIR . 'assets/css/media/woo-reviews-sm.min.css',
-						[],
-						$version,
-						Fusion_Media_Query_Scripts::get_media_query_from_key( 'fusion-max-small' ),
-					];
-
 					Fusion_Dynamic_CSS::enqueue_style( Avada::$template_dir_path . '/assets/css/dynamic/woocommerce/woo-reviews.min.css', Avada::$template_dir_url . '/assets/css/dynamic/woocommerce/woo-reviews.min.css' );
 				}
-
-				FusionBuilder()->add_element_css( FUSION_BUILDER_PLUGIN_DIR . 'assets/css/components/woo-reviews.min.css' );
 			}
 		}
 	}
@@ -409,27 +471,19 @@ if ( fusion_is_element_enabled( 'fusion_tb_woo_reviews' ) ) {
  * @since 3.2
  */
 function fusion_component_woo_reviews() {
-	$fusion_settings = awb_get_fusion_settings();
+	global $fusion_settings;
 
 	fusion_builder_map(
 		fusion_builder_frontend_data(
 			'FusionTB_Woo_Reviews',
 			[
-				'name'         => esc_attr__( 'Woo Reviews', 'fusion-builder' ),
-				'shortcode'    => 'fusion_tb_woo_reviews',
-				'icon'         => 'fusiona-woo-reviews',
-				'component'    => true,
-				'templates'    => [ 'content' ],
-				'subparam_map' => [
-					'fusion_font_family_text_font'  => 'main_typography',
-					'fusion_font_variant_text_font' => 'main_typography',
-					'text_font_size'                => 'main_typography',
-					'text_text_transform'           => 'main_typography',
-					'text_line_height'              => 'main_typography',
-					'text_letter_spacing'           => 'main_typography',
-					'text_color'                    => 'main_typography',
-				],
-				'params'       => [
+				'name'                    => esc_attr__( 'Woo Reviews', 'fusion-builder' ),
+				'shortcode'               => 'fusion_tb_woo_reviews',
+				'icon'                    => 'fusiona-woo-reviews',
+				'component'               => true,
+				'templates'               => [ 'content' ],
+				'components_per_template' => 1,
+				'params'                  => [
 					[
 						'type'        => 'radio_button_set',
 						'heading'     => esc_attr__( 'Show Heading', 'fusion-builder' ),
@@ -448,8 +502,8 @@ function fusion_component_woo_reviews() {
 					],
 					[
 						'type'        => 'radio_button_set',
-						'heading'     => esc_attr__( 'HTML Heading Tag', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose HTML tag of the heading, either div, p or the heading tag, h1-h6.', 'fusion-builder' ),
+						'heading'     => esc_attr__( 'HTML Heading Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose HTML tag of the heading, either div or the heading tag, h1-h6.', 'fusion-builder' ),
 						'param_name'  => 'title_size',
 						'value'       => [
 							'h1'  => 'H1',
@@ -459,7 +513,6 @@ function fusion_component_woo_reviews() {
 							'h5'  => 'H5',
 							'h6'  => 'H6',
 							'div' => 'DIV',
-							'p'   => 'P',
 						],
 						'default'     => 'h2',
 						'callback'    => [
@@ -474,6 +527,13 @@ function fusion_component_woo_reviews() {
 						'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
 						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
 						'param_name'       => 'margin',
+						'callback'         => [
+							'function' => 'fusion_style_block',
+							'args'     => [
+
+								'dimension' => true,
+							],
+						],
 						'value'            => [
 							'margin_top'    => '',
 							'margin_right'  => '',
@@ -486,31 +546,39 @@ function fusion_component_woo_reviews() {
 						],
 					],
 					[
-						'type'             => 'typography',
-						'heading'          => esc_attr__( 'Content Typography', 'fusion-builder' ),
-						'description'      => esc_html__( 'Controls the typography of the text. Leave empty for the global font family.', 'fusion-builder' ),
-						'param_name'       => 'main_typography',
-						'choices'          => [
-							'font-family'    => 'text_font',
-							'font-size'      => 'text_font_size',
-							'text-transform' => 'text_text_transform',
-							'line-height'    => 'text_line_height',
-							'letter-spacing' => 'text_letter_spacing',
-							'color'          => 'text_color',
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Text Color', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the color of the text, ex: #000.' ),
+						'param_name'  => 'text_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_style_block',
 						],
-						'default'          => [
-							'font-family'    => '',
-							'variant'        => '400',
-							'font-size'      => '',
-							'text-transform' => '',
-							'line-height'    => '',
-							'letter-spacing' => '',
-							'color'          => '',
-						],
+					],
+					[
+						'type'             => 'font_family',
 						'remove_from_atts' => true,
-						'global'           => true,
+						'heading'          => esc_attr__( 'Text Font Family', 'fusion-builder' ),
+						'description'      => esc_html__( 'Controls the font family of the text.', 'fusion-builder' ),
+						'param_name'       => 'text_font',
+						'default'          => [
+							'font-family'  => '',
+							'font-variant' => '',
+						],
 						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
 						'callback'         => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Content Text Font Size', 'fusion-builder' ),
+						'description' => esc_html__( 'Controls the font size of the content text. Enter value including any valid CSS unit, ex: 20px.', 'fusion-builder' ),
+						'param_name'  => 'text_font_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
 					],
@@ -668,26 +736,24 @@ function fusion_component_woo_reviews() {
 						],
 					],
 					[
-						'type'             => 'dimension',
-						'remove_from_atts' => true,
-						'heading'          => esc_attr__( 'Button Border Size', 'fusion-builder' ),
-						'description'      => esc_attr__( 'Controls the border size. In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
-						'param_name'       => 'button_border_width',
-						'value'            => [
-							'button_border_top'    => '',
-							'button_border_right'  => '',
-							'button_border_bottom' => '',
-							'button_border_left'   => '',
-						],
-						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'       => [
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Button Border Size', 'fusion-builder' ),
+						'param_name'  => 'button_border_width',
+						'description' => esc_attr__( 'Controls the border size. In pixels.', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'         => [
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_border_width' ),
+						'callback'    => [
 							'function' => 'fusion_style_block',
 							'args'     => [
 
@@ -696,131 +762,215 @@ function fusion_component_woo_reviews() {
 						],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Text Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_color',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'button_accent_color' ),
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'    => [
+						'type'             => 'subgroup',
+						'heading'          => esc_html__( 'Button Styling', 'fusion-builder' ),
+						'description'      => esc_html__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+						'param_name'       => 'button_styling',
+						'default'          => 'regular',
+						'group'            => esc_html__( 'Design', 'fusion-builder' ),
+						'remove_from_atts' => true,
+						'value'            => [
+							'regular' => esc_html__( 'Regular', 'fusion-builder' ),
+							'hover'   => esc_html__( 'Hover / Active', 'fusion-builder' ),
+						],
+						'icons'            => [
+							'regular' => '<span class="fusiona-regular-state" style="font-size:18px;"></span>',
+							'hover'   => '<span class="fusiona-hover-state" style="font-size:18px;"></span>',
+						],
+						'dependency'       => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
-							'function' => 'fusion_style_block',
-						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_accent_hover_color' ),
-								'preview' => [
-									'selector' => 'input#submit',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_gradient_top', 'button_gradient_bottom', 'button_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Gradient Top Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_gradient_top',
-						'value'         => '',
-						'default'       => $fusion_settings->get( 'button_gradient_top_color' ),
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_accent_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_gradient_top_color_hover' ),
-								'preview' => [
-									'selector' => 'input#submit',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_color', 'button_gradient_bottom', 'button_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Gradient Bottom Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_gradient_bottom',
-						'value'         => '',
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'default'       => $fusion_settings->get( 'button_gradient_bottom_color' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Top Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_top',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_gradient_top_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
-								'preview' => [
-									'selector' => 'input#submit',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
-							],
-						],
-						'connect-state' => [ 'button_color', 'button_gradient_top', 'button_border_color' ],
 					],
 					[
-						'type'          => 'colorpickeralpha',
-						'heading'       => esc_attr__( 'Button Border Color', 'fusion-builder' ),
-						'description'   => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
-						'param_name'    => 'button_border_color',
-						'value'         => '',
-						'group'         => esc_attr__( 'Design', 'fusion-builder' ),
-						'default'       => $fusion_settings->get( 'button_border_color' ),
-						'dependency'    => [
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Bottom Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_bottom',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_gradient_bottom_color' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
 							[
 								'element'  => 'button_style',
 								'value'    => 'custom',
 								'operator' => '==',
 							],
 						],
-						'callback'      => [
+						'callback'    => [
 							'function' => 'fusion_style_block',
 						],
-						'states'        => [
-							'hover' => [
-								'label'   => __( 'Hover', 'fusion-builder' ),
-								'default' => $fusion_settings->get( 'button_border_hover_color' ),
-								'preview' => [
-									'selector' => 'input#submit',
-									'type'     => 'class',
-									'toggle'   => 'hover',
-								],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_border_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_border_color' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'regular',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
 							],
 						],
-						'connect-state' => [ 'button_color', 'button_gradient_top', 'button_gradient_bottom' ],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Text Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_color_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_accent_hover_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Top Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_top_hover',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'button_gradient_top_color_hover' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Gradient Bottom Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the text color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_gradient_bottom_hover',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_gradient_bottom_color_hover' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Button Border Hover Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the button.', 'fusion-builder' ),
+						'param_name'  => 'button_border_color_hover',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'default'     => $fusion_settings->get( 'button_border_hover_color' ),
+						'subgroup'    => [
+							'name' => 'button_styling',
+							'tab'  => 'hover',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'button_style',
+								'value'    => 'custom',
+								'operator' => '==',
+							],
+						],
+						'callback'    => [
+							'function' => 'fusion_style_block',
+						],
 					],
 				],
-				'callback'     => [
+				'callback'                => [
 					'function' => 'fusion_ajax',
 					'action'   => 'get_fusion_tb_woo_reviews',
 					'ajax'     => true,

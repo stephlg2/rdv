@@ -1,5 +1,4 @@
 /* jshint -W024 */
-/* global fusionAllElements, FusionApp, FusionPageBuilderApp, awbPalette */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -165,10 +164,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( '' !== values.overlay_color ) {
-					values.overlay_color = awbPalette.getRealColor( values.overlay_color );
-					alpha = jQuery.AWB_Color( values.overlay_color ).alpha();
+					alpha = jQuery.Color( values.overlay_color ).alpha();
 					if ( 1 === alpha ) {
-						values.overlay_color = jQuery.AWB_Color( values.overlay_color ).alpha( 0.5 ).toVarOrRgbaString();
+						values.overlay_color = jQuery.Color( values.overlay_color ).alpha( 0.5 ).toRgbaString();
 					}
 					attr[ 'class' ] += ' fusion-video-overlay';
 					attr.style += 'background-color:' + values.overlay_color + ';';
@@ -215,36 +213,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				return attr;
-			},
-
-			/**
-			 * Runs just after render on cancel.
-			 *
-			 * @since 3.5
-			 * @return null
-			 */
-			beforeGenerateShortcode: function() {
-				var elementType = this.model.get( 'element_type' ),
-					options     = fusionAllElements[ elementType ].params,
-					values      = jQuery.extend( true, {}, fusionAllElements[ elementType ].defaults, _.fusionCleanParameters( this.model.get( 'params' ) ) );
-
-				if ( 'object' !== typeof options ) {
-					return;
-				}
-
-				// If images needs replaced lets check element to see if we have media being used to add to object.
-				if ( 'undefined' !== typeof FusionApp.data.replaceAssets && FusionApp.data.replaceAssets && ( 'undefined' !== typeof FusionApp.data.fusion_element_type || 'fusion_template' === FusionApp.getPost( 'post_type' ) ) ) {
-
-					this.mapStudioImages( options, values );
-
-					if ( '' !== values.video ) {
-						// If its not within object already, add it.
-						if ( 'undefined' === typeof FusionPageBuilderApp.mediaMap.videos[ values.video ] ) {
-							FusionPageBuilderApp.mediaMap.videos[ values.video ] = true;
-						}
-
-					}
-				}
 			}
 		} );
 	} );

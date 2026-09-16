@@ -1,4 +1,4 @@
-/* global FusionPageBuilderViewManager, fusionAppConfig, FusionEvents, fusionBuilderText, FusionPageBuilderApp, fusionGlobalManager */
+/* global FusionPageBuilderViewManager, FusionEvents, FusionPageBuilderApp, fusionGlobalManager */
 /* eslint no-unused-vars: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
@@ -12,8 +12,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			template: FusionPageBuilder.template( jQuery( '#fusion-builder-child-sortables' ).html() ),
 			events: {
 				'click .fusion-builder-add-multi-child': 'addChildElement',
-				'click .fusion-builder-add-predefined-multi-child': 'addPredefinedChildElement',
-				'click .fusion-builder-add-multi-gallery-images': 'openMediaUploaderForGalleryAndImageCarousel',
 				'click .fusion-builder-multi-setting-remove': 'removeChildElement',
 				'click .fusion-builder-multi-setting-clone': 'cloneChildElement',
 				'click .fusion-builder-multi-setting-options': 'editChildElement'
@@ -32,12 +30,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.listenTo( this.model.children, 'remove', this.render );
 				this.listenTo( this.model.children, 'sort', this.render );
 				this.settingsView = this.attributes.settingsView;
-
-				this.listenTo( FusionEvents, 'fusion-dynamic-data-added', this.addDynamic );
-				this.listenTo( FusionEvents, 'fusion-dynamic-data-removed', this.removeDynamicStatus );
-
-				this.listenTo( FusionEvents, 'fusion-dynamic-data-toggle', this.dynamicParentToggle );
-
 			},
 
 			/**
@@ -49,7 +41,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			render: function() {
 				this.$el.html( this.template( this.model ) );
 				this.sortableOptions();
-				this.adjustChildrenMargin( 'parent_dynamic_content' );
 
 				return this;
 			},
@@ -102,120 +93,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * @param {Object} event - The event.
 			 * @return {void}
 			 */
-			addChildElement: function( event, predefinedParams ) {
+			addChildElement: function( event ) {
 
-				if ( event ) {
-					event.preventDefault();
-				}
-
-				this.elementView.addChildElement( null, predefinedParams );
+				event.preventDefault();
+				this.elementView.addChildElement();
 				this.render();
 
 				this.settingsView.optionHasChanged = true;
-			},
-
-			/**
-			 * Adds a children element views and renders it, used in Bulk Add dialog.
-			 *
-			 * @since 3.5.0
-			 * @param {Object} event - The event.
-			 * @return {void}
-			 */
-			addPredefinedChildElement: function( event ) {
-				var self = this,
-					modalView;
-
-				if ( event ) {
-					event.preventDefault();
-				}
-
-				if ( jQuery( '.fusion-builder-settings-bulk-dialog' ).length ) {
-					return;
-				}
-
-				modalView = new FusionPageBuilder.BulkAddView( {
-					choices: fusionAppConfig.predefined_choices
-				} );
-
-				jQuery( modalView.render().el ).dialog( {
-					title: ( fusionBuilderText.bulk_add + ' / ' + fusionBuilderText.bulk_add_predefined ),
-					dialogClass: 'fusion-builder-dialog fusion-builder-settings-dialog bulk-add-dialog',
-					resizable: false,
-					width: 450,
-					buttons: [
-						{
-							text: fusionBuilderText.cancel,
-							click: function() {
-								jQuery( this ).dialog( 'close' );
-							}
-						},
-						{
-							text: fusionBuilderText.bulk_add_insert_choices,
-							click: function() {
-								var choices = modalView.getChoices();
-
-								event.preventDefault();
-
-								_.each( choices, function( choice ) {
-									var predefinedParams = {};
-
-									if ( -1 !== choice.indexOf( '||' ) ) {
-
-										// We have multiple params in one choice.
-										_.each( choice.split( '||' ), function( param ) {
-											var paramKeyValue = param.split( '|' );
-
-											predefinedParams[ paramKeyValue[ 0 ] ] = {};
-											predefinedParams[ paramKeyValue[ 0 ] ].param_name = paramKeyValue[ 0 ].trim();
-											predefinedParams[ paramKeyValue[ 0 ] ].value      = paramKeyValue[ 1 ].trim();
-
-										} );
-									} else {
-
-										// Use choice as element_content.
-										predefinedParams = {
-											'element_content': {
-												param_name: 'element_content',
-												value: choice
-											}
-										};
-									}
-
-									self.addChildElement( null, predefinedParams );
-								} );
-
-								jQuery( this ).dialog( 'close' );
-							},
-							class: 'ui-button-blue'
-						}
-					],
-					open: function() {
-						jQuery( '.fusion-builder-modal-settings-container' ).css( 'z-index', 9998 );
-					},
-					beforeClose: function() {
-						jQuery( '.fusion-builder-modal-settings-container' ).css( 'z-index', 99999 );
-						jQuery( this ).remove();
-					}
-
-				} );
-			},
-
-			/**
-			 * Open a WP Media, to select multiple images, for Gallery Element and Image Carousel Element.
-			 *
-			 * @since 3.5.0
-			 * @param {Object} event - The event.
-			 * @return {void}
-			 */
-			openMediaUploaderForGalleryAndImageCarousel: function( event ) {
-				var multi_upload_button = jQuery( event.currentTarget ).closest( '.fusion-tabs' ).find( '.fusion-multiple-upload-image input' );
-				var originalButtonEvent;
-				if ( event ) {
-					event.preventDefault();
-				}
-
-				originalButtonEvent = this.settingsView.openMultipleMedia.bind( multi_upload_button );
-				originalButtonEvent( event );
 			},
 
 			/**
@@ -244,6 +128,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					handleType: 'changeOption'
 				};
 				fusionGlobalManager.handleMultiGlobal( MultiGlobalArgs );
+
+				this.elementView.childViewRemoved();
 
 				this.settingsView.optionHasChanged = true;
 			},
@@ -278,6 +164,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				};
 				fusionGlobalManager.handleMultiGlobal( MultiGlobalArgs );
 
+				this.elementView.childViewCloned();
+
 				this.settingsView.optionHasChanged = true;
 			},
 
@@ -295,81 +183,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				event.preventDefault();
 
 				childView.settings();
-			},
-
-			addDynamic: function( param ) {
-
-				if ( 'parent_dynamic_content' !== param ) {
-					return;
-				}
-
-				// if gallery or carousel remove multi_upload dynamic data.
-				if ( 'fusion_gallery' === this.model.attributes.element_type || 'fusion_images' === this.model.attributes.element_type ) {
-					this.elementView.dynamicParams.removeParam( 'multiple_upload' );
-				}
-
-				const self = this;
-				// Add dynamic class.
-				jQuery( `[data-option-id=${param}]` ).closest( '.fusion-tab-content' ).find( '.fusion-child-sortables' ).addClass( 'has-dynamic-data' );
-
-				// Remove children.
-				const children = FusionPageBuilderViewManager.getChildViews( this.model.get( 'cid' ) );
-				_.each( children, function( child ) {
-					child.removeElement( '', 'Automated' );
-				} );
-
-				// Add the dynamic child.
-				this.elementView.addChildElement( null, null, { dynamic_parent: true } );
-				this.render();
-
-				this.settingsView.optionHasChanged = true;
-
-				setTimeout( () => {
-					self.adjustChildrenMargin( param );
-				}, 10 );
-			},
-
-			removeDynamicStatus: function( param ) {
-
-				if ( 'parent_dynamic_content' !== param ) {
-					return;
-				}
-
-				const self = this;
-				// Remove dynamic class.
-				jQuery( `[data-option-id=${param}]` ).closest( '.fusion-tab-content' ).find( '.fusion-child-sortables' ).removeClass( 'has-dynamic-data' );
-
-				// Remove children.
-				const children = FusionPageBuilderViewManager.getChildViews( this.model.get( 'cid' ) );
-				_.each( children, function( child ) {
-					child.removeElement( '', 'Automated' );
-				} );
-
-				setTimeout( () => {
-					self.adjustChildrenMargin( param );
-				}, 10 );
-			},
-
-			dynamicParentToggle: function( param ) {
-
-				if ( 'parent_dynamic_content' !== param ) {
-					return;
-				}
-
-				this.adjustChildrenMargin( param );
-			},
-
-			adjustChildrenMargin: function( param ) {
-
-				const $children = jQuery( `[data-option-id=${param}]` ).closest( '.fusion-tab-content' ).find( '.fusion-child-sortables .fusion-builder-sortable-children' );
-
-				if ( ! $children.length ) {
-					return;
-				}
-
-				const dynamicHeight = jQuery( `[data-option-id=${param}]` ).find( '.dynamic-wrapper' ).outerHeight();
-				$children.css( 'margin-top', ( 30 + dynamicHeight ) + 'px' );
-
 			}
 		} );
 	} );

@@ -27,7 +27,7 @@ class Fusion_Media_Query_Scripts {
 	 * @access public
 	 */
 	public function __construct() {
-		add_action( 'wp_enqueue_scripts', [ $this, 'maybe_defer_enqueue_media_query_styles' ], PHP_INT_MAX );
+		add_action( 'wp_enqueue_scripts', [ $this, 'maybe_defer_enqueue_media_query_styles' ], 900 );
 		add_filter( 'fusion_dynamic_css_final', [ $this, 'compile_media_query_styles' ], 999 );
 	}
 
@@ -45,17 +45,12 @@ class Fusion_Media_Query_Scripts {
 		if ( '1' === Fusion_Settings::get_instance()->get( 'media_queries_async' ) ) {
 			return $styles;
 		}
-		
 		foreach ( self::$media_query_assets as $asset ) {
 
 			// The file-path.
-			if ( filter_var( $asset[1], FILTER_VALIDATE_URL ) ) {
-				$path = ( defined( 'FUSION_BUILDER_PLUGIN_URL' ) && defined( 'FUSION_BUILDER_PLUGIN_DIR' ) && false !== strpos( $asset[1], FUSION_BUILDER_PLUGIN_URL ) )
-					? str_replace( FUSION_BUILDER_PLUGIN_URL, FUSION_BUILDER_PLUGIN_DIR, $asset[1] )
-					: str_replace( get_template_directory_uri(), get_template_directory(), $asset[1] );
-			} else {
-				$path = $asset[1];
-			}
+			$path = ( defined( 'FUSION_BUILDER_PLUGIN_URL' ) && defined( 'FUSION_BUILDER_PLUGIN_DIR' ) && false !== strpos( $asset[1], FUSION_BUILDER_PLUGIN_URL ) )
+				? str_replace( FUSION_BUILDER_PLUGIN_URL, FUSION_BUILDER_PLUGIN_DIR, $asset[1] )
+				: str_replace( get_template_directory_uri(), get_template_directory(), $asset[1] );
 			$path = wp_normalize_path( $path );
 
 			// Add the contents of the file to $styles.
@@ -148,8 +143,8 @@ class Fusion_Media_Query_Scripts {
 	 * @static`
 	 * @access public
 	 * @since 2.0
-	 * @param string $key  The media-query key.
-	 * @return string|null The media-query. Null if $key don't exist.
+	 * @param string $key The media-query key.
+	 * @return string     The media-query.
 	 */
 	public static function get_media_query_from_key( $key ) {
 
@@ -182,10 +177,10 @@ class Fusion_Media_Query_Scripts {
 		}
 
 		// Get sidebar_break_point.
-		$sidebar_break_point = (int) fusion_library()->get_option( 'sidebar_break_point' );
-
-		$visibility_small  = (int) fusion_library()->get_option( 'visibility_small' ) . 'px';
-		$visibility_medium = (int) fusion_library()->get_option( 'visibility_medium' ) . 'px';
+		$sidebar_break_point = 800;
+		if ( class_exists( 'Avada' ) ) {
+			$sidebar_break_point = (int) fusion_library()->get_option( 'sidebar_break_point' );
+		}
 
 		// Columns.
 		$breakpoint_interval = (int) ( $breakpoint_range / 5 );
@@ -352,39 +347,7 @@ class Fusion_Media_Query_Scripts {
 						'max-width' => '782px',
 					]
 				);
-			case 'fusion-min-never':
-				return self::get_media_query(
-					[
-						'min-width' => '1px',
-					]
-				);
-			case 'fusion-min-small':
-				return self::get_media_query(
-					[
-						'min-width' => $visibility_small,
-					]
-				);
-			case 'fusion-min-medium':
-				return self::get_media_query(
-					[
-						'min-width' => $visibility_medium,
-					]
-				);
-			case 'fusion-max-small':
-				return self::get_media_query(
-					[
-						'max-width' => $visibility_small,
-					]
-				);
-			case 'fusion-max-medium':
-				return self::get_media_query(
-					[
-						'max-width' => $visibility_medium,
-					]
-				);              
 		}
-
-		return null;
 	}
 
 	/**

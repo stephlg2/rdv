@@ -448,7 +448,10 @@ $form_unique_id = 'devis-pro-form-' . uniqid();
                     }
                 } else {
                     // Afficher l'erreur
-                    alert(data.data || 'Une erreur est survenue');
+                    var errorMessage = (typeof data.data === 'string')
+                        ? data.data
+                        : (data.data && data.data.message ? data.data.message : 'Une erreur est survenue');
+                    alert(errorMessage);
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = originalBtnText;

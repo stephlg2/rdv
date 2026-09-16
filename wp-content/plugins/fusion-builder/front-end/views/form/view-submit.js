@@ -25,7 +25,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
                 }
 
                 // Create attribute
-                attributes.html = this.generateFormFieldHtml( this.btnInstance.render().$el.html() );
+                attributes.html = this.btnInstance.render().$el.html();
 
 				return attributes;
 			}

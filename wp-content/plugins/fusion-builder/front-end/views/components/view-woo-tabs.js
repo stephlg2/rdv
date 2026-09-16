@@ -41,6 +41,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Any extras that need passed on.
 				attributes.cid         = this.model.get( 'cid' );
 				attributes.wrapperAttr = this.buildAttr( atts.values );
+				attributes.styles      = this.buildStyleBlock( atts.values );
 				attributes.output      = this.buildOutput( atts );
 
 				return attributes;
@@ -59,14 +60,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						style: ''
 					} );
 
-				attr.style += this.getStyleVariables( values );
-
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
 				}
 
-				if ( '' !== values.layout ) {
-					attr[ 'class' ] += ' woo-tabs-' + values.layout;
+				if ( 'horizontal' === values.layout ) {
+					attr[ 'class' ] += ' woo-tabs-horizontal';
 				}
 
 				if ( '' !== values.id ) {
@@ -113,68 +112,126 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			/**
-			 * Gets style variables.
+			 * Builds styles.
 			 *
-			 * @since 3.9
+			 * @since  3.2
 			 * @param  {Object} values - The values object.
 			 * @return {String}
 			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
+			buildStyleBlock: function( values ) {
+				var self = this,
+					titleSelectors,
+					css,
+					headingStyles = {},
+					textStyles = {};
 
-				// Text typography.
-				jQuery.each( _.fusionGetFontStyle( 'text_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'text-' + rule ] = value;
+				this.baseSelector = '.fusion-woo-tabs-tb.fusion-woo-tabs-tb-' + this.model.get( 'cid' );
+				this.dynamic_css  = {};
+
+				jQuery.each( [ 'top', 'right', 'bottom', 'left' ], function( index, side ) {
+					var marginName = 'margin_' + side;
+
+					// Element margin.
+					if ( '' !==  values[ marginName ] ) {
+						self.addCssProperty( self.baseSelector, 'margin-' + side,  _.fusionGetValueWithUnit( values[ marginName ] ) );
+					}
 				} );
 
-				// Text typography.
-				jQuery.each( _.fusionGetFontStyle( 'title_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'title-' + rule ] = value;
+				if ( ! this.isDefault( 'backgroundcolor' ) ) {
+					this.addCssProperty( this.baseSelector + ' .wc-tabs > li.active > a', 'background-color',  this.values.backgroundcolor );
+					this.addCssProperty( this.baseSelector + ' .wc-tabs > li > a:hover', 'background-color',  this.values.backgroundcolor );
+					this.addCssProperty( this.baseSelector + ' .woocommerce-Tabs-panel', 'background-color',  this.values.backgroundcolor );
+				}
+
+				if ( ! this.isDefault( 'inactivebackgroundcolor' ) ) {
+					this.addCssProperty( this.baseSelector + ' .wc-tabs > li > a', 'background-color',  this.values.inactivebackgroundcolor );
+				}
+
+				if ( ! this.isDefault( 'active_nav_text_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .wc-tabs > li.active > a', 'color',  this.values.active_nav_text_color );
+					this.addCssProperty( this.baseSelector + ' .wc-tabs > li > a:hover', 'color',  this.values.active_nav_text_color );
+				}
+
+				if ( ! this.isDefault( 'inactive_nav_text_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .wc-tabs > li > a', 'color',  this.values.inactive_nav_text_color );
+				}
+
+				if ( ! this.isDefault( 'bordercolor' ) ) {
+
+					if ( 'horizontal' === values.layout ) {
+						this.addCssProperty( this.baseSelector + '.woo-tabs-horizontal .woocommerce-tabs > .tabs .active', 'border-color',  this.values.bordercolor );
+						this.addCssProperty( this.baseSelector + '.woo-tabs-horizontal .woocommerce-tabs > .tabs', 'border-color',  this.values.bordercolor );
+					} else {
+						this.addCssProperty( this.baseSelector + ' .woocommerce-tabs .tabs li a', 'border-color',  this.values.bordercolor );
+					}
+					this.addCssProperty( this.baseSelector + ' .woocommerce-tabs .panel', 'border-color',  this.values.bordercolor );
+					this.addCssProperty( this.baseSelector + ' .woocommerce-tabs .panel .shop_attributes tr', 'border-color',  this.values.bordercolor );
+				}
+
+				// Text styles.
+				if ( ! this.isDefault( 'text_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .woocommerce-tabs .panel', 'color',  this.values.text_color );
+					this.addCssProperty( this.baseSelector + ' .woocommerce-tabs .panel .shop_attributes th', 'color',  this.values.text_color );
+					this.addCssProperty( '#wrapper ' + this.baseSelector + ' .meta', 'color',  this.values.text_color );
+					this.addCssProperty( [ this.baseSelector + ' .stars a', this.baseSelector + ' .stars a:after' ], 'color',  this.values.text_color );
+				}
+
+				if ( ! this.isDefault( 'text_font_size' ) ) {
+					this.addCssProperty( this.baseSelector + ' .woocommerce-tabs .panel', 'font-size',  _.fusionGetValueWithUnit( this.values.text_font_size ) );
+				}
+
+				// Text typography styles.
+				textStyles = _.fusionGetFontStyle( 'text_font', values, 'object' );
+				jQuery.each( textStyles, function( rule, value ) {
+					self.addCssProperty( self.baseSelector + ' .woocommerce-tabs .panel', rule, value );
 				} );
 
-				if ( 'vertical' === values.layout && ! this.isDefault( 'nav_content_space' ) ) {
-					customVars.nav_content_space = 'calc(220px + ' + _.fusionGetValueWithUnit( values.nav_content_space ) + ')';
-				}
-
-				if ( 'string' === typeof values.text_color && '' !== values.text_color ) {
-					customVars.stars_default_color = values.text_color;
-				}
-
-				cssVarsOptions = [
-					'backgroundcolor',
-					'inactivebackgroundcolor',
-					'active_nav_text_color',
-					'inactive_nav_text_color',
-					'bordercolor',
-					'text_color',
-					'title_color',
-					'stars_color',
-					'text_line_height',
-					'text_text_transform',
-					'title_line_height',
-					'title_text_transform'
+				// Title styles.
+				titleSelectors = [
+					'#wrapper ' + this.baseSelector + ' #tab-reviews #reviews .woocommerce-Reviews-title',
+					'#wrapper ' + this.baseSelector + ' .woocommerce-Tabs-panel .fusion-woocommerce-tab-title'
 				];
+				if ( ! this.isDefault( 'title_color' ) ) {
+					this.addCssProperty( titleSelectors, 'color',  this.values.title_color );
+				}
 
-				cssVarsOptions.margin_bottom          = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_left            = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_right           = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top             = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_font_size         = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.text_letter_spacing    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_font_size        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_letter_spacing   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_top    = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_right  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_bottom = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_padding_left   = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.nav_padding_top        = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.nav_padding_right      = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.nav_padding_bottom     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.nav_padding_left       = { 'callback': _.fusionGetValueWithUnit };
+				if ( ! this.isDefault( 'title_font_size' ) ) {
+					this.addCssProperty( titleSelectors, 'font-size', _.fusionGetValueWithUnit( this.values.title_font_size ) );
+				}
 
+				// Title typography styles.
+				headingStyles = _.fusionGetFontStyle( 'title_font', values, 'object' );
+				jQuery.each( headingStyles, function( rule, value ) {
+					self.addCssProperty( titleSelectors, rule, value );
+				} );
 
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
+				if ( 'vertical' === this.values.layout && ! this.isDefault( 'nav_content_space' ) ) {
+					this.addCssProperty( this.baseSelector + ' .woocommerce-tabs .panel', 'margin-left', 'calc(220px + ' + _.fusionGetValueWithUnit( this.values.nav_content_space ) + ')' );
+				}
+
+				// Stars color.
+				if ( ! this.isDefault( 'stars_color' ) ) {
+					this.addCssProperty( this.baseSelector + ' .comment-text .star-rating:before', 'color',  this.values.stars_color );
+					this.addCssProperty( this.baseSelector + ' .comment-text .star-rating span:before', 'color',  this.values.stars_color );
+				}
+
+				// Get padding.
+				jQuery.each( [ 'top', 'right', 'bottom', 'left' ], function( index, padding ) {
+					var content_padding_name = 'content_padding_' + padding,
+						nav_padding_name = 'nav_padding_' + padding;
+
+					// Add content padding to style.
+					if ( '' !==  self.values[ content_padding_name ] ) {
+						self.addCssProperty( self.baseSelector + ' .woocommerce-tabs .panel', 'padding-' + padding,  _.fusionGetValueWithUnit( self.values[ content_padding_name ] ) );
+					}
+
+					if ( '' !==  self.values[ nav_padding_name ] ) {
+						self.addCssProperty( self.baseSelector + ' .woocommerce-tabs .tabs li a', 'padding-' + padding,  _.fusionGetValueWithUnit( self.values[ nav_padding_name ] ) );
+					}
+				} );
+
+				css = this.parseCSS();
+				return ( css ) ? '<style>' + css + '</style>' : '';
 			}
 		} );
 	} );

@@ -11,29 +11,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 	FusionPageBuilder.Layouts = Backbone.Model.extend( {
 		defaults: {
 			type: 'layouts'
-		},
-
-		/**
-		 * Ajax handler
-		 *
-		 * @since 2.2
-		 * @param {Object} data
-		 * @param {Function} callback
-		 * @return {Void}.
-		 */
-		doAjax: function( data, callback ) {
-			jQuery.ajax( {
-				type: 'POST',
-				url: ajaxurl,
-				dataType: 'json',
-				data: data,
-				complete: function( response ) {
-					if ( response.success ) {
-						return callback( response.responseJSON );
-					}
-					return callback( null, response );
-				}
-			} );
 		}
 	} );
 
@@ -206,52 +183,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		 * @return {Object} this.
 		 */
 		render: function() {
-			var self              = this,
-				$layouts          = {},
-				$layoutOrderInput = {};
-
 			this.$el.html( this.template() );
 			this.addLayouts();
-
-			$layouts          = this.$el.find( '.fusion-layouts-grid' );
-			$layoutOrderInput = jQuery( '.avada-db-layouts' ).find( '.awb-layout-order' );
-
-			$layouts.sortable( {
-				items: '> div:not(.awb-layout-not-sortable)',
-				placeholder: 'awb-layout-placeholder',
-				tolerance: 'pointer',
-				cursor: 'grab',
-				opacity: '0.8',
-				stop: function() {
-					var layoutOrder = '',
-						data = {};
-
-					$layouts.find( '.fusion-layout' ).each( function() {
-						layoutOrder += jQuery( this ).data( 'id' ) + ',';
-					} );
-
-					$layoutOrderInput.val( layoutOrder.slice( 0, -1 ) );
-
-					data = {
-						action: 'awb_save_layout_order',
-						awb_layout_order: $layoutOrderInput.val(),
-						security: jQuery( '.fusion-template-builder #_wpnonce' ).val()
-					};
-
-					self.model.doAjax( data, function( response ) {
-						if ( response.success ) {
-							console.log( 'Layout Order Saved' );
-						}
-					} );
-				}
-			} );
-			$layouts.disableSelection();
-
 			return this;
 		},
 
 		/**
-		 * Create view for each layout and append.
+		 * Create view for each  layout and append.
 		 *
 		 * @since 2.0.0
 		 * @return {void}
@@ -269,14 +207,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				self.layouts[ layoutSettings.cid ] 	= layoutSettings;
 				$layouts.append( view.render().el );
 			} );
-
-			setTimeout( function() {
-				if ( jQuery( '.awb-layout-highlight' ).length ) {
-					jQuery( 'html, body' ).animate( {
-						scrollTop: jQuery( '.awb-layout-highlight' ).offset().top - jQuery( '#wpadminbar' ).height() - jQuery( '.avada-db-menu-sticky' ).height() - 15
-					}, 250 );
-				}
-			}, 100 );
 		}
 	} );
 

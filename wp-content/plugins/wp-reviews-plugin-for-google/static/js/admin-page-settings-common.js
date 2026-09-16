@@ -18,6 +18,13 @@ function popupCenter(w, h)
 	return ',top=' + top + ',left=' + left;
 }
 
+function decodeHtmlEntities(value) {
+	let textarea = document.createElement('textarea');
+	textarea.innerHTML = value;
+
+	return textarea.value;
+}
+
 jQuery.fn.expand = function() {
 	let textarea = jQuery(this);
 	let val = textarea.val();
@@ -615,6 +622,47 @@ jQuery(document).ready(function() {
 			}
 		});
 	});
+
+	/*************************************************************************/
+	/* Sales Widget Preview */
+	document.addEventListener('click', function (event) {
+		let trigger = event.target.closest('.ti-sales-widget-row-title');
+		let targetIsTrigger = false;
+
+		document.querySelectorAll('.ti-sales-widget-preview.is-active').forEach(item => {
+			if (item.closest('.ti-sales-widget-row-title') === trigger) {
+				targetIsTrigger = true;
+			}
+
+			item.classList.remove('is-active');
+		});
+
+		if (trigger && !targetIsTrigger) {
+			event.preventDefault();
+
+			let currentPreview = trigger.closest('.ti-sales-widget-row').querySelector('.ti-sales-widget-preview');
+			currentPreview.classList.toggle('is-active');
+		}
+	});
+
+	/*************************************************************************/
+	/* Wordpress Source Connect on Admin Page */
+	document.addEventListener('click', function (event) {
+		if (event.target.matches('a[href*="trustindex"][href*="a=sys&c="]')) {
+			let sourceDataScript = document.getElementById('ti-plugin-source-data');
+			if (sourceDataScript) {
+				let jsonStr = JSON.parse(sourceDataScript.innerHTML).data;
+				let data = JSON.parse(decodeHtmlEntities(jsonStr));
+
+				if ('Google' === data.platform) {
+					data.redirect = event.target.href;
+
+					event.preventDefault();
+					window.location.href = 'https://admin.trustindex.io/wp-plugin-source.html#' + encodeURIComponent(JSON.stringify(data));
+				}
+			}
+		}
+	});
 });
 
 
@@ -742,6 +790,27 @@ jQuery(document).on('click', '.btn-send-feature-request', function(event) {
 
 // - import/rate-us.js
 // remember on hover
+(function() {
+	setTimeout(() => {
+		let quickRating = document.querySelector('.ti-quick-rating');
+		if (quickRating) {
+			for (let i = 0; i < 5; i++) {
+				setTimeout(() => {
+					let star = quickRating.querySelector('.ti-quick-rating .ti-star-check[data-value="'+ (i+1) +'"]');
+					let prevStar = quickRating.querySelector('.ti-quick-rating .ti-star-check[data-value="'+ i +'"]')
+					star.classList.add('ti-active')
+					prevStar?.classList.remove('ti-active');
+				}, i * 200);
+			}
+			quickRating.addEventListener(
+				'mouseleave',
+				() => quickRating.querySelector('.ti-star-check.ti-active').classList.remove('ti-active'),
+				{once: true}
+			);
+		}
+	}, 1000);
+})();
+
 jQuery(document).on('mouseenter', '.ti-quick-rating', function(event) {
 	let container = jQuery(this);
 	let selected = container.find('.ti-star-check.ti-active, .star-check.active');
@@ -751,6 +820,7 @@ jQuery(document).on('mouseenter', '.ti-quick-rating', function(event) {
 		container.data('selected', selected.index()).find('.ti-star-check, .star-check').removeClass('ti-active active');
 
 		// give back active star on mouse enter
+		console.log(container.data('selected'));
 		container.one('mouseleave', () => container.find('.ti-star-check, .star-check').eq(container.data('selected')).addClass('ti-active active'));
 	}
 });

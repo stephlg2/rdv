@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 		class FusionSC_WooFeaturedProductsSlider extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 1.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * Constructor.
 			 *
 			 * @access public
@@ -42,10 +51,6 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 			 */
 			public static function get_element_defaults() {
 				return [
-					'margin_top'      => '',
-					'margin_right'    => '',
-					'margin_bottom'   => '',
-					'margin_left'     => '',
 					'hide_on_mobile'  => fusion_builder_default_visibility( 'string' ),
 					'class'           => '',
 					'id'              => '',
@@ -83,7 +88,7 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 			 * @return array
 			 */
 			public static function get_element_extras() {
-				$fusion_settings = awb_get_fusion_settings();
+				$fusion_settings = fusion_get_fusion_settings();
 				return [
 					'design_class' => $fusion_settings->get( 'woocommerce_product_box_design', false, 'classic' ),
 				];
@@ -128,6 +133,7 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 			 * @return array|Object
 			 */
 			public function query( $defaults ) {
+				global $fusion_settings;
 				$live_request = false;
 
 				// From Ajax Request.
@@ -188,18 +194,14 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 					];
 				}
 
-				if ( $live_request ) {
-					// Ajax returns protected posts, but we just want published.
-					$defaults['post_status'] = 'publish';
+				if ( ! $live_request ) {
+					return fusion_cached_query( $defaults );
 				}
+
+				// Ajax returns protected posts, but we just want published.
+				$defaults['post_status'] = 'publish';
 
 				$products = fusion_cached_query( $defaults );
-
-				fusion_library()->woocommerce->remove_post_clauses( $defaults['orderby'], $defaults['order'] );
-
-				if ( ! $live_request ) {
-					return $products;
-				}
 
 				if ( ! $products->have_posts() ) {
 					$return_data['placeholder'] = fusion_builder_placeholder( 'product', 'products' );
@@ -243,14 +245,13 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 			 * @return string         HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				$fusion_settings = awb_get_fusion_settings();
+				global $fusion_settings;
 
 				$html = '';
 
 				if ( class_exists( 'Woocommerce' ) ) {
 
-					$this->defaults = self::get_element_defaults();
-					$defaults       = FusionBuilder::set_shortcode_defaults( $this->defaults, $args, 'fusion_featured_products_slider' );
+					$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_featured_products_slider' );
 
 					$defaults['column_spacing'] = FusionBuilder::validate_shortcode_attr_value( $defaults['column_spacing'], '' );
 
@@ -260,16 +261,13 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 
 					$products = $this->query( $defaults );
 
-					$this->args = $defaults;
+					extract( $defaults );
 
-					$this->args['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_bottom'], 'px' );
-					$this->args['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_left'], 'px' );
-					$this->args['margin_right']  = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_right'], 'px' );
-					$this->args['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_top'], 'px' );
+					$this->args = $defaults;
 
 					$design_class = 'fusion-' . $fusion_settings->get( 'woocommerce_product_box_design', false, 'classic' ) . '-product-image-wrapper';
 
-					$featured_image_size = ( 'fixed' === $this->args['picture_size'] ) ? 'woocommerce_single' : 'full';
+					$featured_image_size = ( 'fixed' === $picture_size ) ? 'shop_single' : 'full';
 
 					if ( ! $products->have_posts() ) {
 						return fusion_builder_placeholder( 'product', 'products' );
@@ -290,25 +288,24 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 								'post_featured_image_size' => $featured_image_size,
 								'post_permalink'           => get_permalink( get_the_ID() ),
 								'display_placeholder_image' => true,
-								'display_woo_sale'         => 'yes' === $this->args['show_sale'] ? true : false,
-								'display_woo_outofstock'   => 'include' === $this->args['out_of_stock'] ? true : false,
-								'display_woo_buttons'      => $this->args['show_buttons'],
+								'display_woo_sale'         => $show_sale,
+								'display_woo_buttons'      => $show_buttons,
 							];
 
-							if ( 'auto' === $this->args['picture_size'] ) {
+							if ( 'auto' === $picture_size ) {
 								fusion_library()->images->set_grid_image_meta(
 									[
 										'layout'       => 'grid',
-										'columns'      => $this->args['columns'],
-										'gutter_width' => $this->args['column_spacing'],
+										'columns'      => $columns,
+										'gutter_width' => $column_spacing,
 									]
 								);
 							}
 
 							// Title on rollover layout.
-							if ( 'title_on_rollover' === $this->args['carousel_layout'] ) {
-								$image_args['display_woo_price']       = $this->args['show_price'];
-								$image_args['display_post_categories'] = $this->args['show_cats'];
+							if ( 'title_on_rollover' === $carousel_layout ) {
+								$image_args['display_woo_price']       = $show_price;
+								$image_args['display_post_categories'] = $show_cats;
 								$image                                 = avada_first_featured_image_markup( $image_args );
 								// Title below image layout.
 							} else {
@@ -316,7 +313,7 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 								$image_args['display_post_categories'] = 'disable';
 								$image_args['display_post_title']      = 'disable';
 
-								if ( true === $this->args['show_buttons'] ) {
+								if ( true === $show_buttons ) {
 									$image .= avada_first_featured_image_markup( $image_args );
 								} else {
 									$image_args['display_rollover'] = 'no';
@@ -330,12 +327,12 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 								$image .= '<div class="fusion-carousel-meta">';
 
 								// Get the terms.
-								if ( 'enable' === $this->args['show_cats'] ) {
+								if ( 'enable' === $show_cats ) {
 									$image .= get_the_term_list( get_the_ID(), 'product_cat', '', ', ', '' );
 								}
 
 								// Check if we should render the woo product price.
-								if ( $this->args['show_price'] ) {
+								if ( $show_price ) {
 									ob_start();
 									do_action( 'fusion_woocommerce_after_shop_loop_item' );
 									$image .= ob_get_clean();
@@ -348,7 +345,7 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 								$image .= '</div>';
 							}
 
-							if ( 'auto' === $this->args['picture_size'] ) {
+							if ( 'auto' === $picture_size ) {
 								fusion_library()->images->set_grid_image_meta( [] );
 							} else {
 								// Disable quick view.
@@ -357,9 +354,9 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 							}
 
 							if ( $in_cart ) {
-								$product_list .= '<div ' . FusionBuilder::attributes( 'swiper-slide' ) . '><div class="' . $design_class . ' fusion-item-in-cart"><div ' . FusionBuilder::attributes( 'fusion-carousel-item-wrapper' ) . '>' . $image . '</div></div></div>';
+								$product_list .= '<li ' . FusionBuilder::attributes( 'fusion-carousel-item' ) . '><div class="' . $design_class . ' fusion-item-in-cart"><div ' . FusionBuilder::attributes( 'fusion-carousel-item-wrapper' ) . '>' . $image . '</div></div></li>';
 							} else {
-								$product_list .= '<div ' . FusionBuilder::attributes( 'swiper-slide' ) . '><div class="' . $design_class . '"><div ' . FusionBuilder::attributes( 'fusion-carousel-item-wrapper' ) . '>' . $image . '</div></div></div>';
+								$product_list .= '<li ' . FusionBuilder::attributes( 'fusion-carousel-item' ) . '><div class="' . $design_class . '"><div ' . FusionBuilder::attributes( 'fusion-carousel-item-wrapper' ) . '>' . $image . '</div></div></li>';
 							}
 						}
 					}
@@ -368,13 +365,15 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 
 					$html  = '<div ' . FusionBuilder::attributes( 'woo-featured-products-slider-shortcode' ) . '>';
 					$html .= '<div ' . FusionBuilder::attributes( 'woo-featured-products-slider-shortcode-carousel' ) . '>';
-					$html .= '<div ' . FusionBuilder::attributes( 'swiper-wrapper' ) . '>';
+					$html .= '<div ' . FusionBuilder::attributes( 'fusion-carousel-positioner' ) . '>';
+					$html .= '<ul ' . FusionBuilder::attributes( 'fusion-carousel-holder' ) . '>';
 					$html .= $product_list;
-					$html .= '</div>';
+					$html .= '</ul>';
 					// Check if navigation should be shown.
-					if ( 'yes' === $this->args['show_nav'] ) {
-						$html .= awb_get_carousel_nav();
+					if ( 'yes' === $show_nav ) {
+						$html .= '<div ' . FusionBuilder::attributes( 'fusion-carousel-nav' ) . '><span ' . FusionBuilder::attributes( 'fusion-nav-prev' ) . '></span><span ' . FusionBuilder::attributes( 'fusion-nav-next' ) . '></span></div>';
 					}
+					$html .= '</div>';
 					$html .= '</div>';
 					$html .= '</div>';
 
@@ -399,11 +398,8 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 					$this->args['hide_on_mobile'],
 					[
 						'class' => 'fusion-woo-featured-products-slider fusion-woo-slider',
-						'style' => '',
 					]
 				);
-
-				$attr['style'] .= $this->get_style_variables();
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -418,40 +414,6 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 			}
 
 			/**
-			 * Get the style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_style_variables() {
-				$css_vars_options = [
-					'margin_top'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'   => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				return $this->get_css_vars_for_options( $css_vars_options );
-			}
-
-			/**
-			 * Get the carousel style variables.
-			 *
-			 * @access protected
-			 * @since 3.9
-			 * @return string
-			 */
-			public function get_carousel_style_variables() {
-				$css_vars_options = [
-					'columns',
-					'column_spacing' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-				];
-
-				return $this->get_css_vars_for_options( $css_vars_options );
-			}
-
-			/**
 			 * Builds the carousel attributes.
 			 *
 			 * @access public
@@ -461,8 +423,7 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 			public function carousel_attr() {
 
 				$attr = [
-					'class' => 'awb-carousel awb-swiper awb-swiper-carousel',
-					'style' => $this->get_carousel_style_variables(),
+					'class' => 'fusion-carousel',
 				];
 
 				if ( 'title_below_image' === $this->args['carousel_layout'] ) {
@@ -491,7 +452,7 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 			 * @return void
 			 */
 			public function on_first_render() {
-				Fusion_Dynamic_JS::enqueue_script( 'awb-carousel' );
+				Fusion_Dynamic_JS::enqueue_script( 'fusion-carousel' );
 			}
 
 			/**
@@ -519,35 +480,6 @@ if ( fusion_is_element_enabled( 'fusion_featured_products_slider' ) && class_exi
 function fusion_element_featured_products_slider() {
 	if ( class_exists( 'WooCommerce' ) ) {
 		$lookup_table_link = admin_url( 'admin.php?page=wc-status&tab=tools' );
-		$builder_status    = function_exists( 'is_fusion_editor' ) && is_fusion_editor();
-
-		$product_cat = $builder_status ? fusion_builder_shortcodes_categories( 'product_cat', false, false, 26 ) : [];
-
-		$cat_include = [
-			'type'        => 'multiple_select',
-			'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
-			'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
-			'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
-			'param_name'  => 'cat_slug',
-			'value'       => $product_cat,
-			'default'     => '',
-			'callback'    => [
-				'function' => 'fusion_ajax',
-				'action'   => 'get_fusion_featured_products',
-				'ajax'     => true,
-			],
-		];
-
-		if ( count( $product_cat ) > 25 ) {
-			$cat_include['type']        = 'ajax_select';
-			$cat_include['ajax']        = 'fusion_search_query';
-			$cat_include['value']       = [];
-			$cat_include['ajax_params'] = [
-				'taxonomy'  => 'product_cat',
-				'use_slugs' => true,
-			];
-		}
-
 		fusion_builder_map(
 			fusion_builder_frontend_data(
 				'FusionSC_WooFeaturedProductsSlider',
@@ -555,7 +487,7 @@ function fusion_element_featured_products_slider() {
 					'name'      => esc_attr__( 'Woo Featured Products Slider', 'fusion-builder' ),
 					'shortcode' => 'fusion_featured_products_slider',
 					'icon'      => 'fusiona-star-empty',
-					'help_url'  => 'https://avada.com/documentation/woocommerce-featured-products-slider-element/',
+					'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/woocommerce-featured-products-slider-element/',
 					'params'    => [
 						[
 							'type'        => 'radio_button_set',
@@ -568,9 +500,20 @@ function fusion_element_featured_products_slider() {
 							],
 							'default'     => 'fixed',
 						],
-
-						$cat_include,
-
+						[
+							'type'        => 'multiple_select',
+							'heading'     => esc_attr__( 'Categories', 'fusion-builder' ),
+							'placeholder' => esc_attr__( 'Categories', 'fusion-builder' ),
+							'description' => esc_attr__( 'Select a category or leave blank for all.', 'fusion-builder' ),
+							'param_name'  => 'cat_slug',
+							'value'       => fusion_builder_shortcodes_categories( 'product_cat' ),
+							'default'     => '',
+							'callback'    => [
+								'function' => 'fusion_ajax',
+								'action'   => 'get_fusion_featured_products',
+								'ajax'     => true,
+							],
+						],
 						[
 							'type'        => 'range',
 							'heading'     => esc_attr__( 'Number of Products', 'fusion-builder' ),
@@ -777,16 +720,6 @@ function fusion_element_featured_products_slider() {
 							],
 							'default'     => 'yes',
 						],
-						'fusion_margin_placeholder' => [
-							'param_name' => 'margin',
-							'group'      => esc_attr__( 'General', 'fusion-builder' ),
-							'value'      => [
-								'margin_top'    => '',
-								'margin_right'  => '',
-								'margin_bottom' => '',
-								'margin_left'   => '',
-							],
-						],
 						[
 							'type'        => 'checkbox_button_set',
 							'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
@@ -822,4 +755,4 @@ function fusion_element_featured_products_slider() {
 		);
 	}
 }
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_featured_products_slider' );
+add_action( 'wp_loaded', 'fusion_element_featured_products_slider' );

@@ -17,6 +17,15 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 		class FusionSC_Widget extends Fusion_Element {
 
 			/**
+			 * An array of the shortcode arguments.
+			 *
+			 * @access protected
+			 * @since 2.2.0
+			 * @var array
+			 */
+			protected $args;
+
+			/**
 			 * The widget counter.
 			 *
 			 * @access private
@@ -122,6 +131,10 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 			 */
 			public function preview_styles( $hook ) {
 				wp_enqueue_style( 'wp-mediaelement' );
+
+				if ( class_exists( 'Tribe__Events__Pro__Widgets' ) ) {
+					Tribe__Events__Pro__Widgets::enqueue_calendar_widget_styles();
+				}
 			}
 
 			/**
@@ -174,13 +187,7 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 						var js, fjs = d.getElementsByTagName(s)[0];
 						if (d.getElementById(id)) return;
 						js = d.createElement(s); js.id = id;
-
-						let lang = 'en_US';
-						const el = document.querySelector('.fusion-facebook-page');
-						if ( el ) {
-							lang = el.dataset.language;
-						}
-						js.src = "https://connect.facebook.net/"+ lang +"/sdk.js#xfbml=1&version=v2.11&appId=";
+						js.src = "https://connect.facebook.net/<?php echo esc_attr( get_locale() ); ?>/sdk.js#xfbml=1&version=v2.11&appId=";
 						fjs.parentNode.insertBefore(js, fjs);
 					}(document, 'script', 'facebook-jssdk'));
 				</script>
@@ -192,14 +199,13 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 			 *
 			 * @access public
 			 * @since 2.2.0
-			 * @param  array $instance The widget instance.
 			 * @return array
 			 */
-			public function attr( $instance ) {
-				$attr = [
-					'class' => 'fusion-widget fusion-widget-element fusion-widget-area fusion-content-widget-area ' . $this->element_id,
-					'style' => '',
-				];
+			public function attr() {
+				$attr   = [];
+				$styles = '';
+
+				$attr['class'] = 'fusion-widget fusion-widget-element fusion-widget-area fusion-content-widget-area ' . $this->element_id;
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -213,25 +219,21 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 					$attr['class'] .= ' fusion-widget-mobile-align-' . $this->args['fusion_align_mobile'];
 				}
 
-				if ( '' !== $this->args['type'] ) {
-					$attr['class'] .= ' ' . strtolower( $this->args['type'] );
-				}
-
-				if ( 'Fusion_Widget_Vertical_Menu' === $this->args['type'] ) {
-					if ( isset( $instance['border_color'] ) && ! isset( $this->args['fusion_divider_color'] ) ) {
-						$this->args['fusion_divider_color'] = $instance['border_color'];
-					}
-
-					if ( '' === $this->args['fusion_divider_color'] ) {
-						$attr['class'] .= ' no-divider-color';
-					}
-				}
-
 				$attr = fusion_builder_visibility_atts( $this->args['hide_on_mobile'], $attr );
 
 				$attr['id'] = $this->args['id'];
 
-				$attr['style'] .= $this->get_style_variables( $instance );
+				$styles .= ( $this->args['fusion_bg_color'] ) ? 'background-color:' . $this->args['fusion_bg_color'] . ';' : '';
+				$styles .= ( $this->args['fusion_padding_color'] ) ? 'padding:' . $this->args['fusion_padding_color'] . ';' : '';
+				$styles .= ( $this->args['fusion_border_size'] ) ? 'border-width:' . $this->args['fusion_border_size'] . ';' : '';
+				$styles .= ( $this->args['fusion_border_color'] ) ? 'border-color:' . $this->args['fusion_border_color'] . ';' : '';
+				$styles .= ( $this->args['fusion_border_style'] && '' !== $this->args['fusion_border_size'] ) ? 'border-style:' . $this->args['fusion_border_style'] . ';' : '';
+				$styles .= ( $this->args['fusion_bg_radius_size'] ) ? 'border-radius:' . $this->args['fusion_bg_radius_size'] . ';' : '';
+				$styles .= ( $this->args['fusion_margin'] ) ? 'margin:' . $this->args['fusion_margin'] . ';' : '';
+
+				if ( $styles ) {
+					$attr['style'] = $styles;
+				}
 
 				return $attr;
 			}
@@ -262,18 +264,14 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 			 * @return array              Returns $all_elements after modifications.
 			 */
 			public function map_style_options_to_params( $all_elements ) {
-				if ( ! class_exists( 'AWB_Widget_Style' ) ) {
+				if ( ! class_exists( 'Avada' ) || ! class_exists( 'Avada_Widget_Style' ) ) {
 					return $all_elements;
 				}
 
-				$style_options = AWB_Widget_Style::get_instance()->widget_options;
+				$style_options = Avada_Widget_Style::get_instance()->widget_options;
 				$widget_styles = [];
 
 				foreach ( $style_options as $option ) {
-
-					if ( 'fusion_margin' === $option['key'] ) {
-						continue;
-					}
 
 					if ( 'text' === $option['type'] ) {
 						$option['type'] = 'textfield';
@@ -326,6 +324,8 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 			public function events_pro_scripts( $classname ) {
 				$url = '';
 
+				add_action( 'tribe_events_pro_widget_render', [ 'Tribe__Events__Pro__Widgets', 'enqueue_calendar_widget_styles' ], 100 );
+
 				switch ( $classname ) {
 					case 'Tribe__Events__Pro__Countdown_Widget':
 						$url = tribe_events_pro_resource_url( 'widget-countdown.js' );
@@ -362,7 +362,7 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 				$widget    = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 				$params    = isset( $_POST['params'] ) ? stripslashes_deep( wp_unslash( $_POST['params'] ) ) : []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 				$widget_id = isset( $_POST['widget_id'] ) ? sanitize_text_field( wp_unslash( $_POST['widget_id'] ) ) : random_int( 100, 1000 );
-				$prefix    = str_replace( '\\', '_', strtolower( $widget ) ) . '__';
+				$prefix    = strtolower( $widget ) . '__';
 
 				if ( 'default' === $widget ) {
 					echo wp_json_encode( '' );
@@ -370,7 +370,7 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 				}
 
 				foreach ( $params as $key => $param ) {
-					if ( 0 === strpos( $key, $prefix ) ) {
+					if ( strpos( $key, $prefix ) === 0 ) {
 						$instance[ substr( $key, strlen( $prefix ) ) ] = 'off' === $param ? '' : $param;
 					}
 				}
@@ -403,10 +403,6 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 			 */
 			public static function get_element_defaults() {
 				return [
-					'margin_top'            => '',
-					'margin_right'          => '',
-					'margin_bottom'         => '',
-					'margin_left'           => '',
 					'hide_on_mobile'        => fusion_builder_default_visibility( 'string' ),
 					'class'                 => '',
 					'id'                    => '',
@@ -440,49 +436,48 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 			}
 
 			/**
-			 * Get the style variables.
+			 * Get the style tag with additional styles.
 			 *
-			 * @access protected
-			 * @since 3.9
+			 * @access public
+			 * @since 3.0
 			 * @param  array $instance The widget instance.
-			 * @return string
+			 * @return string The style tag with styles.
 			 */
-			protected function get_style_variables( $instance ) {
-				$custom_vars = [];
+			public function get_style_tag( $instance ) {
+				$divider_styles = '';
+				if ( isset( $this->args['fusion_divider_color'] ) && '' !== $this->args['fusion_divider_color'] ) {
+					$fusion_divider_color = Fusion_Sanitize::color( $this->args['fusion_divider_color'] );
+					$divider_styles       = '#wrapper .' . $this->element_id . ' li { border-color:' . $fusion_divider_color . ';}';
 
-				if ( 'Fusion_Widget_Vertical_Menu' === $this->args['type'] ) {
-					if ( isset( $instance['border_color'] ) && ! isset( $this->args['fusion_divider_color'] ) ) {
-						$this->args['fusion_divider_color'] = $instance['border_color'];
+					if ( 'WP_Widget_Tag_Cloud' === $this->args['type'] ) {
+						$divider_styles .= '#wrapper .' . $this->element_id . ' .tagcloud a { border-color:' . $fusion_divider_color . ';}';
+					} elseif ( 'Fusion_Widget_Menu' === $this->args['type'] ) {
+						$divider_styles .= '#wrapper .' . $this->element_id . ' .fusion-widget-menu ul li a:after { color:' . $fusion_divider_color . ';}';
 					}
 				}
 
-				if ( '' !== $this->args['fusion_divider_color'] ) {
-					$custom_vars['fusion_divider_color'] = Fusion_Sanitize::color( $this->args['fusion_divider_color'] );
+				// Special handling for vertical menu widget, to take into account the deprecated border_color option.
+				if ( 'Fusion_Widget_Vertical_Menu' === $this->args['type'] ) {
+					if ( isset( $instance['border_color'] ) && ! isset( $args['fusion_divider_color'] ) ) {
+						$this->args['fusion_divider_color'] = $instance['border_color'];
+					}
+
+					if ( '' !== $this->args['fusion_divider_color'] ) {
+						$fusion_divider_color = Fusion_Sanitize::color( $this->args['fusion_divider_color'] );
+
+						$divider_styles .= '#wrapper .' . $this->element_id . ' .menu { border-right-color:' . $fusion_divider_color . ' !important; border-top-color:' . $fusion_divider_color . ' !important;}';
+						$divider_styles .= '#wrapper .' . $this->element_id . ' .menu li a { border-bottom-color:' . $fusion_divider_color . ' !important; }';
+						$divider_styles .= '#wrapper .' . $this->element_id . ' .right .menu { border-left-color:' . $fusion_divider_color . ' !important; }';
+					} else {
+						$divider_styles .= '#wrapper .' . $this->element_id . ' > ul.menu { margin-top: -8px; }'; // phpcs:ignore WordPress.Security.EscapeOutput
+					}
 				}
 
-				if ( empty( $this->args['margin_top'] ) && empty( $this->args['margin_right'] ) && empty( $this->args['margin_bottom'] ) && empty( $this->args['margin_left'] ) && ! empty( $this->args['fusion_margin'] ) ) {
-					$this->args['margin_top']    = $this->args['fusion_margin'];
-					$this->args['margin_right']  = $this->args['fusion_margin'];
-					$this->args['margin_bottom'] = $this->args['fusion_margin'];
-					$this->args['margin_left']   = $this->args['fusion_margin'];
+				if ( ! empty( $divider_styles ) ) {
+					return '<style type="text/css" data-id="' . $this->element_id . '">' . $divider_styles . '</style>';
 				}
 
-				$css_vars_options = [
-					'margin_top'            => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_right'          => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_bottom'         => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'margin_left'           => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'fusion_padding_color'  => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'fusion_border_size'    => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'fusion_bg_radius_size' => [ 'callback' => [ 'Fusion_Sanitize', 'get_value_with_unit' ] ],
-					'fusion_bg_color'       => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'fusion_border_color'   => [ 'callback' => [ 'Fusion_Sanitize', 'color' ] ],
-					'fusion_border_style',
-				];
-
-				$styles = $this->get_css_vars_for_options( $css_vars_options ) . $this->get_custom_css_vars( $custom_vars );
-
-				return $styles;
+				return '';
 			}
 
 			/**
@@ -506,11 +501,6 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 				extract( $defaults );
 
 				$this->args = $defaults;
-
-				$this->args['margin_bottom'] = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_bottom'], 'px' );
-				$this->args['margin_left']   = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_left'], 'px' );
-				$this->args['margin_right']  = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_right'], 'px' );
-				$this->args['margin_top']    = FusionBuilder::validate_shortcode_attr_value( $this->args['margin_top'], 'px' );
 
 				$instance = [];
 
@@ -550,7 +540,11 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 					'widget_id'    => $this->widget_counter,
 				];
 
-				$html = '<div ' . FusionBuilder::attributes( 'widget-shortcode', $instance ) . '>';
+				$html = '<div ' . FusionBuilder::attributes( 'widget-shortcode' ) . '>';
+
+				if ( ! fusion_is_preview_frame() ) {
+					$html .= $this->get_style_tag( $instance );
+				}
 
 				fusion_element_rendering_elements( true );
 				if ( class_exists( 'Tribe__Events__Pro__Main' ) ) {
@@ -570,7 +564,7 @@ if ( fusion_is_element_enabled( 'fusion_widget' ) ) {
 
 				$this->on_render();
 
-				return apply_filters( 'fusion_element_widget_content', $html, $this->args );
+				return apply_filters( 'fusion_element_widget_content', $html, $args );
 			}
 
 			/**
@@ -611,7 +605,7 @@ function fusion_element_widget() {
 				'front_end_custom_settings_view_js' => FUSION_BUILDER_PLUGIN_URL . 'inc/templates/custom/front-end/js/fusion-widget-settings.js',
 				'admin_enqueue_js'                  => FUSION_BUILDER_PLUGIN_URL . 'shortcodes/js/fusion-widget.js',
 				'on_save'                           => 'widgetShortcodeFilter',
-				'help_url'                          => 'https://avada.com/documentation/widget-element/',
+				'help_url'                          => 'https://theme-fusion.com/documentation/fusion-builder/elements/widget/',
 				'preview'                           => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-widget-preview.php',
 				'preview_id'                        => 'fusion-builder-block-module-widget-preview-template',
 				'params'                            => [
@@ -624,16 +618,6 @@ function fusion_element_widget() {
 						'default'     => 'default',
 						'callback'    => [
 							'function' => 'fusion_widget_changed',
-						],
-					],
-					'fusion_margin_placeholder' => [
-						'param_name' => 'margin',
-						'group'      => esc_attr__( 'General', 'fusion-builder' ),
-						'value'      => [
-							'margin_top'    => '',
-							'margin_right'  => '',
-							'margin_bottom' => '',
-							'margin_left'   => '',
 						],
 					],
 					[
@@ -664,4 +648,4 @@ function fusion_element_widget() {
 	);
 }
 
-add_action( 'fusion_builder_wp_loaded', 'fusion_element_widget' );
+add_action( 'wp_loaded', 'fusion_element_widget' );

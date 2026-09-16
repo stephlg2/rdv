@@ -8,21 +8,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 		// Title View
 		FusionPageBuilder.fusion_tagline_box = FusionPageBuilder.ElementView.extend( {
 
-			onInit: function() {
-				var params = this.model.get( 'params' );
-				if ( 'object' === typeof params ) {
-					// Split border radius into 4.
-					if ( 'undefined' === typeof params.button_border_radius_top_left && 'undefined' !== typeof params.button_border_radius && '' !== params.button_border_radius ) {
-						params.button_border_radius_top_left     = parseInt( params.button_border_radius ) + 'px';
-						params.button_border_radius_top_right    = params.button_border_radius_top_left;
-						params.button_border_radius_bottom_right = params.button_border_radius_top_left;
-						params.button_border_radius_bottom_left  = params.button_border_radius_top_left;
-						delete params.button_border_radius;
-					}
-					this.model.set( 'params', params );
-				}
-			},
-
 			/**
 			 * Modify template attributes.
 			 *
@@ -35,8 +20,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// Validate values.
 				this.validateValues( atts.values );
-
-				this.values = atts.values;
 
 				// Shared base object.
 				this.extras         = atts.extras;
@@ -79,7 +62,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				// BC compatibility for button shape.
 				if ( 'undefined' !== typeof values.button_shape && 'undefined' === typeof values.button_border_radius ) {
-					values.button_border_radius = '0';
 					if ( 'square' === values.button_shape ) {
 						values.button_border_radius = '0';
 					} else if ( 'round' === values.button_shape ) {
@@ -93,18 +75,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					} else if ( '' === values.button_shape ) {
 						values.button_border_radius = '';
 					}
-					values.button_border_radius_top_left     = values.button_border_radius;
-					values.button_border_radius_top_right    = values.button_border_radius_top_left;
-					values.button_border_radius_bottom_right = values.button_border_radius_top_left;
-					values.button_border_radius_bottom_left  = values.button_border_radius_top_left;
-				} else if ( 'string' === typeof values.buton_border_radius && 'undefined' === typeof values.button_border_radius_top_left ) {
-					values.button_border_radius_top_left     = values.button_button_border_radius;
-					values.button_border_radius_top_right    = values.button_border_radius_top_left;
-					values.button_border_radius_bottom_right = values.button_border_radius_top_left;
-					values.button_border_radius_bottom_left  = values.button_border_radius_top_left;
 				}
-
-				values.button_border_radius = _.fusionGetValueWithUnit( values.button_border_radius_top_left ) + ' ' + _.fusionGetValueWithUnit( values.button_border_radius_top_right ) + ' ' + _.fusionGetValueWithUnit( values.button_border_radius_bottom_right ) + ' ' + _.fusionGetValueWithUnit( values.button_border_radius_bottom_left );
 
 				try {
 					if ( FusionPageBuilderApp.base64Encode( FusionPageBuilderApp.base64Decode( values.description ) ) === values.description ) {
@@ -118,11 +89,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				} catch ( error ) {
 					console.log( error ); // jshint ignore:line
 				}
-
-				values.padding_bottom = _.fusionValidateAttrValue( values.padding_bottom, 'px' );
-				values.padding_left   = _.fusionValidateAttrValue( values.padding_left, 'px' );
-				values.padding_right  = _.fusionValidateAttrValue( values.padding_right, 'px' );
-				values.padding_top    = _.fusionValidateAttrValue( values.padding_top, 'px' );
 			},
 
 			/**
@@ -140,7 +106,13 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				attr = _.fusionAnimations( values, attr );
 
-				attr.style += this.getStyleVariables( values );
+				if ( values.margin_top || '0' === values.margin_top ) {
+					attr.style += 'margin-top:' + _.fusionGetValueWithUnit( values.margin_top ) + ';';
+				}
+
+				if ( values.margin_bottom || '0' === values.margin_bottom ) {
+					attr.style += 'margin-bottom:' + _.fusionGetValueWithUnit( values.margin_bottom ) + ';';
+				}
 
 				if ( '' !== values[ 'class' ] ) {
 					attr[ 'class' ] += ' ' + values[ 'class' ];
@@ -150,38 +122,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attr.id = values.id;
 				}
 				return attr;
-			},
-
-			/**
-			 * Gets style variables.
-			 *
-			 * @since 3.9
-			 * @param {Object} values - The values.
-			 * @return {String}
-			 */
-			getStyleVariables: function( values ) {
-				var customVars = [],
-					cssVarsOptions;
-
-				// Title typography.
-				jQuery.each( _.fusionGetFontStyle( 'title_font', values, 'object' ), function( rule, value ) {
-						customVars[ 'title-' + rule ] = value;
-				} );
-
-				cssVarsOptions = [
-					'title_color',
-					'title_text_transform'
-				];
-
-				cssVarsOptions.title_font_size       = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_line_height     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.title_letter_spacing  = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.description_font_size = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.content_font_size     = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_top            = { 'callback': _.fusionGetValueWithUnit };
-				cssVarsOptions.margin_bottom         = { 'callback': _.fusionGetValueWithUnit };
-
-				return this.getCssVarsForOptions( cssVarsOptions ) + this.getCustomCssVars( customVars );
 			},
 
 			/**
@@ -218,22 +158,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					attrReadingBox.style += 'border-' + values.highlightposition + '-color:' + this.extras.primary_color + ';';
 				}
 				attrReadingBox.style += 'border-style:solid;';
-
-				if ( '' !== values.padding_top ) {
-					attrReadingBox.style += 'padding-top:' + values.padding_top + ';';
-				}
-
-				if ( '' !== values.padding_right ) {
-					attrReadingBox.style += 'padding-right:' + values.padding_right + ';';
-				}
-
-				if ( '' !== values.padding_bottom ) {
-					attrReadingBox.style += 'padding-bottom:' + values.padding_bottom + ';';
-				}
-
-				if ( '' !== values.padding_left ) {
-					attrReadingBox.style += 'padding-left:' + values.padding_left + ';';
-				}
 
 				return attrReadingBox;
 			},
@@ -278,7 +202,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				if ( '' !== values.button_border_radius ) {
-					attrButton.style += 'border-radius:' + values.button_border_radius;
+					attrButton.style += 'border-radius:' + parseInt( values.button_border_radius ) + 'px;';
 				}
 
 				return attrButton;

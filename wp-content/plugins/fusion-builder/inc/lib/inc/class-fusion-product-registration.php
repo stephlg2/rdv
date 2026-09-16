@@ -200,7 +200,6 @@ class Fusion_Product_Registration {
 				// Always revoke, regardless of response.
 				$valid         = false;
 				$purchase_code = '';
-				$this->registration_data[ $this->product_id ]['token'] = '';
 			} else {
 				$purchase_code = sanitize_text_field( wp_unslash( $_POST[ $this->option_name ][ $this->product_id ]['purchase_code'] ) );
 				$purchase_code = wp_strip_all_tags( trim( $purchase_code ) );
@@ -240,47 +239,6 @@ class Fusion_Product_Registration {
 		}
 
 		update_option( $this->option_name, $save_data );
-	}
-
-	/**
-	 * Update data to database, CLI version.
-	 *
-	 * @access public
-	 * @since 3.4
-	 * @param array $registration_data Registration data.
-	 * @return void
-	 */
-	public function cli_update_data( $registration_data ) {
-
-		// Early exit.
-		if ( empty( $registration_data ) || ! defined( 'WP_CLI' ) || ! WP_CLI ) {
-			return;
-		}
-
-		$save_data = $registration_data;
-
-		// Filter out non-persistent error messages.
-		if ( isset( $save_data['avada']['errors'] ) && is_wp_error( $save_data['avada']['errors'] ) ) {
-			$error_code = $save_data['avada']['errors']->get_error_code();
-			if ( 400 === $error_code ) {
-				$save_data['avada']['errors'] = '';
-			}
-		} else {
-			$save_data['avada']['errors'] = '';
-		}
-
-		update_option( $this->option_name, $save_data );
-	}
-
-	/**
-	 * Get errors property.
-	 *
-	 * @access public
-	 * @since 3.4
-	 * @return null|object
-	 */
-	public function get_errors() {
-		return $this->errors;
 	}
 
 	/**
@@ -356,6 +314,7 @@ class Fusion_Product_Registration {
 	 * @since 3.3
 	 */
 	public function get_error( $code = 403, $request = 'auth' ) {
+		$support_link = '<a href="https://theme-fusion.com/contact-us/">ThemeFusion</a>';
 
 		switch ( (int) $code ) {
 			// No code.
@@ -421,7 +380,7 @@ class Fusion_Product_Registration {
 			// Purchase code locked.
 			case 423:
 				/* translators: "ThemeFusion" contact link. */
-				return $this->invalidate( new WP_Error( $code, sprintf( __( 'This purchase code has been locked, as it was used in a manner that violates Envato license terms. Please contact us via the %s page to resolve.', 'fusion-builder' ), '<a href="https://my.avada.com/license-unlock/">license unlock</a>' ) ) );
+				return $this->invalidate( new WP_Error( $code, sprintf( __( 'This purchase code has been locked, as it was used in a manner that violates our license terms. Please contact %s to resolve.', 'fusion-builder' ), $support_link ) ) );
 
 			// Envato API limited.
 			case 429:
@@ -430,7 +389,7 @@ class Fusion_Product_Registration {
 			// Too many registrations.
 			case 406:
 				/* translators: "ThemeFusion" contact link. */
-				return new WP_Error( $code, sprintf( __( 'The purchase code has been registered too many times. Please contact %s to resolve.', 'fusion-builder' ), '<a href="https://avada.com/contact/">Avada</a>' ) );
+				return new WP_Error( $code, sprintf( __( 'The purchase code has been registered too many times. Please contact %s to resolve.', 'fusion-builder' ), $support_link ) );
 		}
 
 		return new WP_Error( $code, __( 'Unknown error encountered. Please try again later.', 'fusion-builder' ) );
@@ -719,21 +678,11 @@ class Fusion_Product_Registration {
 				<p class="avada-db-reg-text">
 					<?php
 						/* translators: Link. */
-						printf( __( 'Congratulations, and thank you for registering your website. To manage your licenses, sign up on %s.', 'fusion-builder' ), '<a href="https://my.avada.com/" target="_blank">my.avada.com</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						printf( __( 'Congratulations, and thank you for registering your website. To manage your licenses, sign up on %s.', 'fusion-builder' ), '<a href="https://theme-fusion.com/support/account/" target="_blank">theme-fusion.com</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					?>
 				</p>
 			<?php else : ?>
-				<p class="avada-db-reg-text">
-					<?php 
-					esc_html_e( 'Please enter your Avada purchase code and get access to our prebuilt websites, auto-updates, and premium plugins. The purchase code and site URL will be sent to a ThemeFusion server located in the U.S. to verify the purchase.', 'fusion-builder' );
-
-					// Add note about installing plugins on Setup page.
-					if ( isset( $_GET['page'] ) && 'avada-setup' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-						echo '&nbsp;';
-						esc_html_e( 'After registration is completed required Avada plugins will be installed and activated if needed.', 'fusion-builder' );
-					}
-					?>
-				</p>
+				<p class="avada-db-reg-text"><?php esc_html_e( 'Please enter your Avada purchase code and get access to our prebuilt websites, auto-updates, and premium plugins. The purchase code and site URL will be sent to a ThemeFusion server located in the U.S. to verify the purchase.', 'fusion-builder' ); ?></p>
 			<?php endif; ?>
 
 			<form class="avada-db-reg-form" method="post">
