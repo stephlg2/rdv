@@ -171,7 +171,8 @@ require_once get_stylesheet_directory() . '/rdv-articles.php';
 
 // Champ icône Font Awesome sur les catégories d'articles
 require_once get_stylesheet_directory() . '/rdv-category-icon.php';
-require_once get_stylesheet_directory() . '/rdv-reviews-trustindex.php';
+// Disabled 2026-09-16: Trustindex free quota — use plugin rdvasie-google-reviews instead
+// require_once get_stylesheet_directory() . '/rdv-reviews-trustindex.php';
 
 // -----------------------------------------------------------------
 // Mega menu : images widgets en meilleure qualité (évite le 300px "medium")

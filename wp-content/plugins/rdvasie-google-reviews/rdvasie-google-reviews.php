@@ -348,6 +348,7 @@ class RDVAsie_Google_Reviews {
 		$atts = shortcode_atts( array(
 			'limit' => -1, // -1 = tous les avis
 			'show_rating' => 'yes',
+			'show_title' => 'yes',
 			'debug' => 'no'
 		), $atts );
 		
@@ -386,7 +387,9 @@ class RDVAsie_Google_Reviews {
 		<div class="rdvasie-reviews-container">
 			<?php if ( $atts['show_rating'] === 'yes' ) : ?>
 				<div class="rdvasie-reviews-header">
-					<h2><span class="rdvasie-title-orange">Nos clients</span> <span class="rdvasie-title-dark">parlent de nous !</span></h2>
+					<?php if ( $atts['show_title'] === 'yes' ) : ?>
+						<h2><span class="rdvasie-title-orange">Nos clients</span> <span class="rdvasie-title-dark">parlent de nous !</span></h2>
+					<?php endif; ?>
 					<div class="rdvasie-reviews-summary">
 						<div class="rdvasie-rating-display">
 							<span class="rdvasie-rating-label">EXCELLENT</span>
@@ -445,6 +448,16 @@ class RDVAsie_Google_Reviews {
 					</div>
 				<?php endforeach; ?>
 			</div>
+			<?php
+			$reviews_page_id = (int) get_option( 'rdvasie_reviews_page_id' );
+			$place_id = get_option( 'rdvasie_reviews_place_id' );
+			$all_url = $reviews_page_id ? get_permalink( $reviews_page_id ) : ( $place_id ? 'https://search.google.com/local/reviews?placeid=' . rawurlencode( $place_id ) : '' );
+			if ( $all_url ) :
+			?>
+				<p class="rdvasie-reviews-all" style="text-align:center;margin-top:24px;">
+					<a class="fusion-button button-flat fusion-button-default-size button-default fusion-button-default button-1" href="<?php echo esc_url( $all_url ); ?>">Lire tous les avis</a>
+				</p>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();

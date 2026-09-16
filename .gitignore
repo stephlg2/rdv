@@ -1,7 +1,10 @@
 wp-config.php
-*.log
-wp-content/cache/
+wp-config-*.php
+.env
+*.env
 wp-content/uploads/
-wp-content/tmp/
+wp-content/cache/
 wp-content/upgrade/
+wp-content/wflogs/
 .DS_Store
+*.log
