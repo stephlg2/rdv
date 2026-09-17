@@ -1,0 +1,2 @@
+# RDV Asie — surveillance intrusion + alerte mail stephlg2@orange.fr
+*/15 * * * * root /usr/local/sbin/rdv-intrusion-watch.sh >/dev/null 2>&1
