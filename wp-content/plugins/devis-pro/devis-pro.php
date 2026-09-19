@@ -31,6 +31,7 @@ require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-stats.php';
 require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-security.php';
 require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-clients.php';
 require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-clients-table.php';
+require_once DEVIS_PRO_PATH . 'includes/class-devis-pro-monetico.php';
 
 /**
  * Classe principale du plugin
@@ -1827,66 +1828,30 @@ class Devis_Pro
     }
 
     /**
-     * Générer les données Monetico
+     * Générer les données Monetico (contexte_commande + MAC alphabétique)
      */
     private function generate_monetico_data($devis, $settings)
     {
-        if ($devis->status != 1 || $devis->montant <= 0) {
+        $fields = Devis_Pro_Monetico::build_payment_fields($devis, $settings);
+        if (empty($fields)) {
             return null;
         }
 
-        // Vérifier que la clé Monetico est configurée
-        if (empty($settings['monetico_cle']) || strlen($settings['monetico_cle']) < 40) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[Devis Pro] Clé Monetico non configurée ou invalide');
-            }
-            return null;
+        // Sauvegarder la référence pour le rapprochement IPN
+        $this->db->update_devis($devis->id, array('mac' => $fields['reference']));
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[Devis Pro Monetico] reference=' . $fields['reference'] . ' MAC=' . $fields['MAC']);
         }
 
-        $cle = $this->get_monetico_key($settings['monetico_cle']);
-        $date = wp_date("d/m/Y:H:i:s");
-        $reference = "RDVASIE-" . str_pad($devis->id, 5, "0", STR_PAD_LEFT);
-
-        //"7466577*{$date}*{$demande->montant}EUR*{$reference}*Rendez-vous avec l'Asie*3.0*FR*agencedevo*{$demande->email}**********"
-        $data_to_sign = sprintf(
-                "%s*%s*%s*%s*%s*%s*%s*%s*%s**********",
-                $settings['monetico_tpe'],
-                $date,
-                $devis->montant . $settings['default_currency'],
-                $reference,
-                "Rendez-vous avec l'Asie",
-                "3.0",
-                "FR",
-                $settings['monetico_societe'],
-                $devis->email
-        );
-
-        $mac = strtoupper(hash_hmac("sha1", $data_to_sign, hex2bin($cle)));
-
-        // Sauvegarder la référence
-        $this->db->update_devis($devis->id, array('mac' => $reference));
-
-        error_log("Chaîne à signer : " . $data_to_sign);
-        error_log("Clé hexa : " . $settings['monetico_cle']);
-        error_log("Signature générée : " . $mac);
-
-        return array(
-                'tpe' => $settings['monetico_tpe'],
-                'date' => $date,
-                'montant' => $devis->montant . $settings['default_currency'],
-                'reference' => $reference,
-                'mac' => $mac,
-                'societe' => $settings['monetico_societe'],
-                'email' => $devis->email
-        );
+        return $fields;
     }
 
     /**
-     * Décoder la clé Monetico
+     * @deprecated Conservé pour compatibilité ; utiliser Devis_Pro_Monetico::get_usable_key()
      */
     private function get_monetico_key($cle)
     {
-        // Vérification de sécurité
         $hexStrKey = substr($cle, 0, 38);
         $hexFinal = "" . substr($cle, 38, 2) . "00";
 
@@ -1902,7 +1867,6 @@ class Devis_Pro
         }
 
         return $hexStrKey;
-
     }
 
     /**
@@ -2305,81 +2269,66 @@ class Devis_Pro
         $is_physical_path = ($current_url === '/paiement/validation.php');
         $is_virtual_query = (isset($_GET['monetico_action']) && $_GET['monetico_action'] === 'notify');
 
-        // 2. On ne déclenche QUE si c'est notre URL cible ET qu'il y a du POST
-        if ($is_physical_path || $is_virtual_query) {
-            error_log("=== IPN Monetico reçue via le bridge PHP ===");
-            if (!empty($_POST) && isset($_POST['MAC'])) {
-
-                $settings = get_option('devis_pro_settings');
-
-                $tpe = $_POST['TPE'];
-                $date = $_POST['date'];
-                $montant = $_POST['montant'];
-                $reference = $_POST['reference'];
-                $texte = $_POST['texte-libre'];
-                $code_retour = $_POST['code-retour'];
-                $cvx = $_POST['cvx'];
-                $vld = $_POST['vld'];
-                $brand = $_POST['brand'];
-                $status3ds = $_POST['status3ds'];
-                $numauto = $_POST['numauto'];
-                $motifrefus = $_POST['motifrefus'];
-                $originecb = $_POST['originecb'];
-                $bincb = $_POST['bincb'];
-                $hpancb = $_POST['hpancb'];
-                $ipclient = $_POST['ipclient'];
-                $originetr = $_POST['originetr'];
-                $veres = $_POST['veres'];
-                $pares = $_POST['pares'];
-
-                $mac = $_POST['MAC'];
-
-                $cle = $this->get_monetico_key($settings['monetico_cle']);
-
-                $key = hash_hmac("sha1", "{$tpe}*{$date}*{$montant}*{$reference}*{$texte}*3.0*{$code_retour}*{$cvx}*{$vld}*{$brand}*{$status3ds}*{$numauto}*{$motifrefus}*{$originecb}*{$bincb}*{$hpancb}*{$ipclient}*{$originetr}*{$veres}*{$pares}*", hex2bin($cle));
-
-                error_log("$reference\n{$tpe}*{$date}*{$montant}*{$reference}*{$texte}*3.0*{$code_retour}*{$cvx}*{$vld}*{$brand}*{$status3ds}*{$numauto}*{$motifrefus}*{$originecb}*{$bincb}*{$hpancb}*{$ipclient}*{$originetr}*{$veres}*{$pares}*");
-                error_log("$key = $mac");
-
-                $demande = $this->db->get_devis_by_reference($reference);
-                if ($demande && $code_retour != "Annulation" && $demande->status != 3 && $demande->status != 4 && $demande->status != 5 && $demande->status != 6) {
-                    $id = $demande->id;
-                    $old_data = $this->db->get_devis($id);
-                    $data = array(
-                            'status' => 4
-                    );
-
-                    $this->db->update_devis($id, $data);
-
-                    // Logger les changements
-                    $settings = get_option('devis_pro_settings');
-                    $old_status = $settings['statuses'][$old_data->status]['label'] ?? 'Inconnu';
-                    $new_status = $settings['statuses'][$data['status']]['label'] ?? 'Inconnu';
-                    $this->db->add_history($id, 'status_change', sprintf(__('Statut modifié : %s → %s', 'devis-pro'), $old_status, $new_status));
-
-                    // Email de confirmation de paiement désactivé (le client reçoit déjà une confirmation de la banque)
-                    // $updated_devis = $this->db->get_devis($id);
-                    // $email = new Devis_Pro_Email();
-                    // $email_sent = $email->send_payment_confirmation($updated_devis);
-                    // if ($email_sent) {
-                    //     $this->db->add_history($id, 'email', __('Email "Paiement confirmé" envoyé au client', 'devis-pro'));
-                    // }
-
-
-                    $result = "version=2\ncdr=0";
-                } else {
-                    $result = "version=2\ncdr=1";
-                }
-            } else {
-                $result = "version=2\ncdr=1";
-            }
-
-            header("Content-Type: text/plain");
-            echo $result;
-
-            exit;
+        if (!($is_physical_path || $is_virtual_query)) {
+            return;
         }
 
+        error_log('=== IPN Monetico reçue ===');
+
+        $result = "version=2\ncdr=1";
+
+        if (!empty($_POST) && isset($_POST['MAC'])) {
+            $settings = get_option('devis_pro_settings');
+
+            if (!Devis_Pro_Monetico::validate_ipn_seal($_POST, $settings)) {
+                error_log('[Devis Pro Monetico] IPN rejetée : MAC invalide');
+                header('Content-Type: text/plain');
+                echo $result;
+                exit;
+            }
+
+            $reference   = isset($_POST['reference']) ? sanitize_text_field(wp_unslash($_POST['reference'])) : '';
+            $code_retour = isset($_POST['code-retour']) ? sanitize_text_field(wp_unslash($_POST['code-retour'])) : '';
+
+            $auth = Devis_Pro_Monetico::decode_authentification($_POST);
+            if ($auth) {
+                error_log('[Devis Pro Monetico] authentification status=' . ($auth['status'] ?? '') . ' protocol=' . ($auth['protocol'] ?? '') . ' version=' . ($auth['version'] ?? ''));
+            }
+
+            $demande = $this->db->get_devis_by_reference($reference);
+
+            if (
+                $demande
+                && Devis_Pro_Monetico::is_payment_accepted($code_retour)
+                && !in_array((int) $demande->status, array(3, 4, 5, 6), true)
+            ) {
+                $id = $demande->id;
+                $old_data = $this->db->get_devis($id);
+                $data = array('status' => 4);
+
+                $this->db->update_devis($id, $data);
+
+                $old_status = $settings['statuses'][$old_data->status]['label'] ?? 'Inconnu';
+                $new_status = $settings['statuses'][$data['status']]['label'] ?? 'Inconnu';
+                $this->db->add_history(
+                    $id,
+                    'status_change',
+                    sprintf(__('Statut modifié : %s → %s', 'devis-pro'), $old_status, $new_status)
+                );
+
+                $result = "version=2\ncdr=0";
+            } elseif ($demande && (stripos($code_retour, 'Annulation') === 0)) {
+                // Accusé de réception OK même en cas d'annulation (évite les retries Monetico)
+                $result = "version=2\ncdr=0";
+            } elseif ($demande && in_array((int) $demande->status, array(4), true)) {
+                // Déjà payé — ack idempotent
+                $result = "version=2\ncdr=0";
+            }
+        }
+
+        header('Content-Type: text/plain');
+        echo $result;
+        exit;
     }
 
 
