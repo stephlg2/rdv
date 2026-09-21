@@ -1,0 +1,40 @@
+name: VPS health
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH health
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 146.59.144.202
+          username: debian
+          port: 4747
+          password: ${{ secrets.RDV_VPS_PASSWORD }}
+          timeout: 45s
+          script: |
+            set +e
+            echo "=== UPTIME ==="
+            uptime
+            free -h | head -3
+            df -h / | tail -1
+            echo "=== SERVICES ==="
+            systemctl is-active nginx php8.0-fpm mysql 2>/dev/null
+            sudo systemctl status nginx --no-pager -l | head -20
+            sudo systemctl status php8.0-fpm --no-pager -l | head -15
+            echo "=== LOCAL CURL ==="
+            curl -sI --max-time 10 -o /dev/null -w "localhost_https=%{http_code} time=%{time_total}\n" -k https://127.0.0.1/ || true
+            curl -sI --max-time 10 -o /dev/null -w "vhost=%{http_code} time=%{time_total}\n" -H 'Host: www.rdvasie.com' http://127.0.0.1/ || true
+            echo "=== NGINX ERR LAST ==="
+            sudo tail -30 /var/log/nginx/error.log 2>/dev/null
+            echo "=== PHP-FPM ==="
+            sudo tail -20 /var/log/php8.0-fpm.log 2>/dev/null
+            echo "=== LOAD / DISK / INODES ==="
+            nproc; cat /proc/loadavg
+            df -i / | tail -1
+            echo "=== FAIL2BAN / FIREWALL recent ==="
+            sudo iptables -L INPUT -n | head -25
+            sudo journalctl -u nginx --since '30 min ago' --no-pager | tail -20
+            echo "=== OOM? ==="
+            sudo dmesg -T 2>/dev/null | rg -i 'oom|killed process|out of memory' | tail -10
