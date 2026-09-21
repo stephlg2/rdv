@@ -100,22 +100,23 @@ class Devis_Pro_Monetico {
         $civ = isset($devis->civ) ? trim((string) $devis->civ) : '';
         $civility = isset($civ_map[$civ]) ? $civ_map[$civ] : preg_replace('/[^A-Za-z]/', '', $civ);
 
+        // Adresse client si dispo, sinon siège agence (Monetico refuse CP 00000 / champs fantaisistes)
         $cp    = self::truncate(trim((string) ($devis->cp ?? '')), 10);
         $ville = self::truncate(trim((string) ($devis->ville ?? '')), 50);
-        if ($ville === '') {
-            $ville = 'Non communiquee';
-        }
-        if ($cp === '') {
-            $cp = '00000';
+        $has_client_address = ($cp !== '' && $ville !== '' && !preg_match('/^0+$/', $cp));
+
+        if ($has_client_address) {
+            $address_line1 = self::truncate($cp . ' ' . $ville, 50);
+        } else {
+            $address_line1 = '6 rue Rene Viviani';
+            $ville = 'Nantes';
+            $cp = '44200';
         }
 
-        $address_line1 = self::truncate(trim($cp . ' ' . $ville), 50);
-        if ($address_line1 === '') {
-            $address_line1 = 'Adresse non communiquee';
-        }
-
+        $first = self::sanitize_person_name((string) ($devis->prenom ?? ''), 45);
+        $last  = self::sanitize_person_name((string) ($devis->nom ?? ''), 45);
         $phone_e164 = self::format_phone_e164((string) ($devis->tel ?? ''));
-        $phone_mobile = self::format_phone_mobile($phone_e164);
+        $phone_mobile = $phone_e164 !== '' ? self::format_phone_mobile($phone_e164) : '';
 
         $billing = array(
             'addressLine1' => $address_line1,
@@ -127,18 +128,20 @@ class Devis_Pro_Monetico {
         if ($civility !== '') {
             $billing['civility'] = self::truncate($civility, 32);
         }
-        if (!empty($devis->prenom)) {
-            $billing['firstName'] = self::truncate((string) $devis->prenom, 45);
+        if ($first !== '') {
+            $billing['firstName'] = $first;
         }
-        if (!empty($devis->nom)) {
-            $billing['lastName'] = self::truncate((string) $devis->nom, 45);
+        if ($last !== '') {
+            $billing['lastName'] = $last;
         }
         if (!empty($devis->email)) {
             $billing['email'] = self::truncate((string) $devis->email, 100);
         }
         if ($phone_e164 !== '') {
             $billing['phone'] = $phone_e164;
-            $billing['mobilePhone'] = $phone_mobile;
+            if ($phone_mobile !== '') {
+                $billing['mobilePhone'] = $phone_mobile;
+            }
         }
 
         $item_name = self::truncate(self::resolve_voyage_label($devis), 50);
@@ -153,11 +156,11 @@ class Devis_Pro_Monetico {
             'deliveryTimeframe'   => 'other',
             'matchBillingAddress' => true,
         );
-        if (!empty($billing['firstName'])) {
-            $shipping['firstName'] = $billing['firstName'];
+        if ($first !== '') {
+            $shipping['firstName'] = $first;
         }
-        if (!empty($billing['lastName'])) {
-            $shipping['lastName'] = $billing['lastName'];
+        if ($last !== '') {
+            $shipping['lastName'] = $last;
         }
         if (!empty($billing['email'])) {
             $shipping['email'] = $billing['email'];
@@ -396,29 +399,69 @@ class Devis_Pro_Monetico {
         return substr($value, 0, $max);
     }
 
-    /** +33612345678 */
+    /**
+     * Prénom/nom Monetico : un seul libellé, sans "et …".
+     */
+    private static function sanitize_person_name($value, $max) {
+        $value = trim(wp_strip_all_tags((string) $value));
+        if ($value === '') {
+            return '';
+        }
+        // "Nicolas et Aurélie" → "Nicolas"
+        if (preg_match('/^(.+?)\s+et\s+/iu', $value, $m)) {
+            $value = $m[1];
+        }
+        if (strpos($value, '/') !== false) {
+            $value = trim(explode('/', $value)[0]);
+        }
+        if (strpos($value, ',') !== false) {
+            $value = trim(explode(',', $value)[0]);
+        }
+        return self::truncate($value, $max);
+    }
+
+    /**
+     * Téléphone FR E.164 (+336…) — omet si non fiable (évite +60… etc.).
+     */
     private static function format_phone_e164($tel) {
         $digits = preg_replace('/\D+/', '', (string) $tel);
         if ($digits === '') {
             return '';
         }
-        if (strpos($digits, '33') === 0 && strlen($digits) >= 11) {
-            return '+' . $digits;
+
+        // 0033XXXXXXXXX / 33XXXXXXXXX
+        if (preg_match('/^(?:00)?33(\d{9})$/', $digits, $m)) {
+            return '+33' . $m[1];
         }
-        if (isset($digits[0]) && $digits[0] === '0' && strlen($digits) === 10) {
-            return '+33' . substr($digits, 1);
+        // 0XXXXXXXXX (10 chiffres nationaux)
+        if (preg_match('/^0(\d{9})$/', $digits, $m)) {
+            return '+33' . $m[1];
         }
-        if (strlen($digits) >= 8) {
-            return '+' . ltrim($digits, '0');
+        // 00… puis retenter (ex: 0060122171707 mal saisi)
+        if (strpos($digits, '00') === 0 && strlen($digits) > 4) {
+            $rest = substr($digits, 2);
+            if (preg_match('/^33(\d{9})$/', $rest, $m)) {
+                return '+33' . $m[1];
+            }
+            // 0 + 9 chiffres après avoir retiré des zéros en trop
+            if (preg_match('/^0*(\d{9})$/', $rest, $m) && in_array($m[1][0], array('6', '7', '1', '2', '3', '4', '5', '9'), true)) {
+                return '+33' . $m[1];
+            }
         }
+        // Déjà en 9 chiffres nationaux (sans 0)
+        if (preg_match('/^[1-9]\d{8}$/', $digits)) {
+            return '+33' . $digits;
+        }
+
+        // Ne pas inventer d'indicatif pays (évite +601…)
         return '';
     }
 
     /** +33-612345678 */
     private static function format_phone_mobile($e164) {
-        if (!preg_match('/^\+(\d{1,3})(\d+)$/', $e164, $m)) {
-            return $e164;
+        if (!preg_match('/^\+33(\d{9})$/', $e164, $m)) {
+            return '';
         }
-        return '+' . $m[1] . '-' . $m[2];
+        return '+33-' . $m[1];
     }
 }
