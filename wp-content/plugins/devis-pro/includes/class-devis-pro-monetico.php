@@ -301,6 +301,7 @@ class Devis_Pro_Monetico {
         }
 
         $received = strtoupper((string) $post['MAC']);
+        $post = self::normalize_ipn_post($post);
 
         $fields = $post;
         unset($fields['MAC'], $fields['action']);
@@ -312,19 +313,73 @@ class Devis_Pro_Monetico {
             $fields[$k] = (string) $v;
         }
 
-        $computed_new = self::compute_seal($fields, $usable_key);
-        if (hash_equals($computed_new, $received)) {
+        // 1) Nom=Valeur bruts (kit officiel)
+        $computed_raw = self::compute_seal($fields, $usable_key);
+        if (hash_equals($computed_raw, $received)) {
             return true;
         }
 
+        // 2) Variante http_build_query + urldecode (kits PHP récents)
+        $computed_query = self::compute_seal_http_query($fields, $usable_key);
+        if (hash_equals($computed_query, $received)) {
+            return true;
+        }
+
+        // 3) Ancien format positionnel
         $computed_legacy = self::compute_legacy_ipn_seal($post, $usable_key);
         if ($computed_legacy && hash_equals($computed_legacy, $received)) {
             error_log('[Devis Pro Monetico] IPN validée via MAC legacy');
             return true;
         }
 
-        error_log('[Devis Pro Monetico] IPN MAC invalid. new=' . $computed_new . ' received=' . $received);
+        error_log(
+            '[Devis Pro Monetico] IPN MAC invalid. keys=' . implode(',', array_keys($fields))
+            . ' raw=' . $computed_raw
+            . ' query=' . $computed_query
+            . ' received=' . $received
+        );
         return false;
+    }
+
+    /**
+     * Restaure les '+' des champs base64 (PHP transforme + → espace en x-www-form-urlencoded).
+     */
+    public static function normalize_ipn_post(array $post) {
+        foreach (array('authentification', 'contexte_commande') as $key) {
+            if (!empty($post[$key]) && is_string($post[$key]) && strpos($post[$key], ' ') !== false) {
+                $post[$key] = str_replace(' ', '+', $post[$key]);
+            }
+        }
+        return $post;
+    }
+
+    /**
+     * Parse le corps brut IPN en préservant les '+' (base64 authentification).
+     *
+     * @return array
+     */
+    public static function parse_ipn_request() {
+        $raw = file_get_contents('php://input');
+        if (is_string($raw) && $raw !== '') {
+            $parsed = array();
+            // Évite que parse_str convertisse + en espace dans les base64
+            parse_str(str_replace('+', '%2B', $raw), $parsed);
+            if (!empty($parsed)) {
+                return self::normalize_ipn_post($parsed);
+            }
+        }
+        return self::normalize_ipn_post($_POST);
+    }
+
+    /**
+     * Sceau via http_build_query (compat kits Monetico PHP récents).
+     */
+    public static function compute_seal_http_query(array $fields, $usable_key) {
+        unset($fields['MAC'], $fields['action'], $fields['payment_url']);
+        ksort($fields, SORT_STRING);
+        $query = http_build_query($fields, '', '*', PHP_QUERY_RFC1738);
+        $query = urldecode($query);
+        return strtoupper(hash_hmac('sha1', $query, $usable_key));
     }
 
     /**
@@ -333,6 +388,7 @@ class Devis_Pro_Monetico {
      * @return string
      */
     public static function compute_legacy_ipn_seal(array $post, $usable_key) {
+        $post = self::normalize_ipn_post($post);
         $get = static function ($key) use ($post) {
             return isset($post[$key]) ? (string) $post[$key] : '';
         };

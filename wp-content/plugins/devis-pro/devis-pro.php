@@ -2310,20 +2310,21 @@ class Devis_Pro
             error_log('=== IPN Monetico reçue ===');
             $result = "version=2\ncdr=1";
 
-            if (!empty($_POST) && isset($_POST['MAC'])) {
+            $post = Devis_Pro_Monetico::parse_ipn_request();
+            if (!empty($post) && isset($post['MAC'])) {
                 $settings = get_option('devis_pro_settings');
 
-                if (!Devis_Pro_Monetico::validate_ipn_seal($_POST, is_array($settings) ? $settings : array())) {
+                if (!Devis_Pro_Monetico::validate_ipn_seal($post, is_array($settings) ? $settings : array())) {
                     error_log('[Devis Pro Monetico] IPN rejetée : MAC invalide');
                     header('Content-Type: text/plain');
                     echo $result;
                     exit;
                 }
 
-                $reference = sanitize_text_field(wp_unslash($_POST['reference'] ?? ''));
-                $code_retour = sanitize_text_field(wp_unslash($_POST['code-retour'] ?? ''));
+                $reference = sanitize_text_field($post['reference'] ?? '');
+                $code_retour = sanitize_text_field($post['code-retour'] ?? '');
 
-                $auth = Devis_Pro_Monetico::decode_authentification($_POST);
+                $auth = Devis_Pro_Monetico::decode_authentification($post);
                 if ($auth) {
                     error_log('[Devis Pro Monetico] authentification status=' . ($auth['status'] ?? '') . ' protocol=' . ($auth['protocol'] ?? ''));
                 }
@@ -2343,8 +2344,9 @@ class Devis_Pro
                     $this->db->add_history(
                         $id,
                         'status_change',
-                        sprintf(__('Statut modifié : %s → %s', 'devis-pro'), $old_status, $new_status)
+                        sprintf(__('Statut modifié : %s → %s (IPN Monetico)', 'devis-pro'), $old_status, $new_status)
                     );
+                    error_log('[Devis Pro Monetico] Devis #' . $id . ' passé en Payé (ref=' . $reference . ')');
                 }
 
                 $result = "version=2\ncdr=0";
