@@ -9,44 +9,51 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Audit bans and connectivity
+      - name: Unban client IP
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: 146.59.144.202
           username: debian
           port: 4747
           password: ${{ secrets.RDV_VPS_PASSWORD }}
-          timeout: 60s
+          timeout: 45s
           script: |
-            set +e
-            echo "=== PUBLIC REACHABILITY FROM SERVER ==="
-            curl -sI --max-time 8 -o /dev/null -w "self=%{http_code} t=%{time_total}\n" https://www.rdvasie.com/
-            echo "=== FAIL2BAN ==="
-            sudo fail2ban-client status 2>/dev/null
-            for j in $(sudo fail2ban-client status 2>/dev/null | sed -n 's/.*Jail list:\s*//p' | tr ',' ' '); do
-              echo "--- jail $j ---"
-              sudo fail2ban-client status "$j" 2>/dev/null | sed -n '1,20p'
+            set -e
+            IP=185.232.227.251
+            echo "=== BEFORE ==="
+            sudo iptables -L INPUT -n -v --line-numbers | head -15
+            # Remove all DROP rules for this IP (may appear multiple times)
+            while sudo iptables -L INPUT -n --line-numbers | awk -v ip="$IP" '$4=="DROP" && $5==ip {print $1; exit}'; do
+              NUM=$(sudo iptables -L INPUT -n --line-numbers | awk -v ip="$IP" '$4=="DROP" && $5==ip {print $1; exit}')
+              [ -z "$NUM" ] && break
+              echo "Deleting INPUT rule #$NUM for $IP"
+              sudo iptables -D INPUT "$NUM"
             done
-            echo "=== IPTABLES DROP/REJECT (INPUT) ==="
-            sudo iptables -L INPUT -n -v --line-numbers | head -60
-            echo "=== IPTABLES recent bans / UFW ==="
-            sudo ufw status verbose 2>/dev/null | head -40
-            echo "=== nginx deny / geo ==="
-            sudo rg -n "deny |allow |fail2ban|146\.|ban" /etc/nginx/ 2>/dev/null | head -40
-            echo "=== recent 444/403/drop in access ==="
-            sudo tail -5 /var/log/nginx/rdvasie.com.access.log 2>/dev/null
-            sudo awk '$9 ~ /^(403|444|429|502|504)$/' /var/log/nginx/rdvasie.com.access.log 2>/dev/null | tail -20
-            echo "=== SSH auth rejects last hour ==="
-            sudo journalctl -u ssh --since '2 hours ago' --no-pager 2>/dev/null | rg -i 'Failed|Banned|Invalid|refused' | tail -30
-            echo "=== connection tracking / syn ==="
-            ss -s 2>/dev/null | head -15
-            echo "=== hosts.deny ==="
-            cat /etc/hosts.deny 2>/dev/null | head -20
-            echo "=== rdv intrusion watch recent ==="
-            sudo tail -40 /var/log/rdv-intrusion-watch.log 2>/dev/null
-            ls -la /home/debian/security-quarantine 2>/dev/null | tail -10
-            echo "=== check specific IPs if any in env ==="
-            # Look for banned French ISP ranges count
-            sudo iptables -L INPUT -n | rg -c '^DROP|^REJECT' 
-            echo "=== OVH firewall? nft ==="
-            sudo nft list ruleset 2>/dev/null | head -80
+            # Also clear fail2ban just in case
+            sudo fail2ban-client set sshd unbanip "$IP" 2>/dev/null || true
+            sudo fail2ban-client set nginx-limit-req unbanip "$IP" 2>/dev/null || true
+            sudo fail2ban-client set nginxrepeatoffender unbanip "$IP" 2>/dev/null || true
+            # Persist if iptables-persistent / netfilter-persistent exists
+            if command -v netfilter-persistent >/dev/null; then
+              sudo netfilter-persistent save || true
+            elif [ -d /etc/iptables ]; then
+              sudo iptables-save | sudo tee /etc/iptables/rules.v4 >/dev/null || true
+            fi
+            # Find who added the ban
+            echo "=== WHO BANNED? ==="
+            sudo rg -n "$IP" /etc/cron* /usr/local/sbin /home/debian /var/log/rdv* /var/log/auth.log 2>/dev/null | head -40
+            ls -la /etc/iptables 2>/dev/null
+            echo "=== AFTER ==="
+            sudo iptables -L INPUT -n -v --line-numbers | head -15
+            echo "=== WHITELIST FOR FUTURE ==="
+            # Ensure office IP is accepted early (idempotent)
+            if ! sudo iptables -C INPUT -s "$IP" -j ACCEPT 2>/dev/null; then
+              sudo iptables -I INPUT 1 -s "$IP" -j ACCEPT -m comment --comment "rdvasie-office-whitelist"
+              echo "added ACCEPT whitelist for $IP"
+            fi
+            if command -v netfilter-persistent >/dev/null; then
+              sudo netfilter-persistent save || true
+            elif [ -d /etc/iptables ]; then
+              sudo iptables-save | sudo tee /etc/iptables/rules.v4 >/dev/null || true
+            fi
+            sudo iptables -L INPUT -n -v --line-numbers | head -10
