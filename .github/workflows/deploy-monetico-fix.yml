@@ -5,56 +5,31 @@ on:
     branches: [cursor/monetico-migration-conformite-659d]
     paths:
       - 'wp-content/plugins/devis-pro/**'
+      - '.github/workflows/deploy-monetico-fix.yml'
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Upload plugin files
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: 146.59.144.202
-          username: debian
-          port: 4747
-          password: ${{ secrets.RDV_VPS_PASSWORD }}
-          timeout: 60s
-          source: "wp-content/plugins/devis-pro/devis-pro.php,wp-content/plugins/devis-pro/includes/class-devis-pro-monetico.php,wp-content/plugins/devis-pro/views/paiement/index.php"
-          target: /tmp/monetico-fix-deploy
-          strip_components: 0
-      - name: Install on VPS
+      - name: Health + optional deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: 146.59.144.202
           username: debian
           port: 4747
           password: ${{ secrets.RDV_VPS_PASSWORD }}
-          timeout: 60s
+          timeout: 45s
           script: |
-            set -e
-            SITE=/var/www/rdvasie.com/wp-content/plugins/devis-pro
-            SRC=/tmp/monetico-fix-deploy/wp-content/plugins/devis-pro
-            # scp-action may nest paths differently
-            if [ ! -f "$SRC/devis-pro.php" ]; then
-              SRC=$(find /tmp/monetico-fix-deploy -name devis-pro.php | head -1 | xargs dirname)
-            fi
-            echo "SRC=$SRC"
-            sudo cp -a "$SRC/devis-pro.php" "$SITE/devis-pro.php"
-            sudo mkdir -p "$SITE/includes" "$SITE/views/paiement"
-            sudo cp -a "$SRC/includes/class-devis-pro-monetico.php" "$SITE/includes/class-devis-pro-monetico.php"
-            sudo cp -a "$SRC/views/paiement/index.php" "$SITE/views/paiement/index.php"
-            sudo chown -R www-data:www-data "$SITE/devis-pro.php" "$SITE/includes/class-devis-pro-monetico.php" "$SITE/views/paiement/index.php"
-            php8.0 -l "$SITE/devis-pro.php"
-            php8.0 -l "$SITE/includes/class-devis-pro-monetico.php"
-            # Quick seal self-check
-            cd /var/www/rdvasie.com
-            php8.0 -r '
-            $_SERVER["HTTP_HOST"]="www.rdvasie.com";
-            require "wp-load.php";
-            require_once WP_PLUGIN_DIR."/devis-pro/includes/class-devis-pro-monetico.php";
-            $s=get_option("devis_pro_settings");
-            global $wpdb;
-            $d=$wpdb->get_row("SELECT * FROM {$wpdb->prefix}devis_pro WHERE status=1 AND montant>0 ORDER BY id DESC LIMIT 1");
-            if(!$d){ echo "no open devis\n"; exit(0);} 
-            $f=Devis_Pro_Monetico::build_payment_fields($d,$s);
-            echo $f?"OK ref=".$f["reference"]." mac=".substr($f["MAC"],0,8)."… fields=".count(array_intersect_key($f,array_flip(Devis_Pro_Monetico::REQUEST_MAC_KEYS)))."\n":"FAIL\n";
-            '
+            set +e
+            echo "=== HOST ==="
+            hostname; uptime; free -h | head -2; df -h / | tail -1
+            echo "=== SERVICES ==="
+            systemctl is-active nginx php8.0-fpm mysql
+            echo "=== LOCAL HTTP ==="
+            curl -sI --max-time 8 -o /dev/null -w "loopback=%{http_code} t=%{time_total}\n" -H 'Host: www.rdvasie.com' http://127.0.0.1/
+            curl -sI --max-time 8 -o /dev/null -w "public=%{http_code} t=%{time_total}\n" https://www.rdvasie.com/
+            echo "=== NGINX ERR ==="
+            sudo tail -15 /var/log/nginx/error.log
+            echo "=== LOAD ==="
+            cat /proc/loadavg
+            echo "=== OOM ==="
+            sudo dmesg -T 2>/dev/null | grep -iE 'oom|killed process' | tail -5 || echo none
