@@ -1,10 +1,10 @@
 <?php
 /**
- * Intégration Monetico Paiement — conformité migration oct. 2026
+ * Intégration Monetico Paiement — 3DSecure v2 / migration oct. 2026
  *
  * - contexte_commande (JSON UTF-8 Base64) obligatoire
- * - MAC = paires NomChamp=ValeurChamp triées alphabétiquement, séparées par *
- * - IPN : validation sur tous les champs reçus (dont authentification)
+ * - MAC = paires NomChamp=ValeurChamp triées alphabétiquement ASCII, séparées par *
+ * - Le sceau ne doit porter QUE sur les champs réellement POSTés au formulaire
  */
 
 if (!defined('ABSPATH')) {
@@ -18,26 +18,17 @@ class Devis_Pro_Monetico {
     const PAYMENT_URL_TEST = 'https://p.monetico-services.com/test/paiement.cgi';
 
     /**
-     * Champs de la requête « Aller » inclus dans le MAC (ordre alphabétique ASCII).
-     * Les options optionnelles absentes sont valorisées à ''.
+     * Champs du formulaire « Aller » inclus dans le MAC.
+     * Ne pas y mettre d'options vides (echeances, 3DS challenge, etc.)
+     * sinon le sceau ne correspond plus au POST reçu par Monetico.
      */
     const REQUEST_MAC_KEYS = array(
         'TPE',
-        'ThreeDSecureChallenge',
         'contexte_commande',
         'date',
-        'dateech1',
-        'dateech2',
-        'dateech3',
-        'dateech4',
         'lgue',
         'mail',
         'montant',
-        'montantech1',
-        'montantech2',
-        'montantech3',
-        'montantech4',
-        'nbrech',
         'reference',
         'societe',
         'texte-libre',
@@ -47,10 +38,8 @@ class Devis_Pro_Monetico {
     );
 
     /**
-     * Clé opérationnelle (binaire) à partir de la clé hexadécimale commerçant.
-     *
-     * @param string $hex_key Clé 40 caractères
-     * @return string|false
+     * @param string $hex_key Clé commerçant (40 caractères)
+     * @return string|false Clé binaire opérationnelle
      */
     public static function get_usable_key($hex_key) {
         if (empty($hex_key) || strlen($hex_key) < 40) {
@@ -73,30 +62,29 @@ class Devis_Pro_Monetico {
     }
 
     /**
-     * Calcule le sceau MAC (HMAC-SHA1, hex majuscules).
+     * Sceau MAC (HMAC-SHA1, hex majuscules).
      *
-     * @param array  $fields Champs Nom => Valeur (sans MAC)
+     * @param array  $fields Nom => Valeur (sans MAC)
      * @param string $usable_key Clé binaire
      * @return string
      */
     public static function compute_seal(array $fields, $usable_key) {
+        unset($fields['MAC'], $fields['action'], $fields['payment_url']);
         ksort($fields, SORT_STRING);
 
         $parts = array();
         foreach ($fields as $name => $value) {
-            if ($name === 'MAC' || $name === 'action') {
+            if (is_array($value)) {
                 continue;
             }
             $parts[] = $name . '=' . $value;
         }
 
-        $data = implode('*', $parts);
-
-        return strtoupper(hash_hmac('sha1', $data, $usable_key));
+        return strtoupper(hash_hmac('sha1', implode('*', $parts), $usable_key));
     }
 
     /**
-     * Construit le contexte_commande (Base64 JSON UTF-8).
+     * contexte_commande (Base64 JSON UTF-8).
      *
      * @param object $devis
      * @return string
@@ -110,68 +98,103 @@ class Devis_Pro_Monetico {
             'Dr'   => 'Dr',
         );
         $civ = isset($devis->civ) ? trim((string) $devis->civ) : '';
-        $civility = isset($civ_map[$civ]) ? $civ_map[$civ] : $civ;
+        $civility = isset($civ_map[$civ]) ? $civ_map[$civ] : preg_replace('/[^A-Za-z]/', '', $civ);
 
-        $cp    = trim((string) ($devis->cp ?? ''));
-        $ville = trim((string) ($devis->ville ?? ''));
-        $tel   = preg_replace('/\s+/', '', (string) ($devis->tel ?? ''));
+        $cp    = self::truncate(trim((string) ($devis->cp ?? '')), 10);
+        $ville = self::truncate(trim((string) ($devis->ville ?? '')), 50);
+        if ($ville === '') {
+            $ville = 'Non communiquee';
+        }
+        if ($cp === '') {
+            $cp = '00000';
+        }
 
-        // Champs obligatoires billing — fallbacks si absents du formulaire devis
+        $address_line1 = self::truncate(trim($cp . ' ' . $ville), 50);
+        if ($address_line1 === '') {
+            $address_line1 = 'Adresse non communiquee';
+        }
+
+        $phone_e164 = self::format_phone_e164((string) ($devis->tel ?? ''));
+        $phone_mobile = self::format_phone_mobile($phone_e164);
+
         $billing = array(
-            'addressLine1' => 'Adresse non communiquee',
-            'city'         => $ville !== '' ? $ville : 'Non communiquee',
-            'postalCode'   => $cp !== '' ? $cp : '00000',
+            'addressLine1' => $address_line1,
+            'city'         => $ville,
+            'postalCode'   => $cp,
             'country'      => 'FR',
         );
 
         if ($civility !== '') {
-            $billing['civility'] = $civility;
+            $billing['civility'] = self::truncate($civility, 32);
         }
         if (!empty($devis->prenom)) {
-            $billing['firstName'] = (string) $devis->prenom;
+            $billing['firstName'] = self::truncate((string) $devis->prenom, 45);
         }
         if (!empty($devis->nom)) {
-            $billing['lastName'] = (string) $devis->nom;
+            $billing['lastName'] = self::truncate((string) $devis->nom, 45);
         }
         if (!empty($devis->email)) {
-            $billing['email'] = (string) $devis->email;
+            $billing['email'] = self::truncate((string) $devis->email, 100);
         }
-        if ($tel !== '') {
-            $billing['phone'] = $tel;
+        if ($phone_e164 !== '') {
+            $billing['phone'] = $phone_e164;
+            $billing['mobilePhone'] = $phone_mobile;
         }
 
-        $item_name = self::resolve_voyage_label($devis);
+        $item_name = self::truncate(self::resolve_voyage_label($devis), 50);
         $unit_price = (int) round(((float) $devis->montant) * 100);
+
+        $shipping = array(
+            'addressLine1'        => $address_line1,
+            'city'                => $ville,
+            'postalCode'          => $cp,
+            'country'             => 'FR',
+            'shipIndicator'       => 'travel_and_event',
+            'deliveryTimeframe'   => 'other',
+            'matchBillingAddress' => true,
+        );
+        if (!empty($billing['firstName'])) {
+            $shipping['firstName'] = $billing['firstName'];
+        }
+        if (!empty($billing['lastName'])) {
+            $shipping['lastName'] = $billing['lastName'];
+        }
+        if (!empty($billing['email'])) {
+            $shipping['email'] = $billing['email'];
+        }
+        if ($phone_e164 !== '') {
+            $shipping['phone'] = $phone_e164;
+        }
+
+        $client = array(
+            'authenticationMethod' => 'guest',
+        );
+        foreach (array('civility', 'firstName', 'lastName', 'email', 'phone') as $key) {
+            if (!empty($billing[$key])) {
+                $client[$key] = $billing[$key];
+            }
+        }
 
         $context = array(
             'billing' => $billing,
+            'shipping' => $shipping,
             'shoppingCart' => array(
                 'shoppingCartItems' => array(
                     array(
-                        'name'      => $item_name,
-                        'unitPrice' => $unit_price,
-                        'quantity'  => 1,
-                        'productSKU'=> 'RDVASIE-' . (int) $devis->id,
+                        'name'        => $item_name,
+                        'productCode' => 'service',
                         'productRisk' => 'low',
+                        'unitPrice'   => $unit_price,
+                        'quantity'    => 1,
+                        'productSKU'  => 'RDVASIE-' . (int) $devis->id,
                     ),
                 ),
             ),
-            'client' => array_filter(array(
-                'civility'  => $civility !== '' ? $civility : null,
-                'firstName' => !empty($devis->prenom) ? (string) $devis->prenom : null,
-                'lastName'  => !empty($devis->nom) ? (string) $devis->nom : null,
-                'email'     => !empty($devis->email) ? (string) $devis->email : null,
-                'phone'     => $tel !== '' ? $tel : null,
-            ), static function ($v) {
-                return $v !== null && $v !== '';
-            }),
+            'client' => $client,
         );
 
-        // Pas de shipping physique (voyage) — ne pas envoyer d'objet vide
-
         $json = wp_json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-        return base64_encode($json);
+        return base64_encode($json !== false ? $json : '{}');
     }
 
     /**
@@ -195,7 +218,7 @@ class Devis_Pro_Monetico {
     }
 
     /**
-     * Prépare tous les champs du formulaire de paiement (avec MAC).
+     * Champs du formulaire de paiement (avec MAC).
      *
      * @param object $devis
      * @param array  $settings
@@ -220,48 +243,41 @@ class Devis_Pro_Monetico {
         $date      = wp_date('d/m/Y:H:i:s');
 
         $fields = array(
-            'TPE'                   => (string) ($settings['monetico_tpe'] ?? ''),
-            'ThreeDSecureChallenge' => '',
-            'contexte_commande'     => self::build_contexte_commande($devis),
-            'date'                  => $date,
-            'dateech1'              => '',
-            'dateech2'              => '',
-            'dateech3'              => '',
-            'dateech4'              => '',
-            'lgue'                  => 'FR',
-            'mail'                  => (string) $devis->email,
-            'montant'               => $montant,
-            'montantech1'           => '',
-            'montantech2'           => '',
-            'montantech3'           => '',
-            'montantech4'           => '',
-            'nbrech'                => '',
-            'reference'             => $reference,
-            'societe'               => (string) ($settings['monetico_societe'] ?? ''),
-            'texte-libre'           => "Rendez-vous avec l'Asie",
-            'url_retour_err'        => home_url('/paiement-annule/'),
-            'url_retour_ok'         => home_url('/paiement-accepte/'),
-            'version'               => self::VERSION,
+            'TPE'               => (string) ($settings['monetico_tpe'] ?? ''),
+            'contexte_commande' => self::build_contexte_commande($devis),
+            'date'              => $date,
+            'lgue'              => 'FR',
+            'mail'              => (string) $devis->email,
+            'montant'           => $montant,
+            'reference'         => $reference,
+            'societe'           => (string) ($settings['monetico_societe'] ?? ''),
+            'texte-libre'       => "Rendez-vous avec l'Asie",
+            'url_retour_err'    => home_url('/paiement-annule/'),
+            'url_retour_ok'     => home_url('/paiement-accepte/'),
+            'version'           => self::VERSION,
         );
 
-        // Ne garder que les clés prévues pour le MAC / formulaire
         $mac_fields = array();
         foreach (self::REQUEST_MAC_KEYS as $key) {
-            $mac_fields[$key] = isset($fields[$key]) ? $fields[$key] : '';
+            $mac_fields[$key] = isset($fields[$key]) ? (string) $fields[$key] : '';
         }
 
-        $mac = self::compute_seal($mac_fields, $usable_key);
-        $mac_fields['MAC'] = $mac;
+        $mac_fields['MAC'] = self::compute_seal($mac_fields, $usable_key);
         $mac_fields['payment_url'] = self::PAYMENT_URL;
+
+        // Alias pour la vue (compat)
+        $mac_fields['tpe'] = $mac_fields['TPE'];
+        $mac_fields['mac'] = $mac_fields['MAC'];
+        $mac_fields['email'] = $mac_fields['mail'];
+        $mac_fields['texte_libre'] = $mac_fields['texte-libre'];
 
         return $mac_fields;
     }
 
     /**
-     * Valide le MAC de l'IPN (tous les champs POST reçus sauf MAC/action).
-     * Tente d'abord le format alphabétique (migration 2026), puis l'ancien format fixe.
+     * Valide le MAC IPN (alphabétique, tous champs reçus sauf MAC).
      *
-     * @param array $post Données $_POST brutes
+     * @param array $post
      * @param array $settings
      * @return bool
      */
@@ -283,7 +299,6 @@ class Devis_Pro_Monetico {
 
         $received = strtoupper((string) $post['MAC']);
 
-        // 1) Nouveau format : NomChamp=ValeurChamp triés alphabétiquement
         $fields = $post;
         unset($fields['MAC'], $fields['action']);
         foreach ($fields as $k => $v) {
@@ -299,20 +314,17 @@ class Devis_Pro_Monetico {
             return true;
         }
 
-        // 2) Ancien format (transition jusqu'à migration Monetico 03/10/2026)
         $computed_legacy = self::compute_legacy_ipn_seal($post, $usable_key);
         if ($computed_legacy && hash_equals($computed_legacy, $received)) {
             error_log('[Devis Pro Monetico] IPN validée via MAC legacy');
             return true;
         }
 
-        error_log('[Devis Pro Monetico] IPN MAC invalid. new=' . $computed_new . ' legacy=' . ($computed_legacy ?: 'n/a') . ' received=' . $received);
+        error_log('[Devis Pro Monetico] IPN MAC invalid. new=' . $computed_new . ' received=' . $received);
         return false;
     }
 
     /**
-     * Ancien MAC IPN : concaténation ordonnée des valeurs (sans Nom=).
-     *
      * @param array  $post
      * @param string $usable_key
      * @return string
@@ -322,7 +334,6 @@ class Devis_Pro_Monetico {
             return isset($post[$key]) ? (string) $post[$key] : '';
         };
 
-        // Chaîne historique Monetico (doc ≤ v2.0 « Retour »)
         $data = $get('TPE') . '*'
             . $get('date') . '*'
             . $get('montant') . '*'
@@ -348,8 +359,6 @@ class Devis_Pro_Monetico {
     }
 
     /**
-     * Décode le champ authentification (Base64 JSON) de l'IPN.
-     *
      * @param array $post
      * @return array|null
      */
@@ -359,12 +368,7 @@ class Devis_Pro_Monetico {
         }
 
         $raw = base64_decode((string) $post['authentification'], true);
-        if ($raw === false) {
-            return null;
-        }
-
-        // Monetico peut envoyer "null" encodé
-        if (trim($raw) === 'null') {
+        if ($raw === false || trim($raw) === 'null') {
             return null;
         }
 
@@ -373,8 +377,6 @@ class Devis_Pro_Monetico {
     }
 
     /**
-     * Indique si le code-retour correspond à un paiement accepté.
-     *
      * @param string $code_retour
      * @return bool
      */
@@ -383,7 +385,40 @@ class Devis_Pro_Monetico {
         if ($code === 'paiement' || $code === 'payetest') {
             return true;
         }
-        // Paiements fractionnés : paiement_pf2, paiement_pf3, paiement_pf4
         return (bool) preg_match('/^paiement_pf[2-4]$/', $code);
+    }
+
+    private static function truncate($value, $max) {
+        $value = trim(wp_strip_all_tags((string) $value));
+        if (function_exists('mb_substr')) {
+            return mb_substr($value, 0, $max);
+        }
+        return substr($value, 0, $max);
+    }
+
+    /** +33612345678 */
+    private static function format_phone_e164($tel) {
+        $digits = preg_replace('/\D+/', '', (string) $tel);
+        if ($digits === '') {
+            return '';
+        }
+        if (strpos($digits, '33') === 0 && strlen($digits) >= 11) {
+            return '+' . $digits;
+        }
+        if (isset($digits[0]) && $digits[0] === '0' && strlen($digits) === 10) {
+            return '+33' . substr($digits, 1);
+        }
+        if (strlen($digits) >= 8) {
+            return '+' . ltrim($digits, '0');
+        }
+        return '';
+    }
+
+    /** +33-612345678 */
+    private static function format_phone_mobile($e164) {
+        if (!preg_match('/^\+(\d{1,3})(\d+)$/', $e164, $m)) {
+            return $e164;
+        }
+        return '+' . $m[1] . '-' . $m[2];
     }
 }

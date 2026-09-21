@@ -1315,6 +1315,22 @@ class Devis_Pro
      */
     private function process_old_form($post, $atts)
     {
+        $security_check = Devis_Pro_Security::validate_form_submission($post);
+        if (!$security_check['valid']) {
+            if (!empty($security_check['is_bot'])) {
+                return array('success' => true, 'id' => 0);
+            }
+            return array('success' => false, 'error' => $security_check['error']);
+        }
+
+        $settings = get_option('devis_pro_settings');
+        $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
+                return array('success' => false, 'error' => __('Vérification de sécurité échouée.', 'devis-pro'));
+            }
+        }
+
         // Mapper les anciens noms de champs vers les nouveaux
         $mapped = array(
                 'voyage' => $post['voyage'] ?? $atts['voyage'] ?? '',
@@ -1346,14 +1362,25 @@ class Devis_Pro
         // Ajouter newsletter 
         $mapped['newsletter'] = isset($post['newsletter']) && $post['newsletter'] == '1' ? 1 : 0;
 
-        // Validation
-        if (empty($mapped['email']) || !is_email($mapped['email'])) {
+        $email = Devis_Pro_Security::validate_email($mapped['email']);
+        if ($email === false) {
             return array('success' => false, 'error' => 'Email invalide');
         }
+        $mapped['email'] = $email;
 
-        if (empty($mapped['tel'])) {
+        $tel = Devis_Pro_Security::validate_phone($mapped['tel']);
+        if ($tel === false) {
             return array('success' => false, 'error' => 'Téléphone requis');
         }
+        $mapped['tel'] = $tel;
+
+        $nom = Devis_Pro_Security::validate_name($mapped['nom']);
+        $prenom = Devis_Pro_Security::validate_name($mapped['prenom']);
+        if ($nom === false || $prenom === false) {
+            return array('success' => false, 'error' => 'Nom ou prénom invalide');
+        }
+        $mapped['nom'] = $nom;
+        $mapped['prenom'] = $prenom;
 
         // Insérer dans la base de données
         $id = $this->db->insert_devis($mapped);
@@ -1404,6 +1431,22 @@ class Devis_Pro
      */
     private function process_old_form_ajax($post, $atts)
     {
+        $security_check = Devis_Pro_Security::validate_form_submission($post);
+        if (!$security_check['valid']) {
+            if (!empty($security_check['is_bot'])) {
+                return array('success' => true, 'id' => 0);
+            }
+            return array('success' => false, 'error' => $security_check['error']);
+        }
+
+        $settings = get_option('devis_pro_settings');
+        $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
+                return array('success' => false, 'error' => __('Vérification de sécurité échouée.', 'devis-pro'));
+            }
+        }
+
         // Mapper les anciens noms de champs vers les nouveaux
         $mapped = array(
                 'voyage' => $post['voyage'] ?? $atts['voyage'] ?? '',
@@ -1447,6 +1490,14 @@ class Devis_Pro
             return array('success' => false, 'error' => __('Numéro de téléphone invalide', 'devis-pro'));
         }
         $mapped['tel'] = $tel;
+
+        $nom = Devis_Pro_Security::validate_name($mapped['nom']);
+        $prenom = Devis_Pro_Security::validate_name($mapped['prenom']);
+        if ($nom === false || $prenom === false) {
+            return array('success' => false, 'error' => __('Nom ou prénom invalide', 'devis-pro'));
+        }
+        $mapped['nom'] = $nom;
+        $mapped['prenom'] = $prenom;
 
         // Insérer dans la base de données
         $id = $this->db->insert_devis($mapped);
@@ -1506,8 +1557,8 @@ class Devis_Pro
         $settings = get_option('devis_pro_settings');
         $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
 
-        if (!empty($recaptcha_secret) && !empty($post['recaptcha_token'])) {
-            if (!Devis_Pro_Security::verify_recaptcha($post['recaptcha_token'], $recaptcha_secret)) {
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
                 return array('success' => false, 'error' => __('Vérification de sécurité échouée. Veuillez réessayer.', 'devis-pro'));
             }
         }
@@ -1660,8 +1711,8 @@ class Devis_Pro
         $settings = get_option('devis_pro_settings');
         $recaptcha_secret = $settings['recaptcha_secret_key'] ?? '';
 
-        if (!empty($recaptcha_secret) && !empty($post['recaptcha_token'])) {
-            if (!Devis_Pro_Security::verify_recaptcha($post['recaptcha_token'], $recaptcha_secret)) {
+        if (!empty($recaptcha_secret)) {
+            if (!Devis_Pro_Security::verify_recaptcha_required($post['recaptcha_token'] ?? '', $recaptcha_secret)) {
                 return array('success' => false, 'error' => __('Vérification de sécurité échouée.', 'devis-pro'));
             }
         }
@@ -1828,7 +1879,7 @@ class Devis_Pro
     }
 
     /**
-     * Générer les données Monetico (contexte_commande + MAC alphabétique)
+     * Générer les données Monetico (3DSecure v2)
      */
     private function generate_monetico_data($devis, $settings)
     {
@@ -1837,7 +1888,6 @@ class Devis_Pro
             return null;
         }
 
-        // Sauvegarder la référence pour le rapprochement IPN
         $this->db->update_devis($devis->id, array('mac' => $fields['reference']));
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -1848,25 +1898,12 @@ class Devis_Pro
     }
 
     /**
-     * @deprecated Conservé pour compatibilité ; utiliser Devis_Pro_Monetico::get_usable_key()
+     * @deprecated Utiliser Devis_Pro_Monetico::get_usable_key()
      */
     private function get_monetico_key($cle)
     {
-        $hexStrKey = substr($cle, 0, 38);
-        $hexFinal = "" . substr($cle, 38, 2) . "00";
-
-        $cca0 = ord($hexFinal);
-
-        if ($cca0 > 70 && $cca0 < 97)
-            $hexStrKey .= chr($cca0 - 23) . substr($hexFinal, 1, 1);
-        else {
-            if (substr($hexFinal, 1, 1) == "M")
-                $hexStrKey .= substr($hexFinal, 0, 1) . "0";
-            else
-                $hexStrKey .= substr($hexFinal, 0, 2);
-        }
-
-        return $hexStrKey;
+        $key = Devis_Pro_Monetico::get_usable_key($cle);
+        return $key === false ? '' : $key;
     }
 
     /**
@@ -2269,66 +2306,54 @@ class Devis_Pro
         $is_physical_path = ($current_url === '/paiement/validation.php');
         $is_virtual_query = (isset($_GET['monetico_action']) && $_GET['monetico_action'] === 'notify');
 
-        if (!($is_physical_path || $is_virtual_query)) {
-            return;
+        if ($is_physical_path || $is_virtual_query) {
+            error_log('=== IPN Monetico reçue ===');
+            $result = "version=2\ncdr=1";
+
+            if (!empty($_POST) && isset($_POST['MAC'])) {
+                $settings = get_option('devis_pro_settings');
+
+                if (!Devis_Pro_Monetico::validate_ipn_seal($_POST, is_array($settings) ? $settings : array())) {
+                    error_log('[Devis Pro Monetico] IPN rejetée : MAC invalide');
+                    header('Content-Type: text/plain');
+                    echo $result;
+                    exit;
+                }
+
+                $reference = sanitize_text_field(wp_unslash($_POST['reference'] ?? ''));
+                $code_retour = sanitize_text_field(wp_unslash($_POST['code-retour'] ?? ''));
+
+                $auth = Devis_Pro_Monetico::decode_authentification($_POST);
+                if ($auth) {
+                    error_log('[Devis Pro Monetico] authentification status=' . ($auth['status'] ?? '') . ' protocol=' . ($auth['protocol'] ?? ''));
+                }
+
+                $demande = $this->db->get_devis_by_reference($reference);
+                if (
+                    $demande
+                    && Devis_Pro_Monetico::is_payment_accepted($code_retour)
+                    && !in_array((int) $demande->status, array(3, 4, 5, 6), true)
+                ) {
+                    $id = (int) $demande->id;
+                    $old_data = $this->db->get_devis($id);
+                    $this->db->update_devis($id, array('status' => 4));
+
+                    $old_status = $settings['statuses'][$old_data->status]['label'] ?? 'Inconnu';
+                    $new_status = $settings['statuses'][4]['label'] ?? 'Payé';
+                    $this->db->add_history(
+                        $id,
+                        'status_change',
+                        sprintf(__('Statut modifié : %s → %s', 'devis-pro'), $old_status, $new_status)
+                    );
+                }
+
+                $result = "version=2\ncdr=0";
+            }
+
+            header('Content-Type: text/plain');
+            echo $result;
+            exit;
         }
-
-        error_log('=== IPN Monetico reçue ===');
-
-        $result = "version=2\ncdr=1";
-
-        if (!empty($_POST) && isset($_POST['MAC'])) {
-            $settings = get_option('devis_pro_settings');
-
-            if (!Devis_Pro_Monetico::validate_ipn_seal($_POST, $settings)) {
-                error_log('[Devis Pro Monetico] IPN rejetée : MAC invalide');
-                header('Content-Type: text/plain');
-                echo $result;
-                exit;
-            }
-
-            $reference   = isset($_POST['reference']) ? sanitize_text_field(wp_unslash($_POST['reference'])) : '';
-            $code_retour = isset($_POST['code-retour']) ? sanitize_text_field(wp_unslash($_POST['code-retour'])) : '';
-
-            $auth = Devis_Pro_Monetico::decode_authentification($_POST);
-            if ($auth) {
-                error_log('[Devis Pro Monetico] authentification status=' . ($auth['status'] ?? '') . ' protocol=' . ($auth['protocol'] ?? '') . ' version=' . ($auth['version'] ?? ''));
-            }
-
-            $demande = $this->db->get_devis_by_reference($reference);
-
-            if (
-                $demande
-                && Devis_Pro_Monetico::is_payment_accepted($code_retour)
-                && !in_array((int) $demande->status, array(3, 4, 5, 6), true)
-            ) {
-                $id = $demande->id;
-                $old_data = $this->db->get_devis($id);
-                $data = array('status' => 4);
-
-                $this->db->update_devis($id, $data);
-
-                $old_status = $settings['statuses'][$old_data->status]['label'] ?? 'Inconnu';
-                $new_status = $settings['statuses'][$data['status']]['label'] ?? 'Inconnu';
-                $this->db->add_history(
-                    $id,
-                    'status_change',
-                    sprintf(__('Statut modifié : %s → %s', 'devis-pro'), $old_status, $new_status)
-                );
-
-                $result = "version=2\ncdr=0";
-            } elseif ($demande && (stripos($code_retour, 'Annulation') === 0)) {
-                // Accusé de réception OK même en cas d'annulation (évite les retries Monetico)
-                $result = "version=2\ncdr=0";
-            } elseif ($demande && in_array((int) $demande->status, array(4), true)) {
-                // Déjà payé — ack idempotent
-                $result = "version=2\ncdr=0";
-            }
-        }
-
-        header('Content-Type: text/plain');
-        echo $result;
-        exit;
     }
 
 

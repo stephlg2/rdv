@@ -496,8 +496,7 @@ if (!empty($devis->voyage)) {
                         <?php echo number_format($devis->montant, 0, ',', ' '); ?><small> €</small>
                     </div>
 
-                    <!-- Monetico Paiement (p.monetico-services.com) — conformité oct. 2026 -->
-                    <form method="post" action="<?php echo esc_url($payment_data['payment_url']); ?>" class="payment-form">
+                    <form method="post" action="<?php echo esc_url($payment_data['payment_url']); ?>" class="payment-form" accept-charset="UTF-8">
                         <input type="hidden" name="version" value="<?php echo esc_attr($payment_data['version']); ?>">
                         <input type="hidden" name="TPE" value="<?php echo esc_attr($payment_data['TPE']); ?>">
                         <input type="hidden" name="date" value="<?php echo esc_attr($payment_data['date']); ?>">
@@ -511,7 +510,7 @@ if (!empty($devis->voyage)) {
                         <input type="hidden" name="texte-libre" value="<?php echo esc_attr($payment_data['texte-libre']); ?>">
                         <input type="hidden" name="mail" value="<?php echo esc_attr($payment_data['mail']); ?>">
                         <input type="hidden" name="contexte_commande" value="<?php echo esc_attr($payment_data['contexte_commande']); ?>">
-                        
+
                         <button type="submit" class="payment-btn">
                             <?php _e('Procéder au paiement', 'devis-pro'); ?>
                         </button>
