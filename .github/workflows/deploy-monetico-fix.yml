@@ -4,32 +4,49 @@ on:
   push:
     branches: [cursor/monetico-migration-conformite-659d]
     paths:
-      - 'wp-content/plugins/devis-pro/**'
       - '.github/workflows/deploy-monetico-fix.yml'
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Health + optional deploy
+      - name: Audit bans and connectivity
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: 146.59.144.202
           username: debian
           port: 4747
           password: ${{ secrets.RDV_VPS_PASSWORD }}
-          timeout: 45s
+          timeout: 60s
           script: |
             set +e
-            echo "=== HOST ==="
-            hostname; uptime; free -h | head -2; df -h / | tail -1
-            echo "=== SERVICES ==="
-            systemctl is-active nginx php8.0-fpm mysql
-            echo "=== LOCAL HTTP ==="
-            curl -sI --max-time 8 -o /dev/null -w "loopback=%{http_code} t=%{time_total}\n" -H 'Host: www.rdvasie.com' http://127.0.0.1/
-            curl -sI --max-time 8 -o /dev/null -w "public=%{http_code} t=%{time_total}\n" https://www.rdvasie.com/
-            echo "=== NGINX ERR ==="
-            sudo tail -15 /var/log/nginx/error.log
-            echo "=== LOAD ==="
-            cat /proc/loadavg
-            echo "=== OOM ==="
-            sudo dmesg -T 2>/dev/null | grep -iE 'oom|killed process' | tail -5 || echo none
+            echo "=== PUBLIC REACHABILITY FROM SERVER ==="
+            curl -sI --max-time 8 -o /dev/null -w "self=%{http_code} t=%{time_total}\n" https://www.rdvasie.com/
+            echo "=== FAIL2BAN ==="
+            sudo fail2ban-client status 2>/dev/null
+            for j in $(sudo fail2ban-client status 2>/dev/null | sed -n 's/.*Jail list:\s*//p' | tr ',' ' '); do
+              echo "--- jail $j ---"
+              sudo fail2ban-client status "$j" 2>/dev/null | sed -n '1,20p'
+            done
+            echo "=== IPTABLES DROP/REJECT (INPUT) ==="
+            sudo iptables -L INPUT -n -v --line-numbers | head -60
+            echo "=== IPTABLES recent bans / UFW ==="
+            sudo ufw status verbose 2>/dev/null | head -40
+            echo "=== nginx deny / geo ==="
+            sudo rg -n "deny |allow |fail2ban|146\.|ban" /etc/nginx/ 2>/dev/null | head -40
+            echo "=== recent 444/403/drop in access ==="
+            sudo tail -5 /var/log/nginx/rdvasie.com.access.log 2>/dev/null
+            sudo awk '$9 ~ /^(403|444|429|502|504)$/' /var/log/nginx/rdvasie.com.access.log 2>/dev/null | tail -20
+            echo "=== SSH auth rejects last hour ==="
+            sudo journalctl -u ssh --since '2 hours ago' --no-pager 2>/dev/null | rg -i 'Failed|Banned|Invalid|refused' | tail -30
+            echo "=== connection tracking / syn ==="
+            ss -s 2>/dev/null | head -15
+            echo "=== hosts.deny ==="
+            cat /etc/hosts.deny 2>/dev/null | head -20
+            echo "=== rdv intrusion watch recent ==="
+            sudo tail -40 /var/log/rdv-intrusion-watch.log 2>/dev/null
+            ls -la /home/debian/security-quarantine 2>/dev/null | tail -10
+            echo "=== check specific IPs if any in env ==="
+            # Look for banned French ISP ranges count
+            sudo iptables -L INPUT -n | rg -c '^DROP|^REJECT' 
+            echo "=== OVH firewall? nft ==="
+            sudo nft list ruleset 2>/dev/null | head -80
