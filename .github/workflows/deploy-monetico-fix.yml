@@ -1,0 +1,59 @@
+name: Deploy Monetico fix
+on:
+  workflow_dispatch:
+  push:
+    branches: [cursor/monetico-migration-conformite-659d]
+    paths:
+      - '.github/workflows/deploy-monetico-fix.yml'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unban client IP
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 146.59.144.202
+          username: debian
+          port: 4747
+          password: ${{ secrets.RDV_VPS_PASSWORD }}
+          timeout: 45s
+          script: |
+            set -e
+            IP=185.232.227.251
+            echo "=== BEFORE ==="
+            sudo iptables -L INPUT -n -v --line-numbers | head -15
+            # Remove all DROP rules for this IP (may appear multiple times)
+            while sudo iptables -L INPUT -n --line-numbers | awk -v ip="$IP" '$4=="DROP" && $5==ip {print $1; exit}'; do
+              NUM=$(sudo iptables -L INPUT -n --line-numbers | awk -v ip="$IP" '$4=="DROP" && $5==ip {print $1; exit}')
+              [ -z "$NUM" ] && break
+              echo "Deleting INPUT rule #$NUM for $IP"
+              sudo iptables -D INPUT "$NUM"
+            done
+            # Also clear fail2ban just in case
+            sudo fail2ban-client set sshd unbanip "$IP" 2>/dev/null || true
+            sudo fail2ban-client set nginx-limit-req unbanip "$IP" 2>/dev/null || true
+            sudo fail2ban-client set nginxrepeatoffender unbanip "$IP" 2>/dev/null || true
+            # Persist if iptables-persistent / netfilter-persistent exists
+            if command -v netfilter-persistent >/dev/null; then
+              sudo netfilter-persistent save || true
+            elif [ -d /etc/iptables ]; then
+              sudo iptables-save | sudo tee /etc/iptables/rules.v4 >/dev/null || true
+            fi
+            # Find who added the ban
+            echo "=== WHO BANNED? ==="
+            sudo rg -n "$IP" /etc/cron* /usr/local/sbin /home/debian /var/log/rdv* /var/log/auth.log 2>/dev/null | head -40
+            ls -la /etc/iptables 2>/dev/null
+            echo "=== AFTER ==="
+            sudo iptables -L INPUT -n -v --line-numbers | head -15
+            echo "=== WHITELIST FOR FUTURE ==="
+            # Ensure office IP is accepted early (idempotent)
+            if ! sudo iptables -C INPUT -s "$IP" -j ACCEPT 2>/dev/null; then
+              sudo iptables -I INPUT 1 -s "$IP" -j ACCEPT -m comment --comment "rdvasie-office-whitelist"
+              echo "added ACCEPT whitelist for $IP"
+            fi
+            if command -v netfilter-persistent >/dev/null; then
+              sudo netfilter-persistent save || true
+            elif [ -d /etc/iptables ]; then
+              sudo iptables-save | sudo tee /etc/iptables/rules.v4 >/dev/null || true
+            fi
+            sudo iptables -L INPUT -n -v --line-numbers | head -10
