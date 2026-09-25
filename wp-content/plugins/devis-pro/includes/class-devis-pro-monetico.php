@@ -115,8 +115,8 @@ class Devis_Pro_Monetico {
 
         $first = self::sanitize_person_name((string) ($devis->prenom ?? ''), 45);
         $last  = self::sanitize_person_name((string) ($devis->nom ?? ''), 45);
-        $phone_e164 = self::format_phone_e164((string) ($devis->tel ?? ''));
-        $phone_mobile = $phone_e164 !== '' ? self::format_phone_mobile($phone_e164) : '';
+        // Monetico exige +33-612345678 (tiret), pas l'E.164 +33612345678 — sinon rejet « formulaire erroné ».
+        $phone_monetico = self::format_phone_monetico((string) ($devis->tel ?? ''));
 
         $billing = array(
             'addressLine1' => $address_line1,
@@ -137,11 +137,9 @@ class Devis_Pro_Monetico {
         if (!empty($devis->email)) {
             $billing['email'] = self::truncate((string) $devis->email, 100);
         }
-        if ($phone_e164 !== '') {
-            $billing['phone'] = $phone_e164;
-            if ($phone_mobile !== '') {
-                $billing['mobilePhone'] = $phone_mobile;
-            }
+        if ($phone_monetico !== '') {
+            $billing['phone'] = $phone_monetico;
+            $billing['mobilePhone'] = $phone_monetico;
         }
 
         $item_name = self::truncate(self::resolve_voyage_label($devis), 50);
@@ -165,8 +163,8 @@ class Devis_Pro_Monetico {
         if (!empty($billing['email'])) {
             $shipping['email'] = $billing['email'];
         }
-        if ($phone_e164 !== '') {
-            $shipping['phone'] = $phone_e164;
+        if ($phone_monetico !== '') {
+            $shipping['phone'] = $phone_monetico;
         }
 
         $client = array(
@@ -477,47 +475,39 @@ class Devis_Pro_Monetico {
     }
 
     /**
-     * Téléphone FR E.164 (+336…) — omet si non fiable (évite +60… etc.).
+     * Téléphone Monetico : +33-612345678 (indicatif + tiret + national).
+     * Omet si non fiable (évite +60… etc.). L'E.164 sans tiret est rejeté par la plateforme.
      */
-    private static function format_phone_e164($tel) {
+    private static function format_phone_monetico($tel) {
         $digits = preg_replace('/\D+/', '', (string) $tel);
         if ($digits === '') {
             return '';
         }
 
+        $national = '';
         // 0033XXXXXXXXX / 33XXXXXXXXX
         if (preg_match('/^(?:00)?33(\d{9})$/', $digits, $m)) {
-            return '+33' . $m[1];
-        }
-        // 0XXXXXXXXX (10 chiffres nationaux)
-        if (preg_match('/^0(\d{9})$/', $digits, $m)) {
-            return '+33' . $m[1];
-        }
-        // 00… puis retenter (ex: 0060122171707 mal saisi)
-        if (strpos($digits, '00') === 0 && strlen($digits) > 4) {
+            $national = $m[1];
+        } elseif (preg_match('/^0(\d{9})$/', $digits, $m)) {
+            // 0XXXXXXXXX (10 chiffres nationaux)
+            $national = $m[1];
+        } elseif (strpos($digits, '00') === 0 && strlen($digits) > 4) {
+            // 00… puis retenter (ex: 0060122171707 mal saisi)
             $rest = substr($digits, 2);
             if (preg_match('/^33(\d{9})$/', $rest, $m)) {
-                return '+33' . $m[1];
+                $national = $m[1];
+            } elseif (preg_match('/^0*(\d{9})$/', $rest, $m) && in_array($m[1][0], array('6', '7', '1', '2', '3', '4', '5', '9'), true)) {
+                $national = $m[1];
             }
-            // 0 + 9 chiffres après avoir retiré des zéros en trop
-            if (preg_match('/^0*(\d{9})$/', $rest, $m) && in_array($m[1][0], array('6', '7', '1', '2', '3', '4', '5', '9'), true)) {
-                return '+33' . $m[1];
-            }
-        }
-        // Déjà en 9 chiffres nationaux (sans 0)
-        if (preg_match('/^[1-9]\d{8}$/', $digits)) {
-            return '+33' . $digits;
+        } elseif (preg_match('/^[1-9]\d{8}$/', $digits)) {
+            // Déjà en 9 chiffres nationaux (sans 0)
+            $national = $digits;
         }
 
-        // Ne pas inventer d'indicatif pays (évite +601…)
-        return '';
-    }
-
-    /** +33-612345678 */
-    private static function format_phone_mobile($e164) {
-        if (!preg_match('/^\+33(\d{9})$/', $e164, $m)) {
+        if ($national === '') {
             return '';
         }
-        return '+33-' . $m[1];
+
+        return '+33-' . $national;
     }
 }
